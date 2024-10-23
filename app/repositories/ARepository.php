@@ -31,7 +31,7 @@ abstract class ARepository {
     protected function __construct(DatabaseConnection $conn, Logger $logger) {
         $this->conn = $conn;
         $this->logger = $logger;
-        $this->cacheFactory = new CacheFactory($logger->getCfg());
+        $this->cacheFactory = new CacheFactory();
 
         $this->tlr = new TransactionLogRepository($this->conn, $this->logger);
     }

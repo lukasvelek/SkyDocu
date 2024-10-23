@@ -16,23 +16,20 @@ use QueryBuilder\IDbQueriable;
  */
 class DatabaseConnection implements IDbQueriable {
     private \mysqli $conn;
-    private array $cfg;
 
     /**
      * Class constructor
      * 
-     * @param array $cfg Configuration array
+     * @param string $dbName Database name to connect to
      */
-    public function __construct(array $cfg) {
-        $this->cfg = $cfg;
-
+    public function __construct(string $dbName) {
         try {
-            $dbPort = (empty($this->cfg['DB_PORT']) ? null : $this->cfg['DB_PORT']);
-            $dbPass = $this->cfg['DB_PASS'];
+            $dbPort = (defined(DB_PORT) ? (!empty(DB_PORT) ? DB_PORT : null) : null);
+            $dbPass = DB_PASS;
             if(FileManager::fileExists(__DIR__ . '\\install')) {
                 $dbPass = CryptManager::decrypt($dbPass);
             }
-            $this->establishConnection($this->cfg['DB_SERVER'], $this->cfg['DB_USER'], $dbPass, $this->cfg['DB_NAME'], $dbPort);
+            $this->establishConnection(DB_SERVER, DB_USER, $dbPass, $dbName, $dbPort);
         } catch(AException $e) {
             throw $e;
         }
@@ -102,7 +99,7 @@ class DatabaseConnection implements IDbQueriable {
      * Installs the database - creates tables and default values
      */
     public function installDb() {
-        $installer = new DatabaseInstaller($this, new Logger($this->cfg));
+        $installer = new DatabaseInstaller($this, new Logger());
         $installer->install();
     }
 }

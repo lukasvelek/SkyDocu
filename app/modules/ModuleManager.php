@@ -10,14 +10,10 @@ use App\Exceptions\ModuleDoesNotExistException;
  * @author Lukas Velek
  */
 class ModuleManager {
-    private array $cfg;
-
     /**
      * The class constructor is not used for anything currently
      */
-    public function __construct(array $cfg) {
-        $this->cfg = $cfg;
-    }
+    public function __construct() {}
 
     /**
      * Loads modules
@@ -54,7 +50,6 @@ class ModuleManager {
 
             /** @var AModule */
             $module = new $className();
-            $module->setCfg($this->cfg);
             
             return $module;
         } else {

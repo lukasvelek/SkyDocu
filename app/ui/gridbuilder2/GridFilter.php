@@ -25,10 +25,9 @@ class GridFilter extends AComponent {
      * Class constructor
      * 
      * @param HttpRequest $request HttpRequest instance
-     * @param array $cfg Application configuration
      */
-    public function __construct(HttpRequest $request, array $cfg) {
-        parent::__construct($request, $cfg);
+    public function __construct(HttpRequest $request) {
+        parent::__construct($request);
 
         $this->filters = [];
         $this->activeFilters = [];
@@ -194,7 +193,7 @@ class GridFilter extends AComponent {
     }
     
     public static function createFromComponent(AComponent $component) {
-        $obj = new self($component->httpRequest, $component->cfg);
+        $obj = new self($component->httpRequest);
         $obj->setApplication($component->app);
         $obj->setPresenter($component->presenter);
 

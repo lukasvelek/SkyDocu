@@ -17,7 +17,7 @@ abstract class AService implements IRunnable {
         $this->logger = $logger;
         $this->serviceManager = $serviceManager;
         
-        $this->cacheFactory = new CacheFactory($this->logger->getCfg());
+        $this->cacheFactory = new CacheFactory();
     }
 
     protected function serviceStart() {

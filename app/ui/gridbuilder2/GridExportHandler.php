@@ -27,7 +27,6 @@ class GridExportHandler {
     private array $columns;
     private array $columnLabels;
     private ?string $currentUserId;
-    private array $cfg;
     private Application $app;
     private string $gridName;
     private int $exportedEntryCount;
@@ -43,7 +42,6 @@ class GridExportHandler {
      * @param array $columns Grid columns
      * @param array $columnLabels Grid column labels
      * @param ?string $currentUserId Current user ID or null
-     * @param array $cfg Application configuration
      * @param Application $app Application instance
      * @param string $gridName Grid name
      */
@@ -53,7 +51,6 @@ class GridExportHandler {
         array $columns,
         array $columnLabels,
         ?string $currentUserId,
-        array $cfg,
         Application $app,
         string $gridName
     ) {
@@ -62,12 +59,11 @@ class GridExportHandler {
         $this->columns = $columns;
         $this->columnLabels = $columnLabels;
         $this->currentUserId = $currentUserId;
-        $this->cfg = $cfg;
         $this->app = $app;
         $this->gridName = $gridName;
         $this->hasProcessedColumns = false;
 
-        $this->cacheFactory = new CacheFactory($this->cfg);
+        $this->cacheFactory = new CacheFactory();
         $this->exportDataCache = $this->cacheFactory->getCache(CacheNames::GRID_EXPORTS);
     }
 
@@ -324,7 +320,7 @@ class GridExportHandler {
     private function saveFile(string $fileContent) {
         $filename = 'GridExport_' . $this->currentUserId . '_' . date('Y-m-d_H-i-s') . '.csv';
 
-        $filepath = $this->cfg['APP_REAL_DIR'] . $this->cfg['GRID_EXPORT_DIR'];
+        $filepath = APP_ABSOLUTE_DIR . CACHE_DIR;
 
         try {
             $result = FileManager::saveFile($filepath, $filename, $fileContent);
@@ -333,7 +329,7 @@ class GridExportHandler {
                 throw new FileWriteException($filepath . $filename);
             }
 
-            return $this->cfg['GRID_EXPORT_DIR'] . $filename;
+            return CACHE_DIR . $filename;
         } catch(AException $e) {
             throw $e;
         }
@@ -392,11 +388,10 @@ class GridExportHandler {
      * 
      * @param array $data Data for export
      * @param Application $app Application instance
-     * @param array $cfg Application configuration
      * @param ?string $userId Current user ID
      * @return self
      */
-    public static function createForAsync(array $data, Application $app, array $cfg, ?string $userId) {
+    public static function createForAsync(array $data, Application $app, ?string $userId) {
         $dataSource = $data['dataSource'];
         $primaryKey = $data['primaryKey'];
         $columns = $data['columns'];
@@ -407,7 +402,7 @@ class GridExportHandler {
         $qb = $app->gridExportRepository->getQb();
         $qb = $qb->import($dataSource);
 
-        $obj = new self($qb, $primaryKey, $columns, $columnLabels, $userId, $cfg, $app, $gridName);
+        $obj = new self($qb, $primaryKey, $columns, $columnLabels, $userId, $app, $gridName);
         $obj->setProcessedColumns();
         $obj->setEntryCount($exportedEntryCount);
 

@@ -62,7 +62,7 @@ class GridHelper {
 
         $this->gridPageData = [];
 
-        $this->cacheFactory = new CacheFactory($this->logger->getCfg());
+        $this->cacheFactory = new CacheFactory();
         $this->gridPageDataCache = $this->cacheFactory->getCache(CacheNames::GRID_PAGE_DATA);
     }
 

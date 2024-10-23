@@ -16,6 +16,7 @@ use App\Managers\EntityManager;
 use App\Managers\UserManager;
 use App\Modules\ModuleManager;
 use App\Repositories\ContentRepository;
+use App\Repositories\GridExportRepository;
 use App\Repositories\SystemServicesRepository;
 use App\Repositories\SystemStatusRepository;
 use App\Repositories\TransactionLogRepository;
@@ -31,7 +32,6 @@ use ReflectionClass;
  */
 class Application {
     private array $modules;
-    public array $cfg;
     public ?UserEntity $currentUser;
 
     private ?string $currentModule;
@@ -51,6 +51,7 @@ class Application {
     public SystemServicesRepository $systemServicesRepository;
     public TransactionLogRepository $transactionLogRepository;
     public ContentRepository $contentRepository;
+    public GridExportRepository $gridExportRepository;
 
     public ServiceManager $serviceManager;
     public UserManager $userManager;
@@ -60,9 +61,6 @@ class Application {
      * The Application constructor. It creates objects of all used classes.
      */
     public function __construct() {
-        global $cfg;
-        $this->cfg = $cfg;
-
         $this->modules = [];
         $this->currentModule = null;
         $this->currentPresenter = null;
@@ -70,12 +68,12 @@ class Application {
         
         $this->currentUser = null;
 
-        $this->moduleManager = new ModuleManager($this->cfg);
+        $this->moduleManager = new ModuleManager();
 
-        $this->logger = new Logger($this->cfg);
+        $this->logger = new Logger();
         $this->logger->info('Logger initialized.', __METHOD__);
         try {
-            $this->db = new DatabaseConnection($this->cfg);
+            $this->db = new DatabaseConnection(DB_MASTER_NAME);
         } catch(AException $e) {
             throw $e;
         }
@@ -86,7 +84,7 @@ class Application {
         $this->userAuth = new UserAuthenticator($this->userRepository, $this->logger);
 
         $this->entityManager = new EntityManager($this->logger, $this->contentRepository);
-        $this->serviceManager = new ServiceManager($this->cfg, $this->systemServicesRepository);
+        $this->serviceManager = new ServiceManager($this->systemServicesRepository);
         $this->userManager = new UserManager($this->logger, $this->userRepository, $this->entityManager);
 
         $this->isAjaxRequest = false;
@@ -96,7 +94,7 @@ class Application {
         if(!FileManager::fileExists(__DIR__ . '\\install')) {
             try {
                 // Installer will now install the application
-                $installer = new Installer($this, $this->db);
+                $installer = new Installer($this->db);
                 $installer->install();
             } catch(AException $e) {
                 throw new GeneralException('Could not install database. Reason: ' . $e->getMessage(), $e);
@@ -147,8 +145,8 @@ class Application {
             // login
             $this->currentUser = $this->userRepository->getUserById($_SESSION['userId']);
         } else {
-            if((!isset($_GET['page']) || (isset($_GET['page']) && $_GET['page'] != 'UserModule:Logout')) && !isset($_SESSION['is_logging_in'])) {
-                $this->redirect(['page' => 'UserModule:Logout', 'action' => 'logout']);
+            if((!isset($_GET['page']) || (isset($_GET['page']) && $_GET['page'] != 'AnonymModule:Logout')) && !isset($_SESSION['is_logging_in'])) {
+                $this->redirect(['page' => 'AnonymModule:Logout', 'action' => 'logout']);
 
                 if($message != '') {
                     $fmHash = $this->flashMessage($message);
@@ -202,7 +200,7 @@ class Application {
      * @param string $type Flash message type
      */
     public function flashMessage(string $text, string $type = 'info') {
-        $cacheFactory = new CacheFactory($this->cfg);
+        $cacheFactory = new CacheFactory();
         $cache = $cacheFactory->getCache(CacheNames::FLASH_MESSAGES);
 
         $hash = HashManager::createHash(8, false);
@@ -293,30 +291,6 @@ class Application {
         }
 
         $this->logger->info('Current URL: [module => ' . $this->currentModule . ', presenter => ' . $this->currentPresenter . ', action => ' . $this->currentAction . ', isAjax => ' . $isAjax . ']', __METHOD__);
-    }
-
-    /**
-     * Returns the grid size from the config file
-     * 
-     * @return int Grid size
-     */
-    public function getGridSize() {
-        $gridSize = $this->cfg['GRID_SIZE'];
-
-        if($gridSize < 1) {
-            $gridSize = 1;
-        }
-
-        return $gridSize;
-    }
-
-    /**
-     * Returns true if this is the development version
-     * 
-     * @return bool True if this is development version or false if not
-     */
-    public function getIsDev() {
-        return $this->cfg['IS_DEV'];
     }
 }
 

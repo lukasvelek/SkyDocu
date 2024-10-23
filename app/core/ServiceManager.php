@@ -13,17 +13,14 @@ use App\Repositories\SystemServicesRepository;
  * @author Lukas Velek
  */
 class ServiceManager {
-    private array $cfg;
     private SystemServicesRepository $ssr;
 
     /**
      * Class constructor
      * 
-     * @param array $cfg Application configuration
      * @param SystemServicesRepository $ssr SystemServicesRepository instance
      */
-    public function __construct(array $cfg, SystemServicesRepository $ssr) {
-        $this->cfg = $cfg;
+    public function __construct(SystemServicesRepository $ssr) {
         $this->ssr = $ssr;
     }
 
@@ -34,13 +31,13 @@ class ServiceManager {
      * @return bool True if the script was run successfully or false if not
      */
     public function runService(string $scriptPath) {
-        $phpExe = $this->cfg['PHP_DIR_FULLPATH'] . 'php.exe';
+        $phpExe = PHP_ABSOLUTE_DIR . 'php.exe';
 
         if(!FileManager::fileExists($phpExe)) {
             throw new FileDoesNotExistException($phpExe);
         }
 
-        $serviceFile = $this->cfg['APP_REAL_DIR'] . 'services\\' . $scriptPath;
+        $serviceFile = APP_ABSOLUTE_DIR . 'services\\' . $scriptPath;
 
         if(!FileManager::fileExists($serviceFile)) {
             throw new FileDoesNotExistException($serviceFile);

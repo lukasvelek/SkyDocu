@@ -16,7 +16,6 @@ class CacheFactory {
     private const I_NS_CACHE_EXPIRATION = '_cacheExpirationDate';
     private const I_NS_CACHE_LAST_WRITE_DATE = '_cacheLastWriteDate';
 
-    private array $cfg;
     private CacheLogger $cacheLogger;
 
     /** @var array<Cache> */
@@ -27,11 +26,10 @@ class CacheFactory {
      * 
      * @param Logger $logger Logger instance
      */
-    public function __construct(array $cfg) {
-        $this->cfg = $cfg;
+    public function __construct() {
         $this->persistentCaches = [];
 
-        $this->cacheLogger = new CacheLogger($this->cfg);
+        $this->cacheLogger = new CacheLogger();
     }
 
     /**
@@ -110,7 +108,7 @@ class CacheFactory {
      * @return mixed|null Loaded content or null
      */
     private function loadDataFromCache(string $namespace) {
-        $path = $this->cfg['APP_REAL_DIR'] . $this->cfg['CACHE_DIR'] . $namespace . '\\';
+        $path = APP_ABSOLUTE_DIR . CACHE_DIR . $namespace . '\\';
         
         $date = new DateTime();
         $date->format('Y-m-d');
@@ -184,7 +182,7 @@ class CacheFactory {
      * @return int|false Number of bytes written or false if error occured
      */
     private function saveDataToCache(string $namespace, array $data) {
-        $path = $this->cfg['APP_REAL_DIR'] . $this->cfg['CACHE_DIR'] . $namespace . '\\';
+        $path = APP_ABSOLUTE_DIR . CACHE_DIR . $namespace . '\\';
         
         $date = new DateTime();
         $date->format('Y-m-d');
@@ -204,7 +202,7 @@ class CacheFactory {
      * @return bool True on success or false on failure
      */
     private function deleteCache(string $namespace) {
-        $path = $this->cfg['APP_REAL_DIR'] . $this->cfg['CACHE_DIR'] . $namespace . '\\';
+        $path = APP_ABSOLUTE_DIR . CACHE_DIR . $namespace . '\\';
 
         $this->cacheLogger->logCacheNamespaceDeleted($namespace, __METHOD__);
 

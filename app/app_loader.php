@@ -1,5 +1,7 @@
 <?php
 
+use App\Exceptions\UndefinedConstantException;
+
 /**
  * Creates a list of all files in the given folder
  * 
@@ -78,11 +80,9 @@ function sortFilesByPriority(array &$files) {
  * Creates a "container" -> a list of all files saved to a tmp file
  */
 function createContainer($files) {
-    global $cfg;
-
     $data = serialize(['files' => $files, 'created_on' => date('Y-m-d H:i:s')]);
 
-    file_put_contents($cfg['CACHE_DIR'] . 'Container_' . md5(date('Y-m-d')) . '.tmp', $data);
+    file_put_contents(CACHE_DIR . 'Container_' . md5(date('Y-m-d')) . '.tmp', $data);
 }
 
 /**
@@ -91,10 +91,8 @@ function createContainer($files) {
  * @return array File array
  */
 function getContainer() {
-    global $cfg;
-
-    if(file_exists($cfg['CACHE_DIR'] . 'Container_' . md5(date('Y-m-d')) . '.tmp')) {
-        return unserialize(file_get_contents($cfg['CACHE_DIR'] . 'Container_' . md5(date('Y-m-d')) . '.tmp'))['files'];
+    if(file_exists(CACHE_DIR . 'Container_' . md5(date('Y-m-d')) . '.tmp')) {
+        return unserialize(file_get_contents(CACHE_DIR . 'Container_' . md5(date('Y-m-d')) . '.tmp'))['files'];
     } else {
         return [];
     }
@@ -148,6 +146,12 @@ function requireFiles(array $files, bool $createContainer) {
     }
 }
 
+function checkDefines() {
+    if(!defined('CACHE_DIR')) {
+        throw new UndefinedConstantException('CACHE_DIR');
+    }
+}
+
 /**
  * Principle of loading application files:
  * 
@@ -161,6 +165,8 @@ function requireFiles(array $files, bool $createContainer) {
  * 3. Files are looped through and "required"
  * (4. If the container didn't exist in the first place, it is also created)
  */
+
+checkDefines();
 
 $files = getContainer();
 

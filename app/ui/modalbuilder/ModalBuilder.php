@@ -21,10 +21,9 @@ class ModalBuilder extends AComponent {
      * Class constructor
      * 
      * @param HttpRequest $httpRequest HttpRequest instance
-     * @param array $cfg Application configuration
      */
-    public function __construct(HttpRequest $httpRequest, array $cfg) {
-        parent::__construct($httpRequest, $cfg);
+    public function __construct(HttpRequest $httpRequest) {
+        parent::__construct($httpRequest);
 
         $this->id = 'modal-inner';
         $this->title = 'Modal';
@@ -104,7 +103,7 @@ class ModalBuilder extends AComponent {
     }
 
     public static function createFromComponent(AComponent $component) {
-        $obj = new self($component->httpRequest, $component->cfg);
+        $obj = new self($component->httpRequest);
         $obj->setApplication($component->app);
         $obj->setPresenter($component->presenter);
 

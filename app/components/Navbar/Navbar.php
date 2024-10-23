@@ -2,10 +2,7 @@
 
 namespace App\Components\Navbar;
 
-use App\Constants\Systems;
 use App\Helpers\LinkHelper;
-use App\Managers\NotificationManager;
-use App\Managers\SystemStatusManager;
 use App\Modules\TemplateObject;
 use App\UI\IRenderable;
 
@@ -17,14 +14,12 @@ class Navbar implements IRenderable {
     private ?string $currentUserId;
     private bool $isCurrentUserAdmin;
     private array $hideLinks;
-    private SystemStatusManager $ssm;
 
-    public function __construct(SystemStatusManager $ssm, ?string $currentUserId = null) {
+    public function __construct(?string $currentUserId = null) {
         $this->links = [];
         $this->template = new TemplateObject(file_get_contents(__DIR__ . '\\template.html'));
         $this->hideSearchBar = false;
         $this->hasCustomLinks = false;
-        $this->ssm = $ssm;
         $this->currentUserId = $currentUserId;
         $this->isCurrentUserAdmin = false;
         $this->hideLinks = [];

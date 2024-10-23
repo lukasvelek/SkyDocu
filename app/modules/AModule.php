@@ -25,8 +25,6 @@ abstract class AModule extends AGUICore {
     private ?Logger $logger;
     protected HttpRequest $httpRequest;
 
-    public array $cfg;
-
     private bool $isAjax;
 
     /**
@@ -179,7 +177,6 @@ abstract class AModule extends AGUICore {
         $this->presenter->setParams(['module' => $this->title]);
         $this->presenter->setAction($actionTitle);
         $this->presenter->setLogger($this->logger);
-        $this->presenter->setCfg($this->cfg);
         $this->presenter->setIsAjax($this->isAjax);
         $this->presenter->setApplication($this->app);
         $this->presenter->setHttpRequest($this->httpRequest);
@@ -198,7 +195,7 @@ abstract class AModule extends AGUICore {
         }
 
         if(isset($_GET['_fm'])) {
-            $cacheFactory = new CacheFactory($this->logger->getCfg());
+            $cacheFactory = new CacheFactory();
             $cache = $cacheFactory->getCache(CacheNames::FLASH_MESSAGES);
 
             $flashMessages = $cache->load($_GET['_fm'], function() { return []; });
@@ -227,15 +224,6 @@ abstract class AModule extends AGUICore {
      */
     public function getTitle() {
         return $this->title;
-    }
-
-    /**
-     * Sets configuration
-     * 
-     * @param array $cfg Configuration
-     */
-    public function setCfg(array $cfg) {
-        $this->cfg = $cfg;
     }
 }
 

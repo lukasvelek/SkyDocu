@@ -24,32 +24,16 @@ class Logger implements ILoggerCallable {
     private int $logLevel;
     private int $sqlLogLevel;
     private ?string $specialFilename;
-    private array $cfg;
     private int $stopwatchLogLevel;
-    private bool $separateSQLLogging;
 
     /**
      * Class constructor
-     * 
-     * @param array $cfg Application configuration
      */
-    public function __construct(array $cfg) {
-        $this->cfg = $cfg;
-
-        $this->sqlLogLevel = $this->cfg['SQL_LOG_LEVEL'];
-        $this->logLevel = $this->cfg['LOG_LEVEL'];
+    public function __construct() {
+        $this->sqlLogLevel = SQL_LOG_LEVEL;
+        $this->logLevel = LOG_LEVEL;
         $this->specialFilename = null;
-        $this->stopwatchLogLevel = $this->cfg['LOG_STOPWATCH'];
-        $this->separateSQLLogging = $this->cfg['SQL_SEPARATE_LOGGING'];
-    }
-
-    /**
-     * Returns application configuration
-     * 
-     * @return array Application configuration
-     */
-    public function getCfg() {
-        return $this->cfg;
+        $this->stopwatchLogLevel = LOG_STOPWATCH;
     }
 
     /**
@@ -132,17 +116,13 @@ class Logger implements ILoggerCallable {
         $date = new DateTime();
         $newText = '[' . $date . '] [' . strtoupper(self::LOG_SQL) . '] [' . (int)($msTaken) . ' s] ' . $method . '(): ' . $sql;
 
-        if($this->separateSQLLogging && $this->sqlLogLevel >= 1) {
+        if($this->sqlLogLevel >= 1) {
             $newText = '[' . $date . '] [' . strtoupper(self::LOG_SQL) . '] [' . $msTaken . ' s] ' . $method . '(): ' . $sql;
 
             $oldSpecialFilename = $this->specialFilename;
             $this->specialFilename = 'sql_log';
             $this->writeLog($newText);
             $this->specialFilename = $oldSpecialFilename;
-        } else {
-            if($this->sqlLogLevel >= 1) {
-                $this->writeLog($newText);
-            }
         }
     }
 
@@ -208,7 +188,7 @@ class Logger implements ILoggerCallable {
                 break;
 
             case self::LOG_CACHE:
-                if($this->logLevel >= 4 && $this->cfg['LOG_CACHE'] == 1) {
+                if($this->logLevel >= 4) {
                     $result = $this->writeLog($text);
                 }
                 break;
@@ -255,7 +235,7 @@ class Logger implements ILoggerCallable {
      * @return bool True on success or false on failure
      */
     private function writeLog(string $text) {
-        $folder = $this->cfg['APP_REAL_DIR'] . $this->cfg['LOG_DIR'];
+        $folder = APP_ABSOLUTE_DIR . LOG_DIR;
 
         $date = new DateTime();
         $date->format('Y-m-d');

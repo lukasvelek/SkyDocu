@@ -33,7 +33,7 @@ abstract class AAuthorizator {
         $this->db = $db;
         $this->logger = $logger;
         $this->userRepository = $userRepository;
-        $this->cacheFactory = new CacheFactory($this->logger->getCfg());
+        $this->cacheFactory = new CacheFactory();
     }
 
     /**

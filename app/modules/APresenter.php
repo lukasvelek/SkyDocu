@@ -45,7 +45,6 @@ abstract class APresenter extends AGUICore {
     private ArrayList $beforeRenderCallbacks;
     private ArrayList $afterRenderCallbacks;
 
-    protected array $cfg;
     protected ?CacheFactory $cacheFactory;
 
     private array $flashMessages;
@@ -97,7 +96,7 @@ abstract class APresenter extends AGUICore {
      * Everything in startup() method is called after an instance of Presenter has been created and before other functionality-handling methods are called.
      */
     public function startup() {
-        $this->cacheFactory = new CacheFactory($this->cfg);
+        $this->cacheFactory = new CacheFactory();
     }
 
     /**
@@ -435,7 +434,7 @@ abstract class APresenter extends AGUICore {
 
         if($this->template !== null) {
             $this->template->sys_page_title = $this->title;
-            $this->template->sys_app_name = $this->cfg['APP_NAME'];
+            $this->template->sys_app_name = 'SkyDocu';
             $this->template->sys_copyright = (($date > 2024) ? ('2024-' . $date) : ($date));
             $this->template->sys_scripts = $this->scripts->getAll();
         
@@ -543,21 +542,13 @@ abstract class APresenter extends AGUICore {
 
         if($ok === false) {
             if($this->isAjax && !$this->isComponentAjax) {
-                if($this->cfg['IS_DEV']) {
-                    throw new ActionDoesNotExistException($this->action);
-                } else {
-                    $this->redirect(['page' => 'ErrorModule:E404', 'reason' => 'ActionDoesNotExist']);
-                }
+                $this->redirect(['page' => 'ErrorModule:E404', 'reason' => 'ActionDoesNotExist']);
             } else {
                 if($this->defaultAction !== null) {
                     $this->redirect(['page' => $moduleName . ':' . $this->title, 'action' => $this->defaultAction]);
                 }
 
-                if($this->cfg['IS_DEV']) {
-                    throw new ActionDoesNotExistException($handleAction . '\' or \'' . $renderAction);
-                } else {
-                    $this->redirect(['page' => 'ErrorModule:E404', 'reason' => 'ActionDoesNotExist']);
-                }
+                $this->redirect(['page' => 'ErrorModule:E404', 'reason' => 'ActionDoesNotExist']);
             }
         }
 
@@ -695,15 +686,6 @@ abstract class APresenter extends AGUICore {
     }
 
     /**
-     * Sets configuration
-     * 
-     * @param array $cfg
-     */
-    public function setCfg(array $cfg) {
-        $this->cfg = $cfg;
-    }
-
-    /**
      * Saves flash messages to cache and then saves the cache
      */
     private function saveFlashMessagesToCache() {
@@ -726,7 +708,7 @@ abstract class APresenter extends AGUICore {
      * @return GridBuilder GridBuilder instance
      */
     public function getGridBuilder() {
-        $grid = new GridBuilder($this->httpRequest, $this->cfg);
+        $grid = new GridBuilder($this->httpRequest);
         $helper = new GridHelper($this->logger, $this->getUserId());
         $grid->setHelper($helper);
         return $grid;

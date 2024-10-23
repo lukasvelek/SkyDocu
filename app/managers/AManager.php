@@ -24,7 +24,7 @@ abstract class AManager {
     protected function __construct(Logger $logger, ?EntityManager $entityManager) {
         $this->logger = $logger;
         $this->entityManager = $entityManager;
-        $this->cacheFactory = new CacheFactory($this->logger->getCfg());
+        $this->cacheFactory = new CacheFactory();
     }
 
     /**

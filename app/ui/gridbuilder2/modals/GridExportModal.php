@@ -25,7 +25,7 @@ class GridExportModal extends ModalBuilder {
      * @param AComponent $grid Grid
      */
     public function __construct(AComponent $grid) {
-        parent::__construct($grid->httpRequest, $grid->cfg);
+        parent::__construct($grid->httpRequest);
 
         $this->setId('grid-export');
         $this->setTitle('Grid export');
@@ -110,7 +110,7 @@ class GridExportModal extends ModalBuilder {
             $count = 0;
         }
         
-        return $count >= $this->cfg['MAX_GRID_EXPORT_SIZE'];
+        return $count >= MAX_GRID_EXPORT_SIZE;
     }
 }
 

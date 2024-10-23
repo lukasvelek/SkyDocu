@@ -86,10 +86,9 @@ class GridBuilder extends AComponent {
      * Class constructor
      * 
      * @param HttpRequest $request HttpRequest instance
-     * @param array $cfg Application configuration
      */
-    public function __construct(HttpRequest $request, array $cfg) {
-        parent::__construct($request, $cfg);
+    public function __construct(HttpRequest $request) {
+        parent::__construct($request);
 
         $this->dataSource = null;
         $this->columns = [];
@@ -383,7 +382,7 @@ class GridBuilder extends AComponent {
      * @return QueryBuilder QueryBuilder instance
      */
     private function processQueryBuilderDataSource(QueryBuilder $qb) {
-        $gridSize = $this->cfg['GRID_SIZE'];
+        $gridSize = GRID_SIZE;
 
         $qb->limit($gridSize)
             ->offset(($this->gridPage * $gridSize));
@@ -888,14 +887,14 @@ class GridBuilder extends AComponent {
      */
     private function createGridPageInfo() {
         $totalCount = $this->getTotalCount();
-        $lastPage = (int)ceil($totalCount / $this->cfg['GRID_SIZE']);
+        $lastPage = (int)ceil($totalCount / GRID_SIZE);
 
-        $lastPageCount = $this->cfg['GRID_SIZE'] * ($this->gridPage + 1);
+        $lastPageCount = GRID_SIZE * ($this->gridPage + 1);
         if($lastPageCount > $totalCount) {
             $lastPageCount = $totalCount;
         }
 
-        return 'Page ' . ($this->gridPage + 1) . ' of ' . $lastPage . ' (' . ($this->cfg['GRID_SIZE'] * $this->gridPage) . ' - ' . $lastPageCount . ')';
+        return 'Page ' . ($this->gridPage + 1) . ' of ' . $lastPage . ' (' . (GRID_SIZE * $this->gridPage) . ' - ' . $lastPageCount . ')';
     }
 
     /**
@@ -928,7 +927,7 @@ class GridBuilder extends AComponent {
      */
     private function createGridPagingControl() {
         $totalCount = $this->getTotalCount();
-        $lastPage = (int)ceil($totalCount / $this->cfg['GRID_SIZE']) - 1;
+        $lastPage = (int)ceil($totalCount / GRID_SIZE) - 1;
 
         $firstPageBtn = $this->createPagingButtonCode(0, '&lt;&lt;', ($this->gridPage == 0));
         $previousPageBtn = $this->createPagingButtonCode(($this->gridPage - 1), '&lt;', ($this->gridPage == 0));
@@ -1168,7 +1167,7 @@ class GridBuilder extends AComponent {
      * @return AComponent
      */
     public static function createFromComponent(AComponent $component) {
-        $obj = new self($component->httpRequest, $component->cfg);
+        $obj = new self($component->httpRequest);
         $obj->setApplication($component->app);
         $obj->setPresenter($component->presenter);
 
@@ -1188,7 +1187,6 @@ class GridBuilder extends AComponent {
             $this->columns,
             $this->columnLabels,
             $this->presenter->getUserId(),
-            $this->cfg,
             $this->app,
             $this->gridName
         );

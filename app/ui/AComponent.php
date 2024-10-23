@@ -16,18 +16,15 @@ use Exception;
  */
 abstract class AComponent extends AGUICore implements IRenderable {
     protected HttpRequest $httpRequest;
-    protected array $cfg;
     protected string $componentName;
 
     /**
      * Abstract class constructor
      * 
      * @param HttpRequest $httpRequest HttpRequest instance
-     * @param array $cfg Application configuration
      */
-    protected function __construct(HttpRequest $httpRequest, array $cfg) {
+    protected function __construct(HttpRequest $httpRequest) {
         $this->httpRequest = $httpRequest;
-        $this->cfg = $cfg;
     }
 
     /**

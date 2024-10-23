@@ -12,11 +12,9 @@ use App\Logger\Logger;
 class CacheLogger extends Logger {
     /**
      * Class constructor
-     * 
-     * @param array $cfg Configuration file
      */
-    public function __construct(array $cfg) {
-        parent::__construct($cfg);
+    public function __construct() {
+        parent::__construct();
     }
 
     /**

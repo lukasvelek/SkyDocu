@@ -56,12 +56,9 @@ class UserAuthenticator {
             throw new GeneralException('You have entered bad credentials.');
         }
 
-        if(!$user->canLogin()) {
-            throw new GeneralException('Your account is disabled. Maybe you have requested resetting your password or haven\'t confirmed your registration?');
-        }
-
         $_SESSION['userId'] = $user->getId();
         $_SESSION['username'] = $user->getUsername();
+        $_SESSION['fullname'] = $user->getFullname();
 
         $hash = HashManager::createHash(64);
 
@@ -137,20 +134,6 @@ class UserAuthenticator {
      */
     public function checkUser(string $username) {
         if($this->userRepository->getUserForAuthentication($username)->fetch() !== null) {
-            return false;
-        }
-
-        return true;
-    }
-
-    /**
-     * Checks if user with passed email exists or not
-     * 
-     * @param string $email Email to be checked
-     * @return bool True if successful or false if not
-     */
-    public function checkUserByEmail(string $email) {
-        if($this->userRepository->getUserByEmailForAuthentication($email)->fetch() !== null) {
             return false;
         }
 

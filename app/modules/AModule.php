@@ -190,7 +190,7 @@ abstract class AModule extends AGUICore {
          */
 
         // flash messages must be last
-        if(isset($_GET['page']) && $_GET['page'] == 'AnonymModule:Login' && isset($_GET['action']) && $_GET['action'] == 'checkLogin') {
+        if(isset($_GET['page']) && $_GET['page'] == 'Anonym:Login' && isset($_GET['action']) && $_GET['action'] == 'checkLogin') {
             return;
         }
 

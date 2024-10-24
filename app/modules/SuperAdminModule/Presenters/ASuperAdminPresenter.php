@@ -9,12 +9,12 @@ use App\Modules\APresenter;
 abstract class ASuperAdminPresenter extends APresenter {
     protected function __construct(string $name, string $title) {
         parent::__construct($name, $title);
+
+        $this->moduleName = 'SuperAdmin';
     }
 
     public function startup() {
         parent::startup();
-
-        $this->template->sys_navbar = new Navbar(NavbarModes::SUPERADMINISTRATION, $this->getUser());
     }
 }
 

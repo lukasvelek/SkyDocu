@@ -16,6 +16,7 @@ use App\Managers\EntityManager;
 use App\Managers\GroupManager;
 use App\Managers\UserManager;
 use App\Modules\ModuleManager;
+use App\Repositories\ContainerRepository;
 use App\Repositories\ContentRepository;
 use App\Repositories\GridExportRepository;
 use App\Repositories\GroupMembershipRepository;
@@ -55,6 +56,7 @@ class Application {
     public GridExportRepository $gridExportRepository;
     public GroupRepository $groupRepository;
     public GroupMembershipRepository $groupMembershipRepository;
+    public ContainerRepository $containerRepository;
 
     public ServiceManager $serviceManager;
     public UserManager $userManager;

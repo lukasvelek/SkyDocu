@@ -15,6 +15,7 @@ class CacheNames {
     public const GROUP_TITLE_TO_ID_MAPPING = 'groupsTitleToIdMapping';
     public const FLASH_MESSAGES = 'flashMessages';
     public const GRID_EXPORTS = 'gridExports';
+    public const GRID_PAGE_DATA = 'gridPageData';
 }
 
 ?>

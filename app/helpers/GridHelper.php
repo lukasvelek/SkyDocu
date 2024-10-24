@@ -13,35 +13,7 @@ use App\Logger\Logger;
  * @author Lukas Velek
  */
 class GridHelper {
-    /** AdminModule:Manage* */
-    public const GRID_TRANSACTION_LOG = 'gridTransactionLog';
-    public const GRID_USERS = 'gridUsers';
-    public const GRID_USER_PROSECUTION_LOG = 'gridUserProsecutionLog';
-    public const GRID_USER_PROSECUTIONS = 'gridUserProsecutions';
-    public const GRID_SYSTEM_SERVICES = 'gridSystemServices';
-    public const GRID_POST_FILE_UPLOADS = 'gridPostFileUploads';
-    public const GRID_GROUPS = 'gridGroups';
-    public const GRID_DELETED_CONTENT = 'gridDeletedContent';
-    public const GRID_BANNED_WORDS = 'gridBannedWords';
-    public const GRID_GRID_EXPORTS = 'gridGridExports';
-    public const GRID_EMAIL_QUEUE = 'gridEmailQueue';
-    public const GRID_SYSTEM_STATUSES = 'gridSystemStatuses';
-    /** AdminModule:Feedback* */
-    public const GRID_SUGGESTIONS = 'gridSuggestions';
-    public const GRID_REPORTS = 'gridReports';
-    /** UserModule:TopicInvites */
-    public const GRID_TOPIC_INVITES = 'gridTopicInvites';
-    /** UserModule:TopicManagement */
-    public const GRID_USER_TOPIC_ROLES = 'gridUserTopicRoles';
-    public const GRID_TOPIC_POLLS = 'gridTopicPolls';
-    public const GRID_TOPIC_INVITES_ALL = 'gridTopicInvitesAll';
-    public const GRID_TOPIC_FOLLOWERS = 'gridTopicFollowers';
-    public const GRID_TOPIC_BANNED_WORDS = 'gridTopicBannedWords';
-    /** UserModule:TopicRules */
-    public const GRID_TOPIC_RULES = 'gridTopicRules';
-    /** UserModule:Topics */
-    public const GRID_TOPIC_POSTS = 'gridTopicPosts';
-    public const GRID_TOPIC_POST_CONCEPTS = 'gridTopicPostConcepts';
+    public const GRID_CONTAINERS = 'gridContainers';
 
     private Logger $logger;
     private array $gridPageData;

@@ -542,13 +542,13 @@ abstract class APresenter extends AGUICore {
 
         if($ok === false) {
             if($this->isAjax && !$this->isComponentAjax) {
-                $this->redirect(['page' => 'ErrorModule:E404', 'reason' => 'ActionDoesNotExist']);
+                $this->redirect(['page' => 'Error:E404', 'reason' => 'ActionDoesNotExist']);
             } else {
                 if($this->defaultAction !== null) {
                     $this->redirect(['page' => $moduleName . ':' . $this->title, 'action' => $this->defaultAction]);
                 }
 
-                $this->redirect(['page' => 'ErrorModule:E404', 'reason' => 'ActionDoesNotExist']);
+                $this->redirect(['page' => 'Error:E404', 'reason' => 'ActionDoesNotExist']);
             }
         }
 

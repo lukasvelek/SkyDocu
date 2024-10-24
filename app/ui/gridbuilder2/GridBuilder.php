@@ -320,7 +320,7 @@ class GridBuilder extends AComponent {
                 if($user === null) {
                     return $value;
                 } else {
-                    return UserEntity::createUserProfileLink($user, false, 'grid-link');
+                    return $user->getFullname();
                 }
             };
 
@@ -917,7 +917,7 @@ class GridBuilder extends AComponent {
             }
         }
 
-        return '<a class="post-data-link" href="#" onclick="' . $this->componentName . '_gridRefresh(' . implode(', ', $args) . ')">Refresh &orarr;</a>';
+        return '<a class="link" href="#" onclick="' . $this->componentName . '_gridRefresh(' . implode(', ', $args) . ')">Refresh &orarr;</a>';
     }
 
     /**

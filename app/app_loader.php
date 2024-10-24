@@ -173,7 +173,7 @@ $files = getContainer();
 $createContainer = false;
 if(empty($files)) {
     $createContainer = true;
-    getFilesInFolderRecursively(__DIR__, $files, [], ['app_loader.php'], ['html', 'distrib', 'bak']);
+    getFilesInFolderRecursively(__DIR__, $files, [], ['app_loader.php'], ['html', 'distrib', 'bak', 'css', 'js']);
     sortFilesByPriority($files);
 }
 

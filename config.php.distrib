@@ -13,38 +13,38 @@
  * 3 - everything except for cache
  * 4 - everything with cache
  */
-define('LOG_LEVEL', 4);
+define('LOG_LEVEL', 0);
 /**
  * SQL queries logging
  * 
  * 0 - off
  * 1 - on
  */
-define('SQL_LOG_LEVEL', 1);
+define('SQL_LOG_LEVEL', 0);
 /**
  * Stopwatch logging
  * 
  * 0 - off
  * 1 - on
  */
-define('LOG_STOPWATCH', 1);
+define('LOG_STOPWATCH', 0);
 
 //
 //                      DIRECTORIES
 //
 
-define('LOG_DIR', 'logs\\');
-define('CACHE_DIR', 'cache\\');
-define('CONTAINERS_DIR', 'containers\\');
+define('LOG_DIR', '');
+define('CACHE_DIR', '');
+define('CONTAINERS_DIR', '');
 
-define('APP_ABSOLUTE_DIR', 'C:\\xampp\\htdocs\\skydocu\\');
-define('PHP_ABSOLUTE_DIR', 'C:\\xampp\\php\\');
+define('APP_ABSOLUTE_DIR', '');
+define('PHP_ABSOLUTE_DIR', '');
 
 //
 //                      GENERAL
 //
 
-define('APP_HOSTNAME', 'localhost');
+define('APP_HOSTNAME', '');
 define('GRID_SIZE', 20);
 define('MAX_GRID_EXPORT_SIZE', 100);
 
@@ -52,10 +52,10 @@ define('MAX_GRID_EXPORT_SIZE', 100);
 //                      DATABASE
 //
 
-define('DB_SERVER', 'localhost');
-define('DB_PORT', '');
-define('DB_USER', 'root');
+define('DB_SERVER', '');
+//define('DB_PORT', '');
+define('DB_USER', '');
 define('DB_PASS', '');
-define('DB_MASTER_NAME', 'skydocu_master');
+define('DB_MASTER_NAME', '');
 
 ?>

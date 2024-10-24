@@ -3,8 +3,9 @@
         <meta charset="utf-8">
         <link rel="stylesheet" href="app/vendor/css/bootstrap.css">
         <link rel="stylesheet" href="resources/css/style.css">
-        <title>$SYS_PAGE_TITLE$</title>
+        <title>$SYS_PAGE_TITLE$ - $SYS_APP_NAME$</title>
         <script type="text/javascript" src="app/vendor/js/jquery-3.7.1.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <script type="text/javascript" src="resources/js/main.js"></script>
     </head>
     <body>
@@ -18,9 +19,23 @@
 
         <div class="row">
             <div class="col-md">
-                $SYS_PAGE_CONTENT$
+                <div class="row">
+                    <div class="col-md" id="navbar">
+                        $SYS_NAVBAR$
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md" id="page-content">
+                        $SYS_PAGE_CONTENT$
+                    </div>
+                </div>
             </div>
         </div>
+        
+        <span id="scripts">
+            $SYS_SCRIPTS$
+        </span>
     </body>
     <footer>
         <br>

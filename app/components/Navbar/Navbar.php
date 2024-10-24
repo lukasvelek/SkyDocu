@@ -2,6 +2,7 @@
 
 namespace App\Components\Navbar;
 
+use App\Entities\UserEntity;
 use App\Helpers\LinkHelper;
 use App\Modules\TemplateObject;
 use App\UI\IRenderable;
@@ -9,19 +10,15 @@ use App\UI\IRenderable;
 class Navbar implements IRenderable {
     private array $links;
     private TemplateObject $template;
-    private bool $hideSearchBar;
-    private bool $hasCustomLinks;
-    private ?string $currentUserId;
-    private bool $isCurrentUserAdmin;
+    private UserEntity $user;
     private array $hideLinks;
+    private int $mode;
 
-    public function __construct(?string $currentUserId = null) {
+    public function __construct(int $mode, UserEntity $user) {
+        $this->mode = $mode;
         $this->links = [];
         $this->template = new TemplateObject(file_get_contents(__DIR__ . '\\template.html'));
-        $this->hideSearchBar = false;
-        $this->hasCustomLinks = false;
-        $this->currentUserId = $currentUserId;
-        $this->isCurrentUserAdmin = false;
+        $this->user = $user;
         $this->hideLinks = [];
 
         $this->getLinks();
@@ -31,25 +28,12 @@ class Navbar implements IRenderable {
         $this->hideLinks[] = $title;
     }
 
-    public function setIsCurrentUserIsAdmin(?bool $isCurrentUserAdmin = true) {
-        if($isCurrentUserAdmin === null) {
-            $isCurrentUserAdmin = false;
-        }
-        $this->isCurrentUserAdmin = $isCurrentUserAdmin;
-    }
-
-    public function hideSearchBar(bool $hide = true) {
-        $this->hideSearchBar = $hide;
-        $this->template = new TemplateObject(file_get_contents(__DIR__ . '\\template-no-searchbar.html'));
-    }
-
-    public function setCustomLinks(array $links) {
-        $this->links = $links;
-        $this->hasCustomLinks = true;
-    }
-
     private function getLinks() {
-        $this->links = NavbarLinks::toArray();
+        switch($this->mode) {
+            case NavbarModes::SUPERADMINISTRATION:
+                $this->links = NavbarSuperAdminLinks::toArray();
+                break;
+        }
     }
 
     private function beforeRender() {
@@ -61,51 +45,51 @@ class Navbar implements IRenderable {
             }
         }
 
-        if($this->hasCustomLinks !== true && $this->isCurrentUserAdmin) {
-            $linksCode .= $this->createLink(NavbarLinks::ADMINISTRATION, 'administration');
-        }
-
         $this->template->links = $linksCode;
 
-        if($this->currentUserId !== null) {
-            $profileLinkArray = NavbarLinks::USER_PROFILE;
-            $profileLinkArray['userId'] = $this->currentUserId;
+        $userInfoLinks = [
+            $this->user->getFullname() => $this->getUserProfileLink(),
+            'Logout' => $this->getUserLogoutLink()
+        ];
 
-            $userInfoLinks = ['chats' => $this->createLink(NavbarLinks::USER_CHATS, 'chats'), 'invites' => $this->createLink(NavbarLinks::USER_INVITES, 'invites'), 'me' => $this->createLink($profileLinkArray, 'me'), 'logout' => $this->createLink(NavbarLinks::USER_LOGOUT, 'logout')];;
-
-            $userInfo = '';
-            foreach($userInfoLinks as $title => $link) {
-                if(!in_array($title, $this->hideLinks)) {
-                    $userInfo .= $link;
-                }
+        $userInfo = '';
+        foreach($userInfoLinks as $title => $link) {
+            if(!in_array($title, $this->hideLinks)) {
+                $userInfo .= $link;
             }
+        }
 
-            $this->template->user_info = $userInfo;
-        } else {
-            $this->template->user_info = '';
-        }
-        
-        if($this->hideSearchBar || $this->currentUserId === null) {
-            $this->template->search_bar = '';
-        } else {
-            $this->template->search_bar = $this->createSearchBar();
-        }
+        $this->template->user_info = $userInfo;
     }
 
-    private function createSearchBar() {
-        $query = '';
-
-        if(isset($_GET['q'])) {
-            $query = ' value="' . htmlspecialchars($_GET['q']) . '"';
+    private function getUserProfileLink() {
+        $link = null;
+        switch($this->mode) {
+            case NavbarModes::SUPERADMINISTRATION:
+                $link = NavbarSuperAdminLinks::USER_PROFILE;
+                break;
         }
 
-        $code = '
-            <input type="text" name="searchQuery" id="searchQuery" placeholder="Search..."' . $query . '>
-            <button type="button" onclick="doSearch(\'' . $this->currentUserId . '\')" id="searchQueryButton"><div style="-webkit-transform: rotate(45deg); -moz-transform: rotate(45deg); -o-transform: rotate(45deg); transform: rotate(45deg);">&#9906;</div></button>
-            <script type="text/javascript" src="js/NavbarSearch.js"></script>
-        ';
+        if($link === null) {
+            return '';
+        }
 
-        return $code;
+        return $this->createLink($link, $this->user->getFullname());
+    }
+
+    private function getUserLogoutLink() {
+        $link = null;
+        switch($this->mode) {
+            case NavbarModes::SUPERADMINISTRATION:
+                $link = NavbarSuperAdminLinks::USER_LOGOUT;
+                break;
+        }
+
+        if($link === null) {
+            return '';
+        }
+
+        return $this->createLink($link, 'Logout');
     }
 
     private function createLink(array $url, string $title) {

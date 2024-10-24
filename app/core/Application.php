@@ -13,12 +13,14 @@ use App\Exceptions\ModuleDoesNotExistException;
 use App\Helpers\LinkHelper;
 use App\Logger\Logger;
 use App\Managers\EntityManager;
+use App\Managers\GroupManager;
 use App\Managers\UserManager;
 use App\Modules\ModuleManager;
 use App\Repositories\ContentRepository;
 use App\Repositories\GridExportRepository;
+use App\Repositories\GroupMembershipRepository;
+use App\Repositories\GroupRepository;
 use App\Repositories\SystemServicesRepository;
-use App\Repositories\SystemStatusRepository;
 use App\Repositories\TransactionLogRepository;
 use App\Repositories\UserRepository;
 use Exception;
@@ -47,15 +49,17 @@ class Application {
     public UserAuthenticator $userAuth;
 
     public UserRepository $userRepository;
-    public SystemStatusRepository $systemStatusRepository;
     public SystemServicesRepository $systemServicesRepository;
     public TransactionLogRepository $transactionLogRepository;
     public ContentRepository $contentRepository;
     public GridExportRepository $gridExportRepository;
+    public GroupRepository $groupRepository;
+    public GroupMembershipRepository $groupMembershipRepository;
 
     public ServiceManager $serviceManager;
     public UserManager $userManager;
     public EntityManager $entityManager;
+    public GroupManager $groupManager;
 
     /**
      * The Application constructor. It creates objects of all used classes.
@@ -86,6 +90,7 @@ class Application {
         $this->entityManager = new EntityManager($this->logger, $this->contentRepository);
         $this->serviceManager = new ServiceManager($this->systemServicesRepository);
         $this->userManager = new UserManager($this->logger, $this->userRepository, $this->entityManager);
+        $this->groupManager = new GroupManager($this->logger, $this->entityManager, $this->groupRepository, $this->groupMembershipRepository);
 
         $this->isAjaxRequest = false;
 
@@ -145,8 +150,8 @@ class Application {
             // login
             $this->currentUser = $this->userRepository->getUserById($_SESSION['userId']);
         } else {
-            if((!isset($_GET['page']) || (isset($_GET['page']) && $_GET['page'] != 'AnonymModule:Logout')) && !isset($_SESSION['is_logging_in'])) {
-                $this->redirect(['page' => 'AnonymModule:Logout', 'action' => 'logout']);
+            if((!isset($_GET['page']) || (isset($_GET['page']) && $_GET['page'] != 'Anonym:Logout')) && !isset($_SESSION['is_logging_in'])) {
+                //$this->redirect(['page' => 'Anonym:Logout', 'action' => 'logout']);
 
                 if($message != '') {
                     $fmHash = $this->flashMessage($message);
@@ -275,7 +280,7 @@ class Application {
 
         $pageParts = explode(':', $page);
 
-        $this->currentModule = $pageParts[0];
+        $this->currentModule = $pageParts[0] . 'Module';
         $this->currentPresenter = $pageParts[1] . 'Presenter';
 
         if(isset($_GET['action'])) {

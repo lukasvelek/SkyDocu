@@ -1,5 +1,6 @@
 logs/
-temp/
+cache/
 *.bak
-*.distrib
+config.php
 *.tmp
+install

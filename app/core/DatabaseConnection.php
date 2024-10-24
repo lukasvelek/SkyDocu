@@ -25,11 +25,7 @@ class DatabaseConnection implements IDbQueriable {
     public function __construct(string $dbName) {
         try {
             $dbPort = (defined(DB_PORT) ? (!empty(DB_PORT) ? DB_PORT : null) : null);
-            $dbPass = DB_PASS;
-            if(FileManager::fileExists(__DIR__ . '\\install')) {
-                $dbPass = CryptManager::decrypt($dbPass);
-            }
-            $this->establishConnection(DB_SERVER, DB_USER, $dbPass, $dbName, $dbPort);
+            $this->establishConnection(DB_SERVER, DB_USER, DB_PASS, $dbName, $dbPort);
         } catch(AException $e) {
             throw $e;
         }

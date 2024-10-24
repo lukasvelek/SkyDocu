@@ -2,8 +2,7 @@
 
 namespace App\Core;
 
-use App\Constants\AdministratorGroups;
-use App\Constants\Systems;
+use App\Constants\SystemGroups;
 use App\Logger\Logger;
 
 /**
@@ -35,7 +34,8 @@ class DatabaseInstaller {
         $this->createTables();
         //$this->createIndexes();
         $this->createUsers();
-        $this->addSystemServices();
+        $this->createGroupsAndTheirMembers();
+        //$this->addSystemServices();
 
         $this->logger->info('Database installation finished.', __METHOD__);
     }
@@ -78,7 +78,26 @@ class DatabaseInstaller {
                 'dateCreated' => 'DATETIME NOT NULL DEFAULT current_timestamp()'
             ],
             'container_creation_status' => [
-                
+                'statusId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',
+                'containerId' => 'VARCHAR(256) NOT NULL',
+                'percentFinished' => 'INT(4) NOT NULL DEFAULT 0',
+                'description' => 'TEXT NULL',
+                'dateCreated' => 'DATETIME NOT NULL DEFAULT current_timestamp()'
+            ],
+            'container_status_history' => [
+                'historyId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',
+                'containerId' => 'VARCHAR(256) NOT NULL',
+                'userId' => 'VARCHAR(256) NOT NULL',
+                'description' => 'TEXT NOT NULL',
+                'oldStatus' => 'INT(4) NOT NULL',
+                'newStatus' => 'INT(4) NOT NULL',
+                'dateCreated' => 'DATETIME NOT NULL DEFAULT current_timestamp()'
+            ],
+            'transaction_log' => [
+                'transactionId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',
+                'userId' => 'VARCHAR(256) NOT NULL',
+                'callingMethod' => 'TEXT NOT NULL',
+                'dateCreated' => 'DATETIME NOT NULL'
             ]
         ];
 
@@ -160,9 +179,10 @@ class DatabaseInstaller {
         foreach($users as $username => $password) {
             $password = password_hash($password, PASSWORD_BCRYPT);
             $userId = HashManager::createEntityId();
+            $fullname = ucfirst($username);
 
-            $sql = 'INSERT INTO `users` (`userId`, `username`, `password`)
-                    SELECT \'' . $userId . '\', \'' . $username . '\', \'' . $password . '\'
+            $sql = 'INSERT INTO `users` (`userId`, `username`, `password`, `fullname`)
+                    SELECT \'' . $userId . '\', \'' . $username . '\', \'' . $password . '\', \'' . $fullname . '\'
                     WHERE NOT EXISTS (SELECT 1 FROM `users` WHERE `username` = \'' . $username . '\')';
 
             $this->db->query($sql);
@@ -171,6 +191,52 @@ class DatabaseInstaller {
         }
 
         $this->logger->info('Created ' . $i . ' users.', __METHOD__);
+    }
+
+    private function createGroupsAndTheirMembers() {
+        $this->logger->info('Creating groups and adding users to them.', __METHOD__);
+
+        $groups = [
+            SystemGroups::SUPERADMINISTRATORS => [
+                'admin'
+            ]
+        ];
+
+        $i = 0;
+        foreach($groups as $group => $members) {
+            $groupId = HashManager::createEntityId();
+
+            $sql = 'INSERT INTO `groups` (`groupId`, `title`)
+                    SELECT \'' . $groupId . '\', \'' . $group . '\'
+                    WHERE NOT EXISTS (SELECT 1 FROM `groups` WHERE `title` = \'' . $group . '\')';
+
+            $this->db->query($sql);
+
+            foreach($members as $username) {
+                $sql = 'SELECT `userId` FROM `users` WHERE `username` = \'' . $username . '\'';
+
+                $rows = $this->db->query($sql);
+
+                $userId = null;
+                foreach($rows as $row) {
+                    $userId = $row['userId'];
+                }
+
+                if($userId !== null) {
+                    $groupUserId = HashManager::createEntityId();
+
+                    $sql = 'INSERT INTO `group_users` (`groupUserId`, `groupId`, `userId`)
+                            SELECT \'' . $groupUserId . '\', \'' . $groupId . '\', \'' . $userId . '\'
+                            WHERE NOT EXISTS (SELECT 1 FROM `group_users` WHERE `groupId` = \'' . $groupId . '\' AND `userId` = \'' . $userId . '\')';
+
+                    $this->db->query($sql);
+                }
+            }
+
+            $i++;
+        }
+
+        $this->logger->info('Created ' . $i . ' groups.', __METHOD__);
     }
 
     /**

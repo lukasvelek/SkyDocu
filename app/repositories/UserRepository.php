@@ -67,14 +67,7 @@ class UserRepository extends ARepository {
     }
 
     public function saveLoginHash(string $userId, string $hash) {
-        $qb = $this->qb(__METHOD__);
-
-        $qb ->update('users')
-            ->set(['loginHash' => $hash])
-            ->where('userId = ?', [$userId])
-            ->execute();
-
-        return $qb->fetchBool();
+        return $this->updateUser($userId, ['loginHash' => $hash]);
     }
 
     public function getLoginHashForUserId(string $userId) {
@@ -111,38 +104,6 @@ class UserRepository extends ARepository {
         }
 
         return $this->getUserById($userId);
-    }
-
-    public function getUsersCount() {
-        $qb = $this->qb(__METHOD__);
-
-        $qb ->select(['COUNT(userId) AS cnt'])
-            ->from('users')
-            ->execute();
-
-        return $qb->fetch('cnt');
-    }
-
-    public function getUsersForGrid(int $limit, int $offset) {
-        $qb = $this->qb(__METHOD__);
-
-        $qb ->select(['*'])
-            ->from('users');
-
-        $this->applyGridValuesToQb($qb, $limit, $offset);
-
-        $qb->execute();
-
-        return $this->createUsersArrayFromQb($qb);
-    }
-
-    public function composeQueryForUsers() {
-        $qb = $this->qb(__METHOD__);
-
-        $qb ->select(['*'])
-            ->from('users');
-
-        return $qb;
     }
 
     public function updateUser(string $id, array $data) {
@@ -190,24 +151,6 @@ class UserRepository extends ARepository {
         return $this->createUsersArrayFromQb($qb);
     }
 
-    public function composeStandardQuery(string $username, string $method) {
-        $qb = $this->qb(__METHOD__ . ' from ' . $method);
-
-        $qb ->select(['*'])
-            ->from('users')
-            ->where('username LIKE ?', ['%' . $username . '%'])
-            ->andWhere('username <> ?', ['service_user']);
-
-        return $qb;
-    }
-
-    public function getUsersFromQb(QueryBuilder $qb, bool $isExecuted = false) {
-        if(!$isExecuted) {
-            $qb->execute();
-        }
-        return $this->createUsersArrayFromQb($qb);
-    }
-
     public function createNewUser(string $id, string $username, string $password, ?string $email, bool $isAdmin) {
         $qb = $this->qb(__METHOD__);
 
@@ -233,38 +176,6 @@ class UserRepository extends ARepository {
         }
 
         return $users;
-    }
-
-    public function insertNewForgottenPasswordEntry(string $linkId, string $userId, string $dateExpire) {
-        $qb = $this->qb(__METHOD__);
-
-        $qb ->insert('user_forgotten_password_links', ['linkId', 'userId', 'dateExpire'])
-            ->values([$linkId, $userId, $dateExpire])
-            ->execute();
-
-        return $qb->fetchBool();
-    }
-
-    public function getForgottenPasswordRequestById(string $id) {
-        $qb = $this->qb(__METHOD__);
-
-        $qb ->select(['*'])
-            ->from('user_forgotten_password_links')
-            ->where('linkId = ?', [$id])
-            ->execute();
-
-        return $qb->fetch();
-    }
-
-    public function updateRequest(string $id, array $data) {
-        $qb = $this->qb(__METHOD__);
-
-        $qb ->update('user_forgotten_password_links')
-            ->set($data)
-            ->where('linkId = ?', [$id])
-            ->execute();
-
-        return $qb->fetchBool();
     }
 }
 

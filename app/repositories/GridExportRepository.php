@@ -12,26 +12,6 @@ class GridExportRepository extends ARepository {
         parent::__construct($db, $logger);
     }
 
-    public function getUserExportsForGrid(string $userId, int $limit, int $offset) {
-        $qb = $this->qb(__METHOD__);
-
-        $qb ->select(['*'])
-            ->from('grid_exports')
-            ->where('userId = ?', [$userId])
-            ->orderBy('dateCreated', 'DESC');
-
-        $this->applyGridValuesToQb($qb, $limit, $offset);
-
-        $qb->execute();
-
-        $entities = [];
-        while($row = $qb->fetchAssoc()) {
-            $entities[] = GridExportEntity::createEntityFromDbRow($row);
-        }
-
-        return $entities;
-    }
-
     public function composeQueryForExports() {
         $qb = $this->qb(__METHOD__);
 
@@ -40,25 +20,6 @@ class GridExportRepository extends ARepository {
             ->orderBy('dateCreated', 'DESC');
 
         return $qb;
-    }
-
-    public function getExportsForGrid(int $limit, int $offset) {
-        $qb = $this->qb(__METHOD__);
-
-        $qb ->select(['*'])
-            ->from('grid_exports')
-            ->orderBy('dateCreated', 'DESC');
-
-        $this->applyGridValuesToQb($qb, $limit, $offset);
-
-        $qb->execute();
-
-        $entities = [];
-        while($row = $qb->fetchAssoc()) {
-            $entities[] = GridExportEntity::createEntityFromDbRow($row);
-        }
-
-        return $entities;
     }
 
     public function createNewExport(string $userId, string $hash, string $gridName) {
@@ -100,17 +61,6 @@ class GridExportRepository extends ARepository {
         }
 
         return $hashes;
-    }
-
-    public function getExportByHash(string $hash) {
-        $qb = $this->qb(__METHOD__);
-
-        $qb ->select(['*'])
-            ->from('grid_exports')
-            ->where('hash = ?', [$hash])
-            ->execute();
-
-        return GridExportEntity::createEntityFromDbRow($qb->fetch());
     }
 }
 

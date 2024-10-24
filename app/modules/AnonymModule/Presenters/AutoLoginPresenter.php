@@ -11,9 +11,10 @@ class AutoLoginPresenter extends AAnonymPresenter {
         $fm = $this->httpGet('_fm');
 
         if($this->httpSessionGet('userId') === null) {
-            $url = ['page' => 'AnonymModule:Home', 'action' => 'loginForm'];
+            $url = ['page' => 'Anonym:Login', 'action' => 'loginForm'];
+            $this->httpSessionSet('is_logging_in', 'true');
         } else {
-            
+            $url = $this->calculateUserNextDestination();
         }
 
         if($fm !== null) {
@@ -24,7 +25,12 @@ class AutoLoginPresenter extends AAnonymPresenter {
     }
 
     private function calculateUserNextDestination() {
-        
+        if($this->app->groupManager->isUserMemberOfSuperadministrators($this->getUserId())) {
+            // redirect to superadmin
+            return ['page' => 'SuperAdmin:Home', 'action' => 'home'];
+        } else {
+            // redirect to their container
+        }
     }
 }
 

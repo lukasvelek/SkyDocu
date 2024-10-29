@@ -24,7 +24,7 @@ class ContainerManager extends AManager {
 
     public function createNewContainer(string $title, string $description, string $callingUserId) {
         $containerId = $this->createId(EntityManager::CONTAINERS);
-        $databaseName = 'SD_db_' . $containerId;
+        $databaseName = 'sd_db_' . $containerId;
 
         if(!$this->containerRepository->createNewContainer($containerId, $callingUserId, $title, $description, $databaseName)) {
             throw new GeneralException('Could not create a new container.');
@@ -50,6 +50,10 @@ class ContainerManager extends AManager {
         $container = DatabaseRow::createFromDbRow($container);
 
         try {
+            if(!$this->dbManager->createNewDatabase($container->databaseName)) {
+                throw new GeneralException('Could not create database.');
+            }
+
             $this->createNewContainerTables($container->databaseName);
             
             $exceptions = [];
@@ -131,7 +135,7 @@ class ContainerManager extends AManager {
             ],
             'process_types' => [
                 'typeId' => $this->createIdCustomDb(EntityManager::C_PROCESS_TYPES, $conn),
-                'key' => 'shredding',
+                'typeKey' => 'shredding',
                 'title' => 'Document shredding',
                 'description' => 'Shred document'
             ]
@@ -239,7 +243,7 @@ class ContainerManager extends AManager {
             'custom_metadata_list_values' => [
                 'valueId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',
                 'metadataId' => 'VARCHAR(256) NOT NULL',
-                'key' => 'INT(32) NOT NULL',
+                'metadataKey' => 'INT(32) NOT NULL',
                 'title' => 'TEXT NOT NULL'
             ],
             'processes' => [
@@ -253,7 +257,7 @@ class ContainerManager extends AManager {
             ],
             'process_types' => [
                 'typeId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',
-                'key' => 'VARCHAR(256) NOT NULL',
+                'typeKey' => 'VARCHAR(256) NOT NULL',
                 'title' => 'VARCHAR(256) NOT NULL',
                 'description' => 'TEXT NOT NULL'
             ],

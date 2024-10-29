@@ -33,6 +33,10 @@ class Navbar implements IRenderable {
             case NavbarModes::SUPERADMINISTRATION:
                 $this->links = NavbarSuperAdminLinks::toArray();
                 break;
+            
+            case NavbarModes::SUPERADMINISTRATION_SETTINGS:
+                $this->links = NavbarSuperAdminSettingsLinks::toArray();
+                break;
         }
     }
 
@@ -66,6 +70,7 @@ class Navbar implements IRenderable {
         $link = null;
         switch($this->mode) {
             case NavbarModes::SUPERADMINISTRATION:
+            case NavbarModes::SUPERADMINISTRATION_SETTINGS:
                 $link = NavbarSuperAdminLinks::USER_PROFILE;
                 break;
         }
@@ -81,6 +86,7 @@ class Navbar implements IRenderable {
         $link = null;
         switch($this->mode) {
             case NavbarModes::SUPERADMINISTRATION:
+            case NavbarModes::SUPERADMINISTRATION_SETTINGS:
                 $link = NavbarSuperAdminLinks::USER_LOGOUT;
                 break;
         }

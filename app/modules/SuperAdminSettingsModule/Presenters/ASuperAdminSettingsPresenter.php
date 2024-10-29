@@ -1,14 +1,14 @@
 <?php
 
-namespace App\Modules\SuperAdminModule;
+namespace App\Modules\SuperAdminSettingsModule;
 
 use App\Modules\APresenter;
 
-abstract class ASuperAdminPresenter extends APresenter {
+abstract class ASuperAdminSettingsPresenter extends APresenter {
     protected function __construct(string $name, string $title) {
         parent::__construct($name, $title);
 
-        $this->moduleName = 'SuperAdmin';
+        $this->moduleName = 'SuperAdminSettings';
     }
 
     public function startup() {

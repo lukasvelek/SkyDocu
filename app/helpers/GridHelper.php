@@ -14,6 +14,7 @@ use App\Logger\Logger;
  */
 class GridHelper {
     public const GRID_CONTAINERS = 'gridContainers';
+    public const GRID_BACKGROUND_SERVICES = 'gridBackgroundServices';
 
     private Logger $logger;
     private array $gridPageData;

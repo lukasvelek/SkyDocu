@@ -35,7 +35,7 @@ class DatabaseInstaller {
         //$this->createIndexes();
         $this->createUsers();
         $this->createGroupsAndTheirMembers();
-        //$this->addSystemServices();
+        $this->addSystemServices();
 
         $this->logger->info('Database installation finished.', __METHOD__);
     }
@@ -98,6 +98,14 @@ class DatabaseInstaller {
                 'userId' => 'VARCHAR(256) NOT NULL',
                 'callingMethod' => 'TEXT NOT NULL',
                 'dateCreated' => 'DATETIME NOT NULL'
+            ],
+            'system_services' => [
+                'serviceId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',
+                'title' => 'VARCHAR(256) NOT NULL',
+                'scriptPath' => 'VARCHAR(256) NOT NULL',
+                'dateStarted' => 'DATETIME NULL',
+                'dateEnded' => 'DATETIME NULL',
+                'status' => 'INT(4) NOT NULL DEFAULT 1'
             ]
         ];
 
@@ -246,6 +254,7 @@ class DatabaseInstaller {
         $this->logger->info('Adding system services.', __METHOD__);
 
         $services = [
+            'ContainerCreation' => 'container_creation_service.php'
         ];
 
         foreach($services as $title => $path) {

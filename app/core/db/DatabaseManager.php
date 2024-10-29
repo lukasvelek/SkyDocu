@@ -84,8 +84,8 @@ class DatabaseManager {
 
         // COLUMN PROCESSING
         $processedColumns = [];
-        foreach($columns as $name => $definition) {
-            $processedColumns[] = $name . ' ' . $definition;
+        foreach($columns as $colName => $definition) {
+            $processedColumns[] = $colName . ' ' . $definition;
         }
         // END OF COLUMN PROCESSING
 

@@ -8,6 +8,7 @@ use App\Exceptions\AException;
 use App\Logger\Logger;
 use App\Managers\ContainerManager;
 use App\Repositories\ContainerRepository;
+use Error;
 use Exception;
 
 class ContainerCreationService extends AService {
@@ -34,8 +35,11 @@ class ContainerCreationService extends AService {
             $this->innerRun();
 
             $this->serviceStop();
-        } catch(AException|Exception $e) {
+        } catch(AException|Exception|Error $e) {
             $this->logError($e->getMessage());
+            $this->serviceStop();
+
+            throw $e;
         }
     }
 
@@ -51,6 +55,10 @@ class ContainerCreationService extends AService {
 
             $containers = $this->getContainerIdsWaitingForCreation($offset);
 
+            if(empty($containers)) {
+                break;
+            }
+
             foreach($containers as $containerId) {
                 try {
                     $this->cm->changeContainerStatus($containerId, ContainerStatus::IS_BEING_CREATED, $this->serviceManager->getServiceUserId(), 'Status change due to background container creation. Container is being created.');
@@ -59,7 +67,7 @@ class ContainerCreationService extends AService {
 
                     $this->processContainerCreation($containerId);
 
-                    $this->cr->commit(null, __METHOD__);
+                    $this->cr->commit($this->serviceManager->getServiceUserId(), __METHOD__);
 
                     $this->cm->changeContainerStatus($containerId, ContainerStatus::NOT_RUNNING, $this->serviceManager->getServiceUserId(), 'Status change due to background container creation. Container is created and not running.');
                 } catch(AException $e) {
@@ -76,6 +84,7 @@ class ContainerCreationService extends AService {
 
     private function getContainerIdsWaitingForCreation(int $offset) {
         $qb = $this->cr->composeQueryForContainersAwaitingCreation();
+        $qb->limit(self::BATCH_SIZE);
 
         if($offset > 0) {
             $qb->offset($offset);

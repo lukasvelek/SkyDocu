@@ -6,6 +6,7 @@ use App\Core\DB\DatabaseManager;
 use App\Core\DB\DatabaseRow;
 use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
+use App\Exceptions\NonExistingEntityException;
 use App\Logger\Logger;
 use App\Repositories\ContainerRepository;
 
@@ -300,6 +301,16 @@ class ContainerManager extends AManager {
         ])) {
             throw new GeneralException('Could not change status.');
         }
+    }
+
+    public function getContainerById(string $containerId) {
+        $container = $this->containerRepository->getContainerById($containerId);
+
+        if($container === null) {
+            throw new NonExistingEntityException('Entity does not exist.');
+        }
+        
+        return DatabaseRow::createFromDbRow($container);
     }
 }
 

@@ -2,6 +2,7 @@
 
 namespace App\Modules\SuperAdminModule;
 
+use App\Components\Sidebar\Sidebar;
 use App\Modules\APresenter;
 
 abstract class ASuperAdminPresenter extends APresenter {
@@ -13,6 +14,34 @@ abstract class ASuperAdminPresenter extends APresenter {
 
     public function startup() {
         parent::startup();
+
+        if($this->name == 'ContainerSettingsPresenter') {
+            $this->addBeforeRenderCallback(function() {
+                $this->template->sidebar = $this->createContainerSettingsSidebar();
+            });
+        }
+    }
+
+    private function createContainerSettingsSidebar() {
+        $containerId = $this->httpGet('containerId', true);
+
+        $sb = new Sidebar();
+
+        $home = $this->checkAction('home');
+        $status = $this->checkAction('status');
+
+        $sb->addLink('Home', $this->createURL('home', ['containerId' => $containerId]), $home);
+        $sb->addLink('Status', $this->createURL('status', ['containerId' => $containerId]), $status);
+
+        return $sb->render();
+    }
+
+    private function checkPage(string $page) {
+        return $this->httpGet('page') == $page;
+    }
+
+    private function checkAction(string $action) {
+        return $this->httpGet('action') == $action;
     }
 }
 

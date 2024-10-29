@@ -3,12 +3,15 @@
 namespace App\Modules\SuperAdminModule;
 
 use App\Constants\ContainerStatus;
+use App\Core\DB\DatabaseRow;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
 use App\Helpers\GridHelper;
 use App\UI\FormBuilder\FormBuilder;
 use App\UI\FormBuilder\FormResponse;
+use App\UI\GridBuilder2\Row;
+use App\UI\HTML\HTML;
 use App\UI\LinkBuilder;
 
 class ContainersPresenter extends ASuperAdminPresenter {
@@ -30,6 +33,20 @@ class ContainersPresenter extends ASuperAdminPresenter {
 
         $grid->addColumnText('title', 'Title');
         $grid->addColumnConst('status', 'Status', ContainerStatus::class);
+
+        $settings = $grid->addAction('settings');
+        $settings->setTitle('Settings');
+        $settings->onCanRender[] = function() {
+            return true;
+        };
+        $settings->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
+            $el = HTML::el('a')
+                ->class('grid-link')
+                ->href($this->createFullURLString('SuperAdmin:ContainerSettings', 'home', ['containerId' => $primaryKey]))
+                ->text('Settings');
+
+            return $el;
+        };
         
         return $grid;
     }

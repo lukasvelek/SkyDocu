@@ -48,6 +48,16 @@ class GroupRepository extends ARepository {
 
         return $this->getGroupEntityById($groupId);
     }
+
+    public function createNewGroup(string $groupId, string $title) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->insert('groups', ['groupId', 'title'])
+            ->values([$groupId, $title])
+            ->execute();
+
+        return $qb->fetchBool();
+    }
 }
 
 ?>

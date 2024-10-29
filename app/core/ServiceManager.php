@@ -6,6 +6,7 @@ use App\Constants\SystemServiceStatus;
 use App\Exceptions\FileDoesNotExistException;
 use App\Exceptions\ServiceException;
 use App\Repositories\SystemServicesRepository;
+use App\Repositories\UserRepository;
 
 /**
  * Service manager allows running background services
@@ -14,14 +15,17 @@ use App\Repositories\SystemServicesRepository;
  */
 class ServiceManager {
     private SystemServicesRepository $ssr;
+    private UserRepository $ur;
 
     /**
      * Class constructor
      * 
      * @param SystemServicesRepository $ssr SystemServicesRepository instance
+     * @param UserRepository $ur UserRepository instance
      */
-    public function __construct(SystemServicesRepository $ssr) {
+    public function __construct(SystemServicesRepository $ssr, UserRepository $ur) {
         $this->ssr = $ssr;
+        $this->ur = $ur;
     }
 
     /**
@@ -104,6 +108,21 @@ class ServiceManager {
         }
 
         return $service->getId();
+    }
+
+    /**
+     * Returns service user ID
+     * 
+     * @return string|null Service user ID or null
+     */
+    public function getServiceUserId() {
+        $user = $this->ur->getUserByUsername('service_user');
+
+        if($user !== null) {
+            return $user->getId();
+        } else {
+            return null;
+        }
     }
 }
 

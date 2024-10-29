@@ -5,6 +5,7 @@ namespace App\Core;
 use App\Authenticators\UserAuthenticator;
 use App\Core\Caching\CacheFactory;
 use App\Core\Caching\CacheNames;
+use App\Core\DB\DatabaseManager;
 use App\Core\Http\HttpRequest;
 use App\Entities\UserEntity;
 use App\Exceptions\AException;
@@ -12,6 +13,7 @@ use App\Exceptions\GeneralException;
 use App\Exceptions\ModuleDoesNotExistException;
 use App\Helpers\LinkHelper;
 use App\Logger\Logger;
+use App\Managers\ContainerManager;
 use App\Managers\EntityManager;
 use App\Managers\GroupManager;
 use App\Managers\UserManager;
@@ -46,6 +48,7 @@ class Application {
     private ModuleManager $moduleManager;
     public Logger $logger;
     private DatabaseConnection $db;
+    public DatabaseManager $dbManager;
 
     public UserAuthenticator $userAuth;
 
@@ -62,6 +65,7 @@ class Application {
     public UserManager $userManager;
     public EntityManager $entityManager;
     public GroupManager $groupManager;
+    public ContainerManager $containerManager;
 
     /**
      * The Application constructor. It creates objects of all used classes.
@@ -89,10 +93,13 @@ class Application {
 
         $this->userAuth = new UserAuthenticator($this->userRepository, $this->logger);
 
+        $this->dbManager = new DatabaseManager($this->db, $this->logger);
+
         $this->entityManager = new EntityManager($this->logger, $this->contentRepository);
-        $this->serviceManager = new ServiceManager($this->systemServicesRepository);
+        $this->serviceManager = new ServiceManager($this->systemServicesRepository, $this->userRepository);
         $this->userManager = new UserManager($this->logger, $this->userRepository, $this->entityManager);
         $this->groupManager = new GroupManager($this->logger, $this->entityManager, $this->groupRepository, $this->groupMembershipRepository);
+        $this->containerManager = new ContainerManager($this->logger, $this->entityManager, $this->containerRepository, $this->dbManager, $this->groupManager);
 
         $this->isAjaxRequest = false;
 

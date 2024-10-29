@@ -2,6 +2,7 @@
 
 namespace App\Managers;
 
+use App\Core\DatabaseConnection;
 use App\Core\HashManager;
 use App\Logger\Logger;
 use App\Repositories\ContentRepository;
@@ -17,6 +18,17 @@ class EntityManager extends AManager {
     public const GRID_EXPORTS = 'grid_exports';
     public const GROUPS = 'groups';
     public const GROUP_USERS = 'group_users';
+    public const CONTAINERS = 'containers';
+    public const CONTAINER_CREATION_STATUS = 'container_creation_status';
+    public const CONTAINER_STATUS_HISTORY = 'container_status_history';
+
+    public const C_GROUPS = 'groups';
+    public const C_DOCUMENT_CLASSES = 'document_classes';
+    public const C_DOCUMENT_CLASS_GROUP_RIGHTS = 'document_class_group_rights';
+    public const C_DOCUMENT_FOLDERS = 'document_folders';
+    public const C_DOCUMENT_FOLDER_GROUP_RELATION = 'document_folder_group_relation';
+    public const C_GROUP_STANDARD_OPERATION_RIGHTS = 'group_rights_standard_operations';
+    public const C_PROCESS_TYPES = 'process_types';
 
     private const __MAX__ = 100;
 
@@ -32,6 +44,32 @@ class EntityManager extends AManager {
         parent::__construct($logger, null);
 
         $this->cr = $cr;
+    }
+
+    public function generateEntityIdCustomDb(string $category, DatabaseConnection $customConn) {
+        $unique = true;
+        $run = true;
+
+        $entityId = null;
+        $x = 0;
+        while($run) {
+            $entityId = HashManager::createEntityId();
+
+            $primaryKeyName = $this->getPrimaryKeyNameByCategory($category);
+
+            //$unique = $this->cr->checkIdIsUnique($category, $primaryKeyName, $entityId);
+            $cr = new ContentRepository($customConn, $this->logger);
+            $unique = $cr->checkIdIsUnique($category, $primaryKeyName, $entityId);
+
+            if($unique || $x >= self::__MAX__) {
+                $run = false;
+                break;
+            }
+
+            $x++;
+        }
+
+        return $entityId;
     }
 
     /**
@@ -75,7 +113,18 @@ class EntityManager extends AManager {
             self::TRANSACTIONS => 'transactionId',
             self::GRID_EXPORTS => 'exportId',
             self::GROUPS => 'groupId',
-            self::GROUP_USERS => 'groupUserId'
+            self::GROUP_USERS => 'groupUserId',
+            self::CONTAINERS => 'containerId',
+            self::CONTAINER_CREATION_STATUS => 'statusId',
+            self::CONTAINER_STATUS_HISTORY => 'historyId',
+
+            self::C_GROUPS => 'groupId',
+            self::C_DOCUMENT_CLASSES => 'classId',
+            self::C_DOCUMENT_CLASS_GROUP_RIGHTS => 'rightId',
+            self::C_DOCUMENT_FOLDERS => 'folderId',
+            self::C_DOCUMENT_FOLDER_GROUP_RELATION => 'relationId',
+            self::C_GROUP_STANDARD_OPERATION_RIGHTS => 'rightId',
+            self::C_PROCESS_TYPES => 'typeId',
         };
     }
 }

@@ -34,6 +34,16 @@ class GroupMembershipRepository extends ARepository {
             return $userIds;
         });
     }
+
+    public function addUserToGroup(string $groupUserId, string $groupId, string $userId) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->insert('group_users', ['groupUserId', 'groupId', 'userId'])
+            ->values([$groupUserId, $groupId, $userId])
+            ->execute();
+
+        return $qb->fetchBool();
+    }
 }
 
 ?>

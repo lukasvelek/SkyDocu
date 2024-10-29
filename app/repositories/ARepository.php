@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use App\Core\Caching\CacheFactory;
 use App\Core\DatabaseConnection;
+use App\Core\DB\AMultipleDatabaseConnectionHandler;
 use App\Exceptions\DatabaseExecutionException;
 use App\Exceptions\GeneralException;
 use App\Logger\Logger;
@@ -16,8 +17,7 @@ use QueryBuilder\QueryBuilder;
  * 
  * @author Lukas Velek
  */
-abstract class ARepository {
-    private DatabaseConnection $conn;
+abstract class ARepository extends AMultipleDatabaseConnectionHandler {
     protected Logger $logger;
     private TransactionLogRepository $tlr;
     protected CacheFactory $cacheFactory;
@@ -29,7 +29,7 @@ abstract class ARepository {
      * @param Logger $logger Logger instance
      */
     protected function __construct(DatabaseConnection $conn, Logger $logger) {
-        $this->conn = $conn;
+        parent::__construct($conn);
         $this->logger = $logger;
         $this->cacheFactory = new CacheFactory();
 

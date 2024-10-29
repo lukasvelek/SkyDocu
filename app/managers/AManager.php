@@ -3,6 +3,7 @@
 namespace App\Managers;
 
 use App\Core\Caching\CacheFactory;
+use App\Core\DatabaseConnection;
 use App\Logger\Logger;
 
 /**
@@ -36,6 +37,21 @@ abstract class AManager {
     public function createId(string $category) {
         if($this->entityManager !== null) {
             return $this->entityManager->generateEntityId($category);
+        }
+
+        return null;
+    }
+    /**
+     * Generates a unique entity ID for given entity category (users, posts, topics, ...)
+     * for a custom database
+     * 
+     * @param string $category Category (use contants in \App\Managers\EntityManager)
+     * @param DatabaseConnection $conn Database connection to custom database
+     * @return string|null Generated unique entity ID or null
+     */
+    public function createIdCustomDb(string $category, DatabaseConnection $conn) {
+        if($this->entityManager !== null) {
+            return $this->entityManager->generateEntityIdCustomDb($category, $conn);
         }
 
         return null;

@@ -25,6 +25,15 @@ class ContainerStatus extends AConstant {
             self::NOT_RUNNING => 'Not running'
         };
     }
+
+    public static function getColor(mixed $key): string {
+        return match((int)$key) {
+            self::NEW => 'black',
+            self::IS_BEING_CREATED => 'orange',
+            self::RUNNING => 'green',
+            self::NOT_RUNNING => 'red'
+        };
+    }
 }
 
 ?>

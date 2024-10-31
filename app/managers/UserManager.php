@@ -42,78 +42,14 @@ class UserManager extends AManager {
         return $user;
     }
 
-    public function createNewForgottenPassword(string $userId) {
-        $linkId = $this->createNewForgottenPasswordRequestId();
+    public function createNewUser(string $username, string $fullname, string $password, ?string $email) {
+        $userId = $this->createId(EntityManager::USERS);
 
-        // disable user
-        $this->disableUser($userId, $userId);
-        
-        // create new forgotten password entry
-        $dateExpire = new DateTime();
-        $dateExpire->modify('+1d');
-        $dateExpire = $dateExpire->getResult();
-        
-        if(!$this->userRepository->insertNewForgottenPasswordEntry($linkId, $userId, $dateExpire)) {
-            throw new GeneralException('Could not insert new forgotten password entry.');
-        }
-    }
-
-    public function disableUser(string $userId, string $callingUserId) {
-        if(!$this->userRepository->updateUser($userId, ['canLogin' => '0'])) {
-            throw new GeneralException('Could not disable user #' . $userId . '.');
+        if(!$this->userRepository->createNewUser($userId, $username, $password, $fullname, $email)) {
+            throw new GeneralException('Could not create user.');
         }
 
-        $this->logger->warning(sprintf('User #%d disabled user #%d.', $callingUserId, $userId), __METHOD__);
-    }
-
-    public function enableUser(string $userId, string $callingUserId) {
-        if(!$this->userRepository->updateUser($userId, ['canLogin' => '1'])) {
-            throw new GeneralException('Could not enable user #' . $userId . '.');
-        }
-
-        $this->logger->warning(sprintf('User #%d enabled user #%d.', $callingUserId, $userId), __METHOD__);
-    }
-
-    private function createNewForgottenPasswordRequestId() {
-        return $this->createId(EntityManager::FORGOTTEN_PASSWORD);
-    }
-
-    public function checkForgottenPasswordRequest(string $linkId) {
-        $row = $this->userRepository->getForgottenPasswordRequestById($linkId);
-
-        if($row['isActive'] == 0) {
-            return false;
-        }
-
-        if(strtotime($row['dateExpire']) < time()) {
-            return false;
-        }
-
-        return true;
-    }
-
-    public function processForgottenPasswordRequestPasswordChange(string $linkId, string $hashedPassword) {
-        // update password
-        // activate user
-        
-        $request = $this->userRepository->getForgottenPasswordRequestById($linkId);
-        $userId = $request['userId'];
-        
-        $data = [
-            'password' => $hashedPassword,
-            'canLogin' => '1'
-        ];
-        if(!$this->userRepository->updateUser($userId, $data)) {
-            throw new EntityUpdateException('Could not update user #' . $userId . ' with data [' . implode(', ', $data) . '].');
-        }
-        
-        // deactive link
-        $rdata = [
-            'isActive' => '0'
-        ];
-        if(!$this->userRepository->updateRequest($linkId, $rdata)) {
-            throw new EntityUpdateException('Could not update request #' . $linkId . ' with data [' . implode(',', $rdata) . '].');
-        }
+        return $userId;
     }
 }
 

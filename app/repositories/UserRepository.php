@@ -151,11 +151,11 @@ class UserRepository extends ARepository {
         return $this->createUsersArrayFromQb($qb);
     }
 
-    public function createNewUser(string $id, string $username, string $password, ?string $email, bool $isAdmin) {
+    public function createNewUser(string $id, string $username, string $password, string $fullname, ?string $email) {
         $qb = $this->qb(__METHOD__);
 
-        $keys = ['userId', 'username', 'password', 'isAdmin'];
-        $values = [$id, $username, $password, $isAdmin];
+        $keys = ['userId', 'username', 'password', 'fullname'];
+        $values = [$id, $username, $password, $fullname];
 
         if($email !== null) {
             $keys[] = 'email';
@@ -176,6 +176,16 @@ class UserRepository extends ARepository {
         }
 
         return $users;
+    }
+
+    public function composeQueryForUsers() {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->select(['*'])
+            ->from('users')
+            ->orderBy('fullname');
+
+        return $qb;
     }
 }
 

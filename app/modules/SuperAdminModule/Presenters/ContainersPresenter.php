@@ -10,6 +10,7 @@ use App\Exceptions\GeneralException;
 use App\Helpers\GridHelper;
 use App\UI\FormBuilder\FormBuilder;
 use App\UI\FormBuilder\FormResponse;
+use App\UI\GridBuilder2\Cell;
 use App\UI\GridBuilder2\Row;
 use App\UI\HTML\HTML;
 use App\UI\LinkBuilder;
@@ -32,7 +33,14 @@ class ContainersPresenter extends ASuperAdminPresenter {
         $grid->setGridName(GridHelper::GRID_CONTAINERS);
 
         $grid->addColumnText('title', 'Title');
-        $grid->addColumnConst('status', 'Status', ContainerStatus::class);
+        $col = $grid->addColumnConst('status', 'Status', ContainerStatus::class);
+        $col->onRenderColumn[] = function(DatabaseRow $row, Row $_row, Cell $cell, HTML $html, mixed $value) {
+            $el = HTML::el('span')
+                ->text($value)
+                ->style('color', ContainerStatus::getColor($row->status));
+
+            return $el;
+        };
 
         $settings = $grid->addAction('settings');
         $settings->setTitle('Settings');

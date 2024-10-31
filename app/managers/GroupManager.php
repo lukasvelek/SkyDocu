@@ -3,8 +3,10 @@
 namespace App\Managers;
 
 use App\Constants\SystemGroups;
+use App\Core\DB\DatabaseRow;
 use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
+use App\Exceptions\NonExistingEntityException;
 use App\Logger\Logger;
 use App\Repositories\GroupMembershipRepository;
 use App\Repositories\GroupRepository;
@@ -48,6 +50,16 @@ class GroupManager extends AManager {
                 }
             }
         }
+    }
+
+    public function getGroupById(string $groupId) {
+        $group = $this->gr->getGroupById($groupId);
+
+        if($group === null) {
+            throw new NonExistingEntityException('Group does not exist.');
+        }
+
+        return DatabaseRow::createFromDbRow($group);
     }
 }
 

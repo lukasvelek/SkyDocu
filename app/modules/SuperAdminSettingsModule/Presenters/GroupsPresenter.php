@@ -9,6 +9,7 @@ use App\Exceptions\GeneralException;
 use App\UI\GridBuilder2\Cell;
 use App\UI\GridBuilder2\Row;
 use App\UI\HTML\HTML;
+use App\UI\LinkBuilder;
 
 class GroupsPresenter extends ASuperAdminSettingsPresenter {
     public function __construct() {
@@ -19,7 +20,7 @@ class GroupsPresenter extends ASuperAdminSettingsPresenter {
         $this->template->links = [];
     }
 
-    public function createComponentGroupsGrid(HttpRequest $request) {
+    protected function createComponentGroupsGrid(HttpRequest $request) {
         $grid = $this->getGridBuilder();
 
         $grid->createDataSourceFromQueryBuilder($this->app->groupRepository->composeQueryForGroups(), 'groupId');
@@ -93,9 +94,9 @@ class GroupsPresenter extends ASuperAdminSettingsPresenter {
             return $el;
         };
 
-        $edit = $grid->addAction('edit');
-        $edit->setTitle('Edit');
-        $edit->onCanRender[] = function(DatabaseRow $row, Row $_row) {
+        $delete = $grid->addAction('delete');
+        $delete->setTitle('Delete');
+        $delete->onCanRender[] = function(DatabaseRow $row, Row $_row) {
             if($row->title == 'superadministrators') {
                 return false;
             }
@@ -106,14 +107,44 @@ class GroupsPresenter extends ASuperAdminSettingsPresenter {
 
             return true;
         };
-        $edit->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
+        $delete->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
             $el = HTML::el('a')
-                ->text('Edit')
+                ->text('Delete')
                 ->href($this->createFullURLString('SuperAdminSettings:GroupsSettings', 'editGroup', ['groupId' => $primaryKey]))
                 ->class('grid-link');
 
             return $el;
         };
+
+        return $grid;
+    }
+
+    public function handleListUsers() {
+        $groupId = $this->httpGet('groupId', true);
+
+        try {
+            $group = $this->app->groupManager->getGroupById($groupId);
+        } catch(AException $e) {
+            $this->flashMessage('This group does not exist.', 'error', 10);
+            $this->redirect($this->createURL('list'));
+        }
+
+        $this->saveToPresenterCache('groupName', $group->title);
+    }
+
+    public function renderListUsers() {
+        $this->template->links = [
+            LinkBuilder::createSimpleLink('&larr; Back', $this->createURL('list'), 'link')
+        ];
+        $this->template->group_name = $this->loadFromPresenterCache('groupName');
+    }
+
+    protected function createComponentGroupUsersGrid(HttpRequest $request) {
+        $grid = $this->getGridBuilder();
+
+        $grid->createDataSourceFromQueryBuilder($this->app->groupMembershipRepository->composeQueryForGroupUsers($request->query['groupId']), 'groupUserId');
+
+        $grid->addColumnUser('userId', 'User');
 
         return $grid;
     }

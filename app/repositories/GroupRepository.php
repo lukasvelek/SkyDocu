@@ -75,6 +75,17 @@ class GroupRepository extends ARepository {
 
         return $qb;
     }
+
+    public function getGroupById(string $groupId) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->select(['*'])  
+            ->from('groups')
+            ->where('groupId = ?', [$groupId])
+            ->execute();
+
+        return $qb->fetch();
+    }
 }
 
 ?>

@@ -36,7 +36,7 @@ class ContainerManager extends AManager {
             throw new GeneralException('Could not queue container for background creation.');
         }
 
-        $this->groupManager->createNewGroup($title . ' - users', [$callingUserId]);
+        $this->groupManager->createNewGroup($title . ' - users', [$callingUserId], $containerId);
 
         return $containerId;
     }

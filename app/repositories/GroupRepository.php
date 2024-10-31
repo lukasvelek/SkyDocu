@@ -49,14 +49,31 @@ class GroupRepository extends ARepository {
         return $this->getGroupEntityById($groupId);
     }
 
-    public function createNewGroup(string $groupId, string $title) {
+    public function createNewGroup(string $groupId, string $title, ?string $containerId = null) {
+        $keys = ['groupId', 'title'];
+        $values = [$groupId, $title];
+
+        if($containerId !== null) {
+            $keys[] = 'containerId';
+            $values[] = $containerId;
+        }
+
         $qb = $this->qb(__METHOD__);
 
-        $qb->insert('groups', ['groupId', 'title'])
-            ->values([$groupId, $title])
+        $qb->insert('groups', $keys)
+            ->values($values)
             ->execute();
 
         return $qb->fetchBool();
+    }
+
+    public function composeQueryForGroups() {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->select(['*'])
+            ->from('groups');
+
+        return $qb;
     }
 }
 

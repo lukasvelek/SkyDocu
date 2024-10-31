@@ -110,7 +110,7 @@ class UsersPresenter extends ASuperAdminSettingsPresenter {
                 $this->app->userRepository->beginTransaction(__METHOD__);
 
                 $email = null;
-                if(isset($fr->email)) {
+                if(isset($fr->email) && $fr->email !== null) {
                     $email = $fr->email;
                 }
 
@@ -149,6 +149,37 @@ class UsersPresenter extends ASuperAdminSettingsPresenter {
         ];
 
         $this->template->form = $this->loadFromPresenterCache('form');
+    }
+
+    public function handleProfile() {
+        $userId = $this->httpGet('userId', true);
+
+        try {
+            $user = $this->app->userManager->getUserById($userId);
+        } catch(AException $e) {
+            $this->flashMessage('This user does not exist.', 'error', 10);
+            $this->redirect($this->createURL('list'));
+        }
+
+        $userProfile = '';
+
+        $addInfo = function(string $title, string $data) use (&$userProfile) {
+            $userProfile .= '<p><b>' . $title . ':</b> ' . $data . '</p>';
+        };
+
+        $addInfo('Full name', $user->getFullname());
+        $addInfo('Email', ($user->getEmail() ?? '-'));
+
+        $this->saveToPresenterCache('userProfile', $userProfile);
+        $this->saveToPresenterCache('username', $user->getUsername());
+    }
+
+    public function renderProfile() {
+        $this->template->user_profile = $this->loadFromPresenterCache('userProfile');
+        $this->template->username = $this->loadFromPresenterCache('username');
+        $this->template->links = [
+            LinkBuilder::createSimpleLink('&larr; Back', $this->createURL('list'), 'link')
+        ];
     }
 }
 

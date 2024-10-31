@@ -28,10 +28,10 @@ class GroupManager extends AManager {
         return in_array($userId, $members);
     }
 
-    public function createNewGroup(string $title, array $userIdsToAdd = []) {
+    public function createNewGroup(string $title, array $userIdsToAdd = [], ?string $containerId = null) {
         $groupId = $this->createId(EntityManager::GROUPS);
 
-        if(!$this->gr->createNewGroup($groupId, $title)) {
+        if(!$this->gr->createNewGroup($groupId, $title, $containerId)) {
             throw new GeneralException('Could not create group.');
         }
 

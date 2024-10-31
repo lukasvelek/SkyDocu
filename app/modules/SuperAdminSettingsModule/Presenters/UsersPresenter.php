@@ -33,6 +33,42 @@ class UsersPresenter extends ASuperAdminSettingsPresenter {
         $grid->addColumnText('fullname', 'Full name');
         $grid->addColumnText('username', 'Username');
 
+        $profile = $grid->addAction('profile');
+        $profile->setTitle('Profile');
+        $profile->onCanRender[] = function(DatabaseRow $row, Row $_row) {
+            if($row->username == 'service_user') {
+                return false;
+            } else {
+                return true;
+            }
+        };
+        $profile->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
+            $el = HTML::el('a')
+                ->text('Profile')
+                ->class('grid-link')
+                ->href($this->createFullURLString('SuperAdminSettings:Users', 'profile', ['userId' => $primaryKey]));
+
+            return $el;
+        };
+
+        $edit = $grid->addAction('edit');
+        $edit->setTitle('Edit');
+        $edit->onCanRender[] = function(DatabaseRow $row, Row $_row) {
+            if($row->username == 'service_user') {
+                return false;
+            } else {
+                return true;
+            }
+        };
+        $edit->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
+            $el = HTML::el('a')
+                ->text('Edit')
+                ->class('grid-link')
+                ->href($this->createFullURLString('SuperAdminSettings:UsersSettings', 'editUser', ['userId' => $primaryKey]));
+
+            return $el;
+        };
+
         $delete = $grid->addAction('delete');
         $delete->setTitle('Delete');
         $delete->onCanRender[] = function(DatabaseRow $row, Row $_row) {

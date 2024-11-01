@@ -56,7 +56,12 @@ class DocumentManager extends AManager {
         }
 
         if($allMetadata) {
-            $visibleCustomMetadata = $this->fr->getVisibleCustomMetadataForFolder($folderId);
+            $visibleCustomMetadataIds = $this->fr->getVisibleCustomMetadataIdForFolder($folderId);
+
+            $visibleCustomMetadata = [];
+            foreach($visibleCustomMetadataIds as $metadataId) {
+                $visibleCustomMetadata[] = $this->fr->getCustomMetadataById($metadataId);
+            }
         }
 
         return $qb;

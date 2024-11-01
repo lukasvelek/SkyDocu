@@ -51,7 +51,7 @@ class FolderRepository extends ARepository {
         return $qb->fetch();
     }
 
-    public function getVisibleCustomMetadataForFolder(string $folderId) {
+    public function getVisibleCustomMetadataIdForFolder(string $folderId) {
         $qb = $this->qb(__METHOD__);
 
         $qb->select(['customMetadataId'])
@@ -65,6 +65,17 @@ class FolderRepository extends ARepository {
         }
 
         return $metadata;
+    }
+
+    public function getCustomMetadataById(string $metadataId) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->select(['*'])
+            ->from('custom_metadata')
+            ->where('metadataId = ?', [$metadataId])
+            ->execute();
+
+        return $qb->fetch();
     }
 }
 

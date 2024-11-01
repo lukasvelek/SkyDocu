@@ -31,7 +31,7 @@ class GroupRepository extends ARepository {
         });
     }
 
-    public function getGroupByTitle(string $title) {
+    public function getGroupEntityByTitle(string $title) {
         $qb = $this->qb(__METHOD__);
 
         $qb->select(['groupId'])
@@ -85,6 +85,33 @@ class GroupRepository extends ARepository {
             ->execute();
 
         return $qb->fetch();
+    }
+
+    public function getGroupByTitle(string $title) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->select(['*'])
+            ->from('groups')
+            ->where('title = ?', [$title])
+            ->execute();
+
+        return $qb->fetch();
+    }
+
+    public function getGroupsForUser(string $userId) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->select(['groupId'])
+            ->from('group_users')
+            ->where('userId = ?', [$userId])
+            ->execute();
+
+        $groups = [];
+        while($row = $qb->fetchAssoc()) {
+            $groups[] = $row['groupId'];
+        }
+
+        return $groups;
     }
 }
 

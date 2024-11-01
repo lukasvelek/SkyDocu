@@ -25,11 +25,17 @@ class AutoLoginPresenter extends AAnonymPresenter {
     }
 
     private function calculateUserNextDestination() {
-        if($this->app->groupManager->isUserMemberOfSuperadministrators($this->getUserId())) {
+        if($this->httpSessionGet('is_choosing_container') !== null) {
+            // redirect to container choose form
+            return ['page' => 'Anonym:Login', 'action' => 'containerForm'];
+        }
+
+        if($this->app->groupManager->isUserMemberOfSuperadministrators($this->getUserId()) && ($this->httpSessionGet('container') !== null && $this->httpSessionGet('container') == 'superadministrators')) {
             // redirect to superadmin
             return ['page' => 'SuperAdmin:Home', 'action' => 'home'];
         } else {
             // redirect to their container
+            return ['page' => 'User:Home', 'action' => 'dashboard'];
         }
     }
 }

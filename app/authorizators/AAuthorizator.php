@@ -5,8 +5,6 @@ namespace App\Authorizators;
 use App\Core\Caching\CacheFactory;
 use App\Core\DatabaseConnection;
 use App\Logger\Logger;
-use App\Repositories\GroupRepository;
-use App\Repositories\UserRepository;
 use QueryBuilder\ExpressionBuilder;
 use QueryBuilder\QueryBuilder;
 
@@ -18,21 +16,17 @@ use QueryBuilder\QueryBuilder;
 abstract class AAuthorizator {
     private DatabaseConnection $db;
     protected Logger $logger;
-    protected UserRepository $userRepository;
-    private CacheFactory $cacheFactory;
+    protected CacheFactory $cacheFactory;
 
     /**
      * Abstract class constructor
      * 
      * @param DatabaseConnection $db DatabaseConnection instance
      * @param Logger $logger Logger instance
-     * @param GroupRepository $groupRepository GroupRepository instance
-     * @param UserRepository $userRepository UserRepository instance
      */
-    protected function __construct(DatabaseConnection $db, Logger $logger, UserRepository $userRepository) {
+    protected function __construct(DatabaseConnection $db, Logger $logger) {
         $this->db = $db;
         $this->logger = $logger;
-        $this->userRepository = $userRepository;
         $this->cacheFactory = new CacheFactory();
     }
 

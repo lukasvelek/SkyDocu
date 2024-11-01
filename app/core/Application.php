@@ -67,6 +67,8 @@ class Application {
     public GroupManager $groupManager;
     public ContainerManager $containerManager;
 
+    public array $repositories;
+
     /**
      * The Application constructor. It creates objects of all used classes.
      */
@@ -120,6 +122,8 @@ class Application {
      * Initializes *Repository classes
      */
     private function initRepositories() {
+        $this->repositories = [];
+
         $rc = new ReflectionClass($this);
 
         $rpa = $rc->getProperties();
@@ -132,6 +136,8 @@ class Application {
                 $className = (string)$rt;
 
                 $this->$name = new $className($this->db, $this->logger);
+
+                $this->repositories[$name] = $this->$name;
             }
         }
     }

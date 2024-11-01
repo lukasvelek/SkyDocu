@@ -79,6 +79,10 @@ class ContainerManager extends AManager {
         $folderIds = [
             'Default' => $this->createIdCustomDb(EntityManager::C_DOCUMENT_FOLDERS, $conn)
         ];
+
+        $classIds = [
+            'Default' => $this->createIdCustomDb(EntityManager::C_DOCUMENT_CLASSES, $conn)
+        ];
         
         $data = [
             'groups' => [
@@ -90,12 +94,13 @@ class ContainerManager extends AManager {
                 'title' => 'All users'
             ],
             'document_classes' => [
-                'classId' => $this->createIdCustomDb(EntityManager::C_DOCUMENT_CLASSES, $conn),
+                'classId' => $classIds['Default'],
                 'title' => 'Default'
             ],
             'document_class_group_rights' => [
                 'rightId' => $this->createIdCustomDb(EntityManager::C_DOCUMENT_CLASS_GROUP_RIGHTS, $conn),
                 'groupId' => $groupIds['All users'],
+                'classId' => $classIds['Default'],
                 'canView' => 1,
                 'canCreate' => 1
             ],
@@ -162,6 +167,7 @@ class ContainerManager extends AManager {
                 'binaryFileHash' => 'TEXT NULL',
                 'status' => 'INT(4) NOT NULL',
                 'classId' => 'VARCHAR(256) NOT NULL',
+                'folderId' => 'VARCHAR(256) NOT NULL',
                 'dateCreated' => 'DATETIME NOT NULL DEFAULT current_timestamp()',
                 'dateModified' => 'DATETIME NULL'
             ],

@@ -23,9 +23,9 @@ class GroupManager extends AManager {
     }
 
     public function isUserMemberOfSuperadministrators(string $userId) {
-        $group = $this->gr->getGroupByTitle(SystemGroups::SUPERADMINISTRATORS);
+        $group = $this->getGroupByTitle(SystemGroups::SUPERADMINISTRATORS);
 
-        $members = $this->gmr->getMemberUserIdsForGroupId($group->getId());
+        $members = $this->gmr->getMemberUserIdsForGroupId($group->groupId);
 
         return in_array($userId, $members);
     }
@@ -78,6 +78,33 @@ class GroupManager extends AManager {
         if(!$this->gmr->removeUserFromGroup($groupId, $userId)) {
             throw new GeneralException('User is not member of the group.');
         }
+    }
+
+    public function getGroupByTitle(string $title) {
+        $group = $this->gr->getGroupByTitle($title);
+
+        if($group === null) {
+            throw new NonExistingEntityException('Group does not exist.');
+        }
+
+        return DatabaseRow::createFromDbRow($group);
+    }
+
+    public function getGroupUsersForGroupTitle(string $title) {
+        $group = $this->getGroupByTitle($title);
+
+        return $this->getGroupUsersForGroupId($group->groupId);
+    }
+
+    public function getMembershipsForUser(string $userId) {
+        $groupIds = $this->gr->getGroupsForUser($userId);
+
+        $groups = [];
+        foreach($groupIds as $id) {
+            $groups[] = $this->getGroupById($id);
+        }
+
+        return $groups;
     }
 }
 

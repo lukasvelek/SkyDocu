@@ -5,6 +5,7 @@ namespace App\Repositories;
 use App\Core\Caching\Cache;
 use App\Core\Caching\CacheNames;
 use App\Core\DatabaseConnection;
+use App\Core\DB\DatabaseRow;
 use App\Logger\Logger;
 
 class GroupMembershipRepository extends ARepository {
@@ -45,6 +46,18 @@ class GroupMembershipRepository extends ARepository {
         return $qb->fetchBool();
     }
 
+    public function removeUserFromGroup(string $groupId, string $userId) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->delete()
+            ->from('group_users')
+            ->where('groupId = ?', [$groupId])
+            ->andWhere('userId = ?', [$userId])
+            ->execute();
+
+        return $qb->fetchBool();
+    }
+
     public function composeQueryForGroupUsers(string $groupId) {
         $qb = $this->qb(__METHOD__);
 
@@ -53,6 +66,19 @@ class GroupMembershipRepository extends ARepository {
             ->where('groupId = ?', [$groupId]);
 
         return $qb;
+    }
+
+    public function getGroupUsersForGroupId(string $groupId) {
+        $qb = $this->composeQueryForGroupUsers($groupId);
+
+        $qb->execute();
+
+        $users = [];
+        while($row = $qb->fetchAssoc()) {
+            $users[] = $row['userId'];
+        }
+
+        return $users;
     }
 }
 

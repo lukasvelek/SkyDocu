@@ -61,6 +61,24 @@ class GroupManager extends AManager {
 
         return DatabaseRow::createFromDbRow($group);
     }
+
+    public function getGroupUsersForGroupId(string $groupId) {
+        return $this->gmr->getGroupUsersForGroupId($groupId);
+    }
+
+    public function addUserToGroup(string $userId, string $groupId) {
+        $groupUserId = $this->createId(EntityManager::GROUP_USERS);
+
+        if(!$this->gmr->addUserToGroup($groupUserId, $groupId, $userId)) {
+            throw new GeneralException('User is probably member of the group.');
+        }
+    }
+
+    public function removeUserFromGroup(string $userId, string $groupId) {
+        if(!$this->gmr->removeUserFromGroup($groupId, $userId)) {
+            throw new GeneralException('User is not member of the group.');
+        }
+    }
 }
 
 ?>

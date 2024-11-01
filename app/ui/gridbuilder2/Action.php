@@ -85,6 +85,7 @@ class Action implements IHTMLOutput {
      */
     public function setTitle(string $title) {
         $this->title = $title;
+        return $this;
     }
 
     /**

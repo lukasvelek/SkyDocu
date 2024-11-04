@@ -75,10 +75,12 @@ class LoginPresenter extends AAnonymPresenter {
             $containers = [];
             foreach($groups as $group) {
                 if($group->title == 'superadministrators') {
-                    $containers[] = [
+                    $c = [
                         'value' => $group->title,
                         'text' => 'Superadministration'
                     ];
+
+                    array_unshift($containers, $c);
                 } else {
                     $title = substr($group->title, 0, (strlen($group->title) - 8));
 

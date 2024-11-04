@@ -2,6 +2,7 @@
 
 namespace App\Managers\Container;
 
+use App\Core\Caching\CacheNames;
 use App\Core\DB\DatabaseRow;
 use App\Exceptions\GeneralException;
 use App\Logger\Logger;
@@ -83,7 +84,11 @@ class DocumentManager extends AManager {
     }
 
     public function getMetadataValues(string $metadataId) {
-        return $this->dr->getMetadataValues($metadataId);
+        $cache = $this->cacheFactory->getCache(CacheNames::METADATA_VALUES);
+
+        return $cache->load($metadataId, function() use ($metadataId) {
+            return $this->dr->getMetadataValues($metadataId);
+        });
     }
 
     public function composeQueryForDocumentCustomMetadataValues() {

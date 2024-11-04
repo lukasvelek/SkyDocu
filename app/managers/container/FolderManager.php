@@ -2,6 +2,7 @@
 
 namespace App\Managers\Container;
 
+use App\Core\Caching\CacheNames;
 use App\Core\DB\DatabaseRow;
 use App\Logger\Logger;
 use App\Managers\AManager;
@@ -21,28 +22,31 @@ class FolderManager extends AManager {
     }
 
     public function getVisibleFoldersForUser(string $userId) {
-        $groupIds = $this->gr->getGroupsForUser($userId);
+        $cache = $this->cacheFactory->getCache(CacheNames::VISIBLE_FOLDERS_FOR_USER);
+        return $cache->load($userId, function() use ($userId) {
+            $groupIds = $this->gr->getGroupsForUser($userId);
 
-        $folderIds = [];
-        foreach($groupIds as $groupId) {
-            $folderIdsTmp = $this->fr->getVisibleFolderIdsForGroup($groupId);
+            $folderIds = [];
+            foreach($groupIds as $groupId) {
+                $folderIdsTmp = $this->fr->getVisibleFolderIdsForGroup($groupId);
 
-            foreach($folderIdsTmp as $folderId) {
-                if(!in_array($folderId, $folderIds)) {
-                    $folderIds[] = $folderId;
+                foreach($folderIdsTmp as $folderId) {
+                    if(!in_array($folderId, $folderIds)) {
+                        $folderIds[] = $folderId;
+                    }
                 }
             }
-        }
 
-        $folders = [];
-        foreach($folderIds as $folderId) {
-            $folder = $this->fr->getFolderById($folderId);
-            $folder = DatabaseRow::createFromDbRow($folder);
+            $folders = [];
+            foreach($folderIds as $folderId) {
+                $folder = $this->fr->getFolderById($folderId);
+                $folder = DatabaseRow::createFromDbRow($folder);
 
-            $folders[] = $folder;
-        }
+                $folders[] = $folder;
+            }
 
-        return $folders;
+            return $folders;
+        });
     }
 }
 

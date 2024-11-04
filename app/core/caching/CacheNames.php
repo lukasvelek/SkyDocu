@@ -16,6 +16,8 @@ class CacheNames {
     public const FLASH_MESSAGES = 'flashMessages';
     public const GRID_EXPORTS = 'gridExports';
     public const GRID_PAGE_DATA = 'gridPageData';
+    public const METADATA_VALUES = 'customMetadataValues';
+    public const VISIBLE_FOLDERS_FOR_USER = 'visibleFoldersForUser';
 }
 
 ?>

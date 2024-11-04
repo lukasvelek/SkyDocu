@@ -3,7 +3,7 @@
 namespace App\Modules\AdminModule;
 
 use App\Components\Navbar\Navbar;
-use App\Components\Navbar\NavbarAdminLinks;
+use App\Components\Navbar\NavbarModes;
 use App\Modules\AModule;
 
 class AdminModule extends AModule {
@@ -12,11 +12,10 @@ class AdminModule extends AModule {
     }
 
     public function renderModule() {
-        $navbar = new Navbar($this->app->notificationManager, $this->app->systemStatusManager, $this->app->currentUser->getId());
-        $navbar->setCustomLinks(NavbarAdminLinks::toArray());
-        $navbar->hideSearchBar();
-        $navbar->setIsCurrentUserIsAdmin($this->app->currentUser?->isAdmin());
-        $this->template->sys_navbar = $navbar;
+        $navbar = new Navbar(NavbarModes::ADMINISTRATION, $this->app->currentUser, $this->app);
+        if($this->template !== null) {
+            $this->template->sys_navbar = $navbar;
+        }
     }
 }
 

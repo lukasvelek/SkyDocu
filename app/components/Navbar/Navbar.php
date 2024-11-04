@@ -2,6 +2,7 @@
 
 namespace App\Components\Navbar;
 
+use App\Core\Application;
 use App\Entities\UserEntity;
 use App\Helpers\LinkHelper;
 use App\Modules\TemplateObject;
@@ -13,13 +14,15 @@ class Navbar implements IRenderable {
     private UserEntity $user;
     private array $hideLinks;
     private int $mode;
+    private Application $app;
 
-    public function __construct(int $mode, UserEntity $user) {
+    public function __construct(int $mode, UserEntity $user, Application $app) {
         $this->mode = $mode;
         $this->links = [];
         $this->template = new TemplateObject(file_get_contents(__DIR__ . '\\template.html'));
         $this->user = $user;
         $this->hideLinks = [];
+        $this->app = $app;
 
         $this->getLinks();
     }
@@ -39,7 +42,18 @@ class Navbar implements IRenderable {
                 break;
 
             case NavbarModes::GENERAL:
-                $this->links = NavbarGeneralLinks::toArray();
+                $links = NavbarGeneralLinks::toArray();
+
+                if($this->app->groupManager->isUserMemberOfSuperadministrators($this->user->getId()) || in_array($this->user->getId(), $this->app->groupManager->getGroupUsersForGroupTitle('Administrators'))) {
+                    $links['Settings'] = NavbarGeneralLinks::A_SETTINGS;
+                }
+
+                $this->links = $links;
+                break;
+
+            case NavbarModes::ADMINISTRATION:
+                $link = NavbarAdminLinks::toArray();
+
                 break;
         }
     }

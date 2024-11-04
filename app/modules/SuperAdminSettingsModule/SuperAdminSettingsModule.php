@@ -12,7 +12,7 @@ class SuperAdminSettingsModule extends AModule {
     }
 
     public function renderModule() {
-        $navbar = new Navbar(NavbarModes::SUPERADMINISTRATION_SETTINGS, $this->app->currentUser);
+        $navbar = new Navbar(NavbarModes::SUPERADMINISTRATION_SETTINGS, $this->app->currentUser, $this->app);
         if($this->template !== null) {
             $this->template->sys_navbar = $navbar;
         }

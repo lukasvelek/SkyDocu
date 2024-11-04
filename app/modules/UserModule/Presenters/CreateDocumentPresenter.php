@@ -23,7 +23,7 @@ class CreateDocumentPresenter extends AUserPresenter {
                     break;
 
                 case CustomMetadataTypes::DATETIME:
-                    $form->addDatetime($metadata->title, $metadata->guiTitle . ':');
+                    $form->addDatetime($metadata->title, $metadata->guiTitle . ':', null, true);
                     break;
 
                 case CustomMetadataTypes::ENUM:
@@ -35,15 +35,15 @@ class CreateDocumentPresenter extends AUserPresenter {
                             'text' => $title
                         ];
                     }
-                    $form->addSelect($metadata->title, $metadata->guiTitle, $values);
+                    $form->addSelect($metadata->title, $metadata->guiTitle, $values, true);
                     break;
 
                 case CustomMetadataTypes::NUMBER:
-                    $form->addNumberInput($metadata->title, $metadata->guiTitle . ':');
+                    $form->addNumberInput($metadata->title, $metadata->guiTitle . ':', null, null, null, true);
                     break;
 
                 case CustomMetadataTypes::TEXT:
-                    $form->addTextInput($metadata->title, $metadata->guiTitle . ':');
+                    $form->addTextInput($metadata->title, $metadata->guiTitle . ':', null, true);
                     break;
             }
         }

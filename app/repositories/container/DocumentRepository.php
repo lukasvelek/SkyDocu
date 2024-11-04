@@ -78,6 +78,46 @@ class DocumentRepository extends ARepository {
 
         return $qb;
     }
+
+    public function createNewDocument(string $documentId, array $metadataValues) {
+        $qb = $this->qb(__METHOD__);
+
+        $keys = [];
+        $values = [];
+        foreach($metadataValues as $key => $value) {
+            $keys[] = $key;
+            $values[] = $value;
+        }
+
+        $keys[] = 'documentId';
+        $values[] = $documentId;
+
+        $qb->insert('documents', $keys)
+            ->values($values)
+            ->execute();
+
+        return $qb->fetchBool();
+    }
+
+    public function createNewCustomMetadataEntry(string $entryId, array $data) {
+        $qb = $this->qb(__METHOD__);
+
+        $keys = [];
+        $values = [];
+        foreach($data as $key => $value) {
+            $keys[] = $key;
+            $values[] = $value;
+        }
+
+        $keys[] = 'entryId';
+        $values[] = $entryId;
+
+        $qb->insert('documents_custom_metadata', $keys)
+            ->values($values)
+            ->execute();
+
+        return $qb->fetchBool();
+    }
 }
 
 ?>

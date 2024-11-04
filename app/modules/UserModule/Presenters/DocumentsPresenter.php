@@ -5,6 +5,7 @@ namespace App\Modules\UserModule;
 use App\Components\DocumentsGrid\DocumentsGrid;
 use App\Components\Sidebar\Sidebar;
 use App\Core\Http\HttpRequest;
+use App\UI\LinkBuilder;
 
 class DocumentsPresenter extends AUserPresenter {
     private ?string $currentFolderId;
@@ -49,6 +50,9 @@ class DocumentsPresenter extends AUserPresenter {
 
     public function renderList() {
         $this->template->sidebar = $this->loadFromPresenterCache('sidebar');
+        $this->template->links = [
+            LinkBuilder::createSimpleLink('New document', $this->createFullURL('User:CreateDocument', 'form', ['folderId' => $this->httpGet('folderId')]), 'link')
+        ];
     }
 
     protected function createComponentDocumentsGrid(HttpRequest $request) {

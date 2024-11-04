@@ -266,6 +266,20 @@ class FormBuilder implements IFormRenderable {
         return $this;
     }
 
+    public function addNumberInput(string $name, ?string $label, mixed $value = null, ?int $min = null, ?int $max = null, bool $required = false) {
+        $ni = new NumberInput($name, $value, $min, $max);
+
+        $ni->setRequired($required);
+
+        if($label !== null) {
+            $ni = new ElementDuo($ni, new Label($label, $name, $required), $name);
+        }
+
+        $this->addElement($name, $ni);
+
+        return $this;
+    }
+
     public function addJSHandler(string $handlerLink) {
         $this->elements['js_handler'] = '<script type="text/javascript" src="' . $handlerLink . '"></script>';
 

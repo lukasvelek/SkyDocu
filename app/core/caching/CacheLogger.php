@@ -41,7 +41,7 @@ class CacheLogger extends Logger {
      * @return bool True on success or false on failure
      */
     public function logCacheCreateOrGet(string $namespace, bool $created, string $method) {
-        $text = 'Cache namespace \'' . $namespace . '\'' . ($created ? 'created' : 'found') . '.';
+        $text = 'Cache namespace \'' . $namespace . '\' ' . ($created ? 'created' : 'found') . '.';
         
         return $this->log($method, $text, parent::LOG_CACHE);
     }

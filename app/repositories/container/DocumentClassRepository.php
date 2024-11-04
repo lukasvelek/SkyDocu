@@ -56,6 +56,14 @@ class DocumentClassRepository extends ARepository {
 
         return $classes;
     }
+
+    public function getDocumentClassById(string $classId) {
+        $qb = $this->composeQueryForClasses();
+        $qb->andWhere('classId = ?', [$classId])
+            ->execute();
+
+        return $qb->fetch();
+    }
 }
 
 ?>

@@ -274,7 +274,13 @@ class ContainerManager extends AManager {
                 'userId' => 'VARCHAR(256) NOT NULL',
                 'description' => 'TEXT NOT NULL',
                 'dateCreated' => 'DATETIME NOT NULL DEFAULT current_timestamp()'
-            ]
+            ],
+            'transaction_log' => [
+                'transactionId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',
+                'userId' => 'VARCHAR(256) NOT NULL',
+                'callingMethod' => 'TEXT NOT NULL',
+                'dateCreated' => 'DATETIME NOT NULL'
+            ],
         ];
 
         foreach($tables as $name => $definition) {

@@ -56,6 +56,18 @@ class GroupRepository extends ARepository {
 
         return $qb;
     }
+
+    public function getMembersForGroup(string $groupId) {
+        $qb = $this->composeQueryForGroupMembers($groupId);
+        $qb->execute();
+
+        $members = [];
+        while($row = $qb->fetchAssoc()) {
+            $members[] = $row['userId'];
+        }
+
+        return $members;
+    }
 }
 
 ?>

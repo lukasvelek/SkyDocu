@@ -5,6 +5,8 @@ namespace App\Modules\AdminModule;
 use App\Components\Sidebar\Sidebar;
 use App\Core\DB\DatabaseRow;
 use App\Core\Http\HttpRequest;
+use App\UI\FormBuilder\FormBuilder;
+use App\UI\FormBuilder\FormResponse;
 use App\UI\GridBuilder2\Row;
 use App\UI\HTML\HTML;
 use App\UI\LinkBuilder;
@@ -29,7 +31,7 @@ class GroupsPresenter extends AAdminPresenter {
     public function renderList() {
         $this->template->sidebar = $this->sidebar;
         $this->template->links = [
-            LinkBuilder::createSimpleLink('New groups', $this->createURL('newForm'), 'link')
+            LinkBuilder::createSimpleLink('New group', $this->createURL('newForm'), 'link')
         ];
     }
 
@@ -58,43 +60,100 @@ class GroupsPresenter extends AAdminPresenter {
         return $grid;
     }
 
-    public function renderListMembers() {
+    public function handleListMembers() {
         $groupId = $this->httpGet('groupId');
+        $group = $this->groupRepository->getGroupById($groupId);
 
-        $this->template->sidebar = $this->sidebar;
-        $this->template->links = [
-            LinkBuilder::createSimpleLink('Add member', $this->createURL('addMemberForm', ['groupId' => $groupId]), 'link')
+        $links = [
+            LinkBuilder::createSimpleLink('&larr; Back', $this->createURL('list'), 'link'),
         ];
+
+        if($group['title'] != 'All users') {
+            $links[] = LinkBuilder::createSimpleLink('Add member', $this->createURL('addMemberForm', ['groupId' => $groupId]), 'link');
+        }
+        
+        $this->saveToPresenterCache('links', implode('&nbsp;&nbsp;', $links));
+    }
+
+    public function renderListMembers() {
+        $this->template->sidebar = $this->sidebar;
+        $this->template->links = $this->loadFromPresenterCache('links');
     }
 
     protected function createComponentGroupMembersGrid(HttpRequest $request) {
         $grid = $this->getGridBuilder();
+
+        $group = $this->groupRepository->getGroupById($request->query['groupId']);
 
         $grid->createDataSourceFromQueryBuilder($this->groupRepository->composeQueryForGroupMembers($request->query['groupId']), 'relationId');
         $grid->addQueryDependency('groupId', $request->query['groupId']);
 
         $grid->addColumnUser('userId', 'User');
 
-        $remove = $grid->addAction('remove');
-        $remove->onCanRender[] = function(DatabaseRow $row, Row $_row) {
-            if($this->app->groupManager->isUserMemberOfSuperadministrators($row->userId)) {
-                return false;
-            }
+        if($group['title'] != 'All users') {
+            $remove = $grid->addAction('remove');
+            $remove->onCanRender[] = function(DatabaseRow $row, Row $_row) use ($group) {
+                if($this->app->groupManager->isUserMemberOfSuperadministrators($row->userId)) {
+                    return false;
+                }
 
-            return true;
-        };
-        $remove->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) use ($request) {
-            $el = HTML::el('a')
-                ->title('Remove')
-                ->text('Remove')
-                ->href($this->createURLString('removeGroupMember', ['groupId' => $request->query['groupId'], 'userId' => $primaryKey]))
-                ->class('grid-link')
-            ;
+                return true;
+            };
+            $remove->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) use ($request) {
+                $el = HTML::el('a')
+                    ->title('Remove')
+                    ->text('Remove')
+                    ->href($this->createURLString('removeGroupMember', ['groupId' => $request->query['groupId'], 'userId' => $primaryKey]))
+                    ->class('grid-link')
+                ;
 
-            return $el;
-        };
+                return $el;
+            };
+        }
 
         return $grid;
+    }
+
+    public function handleAddMemberForm(?FormResponse $fr = null) {
+        $groupId = $this->httpGet('groupId', true);
+
+        if($fr !== null) {
+
+        } else {
+            $container = $this->app->containerManager->getContainerById($this->httpSessionGet('container'));
+
+            $containerUsers = $this->app->groupManager->getGroupUsersForGroupId($container->title . ' - users');
+            $groupUsers = $this->groupRepository->getMembersForGroup($groupId);
+
+            $users = [];
+            foreach($containerUsers as $user) {
+                if(!in_array($user, $groupUsers)) {
+                    $users[] = [
+                        'value' => $user,
+                        'text' => $this->app->userManager->getUserById($user)->getFullname()
+                    ];
+                }
+            }
+
+            $form = new FormBuilder();
+
+            $form->setMethod()
+                ->setAction($this->createURL('addMemberForm', ['groupId' => $groupId]))
+                ->addSelect('user', 'User:', $users, true)
+                ->addSubmit('Add')
+            ;
+
+            $this->saveToPresenterCache('form', $form);
+        }
+    }
+
+    public function renderAddMemberForm() {
+        $groupId = $this->httpGet('groupId');
+
+        $this->template->form = $this->loadFromPresenterCache('form');
+        $this->template->links = [
+            LinkBuilder::createSimpleLink('&larr; Back', $this->createURL('listMembers', ['groupId' => $groupId]), 'link')
+        ];
     }
 }
 

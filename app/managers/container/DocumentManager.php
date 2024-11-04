@@ -2,6 +2,7 @@
 
 namespace App\Managers\Container;
 
+use App\Core\DB\DatabaseRow;
 use App\Logger\Logger;
 use App\Managers\AManager;
 use App\Managers\EntityManager;
@@ -65,6 +66,27 @@ class DocumentManager extends AManager {
         }
 
         return $qb;
+    }
+
+    public function getCustomMetadataForFolder(string $folderId) {
+        $metadataIds = $this->fr->getVisibleCustomMetadataIdForFolder($folderId);
+
+        $metadatas = [];
+        foreach($metadataIds as $metadataId) {
+            $row = $this->fr->getCustomMetadataById($metadataId);
+            $row = DatabaseRow::createFromDbRow($row);
+            $metadatas[$metadataId] = $row;
+        }
+
+        return $metadatas;
+    }
+
+    public function getMetadataValues(string $metadataId) {
+        return $this->dr->getMetadataValues($metadataId);
+    }
+
+    public function composeQueryForDocumentCustomMetadataValues() {
+        return $this->dr->composeQueryForDocumentCustomMetadataValues();
     }
 }
 

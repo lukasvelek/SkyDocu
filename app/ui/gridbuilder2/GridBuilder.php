@@ -6,7 +6,6 @@ use App\Constants\AConstant;
 use App\Core\AjaxRequestBuilder;
 use App\Core\DB\DatabaseRow;
 use App\Core\Http\HttpRequest;
-use App\Entities\UserEntity;
 use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
 use App\Exceptions\GridExportException;
@@ -40,8 +39,8 @@ class GridBuilder extends AComponent {
     private const COL_TYPE_BOOLEAN = 'boolean';
     private const COL_TYPE_USER = 'user';
 
-    private ?QueryBuilder $dataSource;
-    private string $primaryKeyColName;
+    protected ?QueryBuilder $dataSource;
+    protected string $primaryKeyColName;
     /**
      * @var array<string, Column> $columns
      */
@@ -69,8 +68,8 @@ class GridBuilder extends AComponent {
     /**
      * @var array<Filter> $filters
      */
-    private array $filters;
-    private array $activeFilters;
+    protected array $filters;
+    protected array $activeFilters;
 
     private array $queryDependencies;
 
@@ -81,6 +80,8 @@ class GridBuilder extends AComponent {
      * @var array<callback> $noFilterSqlConditions
      */
     public array $noFilterSqlConditions;
+
+    protected ?QueryBuilder $filledDataSource;
 
     /**
      * Class constructor
@@ -104,6 +105,7 @@ class GridBuilder extends AComponent {
         $this->gridName = 'MyGrid';
         $this->queryDependencies = [];
         $this->noFilterSqlConditions = [];
+        $this->filledDataSource = null;
     }
 
     /**
@@ -381,7 +383,7 @@ class GridBuilder extends AComponent {
      * @param QueryBuilder $qb QueryBuilder instance
      * @return QueryBuilder QueryBuilder instance
      */
-    private function processQueryBuilderDataSource(QueryBuilder $qb) {
+    protected function processQueryBuilderDataSource(QueryBuilder $qb) {
         $gridSize = GRID_SIZE;
 
         $qb->limit($gridSize)
@@ -417,6 +419,8 @@ class GridBuilder extends AComponent {
      * @return string HTML code
      */
     public function render() {
+        $this->fetchDataFromDb(true);
+
         $this->build();
 
         $template = $this->getTemplate(__DIR__ . '/grid.html');
@@ -430,25 +434,36 @@ class GridBuilder extends AComponent {
     }
 
     /**
+     * Processes data source and fetches the data from the database
+     * 
+     * @param bool $explicit True if the data should be fetched from the database explicitly
+     * @return QueryBuilder QueryBuilder instance filled with data
+     */
+    protected function fetchDataFromDb(bool $explicit = false) {
+        if($this->filledDataSource === null || $explicit) {
+            if($this->dataSource === null) {
+                throw new GeneralException('No data source is set.');
+            }
+    
+            $dataSource = clone $this->dataSource;
+    
+            $this->processQueryBuilderDataSource($dataSource);
+    
+            $this->filledDataSource = $dataSource->execute();
+        }
+
+        return $this->filledDataSource;
+    }
+
+    /**
      * Builds the grid
      *  - creates columns
      *  - creates rows
      *  - creates cells
      *  - creates table
-     *  - processes data source
      *  - creates actions
      */
     private function build() {
-        if($this->dataSource === null) {
-            throw new GeneralException('No data source is set.');
-        }
-
-        $dataSource = clone $this->dataSource;
-
-        $this->processQueryBuilderDataSource($dataSource);
-
-        $cursor = $dataSource->execute();
-
         $_tableRows = [];
 
         $_headerRow = new Row();
@@ -465,6 +480,8 @@ class GridBuilder extends AComponent {
 
         $hasActionsCol = false;
 
+        $cursor = clone $this->fetchDataFromDb();
+
         $rowIndex = 0;
         while($row = $cursor->fetchAssoc()) {
             $row = $this->createDatabaseRow($row);
@@ -475,65 +492,44 @@ class GridBuilder extends AComponent {
             $_row->index = $rowIndex;
 
             foreach($this->columns as $name => $col) {
-                if(in_array($name, $row->getKeys())) {
-                    $_cell = new Cell();
-                    $_cell->setName($name);
+                $_cell = new Cell();
+                $_cell->setName($name);
 
+                if(in_array($name, $row->getKeys())) {
                     $content = $row->$name;
 
                     if(!empty($this->columns[$name]->onRenderColumn)) {
                         foreach($this->columns[$name]->onRenderColumn as $render) {
                             try {
-                                /*if($content === null) {
-                                    continue;
-                                }*/
                                 $content = $render($row, $_row, $_cell, $_cell->html, $content);
                             } catch(Exception $e) {}
                         }
                     }
-
-                    if($content === null) {
-                        $content = '-';
-
-                        $_cell->setContent($content);
-                    } else {
-                        if($content instanceof Cell) {
-                            $_cell = $content;
-                        } else {
-                            $_cell->setContent($content);
-                        }
-                    }
-
-                    $_row->addCell($_cell);
                 } else {
-                    $_cell = new Cell();
-                    $_cell->setName($name);
-
                     $content = '-';
 
                     if(!empty($this->columns[$name]->onRenderColumn)) {
                         foreach($this->columns[$name]->onRenderColumn as $render) {
                             try {
-                                if($content === null) {
-                                    continue;
-                                }
                                 $content = $render($row, $_row, $_cell, $_cell->html, $content);
                             } catch(Exception $e) {}
                         }
                     }
-
-                    if($content === null) {
-                        $content = '-';
-                    } else {
-                        if($content instanceof Cell) {
-                            $_cell = $content;
-                        } else {
-                            $_cell->setContent($content);
-                        }
-                    }
-
-                    $_row->addCell($_cell);
                 }
+
+                if($content === null) {
+                    $content = '-';
+
+                    $_cell->setContent($content);
+                } else {
+                    if($content instanceof Cell) {
+                        $_cell = $content;
+                    } else {
+                        $_cell->setContent($content);
+                    }
+                }
+
+                $_row->addCell($_cell);
             }
 
             if(!empty($this->onRowRender)) {
@@ -632,7 +628,7 @@ class GridBuilder extends AComponent {
      * @param mixed $row mysqli_result
      * @return DatabaseRow DatabaseRow instance
      */
-    private function createDatabaseRow(mixed $row) {
+    protected function createDatabaseRow(mixed $row) {
         $r = new DatabaseRow();
 
         foreach($row as $k => $v) {
@@ -1048,7 +1044,9 @@ class GridBuilder extends AComponent {
             }
         }
 
-        $this->build();
+        if(!($this instanceof IExtendingComponent)) {
+            $this->build();
+        }
         return ['grid' => $this->render()];
     }
 
@@ -1064,7 +1062,9 @@ class GridBuilder extends AComponent {
             }
         }
 
-        $this->build();
+        if(!($this instanceof IExtendingComponent)) {
+            $this->build();
+        }
         return ['grid' => $this->render()];
     }
 
@@ -1080,7 +1080,9 @@ class GridBuilder extends AComponent {
             }
         }
 
-        $this->build();
+        if(!($this instanceof IExtendingComponent)) {
+            $this->build();
+        }
         return ['grid' => $this->render()];
     }
 
@@ -1180,7 +1182,7 @@ class GridBuilder extends AComponent {
      * @param QueryBuilder $dataSource Grid data source
      * @return GridExportHandler GridExportHandler instance
      */
-    private function createGridExportHandler(QueryBuilder $dataSource) {
+    protected function createGridExportHandler(QueryBuilder $dataSource) {
         return new GridExportHandler(
             $dataSource,
             $this->primaryKeyColName,

@@ -53,6 +53,31 @@ class DocumentRepository extends ARepository {
 
         return $data;
     }
+
+    public function getMetadataValues(string $metadataId) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->select(['*'])
+            ->from('custom_metadata_list_values')
+            ->where('metadataId = ?', [$metadataId])
+            ->execute();
+
+        $values = [];
+        while($row = $qb->fetchAssoc()) {
+            $values[$row['metadataKey']] = $row['title'];
+        }
+
+        return $values;
+    }
+
+    public function composeQueryForDocumentCustomMetadataValues() {
+        $qb = $this->qb(__METHOD__);
+        
+        $qb->select(['*'])
+            ->from('documents_custom_metadata');
+
+        return $qb;
+    }
 }
 
 ?>

@@ -2,6 +2,7 @@
 
 namespace App\Modules\UserModule;
 
+use App\Components\DocumentsGrid\DocumentsGrid;
 use App\Components\Sidebar\Sidebar;
 use App\Core\Http\HttpRequest;
 
@@ -51,11 +52,11 @@ class DocumentsPresenter extends AUserPresenter {
     }
 
     protected function createComponentDocumentsGrid(HttpRequest $request) {
-        $grid = $this->getGridBuilder();
+        $documentsGrid = new DocumentsGrid($this->getGridBuilder(), $this->app, $this->documentManager);
 
-        $grid->createDataSourceFromQueryBuilder($this->documentManager->composeQueryForDocuments($this->getUserId(), $request->query['folderId'], true), 'documentId');
+        $documentsGrid->showCustomMetadata();
 
-        return $grid;
+        return $documentsGrid;
     }
 
     public function handleSwitchFolder() {

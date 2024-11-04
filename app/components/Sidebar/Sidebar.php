@@ -3,8 +3,9 @@
 namespace App\Components\Sidebar;
 
 use App\Modules\TemplateObject;
+use App\UI\IRenderable;
 
-class Sidebar {
+class Sidebar implements IRenderable {
     private array $links;
     private TemplateObject $template;
 

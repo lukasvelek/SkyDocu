@@ -10,6 +10,12 @@ abstract class AAdminPresenter extends AContainerPresenter {
 
         $this->moduleName = 'Admin';
     }
+
+    protected function checkActivePage(string $key) {
+        $name = substr($this->name, 0, -9); //Presenter
+
+        return $name == $key;
+    }
 }
 
 ?>

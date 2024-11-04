@@ -52,7 +52,7 @@ class Navbar implements IRenderable {
                 break;
 
             case NavbarModes::ADMINISTRATION:
-                $link = NavbarAdminLinks::toArray();
+                $this->links = NavbarAdminLinks::toArray();
 
                 break;
         }
@@ -93,6 +93,7 @@ class Navbar implements IRenderable {
                 break;
 
             case NavbarModes::GENERAL:
+            case NavbarModes::ADMINISTRATION:
                 $link = NavbarGeneralLinks::USER_PROFILE;
                 break;
         }
@@ -113,6 +114,7 @@ class Navbar implements IRenderable {
                 break;
 
             case NavbarModes::GENERAL:
+            case NavbarModes::ADMINISTRATION:
                 $link = NavbarGeneralLinks::USER_LOGOUT;
                 break;
         }

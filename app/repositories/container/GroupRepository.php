@@ -37,6 +37,25 @@ class GroupRepository extends ARepository {
 
         return $qb->fetch();
     }
+
+    public function composeQueryForGroups() {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->select(['*'])
+            ->from('groups');
+
+        return $qb;
+    }
+
+    public function composeQueryForGroupMembers(string $groupId) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->select(['*'])
+            ->from('group_users_relation')
+            ->where('groupId = ?', [$groupId]);
+
+        return $qb;
+    }
 }
 
 ?>

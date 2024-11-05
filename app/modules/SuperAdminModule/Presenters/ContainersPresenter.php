@@ -8,6 +8,7 @@ use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
 use App\Helpers\GridHelper;
+use App\UI\FormBuilder2\FormBuilder2;
 use App\UI\FormBuilder\FormBuilder;
 use App\UI\FormBuilder\FormResponse;
 use App\UI\GridBuilder2\Cell;
@@ -59,7 +60,7 @@ class ContainersPresenter extends ASuperAdminPresenter {
         return $grid;
     }
 
-    public function handleNewContainerForm(?FormResponse $fr = null) {
+    /*public function handleNewContainerForm(?FormResponse $fr = null) {
         if($fr !== null) {
                 try {
                     if($this->app->containerManager->checkContainerTitleExists($fr->title)) {
@@ -86,14 +87,33 @@ class ContainersPresenter extends ASuperAdminPresenter {
 
             $this->saveToPresenterCache('form', $form);
         }
-    }
+    }*/
 
     public function renderNewContainerForm() {
-        $this->template->form = $this->loadFromPresenterCache('form');
+        //$this->template->form = $this->loadFromPresenterCache('form');
 
         $this->template->links = [
             LinkBuilder::createSimpleLink('&larr; Back', $this->createURL('list'), 'link')
         ];
+    }
+
+    protected function createComponentForm(HttpRequest $request) {
+        $form = new FormBuilder2($request);
+
+        $form->setAction($this->createURL('processNewContainerForm'));
+
+        $form->addLabel('basicInformation', 'Basic information')
+            ->setTitle();
+
+        $form->addTextInput('title', 'Title:')
+            ->setRequired()
+            ->setPlaceholder('Container title');
+
+        $form->addTextArea('description', 'Description:')
+            ->setPlaceHolder('Description')
+            ->setRequired();
+
+        return $form;
     }
 }
 

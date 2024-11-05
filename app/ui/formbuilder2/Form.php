@@ -47,7 +47,7 @@ class Form extends AElement {
         $code = '';
 
         foreach($this->rows as $row) {
-            $code .= $row->render();
+            $code .= $row->render() . '<br>';
         }
 
         return $code;

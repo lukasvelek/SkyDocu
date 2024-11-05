@@ -2,24 +2,23 @@
 
 namespace App\UI\FormBuilder2;
 
-class Input extends AInteractableElement {
-    private string $type;
+class TextArea extends AInteractableElement {
     private string $name;
+    private ?string $content;
 
-    public function __construct(string $type, string $name) {
+    public function __construct(string $name) {
         parent::__construct();
 
-        $this->type = $type;
         $this->name = $name;
+        $this->content = null;
     }
 
-    public function setValue(mixed $value) {
-        $this->addAttribute('value', $value);
-        return $this;
+    public function setContent(?string $content) {
+        $this->content = $content;
     }
 
     public function render() {
-        $code = '<input type="' . $this->type . '" ';
+        $code = '<textarea ';
 
         if(!array_key_exists('name', $this->attributes)) {
             $this->addAttribute('name', $this->name);
@@ -37,11 +36,13 @@ class Input extends AInteractableElement {
             }
         }
 
-        if(!empty($nullValues)) {
-            $code .= implode(' ', $nullValues);
+        $code .= implode(' ', $nullValues) . '>';
+
+        if($this->content !== null) {
+            $code .= $this->content;
         }
 
-        $code .= '>';
+        $code .= '</textarea>';
 
         return $code;
     }

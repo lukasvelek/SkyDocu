@@ -5,38 +5,168 @@ namespace App\UI\FormBuilder2;
 use App\Core\Http\HttpRequest;
 use App\UI\AComponent;
 
+/**
+ * FormBuilder allows building forms for interaction with the server
+ * 
+ * @author Lukas Velek
+ */
 class FormBuilder2 extends AComponent {
+    /**
+     * @var array<string, AElement>
+     */
     private array $elements;
+    /**
+     * @var array<string, Label>
+     */
     private array $labels;
+    private string $name;
+    private array $action;
+    private string $method;
     
+    /**
+     * Class constructor
+     * 
+     * @param HttpRequest $request HttpRequest instance
+     */
     public function __construct(HttpRequest $request) {
         parent::__construct($request);
 
         $this->elements = [];
+        $this->name = 'MyForm';
+        $this->action = [];
+        $this->method = 'POST';
     }
 
+    /**
+     * Sets form name
+     * 
+     * @param string $name Form name
+     */
+    public function setName(string $name) {
+        $this->name = $name;
+    }
+
+    /**
+     * Sets form action
+     * 
+     * @param array $action Form action
+     */
+    public function setAction(array $action) {
+        $this->action = $action;
+    }
+
+    /**
+     * Sets form method
+     * 
+     * @param string $method Form method
+     */
+    public function setMethod(string $method = 'POST') {
+        $this->method = $method;
+    }
+
+    /**
+     * Renders the form to HTML code
+     * 
+     * @return string HTML code
+     */
     public function render() {
         $template = $this->getTemplate(__DIR__ . '/form.html');
+        $template->form = $this->build();
         
         return $template->render()->getRenderedContent();
     }
 
-    public function addTextInput(string $name, ?string $label = null, mixed $value = null) {
-        $ti = new TextInput($name, $value);
+    /**
+     * Build the inner form (the form itself) and returns its HTML code
+     * 
+     * @return string HTML code
+     */
+    private function build() {
+        $form = new Form($this->name);
+        $form->setAction($this->action);
+        $form->setMethod($this->method);
+
+        foreach($this->elements as $name => $element) {
+            $label = null;
+            if(array_key_exists($name, $this->labels)) {
+                $label = $this->labels[$name];
+            }
+
+            if($element instanceof AInteractableElement) {
+                if($element->isRequired()) {
+                    $label->setRequired();
+                }
+            }
+
+            $row = new Row($label, $element);
+
+            $form->addRow($row);
+        }
+
+        return $form->render();
+    }
+
+    /**
+     * Adds label
+     * 
+     * @param string $name Element name
+     * @param string $text Label text
+     * @return Label Label instance
+     */
+    public function addLabel(string $name, string $text) {
+        $lbl = new Label($name, $text);
+        $this->elements[$name] = &$lbl;
+        return $lbl;
+    }
+
+    /**
+     * Adds single-line text input
+     * 
+     * @param string $name Element name
+     * @param ?string $label Label text or null
+     * @return TextInput TextInput instance
+     */
+    public function addTextInput(string $name, ?string $label = null) {
+        $ti = new TextInput($name);
 
         $this->elements[$name] = &$ti;
 
+        $this->processLabel($name, $label);
+
+        return $ti;
+    }
+    
+    /**
+     * Adds multi-line text input
+     * 
+     * @param string $name Element name
+     * @param ?string $label Label text or null
+     * @return TextArea TextArea instance
+     */
+    public function addTextArea(string $name, ?string $label = null) {
+        $ta = new TextArea($name);
+
+        $this->elements[$name] = &$ta;
+
+        $this->processLabel($name, $label);
+
+        return $ta;
+    }
+
+    /**
+     * If $label is not null then a label is created and associated to given element $name
+     * 
+     * @param string $name Element name
+     * @param ?string $label Label text or null
+     */
+    private function processLabel(string $name, ?string $label) {
         if($label !== null) {
             $lbl = new Label($name, $label);
             $this->labels[$name] = $lbl;
         }
-
-        return $ti;
     }
 
-    public static function createFromComponent(AComponent $component) {
-        
-    }
+    public static function createFromComponent(AComponent $component) {}
 }
 
 ?>

@@ -2,8 +2,11 @@
 
 namespace App\UI\FormBuilder2;
 
-use App\UI\IRenderable;
-
+/**
+ * Form label
+ * 
+ * @author Lukas Velek
+ */
 class Label extends AElement {
     private string $name;
     private string $text;
@@ -11,6 +14,12 @@ class Label extends AElement {
     private bool $required;
     private bool $isTitle;
 
+    /**
+     * Class constructor
+     * 
+     * @param string $name Element name
+     * @param string $text Label text
+     */
     public function __construct(string $name, string $text) {
         $this->text = $text;
         $this->for = $name;
@@ -19,16 +28,33 @@ class Label extends AElement {
         $this->isTitle = false;
     }
 
+    /**
+     * Sets that the element is required
+     * 
+     * @param bool $required True if the element is required
+     * @return self
+     */
     public function setRequired(bool $required = true) {
         $this->required = $required;
         return $this;
     }
 
+    /**
+     * Sets that the element is a title
+     * 
+     * @param bool $title Is the element a title?
+     * @return self
+     */
     public function setTitle(bool $title = true) {
         $this->isTitle = $title;
         return $this;
     }
 
+    /**
+     * Renders the form element
+     * 
+     * @return string HTML code
+     */
     public function render() {
         $code = '<label id="' . $this->name . '" for="' . $this->for . '">';
 

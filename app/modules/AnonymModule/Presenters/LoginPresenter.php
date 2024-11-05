@@ -17,7 +17,7 @@ class LoginPresenter extends AAnonymPresenter {
                 $this->app->userAuth->loginUser($fr->username, $fr->password);
                 
                 $this->app->logger->info('Logged in user #' . $this->httpSessionGet('userId') . '.', __METHOD__);
-                $this->redirect(['page' => 'Anonym:Login', 'action' => 'checkContainers']);
+                $this->redirect($this->createURL('checkContainers'));
             } catch(AException $e) {
                 $this->flashMessage('Could not log in due to internal error. Reason: ' . $e->getMessage(), 'error', 15);
                 $this->redirect($this->createURL('loginForm'));

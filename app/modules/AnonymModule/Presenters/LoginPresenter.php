@@ -2,7 +2,10 @@
 
 namespace App\Modules\AnonymModule;
 
+use App\Constants\ContainerStatus;
+use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
+use App\UI\FormBuilder2\FormBuilder2;
 use App\UI\FormBuilder\FormBuilder;
 use App\UI\FormBuilder\FormResponse;
 
@@ -12,7 +15,7 @@ class LoginPresenter extends AAnonymPresenter {
     }
 
     public function handleLoginForm(?FormResponse $fr = null) {
-        if($this->httpGet('isSubmit') == 'true') {
+        if($fr !== null) {
             try {
                 $this->app->userAuth->loginUser($fr->username, $fr->password);
                 
@@ -22,22 +25,28 @@ class LoginPresenter extends AAnonymPresenter {
                 $this->flashMessage('Could not log in due to internal error. Reason: ' . $e->getMessage(), 'error', 15);
                 $this->redirect($this->createURL('loginForm'));
             }
-        } else {
-            $fb = new FormBuilder();
-        
-            $fb ->setAction(['page' => 'Anonym:Login', 'action' => 'loginForm', 'isSubmit' => 'true'])
-                ->addTextInput('username', 'Username:', null, true)
-                ->addPassword('password', 'Password:', null, true)
-                ->addSubmit('Log in')
-            ;
-
-            $this->saveToPresenterCache('form', $fb);
         }
     }
 
     public function renderLoginForm() {
         $this->template->form = $this->loadFromPresenterCache('form');
         $this->template->title = 'Login';
+    }
+
+    protected function createComponentloginForm(HttpRequest $request) {
+        $form = new FormBuilder2($request);
+
+        $form->setAction($this->createURL('loginForm'));
+
+        $form->addTextInput('username', 'Username:')
+            ->setRequired();
+
+        $form->addPasswordInput('password', 'Password:')
+            ->setRequired();
+
+        $form->addSubmit('Log in');
+
+        return $form;
     }
 
     public function handleCheckContainers() {
@@ -69,42 +78,61 @@ class LoginPresenter extends AAnonymPresenter {
             } else {
                 $this->redirect($this->createFullURL('User:Home', 'dashboard'));
             }
-        } else {
-            $groups = $this->app->groupManager->getMembershipsForUser($this->getUserId());
-
-            $containers = [];
-            foreach($groups as $group) {
-                if($group->title == 'superadministrators') {
-                    $c = [
-                        'value' => $group->title,
-                        'text' => 'Superadministration'
-                    ];
-
-                    array_unshift($containers, $c);
-                } else {
-                    $title = substr($group->title, 0, (strlen($group->title) - 8));
-
-                    $containers[] = [
-                        'value' => $group->containerId,
-                        'text' => $title
-                    ];
-                }
-            }
-
-            $form = new FormBuilder();
-
-            $form->setMethod()
-                ->setAction($this->createURL('containerForm'))
-                ->addSelect('container', 'Container:', $containers, true)
-                ->addSubmit('Select')
-            ;
-
-            $this->saveToPresenterCache('form', $form);
         }
     }
 
     public function renderContainerForm() {
         $this->template->form = $this->loadFromPresenterCache('form');
+    }
+
+    protected function createComponentContainerForm(HttpRequest $request) {
+        $groups = $this->app->groupManager->getMembershipsForUser($this->getUserId());
+
+        $containers = [];
+        foreach($groups as $group) {
+            if($group->containerId !== null) {
+                $container = $this->app->containerManager->getContainerById($group->containerId);
+
+                if($container->status == ContainerStatus::NEW || $container->status == ContainerStatus::IS_BEING_CREATED || $container->status == ContainerStatus::NOT_RUNNING) {
+                    continue;
+                }
+            }
+
+            if($group->title == 'superadministrators') {
+                $c = [
+                    'value' => $group->title,
+                    'text' => 'Superadministration'
+                ];
+
+                array_unshift($containers, $c);
+            } else {
+                $title = substr($group->title, 0, (strlen($group->title) - 8));
+
+                $containers[] = [
+                    'value' => $group->containerId,
+                    'text' => $title
+                ];
+            }
+        }
+
+        $disabled = false;
+        if(empty($containers)) {
+            $this->addScript('alert("No containers are available.");');
+            $disabled = true;
+        }
+
+        $form = new FormBuilder2($request);
+
+        $form->setAction($this->createURL('containerForm'));
+
+        $form->addSelect('container', 'Container:')
+            ->setRequired()
+            ->addRawOptions($containers)
+            ->setDisabled($disabled);
+
+        $form->addSubmit('Select');
+
+        return $form;
     }
 }
 

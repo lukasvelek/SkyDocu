@@ -135,6 +135,57 @@ class FormBuilder2 extends AComponent {
 
         return $ti;
     }
+
+    /**
+     * Adds email input
+     * 
+     * @param string $name Element name
+     * @param ?string $label Label text or null
+     * @return EmailInput EmailInput instance
+     */
+    public function addEmailInput(string $name, ?string $label = null) {
+        $ei = new EmailInput($name);
+
+        $this->elements[$name] = &$ei;
+
+        $this->processLabel($name, $label);
+
+        return $ei;
+    }
+
+    /**
+     * Adds password input
+     * 
+     * @param string $name Element name
+     * @param ?string $label Label text or null
+     * @return PasswordInput PasswordInput instance
+     */
+    public function addPasswordInput(string $name, ?string $label = null) {
+        $pi = new PasswordInput($name);
+
+        $this->elements[$name] = &$pi;
+
+        $this->processLabel($name, $label);
+
+        return $pi;
+    }
+
+    /**
+     * Adds number input
+     * 
+     * @param string $name Element name
+     * @param ?string $label Label text or null
+     * @return NumberInput NumberInput instance
+     */
+    public function addNumberInput(string $name, ?string $label = null) {
+        $ni = new NumberInput($name);
+
+        $this->elements[$name] = &$ni;
+
+        $this->processLabel($name, $label);
+
+        return $ni;
+    }
     
     /**
      * Adds multi-line text input

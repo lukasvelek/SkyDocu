@@ -219,6 +219,15 @@ class FormBuilder2 extends AComponent {
         }
     }
 
+    /**
+     * Returns all form elements
+     * 
+     * @return array
+     */
+    public function getElements() {
+        return $this->elements;
+    }
+
     public static function createFromComponent(AComponent $component) {}
 }
 

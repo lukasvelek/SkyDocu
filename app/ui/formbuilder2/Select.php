@@ -118,7 +118,11 @@ class Select extends AInteractableElement {
      * @return string HTML code
      */
     public function render() {
-        $code = '<select name="' . $this->name . '">';
+        $code = '<select name="' . $this->name . '"';
+
+        $this->appendAttributesToCode($code);
+
+        $code .= '>';
 
         foreach($this->options as $option) {
             $code .= $option->render();

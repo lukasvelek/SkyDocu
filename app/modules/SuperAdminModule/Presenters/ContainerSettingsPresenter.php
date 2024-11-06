@@ -3,8 +3,9 @@
 namespace App\Modules\SuperAdminModule;
 
 use App\Constants\ContainerStatus;
+use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
-use App\UI\FormBuilder\FormBuilder;
+use App\UI\FormBuilder2\FormBuilder2;
 use App\UI\FormBuilder\FormResponse;
 
 class ContainerSettingsPresenter extends ASuperAdminPresenter {
@@ -35,11 +36,36 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
             }
 
             $this->redirect($this->createURL('status', ['containerId' => $containerId]));
-        } else {        
-            $container = $this->app->containerManager->getContainerById($containerId);
+        }
+    }
 
-            $statuses = [];
-            foreach(ContainerStatus::getAll() as $key => $value) {
+    public function renderStatus() {
+        $this->template->form = $this->loadFromPresenterCache('form');
+    }
+
+    protected function createComponentContainerStatusForm(HttpRequest $request) {
+        $container = $this->app->containerManager->getContainerById($request->query['containerId']);
+
+        $form = new FormBuilder2($request);
+
+        $form->setAction($this->createURL('status', ['containerId' => $request->query['containerId']]));
+
+        $disabled = false;
+        $statuses = [];
+        foreach(ContainerStatus::getAll() as $key => $value) {
+            if($container->status == ContainerStatus::NEW || $container->status == ContainerStatus::IS_BEING_CREATED) {
+                $status = [
+                    'text' => $value,
+                    'value' => $key
+                ];
+
+                if($container->status == $key) {
+                    $status['selected'] = 'selected';
+                }
+
+                $statuses[] = $status;
+                $disabled = true;
+            } else {
                 if(in_array($key, [ContainerStatus::IS_BEING_CREATED, ContainerStatus::NEW])){
                     continue;
                 }
@@ -55,21 +81,18 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
 
                 $statuses[] = $status;
             }
-
-            $form = new FormBuilder();
-
-            $form->setAction($this->createURL('status', ['containerId' => $containerId]))
-                ->addSelect('status', 'Status:', $statuses, true)
-                ->addTextArea('description', 'Description:', null, true)
-                ->addSubmit('Save')
-            ;
-
-            $this->saveToPresenterCache('form', $form);
         }
-    }
 
-    public function renderStatus() {
-        $this->template->form = $this->loadFromPresenterCache('form');
+        $form->addSelect('status', 'Status:')
+            ->addRawOptions($statuses)
+            ->setDisabled($disabled);
+
+        $form->addTextArea('description', 'Description:')
+            ->setRequired();
+
+        $form->addSubmit('Save');
+
+        return $form;
     }
 }
 

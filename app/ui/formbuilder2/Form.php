@@ -92,6 +92,10 @@ class Form extends AElement {
      * @return string URL
      */
     private function processAction() {
+        if(!array_key_exists('isFormSubmit', $this->action)) {
+            $this->action['isFormSubmit'] = '1';
+        }
+
         $parts = [];
         foreach($this->action as $key => $value) {
             $parts[] = $key . '=' . $value;

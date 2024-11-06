@@ -4,12 +4,20 @@ namespace App\UI\FormBuilder2;
 
 use App\UI\HTML\HTML;
 
+/**
+ * Form instance
+ */
 class Form extends AElement {
     private array $rows;
     private string $name;
     private string $method;
     private array $action;
 
+    /**
+     * Class constructor
+     * 
+     * @param string $name Form name
+     */
     public function __construct(string $name) {
         parent::__construct();
 
@@ -20,30 +28,55 @@ class Form extends AElement {
         $this->method = 'POST';
     }
 
+    /**
+     * Adds layout row
+     * 
+     * @param Row $row Row instance
+     */
     public function addRow(Row $row) {
         $this->rows[] = $row;
     }
 
+    /**
+     * Sets form action
+     * 
+     * @param array $action Action
+     */
     public function setAction(array $action) {
         $this->action = $action;
     }
 
+    /**
+     * Sets form method
+     * 
+     * @param string $method Method
+     */
     public function setMethod(string $method = 'POST') {
         $this->method = $method;
     }
 
+    /**
+     * Renders the form to HTML code
+     * 
+     * @return string HTML code
+     */
     public function render() {
         $form = HTML::el('form');
         $form->addAtribute('method', $this->method);
         $form->addAtribute('action', $this->processAction());
         $form->name($this->name);
         $form->id($this->name);
-        $form->text($this->processRender());
+        $form->text($this->renderRows());
 
         return $form;
     }
 
-    private function processRender() {
+    /**
+     * Processes layout row render
+     * 
+     * @return string HTML code
+     */
+    private function renderRows() {
         $code = '';
 
         foreach($this->rows as $row) {
@@ -53,6 +86,11 @@ class Form extends AElement {
         return $code;
     }
 
+    /**
+     * Creates a string URL from action
+     * 
+     * @return string URL
+     */
     private function processAction() {
         $parts = [];
         foreach($this->action as $key => $value) {

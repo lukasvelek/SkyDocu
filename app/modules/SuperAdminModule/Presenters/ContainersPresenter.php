@@ -113,6 +113,8 @@ class ContainersPresenter extends ASuperAdminPresenter {
             ->setPlaceHolder('Description')
             ->setRequired();
 
+        $form->addSubmit('Submit');
+
         return $form;
     }
 }

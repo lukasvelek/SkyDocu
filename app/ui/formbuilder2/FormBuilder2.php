@@ -154,6 +154,59 @@ class FormBuilder2 extends AComponent {
     }
 
     /**
+     * Adds form submit button
+     * 
+     * @param string $text Button text
+     * @param string $name Button name
+     * @return SubmitButton SubmitButton instance
+     */
+    public function addSubmit(string $text = 'Submit', string $name = 'btn_submit') {
+        $sb = new SubmitButton($name, $text);
+
+        $this->elements[$name] = &$sb;
+
+        return $sb;
+    }
+
+    /**
+     * Adds form general button
+     * 
+     * @param string $text Button text
+     * @return Button Button instance
+     */
+    public function addButton(string $text) {
+        $b = new Button('button', $text);
+
+        $i = 0;
+        foreach($this->elements as $name => $value) {
+            if(str_contains($name, 'btn')) {
+                $i++;
+            }
+        }
+
+        $this->elements['btn' . $i] = &$b;
+
+        return $b;
+    }
+
+    /**
+     * Adds form select
+     * 
+     * @param string $name Element name
+     * @param ?string $label Label text or null
+     * @return Select
+     */
+    public function addSelect(string $name, ?string $label = null) {
+        $s = new Select($name);
+
+        $this->elements[$name] = &$s;
+
+        $this->processLabel($name, $label);
+
+        return $s;
+    }
+
+    /**
      * If $label is not null then a label is created and associated to given element $name
      * 
      * @param string $name Element name

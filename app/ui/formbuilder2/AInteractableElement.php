@@ -23,7 +23,6 @@ abstract class AInteractableElement extends AElement {
      * Sets placeholder
      * 
      * @param string $text Placeholder text
-     * @return self
      */
     public function setPlaceholder(string $text) {
         $this->addAttribute('placeholder', $text);
@@ -34,7 +33,6 @@ abstract class AInteractableElement extends AElement {
      * Sets that the element is required
      * 
      * @param bool $required True if the element is required
-     * @return self
      */
     public function setRequired(bool $required = true) {
         $this->commonChangeUIParam('required', $required);
@@ -46,7 +44,6 @@ abstract class AInteractableElement extends AElement {
      * Sets that the element is disabled
      * 
      * @param bool $disabled True if the element is disabled
-     * @return self
      */
     public function setDisabled(bool $disabled = true) {
         $this->commonChangeUIParam('disabled', $disabled);

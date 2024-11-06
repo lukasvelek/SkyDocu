@@ -2,10 +2,20 @@
 
 namespace App\UI\FormBuilder2;
 
+/**
+ * Form text area
+ * 
+ * @author Lukas Velek
+ */
 class TextArea extends AInteractableElement {
     private string $name;
     private ?string $content;
 
+    /**
+     * Class constructor
+     * 
+     * @param string $name Element name
+     */
     public function __construct(string $name) {
         parent::__construct();
 
@@ -13,10 +23,20 @@ class TextArea extends AInteractableElement {
         $this->content = null;
     }
 
+    /**
+     * Sets the textarea content
+     * 
+     * @param ?string $content Element content
+     */
     public function setContent(?string $content) {
         $this->content = $content;
     }
 
+    /**
+     * Renders the element to HTML code
+     * 
+     * @return string HTML code
+     */
     public function render() {
         $code = '<textarea ';
 
@@ -27,16 +47,9 @@ class TextArea extends AInteractableElement {
             $this->addAttribute('id', $this->name);
         }
 
-        $nullValues = [];
-        foreach($this->attributes as $name => $value) {
-            if($value === null) {
-                $nullValues[] = $name;
-            } else {
-                $code .= $name . '="' . $value . '" ';
-            }
-        }
+        $this->appendAttributesToCode($code);
 
-        $code .= implode(' ', $nullValues) . '>';
+        $code .= '>';
 
         if($this->content !== null) {
             $code .= $this->content;

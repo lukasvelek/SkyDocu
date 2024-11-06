@@ -28,18 +28,7 @@ class Input extends AInteractableElement {
             $this->addAttribute('id', $this->name);
         }
 
-        $nullValues = [];
-        foreach($this->attributes as $name => $value) {
-            if($value === null) {
-                $nullValues[] = $name;
-            } else {
-                $code .= $name . '="' . $value . '" ';
-            }
-        }
-
-        if(!empty($nullValues)) {
-            $code .= implode(' ', $nullValues);
-        }
+        $this->appendAttributesToCode($code);
 
         $code .= '>';
 

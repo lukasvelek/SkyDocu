@@ -36,10 +36,6 @@ class DocumentsPresenter extends AUserPresenter {
 
         if($folderId !== null) {
             $this->currentFolderId = $folderId;
-        } else {
-            if($this->currentFolderId === null) {
-                //$this->currentFolderId = $this->getDefaultFolder();
-            }
         }
 
         $foldersSidebar = new Sidebar();
@@ -59,6 +55,7 @@ class DocumentsPresenter extends AUserPresenter {
             }
             
             $foldersSidebar->addLink($vf->title, $this->createURL('switchFolder', ['folderId' => $vf->folderId]), $active);
+            //$foldersSidebar->addJSLink($vf->title, 'documentsGrid_gridRefresh(0, \'' . $vf->folderId . '\')', $active);
         }
 
         $this->saveToPresenterCache('sidebar', $foldersSidebar->render());
@@ -74,6 +71,7 @@ class DocumentsPresenter extends AUserPresenter {
 
     protected function createComponentDocumentsGrid(HttpRequest $request) {
         $documentsGrid = new DocumentsGrid($this->getGridBuilder(), $this->app, $this->documentManager);
+        $documentsGrid->setGridName('documentsGrid');
 
         $documentsGrid->showCustomMetadata();
         $documentsGrid->setCurrentFolder($this->currentFolderId);

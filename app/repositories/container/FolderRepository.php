@@ -77,6 +77,71 @@ class FolderRepository extends ARepository {
 
         return $qb->fetch();
     }
+
+    public function getGroupFolderRelationId(string $groupId, string $folderId) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->select(['relationId'])
+            ->from('document_folder_group_relation')
+            ->where('folderId = ?', [$folderId])
+            ->andWhere('groupId = ?', [$groupId])
+            ->execute();
+
+        return $qb->fetch('relationId');
+    }
+
+    public function insertGroupFolderRelation(string $relationId, array $data) {
+        $qb = $this->qb(__METHOD__);
+
+        $keys = [];
+        $values = [];
+        foreach($data as $k => $v) {
+            $keys[] = $k;
+            $values[] = $v;
+        }
+
+        if(!in_array('relationId', $keys)) {
+            $keys[] = 'relationId';
+            $values[] = $relationId;
+        }
+
+        $qb->insert('document_folder_group_relation', $keys)
+            ->values($values)
+            ->execute();
+
+        return $qb->fetchBool();
+    }
+
+    public function updateGroupFolderRelation(string $relationId, array $data) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->update('document_folder_group_relation')
+            ->set($data)
+            ->where('relationId = ?', [$relationId])
+            ->execute();
+
+        return $qb->fetchBool();
+    }
+
+    public function createNewFolder(string $folderId, string $title) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->insert('document_folders', ['folderId', 'title'])
+            ->values([$folderId, $title])
+            ->execute();
+
+        return $qb->fetchBool();
+    }
+
+    public function composeQueryForGroupRightsInFolder(string $folderId) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->select(['*'])
+            ->from('document_folder_group_relation')
+            ->where('folderId = ?', [$folderId]);
+
+        return $qb;
+    }
 }
 
 ?>

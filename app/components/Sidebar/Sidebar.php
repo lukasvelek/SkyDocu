@@ -18,6 +18,16 @@ class Sidebar implements IRenderable {
         $this->links[] = $this->createLink($title, $url, $isActive);
     }
 
+    public function addJSLink(string $title, string $jsHandler, bool $isActive = false) {
+        if($isActive) {
+            $title = '<b>' . $title . '</b>';
+        }
+
+        $code = '<a class="sidebar-link" href="#" onclick="' . $jsHandler . '">' . $title . '</a>';
+
+        $this->links[] = $code;
+    }
+
     public function render() {
         $linkCode = implode('<br>', $this->links);
         $this->template->links = $linkCode;

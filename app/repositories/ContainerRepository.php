@@ -137,6 +137,17 @@ class ContainerRepository extends ARepository {
 
         return $qb->fetchBool();
     }
+
+    public function composeQueryForContainerStatusHistory(string $containerId) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->select(['*'])
+            ->from('container_status_history')
+            ->where('containerId = ?', [$containerId])
+            ->orderBy('dateCreated', 'DESC');
+        
+        return $qb;
+    }
 }
 
 ?>

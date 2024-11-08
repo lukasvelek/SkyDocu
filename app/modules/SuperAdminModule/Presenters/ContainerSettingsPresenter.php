@@ -7,6 +7,7 @@ use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
 use App\UI\FormBuilder2\FormBuilder2;
 use App\UI\FormBuilder\FormResponse;
+use App\UI\LinkBuilder;
 
 class ContainerSettingsPresenter extends ASuperAdminPresenter {
     public function __construct() {
@@ -40,7 +41,9 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
     }
 
     public function renderStatus() {
-        $this->template->form = $this->loadFromPresenterCache('form');
+        $this->template->links = [
+            LinkBuilder::createSimpleLink('Show history', $this->createURL('listStatusHistory', ['containerId' => $this->httpGet('containerId')]), 'link')
+        ];
     }
 
     protected function createComponentContainerStatusForm(HttpRequest $request) {
@@ -93,6 +96,26 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
         $form->addSubmit('Save');
 
         return $form;
+    }
+
+    public function renderListStatusHistory() {
+        $this->template->links = [
+            LinkBuilder::createSimpleLink('&larr; Back', $this->createURL('status', ['containerId' => $this->httpGet('containerId')]), 'link')
+        ];
+    }
+
+    protected function createComponentContainerStatusHistoryGrid(HttpRequest $request) {
+        $grid = $this->getGridBuilder();
+
+        $grid->createDataSourceFromQueryBuilder($this->app->containerRepository->composeQueryForContainerStatusHistory($request->query['containerId']), 'historyId');
+        $grid->addQueryDependency('containerId', $request->query['containerId']);
+
+        $grid->addColumnUser('userId', 'User');
+        $grid->addColumnText('description', 'Description');
+        $grid->addColumnConst('oldStatus', 'Old status', ContainerStatus::class);
+        $grid->addColumnConst('newStatus', 'New status', ContainerStatus::class);
+
+        return $grid;
     }
 }
 

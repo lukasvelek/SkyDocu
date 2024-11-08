@@ -28,7 +28,7 @@ abstract class ASuperAdminPresenter extends APresenter {
         $sb = new Sidebar();
 
         $home = $this->checkAction('home');
-        $status = $this->checkAction('status');
+        $status = $this->checkAction('status', 'listStatusHistory');
 
         $sb->addLink('Home', $this->createURL('home', ['containerId' => $containerId]), $home);
         $sb->addLink('Status', $this->createURL('status', ['containerId' => $containerId]), $status);
@@ -40,8 +40,12 @@ abstract class ASuperAdminPresenter extends APresenter {
         return $this->httpGet('page') == $page;
     }
 
-    private function checkAction(string $action) {
-        return $this->httpGet('action') == $action;
+    private function checkAction(string ...$actions) {
+        if(in_array($this->httpGet('action'), $actions)) {
+            return true;
+        } else {
+            return false;
+        }
     }
 }
 

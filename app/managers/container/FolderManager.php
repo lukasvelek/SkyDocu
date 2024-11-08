@@ -134,6 +134,10 @@ class FolderManager extends AManager {
 
         return DatabaseRow::createFromDbRow($folder);
     }
+
+    public function getGroupsWithoutRightsOnFolder(string $folderId) {
+        $groups = $this->fr->composeQueryForGroupRightsInFolder($folderId);
+    }
 }
 
 ?>

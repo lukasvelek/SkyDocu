@@ -26,6 +26,8 @@ class DocumentsGrid extends GridBuilder implements IExtendingComponent {
 
     private bool $allMetadata;
 
+    private ?string $currentFolderId;
+
     /**
      * Class constructor
      * 
@@ -46,6 +48,17 @@ class DocumentsGrid extends GridBuilder implements IExtendingComponent {
         $this->currentUserId = $app->currentUser->getId();
 
         $this->allMetadata = false;
+
+        $this->currentFolderId = null;
+    }
+
+    /**
+     * Sets the current folder
+     * 
+     * @param string $folderId Current folder ID
+     */
+    public function setCurrentFolder(?string $folderId) {
+        $this->currentFolderId = $folderId;
     }
 
     /**
@@ -107,11 +120,15 @@ class DocumentsGrid extends GridBuilder implements IExtendingComponent {
      * @return string Current folder ID
      */
     private function getFolderId() {
-        if(isset($this->httpRequest->query['folderId'])) {
-            return $this->httpRequest->query['folderId'];
-        } else {
-            throw new GeneralException('No folder is selected.');
+        if($this->currentFolderId == null) {
+            if(isset($this->httpRequest->query['folderId'])) {
+                $this->currentFolderId = $this->httpRequest->query['folderId'];
+            } else {
+                throw new GeneralException('No folder is selected.');
+            }
         }
+
+        return $this->currentFolderId;
     }
 
     /**

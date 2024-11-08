@@ -20,11 +20,26 @@ class DocumentsPresenter extends AUserPresenter {
         $this->currentFolderId = $this->httpSessionGet('current_document_folder_id');
     }
 
+    private function getDefaultFolder() {
+        $visibleFolders = $this->folderManager->getVisibleFoldersForUser($this->getUserId());
+
+        foreach($visibleFolders as $vf) {
+            if($this->currentFolderId === null && $vf->title == 'Default') {
+                $this->redirect($this->createURL('switchFolder', ['folderId' => $vf->folderId]));
+            }
+        }
+
+    }
+    
     public function handleList() {
         $folderId = $this->httpGet('folderId');
 
         if($folderId !== null) {
             $this->currentFolderId = $folderId;
+        } else {
+            if($this->currentFolderId === null) {
+                //$this->currentFolderId = $this->getDefaultFolder();
+            }
         }
 
         $foldersSidebar = new Sidebar();
@@ -36,6 +51,7 @@ class DocumentsPresenter extends AUserPresenter {
 
             if($this->currentFolderId == $vf->folderId) {
                 $active = true;
+                $this->saveToPresenterCache('folderTitle', $vf->title);
             }
 
             if($this->currentFolderId === null && $vf->title == 'Default') {
@@ -53,12 +69,14 @@ class DocumentsPresenter extends AUserPresenter {
         $this->template->links = [
             LinkBuilder::createSimpleLink('New document', $this->createFullURL('User:CreateDocument', 'form', ['folderId' => $this->httpGet('folderId')]), 'link')
         ];
+        $this->template->folder_title = $this->loadFromPresenterCache('folderTitle');
     }
 
     protected function createComponentDocumentsGrid(HttpRequest $request) {
         $documentsGrid = new DocumentsGrid($this->getGridBuilder(), $this->app, $this->documentManager);
 
         $documentsGrid->showCustomMetadata();
+        $documentsGrid->setCurrentFolder($this->currentFolderId);
 
         return $documentsGrid;
     }

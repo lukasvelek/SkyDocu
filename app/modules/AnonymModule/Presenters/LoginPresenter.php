@@ -52,12 +52,39 @@ class LoginPresenter extends AAnonymPresenter {
     public function handleCheckContainers() {
         $groups = $this->app->groupManager->getMembershipsForUser($this->getUserId());
 
-        if(count($groups) == 0) {
+        $containers = [];
+        foreach($groups as $group) {
+            if($group->containerId !== null) {
+                $container = $this->app->containerManager->getContainerById($group->containerId);
+
+                if($container->status == ContainerStatus::NEW || $container->status == ContainerStatus::IS_BEING_CREATED || $container->status == ContainerStatus::NOT_RUNNING) {
+                    continue;
+                }
+            }
+
+            if($group->title == 'superadministrators') {
+                $c = [
+                    'value' => $group->title,
+                    'text' => 'Superadministration'
+                ];
+
+                array_unshift($containers, $c);
+            } else {
+                $title = substr($group->title, 0, (strlen($group->title) - 8));
+
+                $containers[] = [
+                    'value' => $group->containerId,
+                    'text' => $title
+                ];
+            }
+        }
+
+        if(count($containers) == 0) {
             session_destroy();
 
             $this->flashMessage('User is not member of any group. Therefore login is not available.', 'error', 10);
             $this->redirect($this->createURL('loginForm'));
-        } else if(count($groups) == 1) {
+        } else if(count($containers) == 1) {
             $this->redirect($this->createFullURL('Anonym:AutoLogin', 'checkLogin'));
         } else {
             $this->httpSessionSet('is_choosing_container', true);

@@ -610,7 +610,7 @@ abstract class APresenter extends AGUICore {
             }
         }
 
-        $this->beforeRenderCallbacks->executeCallables();
+        $this->beforeRenderCallbacks->executeCallables([$this->template]);
 
         return $templateContent;
     }

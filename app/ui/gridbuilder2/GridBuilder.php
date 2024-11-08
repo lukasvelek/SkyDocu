@@ -899,7 +899,7 @@ class GridBuilder extends AComponent {
      * @return string HTML code
      */
     private function createGridRefreshControl() {
-        $args = [$this->getGridPage()];
+        $args = [$this->gridPage];
 
         if(!empty($this->activeFilters)) {
             foreach($this->activeFilters as $name => $value) {

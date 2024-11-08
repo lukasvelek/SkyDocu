@@ -159,6 +159,16 @@ class DocumentManager extends AManager {
             }
         }
     }
+
+    public function getDocumentCountForFolder(string $folderId) {
+        $qb = $this->dr->composeQueryForDocuments();
+        $qb->andWhere('folderId = ?', [$folderId])
+            ->select(['COUNT(*) AS cnt'])
+            ->execute()
+        ;
+
+        return $qb->fetch('cnt');
+    }
 }
 
 ?>

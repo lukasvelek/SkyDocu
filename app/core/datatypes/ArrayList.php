@@ -148,13 +148,13 @@ class ArrayList {
      * 
      * @return bool True if at least once a callable was executed or false if not
      */
-    public function executeCallables() {
+    public function executeCallables(array $params = []) {
         $executed = false;
 
         foreach($this->_data as $d) {
             if(is_callable($d)) {
                 $executed = true;
-                $d();
+                $d(...$params);
             }
         }
 

@@ -21,6 +21,13 @@ class FolderManager extends AManager {
         $this->gr = $gr;
     }
 
+    public function getVisibleFolderIdsForGroup(string $groupId) {
+        $cache = $this->cacheFactory->getCache(CacheNames::VISIBLE_FOLDER_IDS_FOR_GROUP);
+        return $cache->load($groupId, function() use ($groupId) {
+            return $this->fr->getVisibleFolderIdsForGroup($groupId);
+        });
+    }
+
     public function getVisibleFoldersForUser(string $userId) {
         $cache = $this->cacheFactory->getCache(CacheNames::VISIBLE_FOLDERS_FOR_USER);
         return $cache->load($userId, function() use ($userId) {
@@ -28,7 +35,7 @@ class FolderManager extends AManager {
 
             $folderIds = [];
             foreach($groupIds as $groupId) {
-                $folderIdsTmp = $this->fr->getVisibleFolderIdsForGroup($groupId);
+                $folderIdsTmp = $this->getVisibleFolderIdsForGroup($groupId);
 
                 foreach($folderIdsTmp as $folderId) {
                     if(!in_array($folderId, $folderIds)) {
@@ -47,6 +54,27 @@ class FolderManager extends AManager {
 
             return $folders;
         });
+    }
+
+    public function composeQueryForVisibleFoldersForUser(string $userId) {
+        $groupIds = $this->gr->getGroupsForUser($userId);
+
+        $folderIds = [];
+        foreach($groupIds as $groupId) {
+            $folderIdsTmp = $this->getVisibleFolderIdsForGroup($groupId);
+
+            foreach($folderIdsTmp as $folderId) {
+                if(!in_array($folderId, $folderIds)) {
+                    $folderIds[] = $folderId;
+                }
+            }
+        }
+
+        $qb = $this->fr->composeQueryForFolders();
+
+        $qb->where($qb->getColumnInValues('folderId', $folderIds));
+
+        return $qb;
     }
 }
 

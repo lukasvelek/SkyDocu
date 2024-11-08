@@ -76,7 +76,7 @@ abstract class AGUICore {
                 try {
                     $this->checkComponents($content, $template);
                 } catch(AException $e) {
-                    throw new GeneralException('Could not render template. Reason: ' . $e->getMessage() . ' [' . $e->getHash() . ']', $e, false);
+                    throw new GeneralException('Could not render template. Reason: ' . $e->getMessage(), $e, false);
                 }
             }
 
@@ -112,10 +112,10 @@ abstract class AGUICore {
 
                     $template->setComponent($componentName, $component);
                 } else {
-                    throw new GeneralException('Method \'' . $this::class . '::' . $componentAction . '()\' does not return a value that implements IRenderable interface.');
+                    throw new GeneralException('Method \'' . $this::class . '::' . $componentAction . '()\' does not return a value that implements IRenderable interface.', null, false);
                 }
             } else {
-                throw new GeneralException('No method \'' . $this::class . '::' . $componentAction . '()\' exists.');
+                throw new GeneralException('No method \'' . $this::class . '::' . $componentAction . '()\' exists.', null, false);
             }
         }
     }

@@ -115,7 +115,8 @@ class ContainerManager extends AManager {
             ],
             'document_folders' => [
                 'folderId' => $folderIds['Default'],
-                'title' => 'Default'
+                'title' => 'Default',
+                'isSystem' => 1
             ],
             'document_folder_group_relation' => [
                 'relationId' => $this->createIdCustomDb(EntityManager::C_DOCUMENT_FOLDER_GROUP_RELATION, $conn),

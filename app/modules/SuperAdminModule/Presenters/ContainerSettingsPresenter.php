@@ -3,10 +3,14 @@
 namespace App\Modules\SuperAdminModule;
 
 use App\Constants\ContainerStatus;
+use App\Core\DB\DatabaseRow;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
 use App\UI\FormBuilder2\FormBuilder2;
 use App\UI\FormBuilder\FormResponse;
+use App\UI\GridBuilder2\Cell;
+use App\UI\GridBuilder2\Row;
+use App\UI\HTML\HTML;
 use App\UI\LinkBuilder;
 
 class ContainerSettingsPresenter extends ASuperAdminPresenter {
@@ -111,7 +115,10 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
         $grid->addQueryDependency('containerId', $request->query['containerId']);
 
         $grid->addColumnUser('userId', 'User');
-        $grid->addColumnText('description', 'Description');
+        $col = $grid->addColumnText('description', 'Description');
+        $col->onRenderColumn[] = function(DatabaseRow $row, Row $_row, Cell $cell, HTML $html, mixed $value) {
+            return 'User comment: ' . $value;
+        };
         $grid->addColumnConst('oldStatus', 'Old status', ContainerStatus::class);
         $grid->addColumnConst('newStatus', 'New status', ContainerStatus::class);
 

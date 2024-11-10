@@ -5,6 +5,7 @@ namespace App\Modules;
 use App\Core\DatabaseConnection;
 use App\Managers\Container\DocumentManager;
 use App\Managers\Container\FolderManager;
+use App\Managers\Container\GroupManager;
 use App\Managers\EntityManager;
 use App\Repositories\Container\DocumentClassRepository;
 use App\Repositories\Container\DocumentRepository;
@@ -23,6 +24,7 @@ abstract class AContainerPresenter extends APresenter {
     protected EntityManager $entityManager;
     protected FolderManager $folderManager;
     protected DocumentManager $documentManager;
+    protected GroupManager $groupManager;
 
     protected function __construct(string $name, string $title) {
         parent::__construct($name, $title);
@@ -40,6 +42,7 @@ abstract class AContainerPresenter extends APresenter {
         $this->entityManager = new EntityManager($this->logger, $this->contentRepository);
         $this->folderManager = new FolderManager($this->logger, $this->entityManager, $this->folderRepository, $this->groupRepository);
         $this->documentManager = new DocumentManager($this->logger, $this->entityManager, $this->documentRepository, $this->documentClassRepository, $this->groupRepository, $this->folderRepository);
+        $this->groupManager = new GroupManager($this->logger, $this->entityManager, $this->groupRepository, $this->app->userRepository);
     }
 
     private function initRepositories(DatabaseConnection $db) {

@@ -2,10 +2,8 @@
 
 namespace App\Modules\AdminModule;
 
-use App\Components\Sidebar\Sidebar;
 use App\Core\DB\DatabaseRow;
 use App\Core\Http\HttpRequest;
-use App\Modules\TemplateObject;
 use App\UI\FormBuilder\FormBuilder;
 use App\UI\FormBuilder\FormResponse;
 use App\UI\GridBuilder2\Row;
@@ -13,24 +11,10 @@ use App\UI\HTML\HTML;
 use App\UI\LinkBuilder;
 
 class GroupsPresenter extends AAdminPresenter {
-    private Sidebar $sidebar;
-
     public function __construct() {
         parent::__construct('GroupsPresenter', 'Groups');
-    }
 
-    public function startup() {
-        parent::startup();
-
-        $this->sidebar = new Sidebar();
-
-        $this->sidebar->addLink('Dashboard', $this->createFullURL('Admin:Members', 'dashboard'), false);
-        $this->sidebar->addLink('Groups', $this->createFullURL('Admin:Groups', 'list'), true);
-        $this->sidebar->addLink('Users', $this->createFullURL('Admin:Users', 'list'), false);
-
-        $this->addBeforeRenderCallback(function(TemplateObject $template) {
-            $template->sidebar = $this->sidebar;
-        });
+        $this->setMembers();
     }
 
     public function renderList() {

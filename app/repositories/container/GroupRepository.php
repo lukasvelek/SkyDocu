@@ -38,6 +38,17 @@ class GroupRepository extends ARepository {
         return $qb->fetch();
     }
 
+    public function getGroupByTitle(string $groupTitle) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->select(['*'])
+            ->from('groups')
+            ->where('title = ?', [$groupTitle])
+            ->execute();
+
+        return $qb->fetch();
+    }
+
     public function composeQueryForGroups() {
         $qb = $this->qb(__METHOD__);
 
@@ -67,6 +78,16 @@ class GroupRepository extends ARepository {
         }
 
         return $members;
+    }
+
+    public function addUserToGroup(string $relationId, string $groupId, string $userId) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->insert('group_users_relation', ['relationId', 'groupId', 'userId'])
+            ->values([$relationId, $groupId, $userId])
+            ->execute();
+
+        return $qb->fetchBool();
     }
 }
 

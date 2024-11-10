@@ -207,8 +207,18 @@ class ContainerManager extends AManager {
     public function deleteContainer(string $containerId) {
         $container = $this->getContainerById($containerId);
         
+        // Drop container database with all data
         $this->dbManager->dropDatabase($container->databaseName);
 
+        // Remove group and memberships
+        $group = $this->groupManager->getGroupByTitle($container->title . ' - users');
+
+        $exceptions = [];
+        $this->groupManager->removeAllUsersFromGroup($group->groupId, $exceptions);
+
+        $this->groupManager->removeGroup($group->groupId);
+
+        // Delete container and all history data
         if(!$this->containerRepository->deleteContainer($containerId)) {
             throw new GeneralException('Could not delete container.');
         }

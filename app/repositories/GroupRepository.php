@@ -67,6 +67,17 @@ class GroupRepository extends ARepository {
         return $qb->fetchBool();
     }
 
+    public function removeGroup(string $groupId) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->delete()
+            ->from('groups')
+            ->where('groupId = ?', [$groupId])
+            ->execute();
+
+        return $qb->fetchBool();
+    }
+
     public function composeQueryForGroups() {
         $qb = $this->qb(__METHOD__);
 

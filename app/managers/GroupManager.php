@@ -106,6 +106,34 @@ class GroupManager extends AManager {
 
         return $groups;
     }
+
+    public function removeAllUsersFromGroup(string $groupId, array &$exceptions) {
+        $userIds = $this->getGroupUsersForGroupId($groupId);
+
+        $removed = 0;
+        foreach($userIds as $userId) {
+            try {
+                $this->removeUserFromGroup($userId, $groupId);
+                $removed++;
+            } catch(AException $e) {
+                $exceptions[$userId] = $e;
+
+                continue;
+            }
+        }
+
+        if($removed < count($userIds)) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    public function removeGroup(string $groupId) {
+        if(!$this->gr->removeGroup($groupId)) {
+            throw new GeneralException('Could not remove group.');
+        }
+    }
 }
 
 ?>

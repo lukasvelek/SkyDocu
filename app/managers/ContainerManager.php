@@ -59,18 +59,20 @@ class ContainerManager extends AManager {
             $this->createNewContainerTables($container->databaseName);
             
             $exceptions = [];
-            $this->insertNewContainerDefaultDataAsync($containerId, $container->databaseName, $exceptions);
+            $this->insertNewContainerDefaultDataAsync($containerId, $container, $container->databaseName, $exceptions);
         } catch(AException $e) {
             throw $e;
         }
     }
 
-    private function insertNewContainerDefaultDataAsync(string $containerId, string $dbName, array &$exceptions) {
+    private function insertNewContainerDefaultDataAsync(string $containerId, DatabaseRow $container, string $dbName, array &$exceptions) {
         try {
             $conn = $this->dbManager->getConnectionToDatabase($dbName);
         } catch(AException $e) {
             throw new GeneralException('Could not establish connection to the container database.');
         }
+
+        $users = $this->groupManager->getGroupUsersForGroupTitle($container->title . ' - users');
 
         $groupIds = [
             'Administrators' => $this->createIdCustomDb(EntityManager::C_GROUPS, $conn),
@@ -86,71 +88,124 @@ class ContainerManager extends AManager {
         ];
         
         $data = [
-            'groups' => [
-                'groupId' => $groupIds['Administrators'],
-                'title' => 'Administrators'
+            [
+                'table' => 'groups',
+                'data' => [
+                    'groupId' => $groupIds['Administrators'],
+                    'title' => 'Administrators'
+                ]
             ],
-            'groups' => [
-                'groupId' => $groupIds['All users'],
-                'title' => 'All users'
+            [
+                'table' => 'groups',
+                'data' => [
+                    'groupId' => $groupIds['All users'],
+                    'title' => 'All users'
+                ]
             ],
-            'document_classes' => [
-                'classId' => $classIds['Default'],
-                'title' => 'Default'
+            [
+                'table' => 'document_classes',
+                'data' => [
+                    'classId' => $classIds['Default'],
+                    'title' => 'Default'
+                ]
             ],
-            'document_class_group_rights' => [
-                'rightId' => $this->createIdCustomDb(EntityManager::C_DOCUMENT_CLASS_GROUP_RIGHTS, $conn),
-                'groupId' => $groupIds['All users'],
-                'classId' => $classIds['Default'],
-                'canView' => 1,
-                'canCreate' => 1
+            [
+                'table' => 'document_class_group_rights',
+                'data' => [
+                    'rightId' => $this->createIdCustomDb(EntityManager::C_DOCUMENT_CLASS_GROUP_RIGHTS, $conn),
+                    'groupId' => $groupIds['All users'],
+                    'classId' => $classIds['Default'],
+                    'canView' => 1,
+                    'canCreate' => 1
+                ]
             ],
-            'document_class_group_rights' => [
-                'rightId' => $this->createIdCustomDb(EntityManager::C_DOCUMENT_CLASS_GROUP_RIGHTS, $conn),
-                'groupId' => $groupIds['Administrators'],
-                'canView' => 1,
-                'canCreate' => 1,
-                'canEdit' => 1,
-                'canDelete' => 1
+            [
+                'table' => 'document_class_group_rights',
+                'data' => [
+                    'rightId' => $this->createIdCustomDb(EntityManager::C_DOCUMENT_CLASS_GROUP_RIGHTS, $conn),
+                    'groupId' => $groupIds['Administrators'],
+                    'canView' => 1,
+                    'canCreate' => 1,
+                    'canEdit' => 1,
+                    'canDelete' => 1
+                ]
             ],
-            'document_folders' => [
-                'folderId' => $folderIds['Default'],
-                'title' => 'Default',
-                'isSystem' => 1
+            [
+                'table' => 'document_folders',
+                'data' => [
+                    'folderId' => $folderIds['Default'],
+                    'title' => 'Default',
+                    'isSystem' => 1
+                ]
             ],
-            'document_folder_group_relation' => [
-                'relationId' => $this->createIdCustomDb(EntityManager::C_DOCUMENT_FOLDER_GROUP_RELATION, $conn),
-                'folderId' => $folderIds['Default'],
-                'groupId' => $groupIds['All users'],
-                'canView' => 1,
-                'canCreate' => 1
+            [
+                'table' => 'document_folder_group_relation',
+                'data' => [
+                    'relationId' => $this->createIdCustomDb(EntityManager::C_DOCUMENT_FOLDER_GROUP_RELATION, $conn),
+                    'folderId' => $folderIds['Default'],
+                    'groupId' => $groupIds['All users'],
+                    'canView' => 1,
+                    'canCreate' => 1
+                ]
             ],
-            'document_folder_group_relation' => [
-                'relationId' => $this->createIdCustomDb(EntityManager::C_DOCUMENT_FOLDER_GROUP_RELATION, $conn),
-                'folderId' => $folderIds['Default'],
-                'groupId' => $groupIds['Administrators'],
-                'canView' => 1,
-                'canCreate' => 1,
-                'canEdit' => 1,
-                'canDelete' => 1
+            [
+                'table' => 'document_folder_group_relation',
+                'data' => [
+                    'relationId' => $this->createIdCustomDb(EntityManager::C_DOCUMENT_FOLDER_GROUP_RELATION, $conn),
+                    'folderId' => $folderIds['Default'],
+                    'groupId' => $groupIds['Administrators'],
+                    'canView' => 1,
+                    'canCreate' => 1,
+                    'canEdit' => 1,
+                    'canDelete' => 1
+                ]
             ],
-            'group_rights_standard_operations' => [
-                'rightId' => $this->createIdCustomDb(EntityManager::C_GROUP_STANDARD_OPERATION_RIGHTS, $conn),
-                'groupId' => $groupIds['Administrators'],
-                'canShareDocuments' => 1,
-                'canExportDocuments' => 1,
-                'canViewDocumentHistory' => 1
+            [
+                'table' => 'group_rights_standard_operations',
+                'data' => [
+                    'rightId' => $this->createIdCustomDb(EntityManager::C_GROUP_STANDARD_OPERATION_RIGHTS, $conn),
+                    'groupId' => $groupIds['Administrators'],
+                    'canShareDocuments' => 1,
+                    'canExportDocuments' => 1,
+                    'canViewDocumentHistory' => 1
+                ]
             ],
-            'process_types' => [
-                'typeId' => $this->createIdCustomDb(EntityManager::C_PROCESS_TYPES, $conn),
-                'typeKey' => 'shredding',
-                'title' => 'Document shredding',
-                'description' => 'Shred document'
-            ]
+            [
+                'table' => 'process_types',
+                'data' => [
+                    'typeId' => $this->createIdCustomDb(EntityManager::C_PROCESS_TYPES, $conn),
+                    'typeKey' => 'shredding',
+                    'title' => 'Document shredding',
+                    'description' => 'Shred document'
+                ]
+            ],
         ];
 
-        foreach($data as $tableName => $values) {
+        foreach($users as $userId) {
+            $data[] = [
+                'table' => 'group_users_relation',
+                'data' => [
+                    'relationId' => $this->createIdCustomDb(EntityManager::C_GROUP_USERS_RELATION, $conn),
+                    'userId' => $userId,
+                    'groupId' => $groupIds['All users']
+                ]
+            ];
+
+            $data[] = [
+                'table' => 'group_users_relation',
+                'data' => [
+                    'relationId' => $this->createIdCustomDb(EntityManager::C_GROUP_USERS_RELATION, $conn),
+                    'userId' => $userId,
+                    'groupId' => $groupIds['Administrators']
+                ]
+            ];
+        }
+
+        foreach($data as $part) {
             try {
+                $tableName = $part['table'];
+                $values = $part['data'];
+
                 $this->dbManager->insertDataToTable($tableName, $values, $dbName);
             } catch(AException $e) {
                 $exceptions[$tableName] = $e;

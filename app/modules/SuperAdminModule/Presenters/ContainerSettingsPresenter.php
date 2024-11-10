@@ -176,7 +176,7 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
                 $this->flashMessage('Could not delete container. Reason: ' . $e->getMessage(), 'error', 10);
             }
 
-            $this->redirect($this->createFullURL('SuperAdmin:Container', 'list'));
+            $this->redirect($this->createFullURL('SuperAdmin:Containers', 'list'));
         }
     }
 

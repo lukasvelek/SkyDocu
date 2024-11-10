@@ -122,6 +122,7 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
         };
         $grid->addColumnConst('oldStatus', 'Old status', ContainerStatus::class);
         $grid->addColumnConst('newStatus', 'New status', ContainerStatus::class);
+        $grid->addColumnDatetime('dateCreated', 'Date');
 
         return $grid;
     }

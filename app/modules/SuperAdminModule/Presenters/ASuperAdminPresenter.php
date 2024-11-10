@@ -33,7 +33,7 @@ abstract class ASuperAdminPresenter extends APresenter {
 
         $sb->addLink('Home', $this->createURL('home', ['containerId' => $containerId]), $home);
         $sb->addLink('Status', $this->createURL('status', ['containerId' => $containerId]), $status);
-        $sb->addLink('Advanced', $this->createURL('advanced', ['containerId' => $containerId], $advanced));
+        $sb->addLink('Advanced', $this->createURL('advanced', ['containerId' => $containerId]), $advanced);
 
         return $sb->render();
     }

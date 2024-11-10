@@ -4,6 +4,7 @@ namespace App\Core\DB;
 
 use App\Core\DatabaseConnection;
 use App\Exceptions\AException;
+use App\Exceptions\DatabaseExecutionException;
 use App\Logger\Logger;
 
 /**
@@ -34,7 +35,7 @@ class DatabaseManager {
      * Creates a new database
      * 
      * @param string $name Database name
-     * @return bool True on success or false on failure
+     * @return bool True on success
      */
     public function createNewDatabase(string $name) {
         $sql = "CREATE DATABASE `" . $name . "`;";
@@ -44,7 +45,7 @@ class DatabaseManager {
         if($result !== false) {
             return true;
         } else {
-            return false;
+            throw new DatabaseExecutionException('Could not create database.', $sql);
         }
     }
 
@@ -74,6 +75,7 @@ class DatabaseManager {
      * @param string $name Table name
      * @param array $columns Column definition
      * @param string $dbName Database name
+     * @return bool True on success
      */
     public function createTable(string $name, array $columns, string $dbName) {
         try {
@@ -97,7 +99,7 @@ class DatabaseManager {
             if($result !== false) {
                 return true;
             } else {
-                return false;
+                throw new DatabaseExecutionException('Could not create table.', $sql);
             }
         } catch(AException $e) {
             throw $e;
@@ -110,7 +112,7 @@ class DatabaseManager {
      * @param string $name Table name
      * @param array $data Data
      * @param string $dbName Database name
-     * @return bool True on success or false on failure
+     * @return bool True on success
      */
     public function insertDataToTable(string $name, array $data, string $dbName) {
         try {
@@ -134,7 +136,35 @@ class DatabaseManager {
             if($result !== false) {
                 return true;
             } else {
-                return false;
+                throw new DatabaseExecutionException('Could not insert data to table.', $sql);
+            }
+        } catch(AException $e) {
+            throw $e;
+        }
+    }
+
+    /**
+     * Drops database
+     * 
+     * @param string $databaseName Database name
+     * @return bool True on success
+     */
+    public function dropDatabase(string $databaseName) {
+        try {
+            $conn = $this->getConnectionToDatabase($databaseName);
+        } catch(AException $e) {
+            throw $e;
+        }
+
+        $sql = "DROP DATABASE `" . $databaseName . "`";
+
+        try {
+            $result = $conn->query($sql);
+
+            if($result !== false) {
+                return true;
+            } else {
+                throw new DatabaseExecutionException('Could not drop database.', $sql);
             }
         } catch(AException $e) {
             throw $e;

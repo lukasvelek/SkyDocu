@@ -203,6 +203,22 @@ class ContainerManager extends AManager {
         
         return DatabaseRow::createFromDbRow($container);
     }
+
+    public function deleteContainer(string $containerId) {
+        $container = $this->getContainerById($containerId);
+        
+        $this->dbManager->dropDatabase($container->databaseName);
+
+        if(!$this->containerRepository->deleteContainer($containerId)) {
+            throw new GeneralException('Could not delete container.');
+        }
+        if(!$this->containerRepository->deleteContainerCreationStatus($containerId)) {
+            throw new GeneralException('Could not delete container creation status entry.');
+        }
+        if(!$this->containerRepository->deleteContainerStatusHistory($containerId)) {
+            throw new GeneralException('COuld not delete container status history entries.');
+        }
+    }
 }
 
 ?>

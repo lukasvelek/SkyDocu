@@ -29,9 +29,11 @@ abstract class ASuperAdminPresenter extends APresenter {
 
         $home = $this->checkAction('home');
         $status = $this->checkAction('status', 'listStatusHistory');
+        $advanced = $this->checkAction('advanced');
 
         $sb->addLink('Home', $this->createURL('home', ['containerId' => $containerId]), $home);
         $sb->addLink('Status', $this->createURL('status', ['containerId' => $containerId]), $status);
+        $sb->addLink('Advanced', $this->createURL('advanced', ['containerId' => $containerId], $advanced));
 
         return $sb->render();
     }

@@ -148,6 +148,39 @@ class ContainerRepository extends ARepository {
         
         return $qb;
     }
+
+    public function deleteContainer(string $containerId) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->delete()
+            ->from('containers')
+            ->where('containerId = ?', [$containerId])
+            ->execute();
+
+        return $qb->fetchBool();
+    }
+
+    public function deleteContainerStatusHistory(string $containerId) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->delete()
+            ->from('container_status_history')
+            ->where('containerId = ?', [$containerId])
+            ->execute();
+
+        return $qb->fetchBool();
+    }
+
+    public function deleteContainerCreationStatus(string $containerId) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->delete()
+            ->from('container_creation_status')
+            ->where('containerId = ?', [$containerId])
+            ->execute();
+
+        return $qb->fetchBool();
+    }
 }
 
 ?>

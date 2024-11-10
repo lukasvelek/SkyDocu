@@ -97,7 +97,7 @@ class DatabaseInstaller {
                 'transactionId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',
                 'userId' => 'VARCHAR(256) NOT NULL',
                 'callingMethod' => 'TEXT NOT NULL',
-                'dateCreated' => 'DATETIME NOT NULL'
+                'dateCreated' => 'DATETIME NOT NULL DEFAULT current_timestamp()'
             ],
             'system_services' => [
                 'serviceId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',

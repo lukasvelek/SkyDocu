@@ -120,7 +120,7 @@ class DocumentsGrid extends GridBuilder implements IExtendingComponent {
      * @return string Current folder ID
      */
     private function getFolderId() {
-        if($this->currentFolderId == null) {
+        if($this->currentFolderId === null) {
             if(isset($this->httpRequest->query['folderId'])) {
                 $this->currentFolderId = $this->httpRequest->query['folderId'];
             } else {

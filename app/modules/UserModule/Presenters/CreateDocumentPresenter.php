@@ -4,8 +4,9 @@ namespace App\Modules\UserModule;
 
 use App\Constants\Container\CustomMetadataTypes;
 use App\Constants\Container\DocumentStatus;
+use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
-use App\UI\FormBuilder\FormBuilder;
+use App\UI\FormBuilder2\FormBuilder2;
 use App\UI\FormBuilder\FormResponse;
 
 class CreateDocumentPresenter extends AUserPresenter {
@@ -13,17 +14,18 @@ class CreateDocumentPresenter extends AUserPresenter {
         parent::__construct('CreateDocumentPresenter', 'Create document');
     }
 
-    private function addCustomMetadataFormControls(FormBuilder $form, string $folderId) {
+    private function addCustomMetadataFormControls(FormBuilder2 $form, string $folderId) {
         $customMetadatas = $this->documentManager->getCustomMetadataForFolder($folderId);
 
         foreach($customMetadatas as $metadataId => $metadata) {
             switch($metadata->type) {
                 case CustomMetadataTypes::BOOL:
-                    $form->addCheckbox($metadata->title, $metadata->guiTitle . ':');
+                    $form->addCheckboxInput($metadata->title, $metadata->guiTitle . ':');
                     break;
 
                 case CustomMetadataTypes::DATETIME:
-                    $form->addDatetime($metadata->title, $metadata->guiTitle . ':', null, true);
+                    $form->addDateTimeInput($metadata->title, $metadata->guiTitle . ':')
+                        ->setRequired();
                     break;
 
                 case CustomMetadataTypes::ENUM:
@@ -51,10 +53,54 @@ class CreateDocumentPresenter extends AUserPresenter {
         return $form;
     }
 
-    public function handleForm() {
-        $folderId = $this->httpGet('folderId', true);
+    public function handleForm(?FormResponse $fr = null) {
+        if($fr !== null) {
+            $folderId = $this->httpGet('folderId', true);
 
-        // DOCUMENT CLASSES
+            $customMetadatas = $this->documentManager->getCustomMetadataForFolder($folderId);
+
+            $metadataValues = [
+                'title' => $fr->title,
+                'classId' => $fr->class,
+                'authorUserId' => $this->getUserId(),
+                'status' => DocumentStatus::NEW,
+                'folderId' => $folderId
+            ];
+
+            if(isset($fr->description)) {
+                $metadataValues['description'] = $fr->description;
+            }
+
+            $customMetadataValues = [];
+            foreach($customMetadatas as $metadataId => $metadata) {
+                if(isset($fr->{$metadata->title})) {
+                    $customMetadataValues[$metadataId] = $fr->{$metadata->title};
+                }
+            }
+
+            try {
+                $this->documentClassRepository->beginTransaction(__METHOD__);
+
+                $this->documentManager->createNewDocument($metadataValues, $customMetadataValues);
+
+                $this->documentClassRepository->commit($this->getUserId(), __METHOD__);
+
+                $this->flashMessage('Document created.', 'success');
+            } catch(AException $e) {
+                $this->documentClassRepository->rollback(__METHOD__);
+                
+                $this->flashMessage('Could not create new document. Reason: ' . $e->getMessage(), 'error', 10);
+            }
+
+            $this->redirect($this->createFullURL('User:Documents', 'list', ['folderId' => $folderId]));
+        }
+    }
+
+    public function renderForm() {
+        $this->template->links = $this->createBackFullUrl('User:Documents', 'list', ['folderId' => $this->httpGet('folderId')]);
+    }
+
+    protected function createComponentCreateDocumentForm(HttpRequest $request) {
         $classesDb = $this->documentManager->getDocumentClassesForDocumentCreateForUser($this->getUserId());
 
         $classes = [];
@@ -64,68 +110,26 @@ class CreateDocumentPresenter extends AUserPresenter {
                 'text' => $text
             ];
         }
-        // END OF DOCUMENT CLASSES
 
-        $form = new FormBuilder();
+        $form = new FormBuilder2($request);
 
-        $form->setMethod()
-            ->setAction($this->createURL('processForm', ['folderId' => $folderId]))
+        $form->setAction($this->createURL('form', ['folderId' => $request->query['folderId']]));
 
-            ->addTextInput('title', 'Title:', null, true)
-            ->addTextArea('description', 'Description:')
-            ->addSelect('class', 'Class:', $classes, true)
-        ;
+        $form->addTextInput('title', 'Title:')
+            ->setRequired();
 
-        $form = $this->addCustomMetadataFormControls($form, $folderId);
+        $form->addTextArea('description', 'Description:')
+            ->setRequired();
+
+        $form->addSelect('class', 'Class:')
+            ->addRawOptions($classes)
+            ->setRequired();
+
+        $this->addCustomMetadataFormControls($form, $request->query['folderId']);
 
         $form->addSubmit('Create');
 
-        $this->saveToPresenterCache('form', $form);
-    }
-
-    public function renderForm() {
-        $this->template->form = $this->loadFromPresenterCache('form');
-    }
-
-    public function handleProcessForm(FormResponse $fr) {
-        $folderId = $this->httpGet('folderId', true);
-
-        $customMetadatas = $this->documentManager->getCustomMetadataForFolder($folderId);
-
-        $metadataValues = [
-            'title' => $fr->title,
-            'classId' => $fr->class,
-            'authorUserId' => $this->getUserId(),
-            'status' => DocumentStatus::NEW,
-            'folderId' => $folderId
-        ];
-
-        if(isset($fr->description)) {
-            $metadataValues['description'] = $fr->description;
-        }
-
-        $customMetadataValues = [];
-        foreach($customMetadatas as $metadataId => $metadata) {
-            if(isset($fr->{$metadata->title})) {
-                $customMetadataValues[$metadataId] = $fr->{$metadata->title};
-            }
-        }
-
-        try {
-            $this->documentClassRepository->beginTransaction(__METHOD__);
-
-            $this->documentManager->createNewDocument($metadataValues, $customMetadataValues);
-
-            $this->documentClassRepository->commit($this->getUserId(), __METHOD__);
-
-            $this->flashMessage('Document created.', 'success');
-        } catch(AException $e) {
-            $this->documentClassRepository->rollback(__METHOD__);
-            
-            $this->flashMessage('Could not create new document. Reason: ' . $e->getMessage(), 'error', 10);
-        }
-
-        $this->redirect($this->createFullURL('User:Documents', 'list', ['folderId' => $folderId]));
+        return $form;
     }
 }
 

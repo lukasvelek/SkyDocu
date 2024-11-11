@@ -186,6 +186,33 @@ class FormBuilder2 extends AComponent {
 
         return $ni;
     }
+
+    /**
+     * Adds datetime input
+     * 
+     * @param string $name Element name
+     * @param ?string $label Label text or null
+     * @return DateTimeInput DateTimeInput instance
+     */
+    public function addDateTimeInput(string $name, ?string $label = null) {
+        $dti = new DateTimeInput($name);
+        
+        $this->elements[$name] = &$dti;
+
+        $this->processLabel($name, $label);
+
+        return $dti;
+    }
+
+    public function addCheckboxInput(string $name, ?string $label = null) {
+        $ci = new CheckboxInput($name);
+
+        $this->elements[$name] = &$ci;
+
+        $this->processLabel($name, $label);
+
+        return $ci;
+    }
     
     /**
      * Adds multi-line text input

@@ -18,6 +18,7 @@ use App\Exceptions\TemplateDoesNotExistException;
 use App\Helpers\GridHelper;
 use App\Logger\Logger;
 use App\UI\GridBuilder2\GridBuilder;
+use App\UI\LinkBuilder;
 use Exception;
 
 /**
@@ -712,6 +713,31 @@ abstract class APresenter extends AGUICore {
         $helper = new GridHelper($this->logger, $this->getUserId());
         $grid->setHelper($helper);
         return $grid;
+    }
+
+    /**
+     * Creates a link leading to an action in current presenter. It is used for links back.
+     * 
+     * @param string $action Action name
+     * @param array $params Parameters
+     * @param string $class Link CSS class
+     * @return string HTML code
+     */
+    protected function createBackUrl(string $action, array $params = [], string $class = 'link') {
+        return LinkBuilder::createSimpleLink('&larr; Back', $this->createURL($action, $params), $class);
+    }
+
+    /**
+     * Creates a link leading to an action in a presenter in a module. It is used for links back.
+     * 
+     * @param string $modulePresenter Module and presenter name
+     * @param string $action Action name
+     * @param array $params Parameters
+     * @param string $class Link CSS class
+     * @return string HTML code
+     */
+    protected function createBackFullUrl(string $modulePresenter, string $action, array $params = [], string $class = 'link') {
+        return LinkBuilder::createSimpleLink('&larr; Back', $this->createFullURL($modulePresenter, $action, $params), $class);
     }
 }
 

@@ -64,7 +64,7 @@ class DocumentsPresenter extends AUserPresenter {
     public function renderList() {
         $this->template->sidebar = $this->loadFromPresenterCache('sidebar');
         $this->template->links = [
-            LinkBuilder::createSimpleLink('New document', $this->createFullURL('User:CreateDocument', 'form', ['folderId' => $this->httpGet('folderId')]), 'link')
+            LinkBuilder::createSimpleLink('New document', $this->createFullURL('User:CreateDocument', 'form', ['folderId' => $this->currentFolderId]), 'link')
         ];
         $this->template->folder_title = $this->loadFromPresenterCache('folderTitle');
     }

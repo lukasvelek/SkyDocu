@@ -124,6 +124,7 @@ class ContainerManager extends AManager {
                 'data' => [
                     'rightId' => $this->createIdCustomDb(EntityManager::C_DOCUMENT_CLASS_GROUP_RIGHTS, $conn),
                     'groupId' => $groupIds['Administrators'],
+                    'classId' => $classIds['Default'],
                     'canView' => 1,
                     'canCreate' => 1,
                     'canEdit' => 1,

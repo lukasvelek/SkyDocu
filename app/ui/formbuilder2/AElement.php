@@ -11,12 +11,16 @@ use App\UI\IRenderable;
  */
 abstract class AElement implements IRenderable {
     protected array $attributes;
+    private bool $isHidden;
+    private bool $isRequired;
 
     /**
      * Class constructor
      */
     protected function __construct() {
         $this->attributes = [];
+        $this->isHidden = false;
+        $this->isRequired = false;
     }
 
     /**
@@ -60,6 +64,53 @@ abstract class AElement implements IRenderable {
 
         $code .= implode(' ', $attributesWithValue);
         $code .= implode(' ', $attributesWithoutValue);
+    }
+
+    /**
+     * Hides the element
+     */
+    public function setHidden(bool $hidden = true) {
+        $this->isHidden = $hidden;
+
+        return $this;
+    }
+
+    /**
+     * Is the element hidden?
+     * 
+     * @return bool True if the element is hidden or false
+     */
+    public function isHidden() {
+        return $this->isHidden;
+    }
+
+    /**
+     * Sets the element required
+     * 
+     * @param bool $required True if required or false if not
+     */
+    public function setRequired(bool $required = true) {
+        $this->isRequired = $required;
+
+        return $this;
+    }
+
+    /**
+     * Is the element required?
+     * 
+     * @return bool True if the element is required or false
+     */
+    public function isRequired() {
+        return $this->isRequired;
+    }
+
+    /**
+     * Returns all atributes
+     * 
+     * @return array Attributes
+     */
+    public function getAttributes() {
+        return $this->attributes;
     }
 }
 

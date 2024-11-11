@@ -98,7 +98,11 @@ class FormBuilder2 extends AComponent {
                 }
             }
 
-            $row = new Row($label, $element);
+            $row = new Row($label, $element, 'row_' . $name);
+
+            if($element->isHidden()) {
+                $row->hide();
+            }
 
             $form->addRow($row);
         }

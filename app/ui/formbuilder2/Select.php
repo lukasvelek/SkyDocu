@@ -120,6 +120,10 @@ class Select extends AInteractableElement {
     public function render() {
         $code = '<select name="' . $this->name . '"';
 
+        if(!array_key_exists('id', $this->attributes)) {
+            $this->addAttribute('id', $this->name);
+        }
+
         $this->appendAttributesToCode($code);
 
         $code .= '>';

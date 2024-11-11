@@ -14,7 +14,7 @@ class DateTimeInput extends Input {
      * @param string $name Element name
      */
     public function __construct(string $name) {
-        parent::__construct('datetime-local', $name);
+        parent::__construct('date', $name);
     }
 }
 

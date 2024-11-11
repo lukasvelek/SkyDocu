@@ -37,6 +37,7 @@ abstract class AInteractableElement extends AElement {
     public function setRequired(bool $required = true) {
         $this->commonChangeUIParam('required', $required);
         $this->modifiers[] = 'required';
+        parent::setRequired($required);
         return $this;
     }
 
@@ -83,6 +84,16 @@ abstract class AInteractableElement extends AElement {
                 unset($this->attributes[$name]);
             }
         }
+    }
+
+    /**
+     * Adds on change attribute
+     * 
+     * @param string $jsHandler JS handler
+     */
+    public function onChange(string $jsHandler) {
+        $this->addAttribute('onclick', $jsHandler);
+        return $this;
     }
 }
 

@@ -2,6 +2,7 @@
 
 namespace App\UI\FormBuilder2;
 
+use App\Core\AjaxRequestBuilder;
 use App\UI\HTML\HTML;
 
 /**
@@ -12,6 +13,7 @@ class Form extends AElement {
     private string $name;
     private string $method;
     private array $action;
+    public array $scripts;
 
     /**
      * Class constructor
@@ -26,6 +28,20 @@ class Form extends AElement {
         $this->rows = [];
         $this->action = [];
         $this->method = 'POST';
+        $this->scripts = [];
+    }
+
+    /**
+     * Adds JS script
+     * 
+     * @param AjaxRequestBuilder|string $script JS script
+     */
+    public function addScript(AjaxRequestBuilder|string $script) {
+        if($script instanceof AjaxRequestBuilder) {
+            $script = $script->build();
+        }
+
+        $this->scripts[] = $script;
     }
 
     /**
@@ -80,7 +96,7 @@ class Form extends AElement {
         $code = '';
 
         foreach($this->rows as $row) {
-            $code .= $row->render() . '<br>';
+            $code .= $row->render()/* . '<br>'*/;
         }
 
         return $code;

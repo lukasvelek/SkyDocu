@@ -12,6 +12,8 @@ use App\UI\IRenderable;
 class Row implements IRenderable {
     private ?Label $label;
     private ?AElement $element;
+    private string $id;
+    private bool $hide;
 
     /**
      * Class constructor
@@ -19,9 +21,11 @@ class Row implements IRenderable {
      * @param ?Label $label Label instance or null
      * @param ?AElement $element Element instance or null
      */
-    public function __construct(?Label $label, ?AElement $element) {
+    public function __construct(?Label $label, ?AElement $element, string $id) {
         $this->label = $label;
         $this->element = $element;
+        $this->id = $id;
+        $this->hide = false;
     }
 
     /**
@@ -48,7 +52,13 @@ class Row implements IRenderable {
      * @return string HTML code
      */
     public function render() {
-        $code = '<div class="row">';
+        $code = '<div id="' . $this->id . '"';
+
+        if($this->hide) {
+            $code .= ' style="display: none;"';
+        }
+
+        $code .= '><div class="row">';
 
         if($this->label !== null) {
             $code .= '<div class="col-md">' . $this->label->render() . '</div>';
@@ -57,9 +67,13 @@ class Row implements IRenderable {
             $code .= '<div class="col-md">' . $this->element->render() . '</div>';
         }
 
-        $code .= '</div>';
+        $code .= '</div><br></div>';
 
         return $code;
+    }
+
+    public function hide() {
+        $this->hide = true;
     }
 }
 

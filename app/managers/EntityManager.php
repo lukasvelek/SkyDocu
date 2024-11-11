@@ -32,6 +32,7 @@ class EntityManager extends AManager {
     public const C_DOCUMENTS = 'documents';
     public const C_DOCUMENTS_CUSTOM_METADATA = 'documents_custom_metadata';
     public const C_GROUP_USERS_RELATION = 'group_users_relation';
+    public const C_CUSTOM_METADATA = 'custom_metadata';
 
     private const __MAX__ = 100;
 
@@ -130,7 +131,8 @@ class EntityManager extends AManager {
             self::C_PROCESS_TYPES => 'typeId',
             self::C_DOCUMENTS => 'documentId',
             self::C_DOCUMENTS_CUSTOM_METADATA => 'entryId',
-            self::C_GROUP_USERS_RELATION => 'relationId'
+            self::C_GROUP_USERS_RELATION => 'relationId',
+            self::C_CUSTOM_METADATA => 'metadataId'
         };
     }
 }

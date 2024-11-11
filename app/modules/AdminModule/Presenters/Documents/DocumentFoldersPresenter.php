@@ -2,11 +2,9 @@
 
 namespace App\Modules\AdminModule;
 
-use App\Components\Sidebar\Sidebar;
 use App\Core\DB\DatabaseRow;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
-use App\Modules\TemplateObject;
 use App\UI\FormBuilder2\FormBuilder2;
 use App\UI\FormBuilder\FormResponse;
 use App\UI\GridBuilder2\Cell;
@@ -15,24 +13,10 @@ use App\UI\HTML\HTML;
 use App\UI\LinkBuilder;
 
 class DocumentFoldersPresenter extends AAdminPresenter {
-    private Sidebar $sidebar;
-
     public function __construct() {
         parent::__construct('DocumentFoldersPresenter', 'Document folders');
-    }
 
-    public function startup() {
-        parent::startup();
-
-        $this->sidebar = new Sidebar();
-
-        $this->sidebar->addLink('Dashboard', $this->createFullURL('Admin:Documents', 'dashboard'), false);
-        $this->sidebar->addLink('Folders', $this->createFullURL('Admin:DocumentFolders', 'list'), true);
-        $this->sidebar->addLink('Metadata', $this->createFullURL('Admin:DocumentMetadata', 'list'), false);
-
-        $this->addBeforeRenderCallback(function(TemplateObject &$template) {
-            $template->sidebar = $this->sidebar;
-        });
+        $this->setDocuments();
     }
 
     public function renderList() {

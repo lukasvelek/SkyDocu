@@ -11,7 +11,7 @@ use App\Helpers\GridHelper;
 use App\Managers\Container\DocumentManager;
 use App\UI\GridBuilder2\Cell;
 use App\UI\GridBuilder2\GridBuilder;
-use App\UI\GridBuilder2\IExtendingComponent;
+use App\UI\GridBuilder2\IGridExtendingComponent;
 use App\UI\GridBuilder2\Row;
 use App\UI\HTML\HTML;
 
@@ -20,7 +20,7 @@ use App\UI\HTML\HTML;
  * 
  * @author Lukas Velek
  */
-class DocumentsGrid extends GridBuilder implements IExtendingComponent {
+class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
     private string $currentUserId;
     private DocumentManager $dm;
 

@@ -7,7 +7,7 @@ namespace App\UI\GridBuilder2;
  * 
  * @author Lukas Velek
  */
-interface IExtendingComponent {
+interface IGridExtendingComponent {
     function createDataSource();
 }
 

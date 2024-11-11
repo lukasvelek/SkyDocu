@@ -24,11 +24,11 @@ class ContainerManager extends AManager {
         $this->groupManager = $groupManager;
     }
 
-    public function createNewContainer(string $title, string $description, string $callingUserId) {
+    public function createNewContainer(string $title, string $description, string $callingUserId, int $environment) {
         $containerId = $this->createId(EntityManager::CONTAINERS);
         $databaseName = 'sd_db_' . $containerId;
 
-        if(!$this->containerRepository->createNewContainer($containerId, $callingUserId, $title, $description, $databaseName)) {
+        if(!$this->containerRepository->createNewContainer($containerId, $callingUserId, $title, $description, $databaseName, $environment)) {
             throw new GeneralException('Could not create a new container.');
         }
 

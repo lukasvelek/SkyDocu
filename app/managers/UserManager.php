@@ -51,6 +51,12 @@ class UserManager extends AManager {
 
         return $userId;
     }
+
+    public function getServiceUserId() {
+        $user = $this->userRepository->getUserByUsername('service_user');
+
+        return $user->getId();
+    }
 }
 
 ?>

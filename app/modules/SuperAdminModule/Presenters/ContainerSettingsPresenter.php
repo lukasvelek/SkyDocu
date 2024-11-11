@@ -118,7 +118,11 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
         $grid->addColumnUser('userId', 'User');
         $col = $grid->addColumnText('description', 'Description');
         $col->onRenderColumn[] = function(DatabaseRow $row, Row $_row, Cell $cell, HTML $html, mixed $value) {
-            return 'User comment: ' . $value;
+            if($row->userId != $this->app->userManager->getServiceUserId()) {
+                return '<span style="color: grey">User comment: </span>' . $value;
+            } else {
+                return $value;
+            }
         };
         $grid->addColumnConst('oldStatus', 'Old status', ContainerStatus::class);
         $grid->addColumnConst('newStatus', 'New status', ContainerStatus::class);

@@ -23,11 +23,19 @@ class HttpRequest {
     public bool $isAjax;
 
     /**
+     * Custom parameters
+     * 
+     * @var array<string, mixed> $params
+     */
+    public array $params;
+
+    /**
      * Class constructor
      */
     public function __construct() {
         $this->query = [];
         $this->isAjax = false;
+        $this->params = [];
     }
 }
 

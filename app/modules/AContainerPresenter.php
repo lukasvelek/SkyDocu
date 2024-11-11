@@ -47,7 +47,7 @@ abstract class AContainerPresenter extends APresenter {
         $this->folderManager = new FolderManager($this->logger, $this->entityManager, $this->folderRepository, $this->groupRepository);
         $this->documentManager = new DocumentManager($this->logger, $this->entityManager, $this->documentRepository, $this->documentClassRepository, $this->groupRepository, $this->folderRepository);
         $this->groupManager = new GroupManager($this->logger, $this->entityManager, $this->groupRepository, $this->app->userRepository);
-        $this->metadataManager = new MetadataManager($this->logger, $this->entityManager, $this->metadataRepository);
+        $this->metadataManager = new MetadataManager($this->logger, $this->entityManager, $this->metadataRepository, $this->folderRepository);
     }
 
     private function initRepositories(DatabaseConnection $db) {

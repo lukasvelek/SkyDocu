@@ -10,6 +10,7 @@ use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
 use App\UI\FormBuilder2\FormBuilder2;
 use App\UI\FormBuilder\FormResponse;
+use App\UI\GridBuilder2\Cell;
 use App\UI\GridBuilder2\Row;
 use App\UI\HTML\HTML;
 use App\UI\LinkBuilder;
@@ -165,6 +166,116 @@ class DocumentMetadataPresenter extends AAdminPresenter {
 
         $form->setAction($this->createURL('newMetadataForm'));
         
+        return $form;
+    }
+
+    public function handleListFolderRights() {
+        $metadataId = $this->httpGet('metadataId', true);
+
+        $links = [
+            $this->createBackUrl('list'),
+            LinkBuilder::createSimpleLink('Add folder', $this->createURL('newFolderRightForm', ['metadataId' => $metadataId]), 'link')
+        ];
+
+        $this->saveToPresenterCache('links', implode('&nbsp;&nbsp;', $links));
+    }
+
+    public function renderListFolderRights() {
+        $this->template->links = $this->loadFromPresenterCache('links');
+    }
+
+    protected function createComponentMetadataFolderRightsGrid(HttpRequest $request) {
+        $grid = $this->getGridBuilder();
+
+        $qb = $this->metadataRepository->composeQueryForMetadataFolderRights();
+        $qb->andWhere('customMetadataId = ?', [$request->query['metadataId']]);
+
+        $grid->createDataSourceFromQueryBuilder($qb, 'relationId');
+
+        $col = $grid->addColumnText('folderId', 'Folder');
+        $col->onRenderColumn[] = function(DatabaseRow $row, Row $_row, Cell $cell, HTML $html, mixed $value) {
+            $title = null;
+
+            try {
+                $folder = $this->folderManager->getFolderById($value);
+                $title = $folder->title;
+            } catch(AException) {}
+
+            return $title;
+        };
+
+        $remove = $grid->addAction('remove');
+        $remove->setTitle('Remove');
+        $remove->onCanRender[] = function() {
+            return true;
+        };
+        $remove->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
+            $el = HTML::el('a')
+                ->text('Remove')
+                ->href($this->createURLString('removeFolderRight', ['metadataId' => $row->customMetadataId, 'folderId' => $row->folderId]))
+                ->class('grid-link');
+
+            return $el;
+        };
+
+        return $grid;
+    }
+
+    public function handleNewFolderRightForm(?FormResponse $fr = null) {
+        if($fr !== null) {
+            $metadataId = $this->httpGet('metadataId', true);
+
+            try {
+                $this->metadataRepository->beginTransaction(__METHOD__);
+
+                $this->metadataManager->createMetadataFolderRight($metadataId, $fr->folder);
+
+                $this->metadataRepository->commit($this->getUserId(), __METHOD__);
+
+                $this->flashMessage('Folder right added.', 'success');
+            } catch(AException $e) {
+                $this->metadataRepository->rollback(__METHOD__);
+
+                $this->flashMessage('Could not create folder right. Reason: ' . $e->getMessage(), 'error', 10);
+            }
+
+            $this->redirect($this->createURL('listFolderRights', ['metadataId' => $metadataId]));
+        } else {
+            $foldersDb = $this->metadataManager->getFoldersWithoutMetadataRights($this->httpGet('metadataId'));
+
+            if(empty($foldersDb)) {
+                $this->addScript('alert(\'No folder found.\');');
+            }
+
+            $folders = [];
+            foreach($foldersDb as $folderId => $folder) {
+                $folders[] = [
+                    'value' => $folderId,
+                    'text' => $folder->title
+                ];
+            }
+
+            $this->httpRequest->params['folders'] = $folders;
+        }
+    }
+
+    public function renderNewFolderRightForm() {
+        $this->template->links = $this->createBackUrl('listFolderRights', ['metadataId' => $this->httpGet('metadataId')]);
+    }
+
+    protected function createComponentNewFolderRightForm(HttpRequest $request) {
+        $folders = $request->params['folders'];
+
+        $form = new FormBuilder2($request);
+
+        $form->setAction($this->createURL('newFolderRightForm', ['metadataId' => $request->query['metadataId']]));
+
+        $form->addSelect('folder', 'Folder:')
+            ->setRequired()
+            ->addRawOptions($folders);
+
+        $form->addSubmit();
+
         return $form;
     }
 }

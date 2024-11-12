@@ -127,15 +127,15 @@ class FileManager {
      * @param string $dirPath Path to the directory that should be deleted
      * @return bool True on success or false on failure
      */
-    public static function deleteFolderRecursively(string $dirPath) {
+    public static function deleteFolderRecursively2(string $dirPath) {
         if(is_dir($dirPath)) {
             $result = true;
             $objects = scandir($dirPath);
             
             foreach ($objects as $object) {
                 if ($object != "." && $object != "..") {
-                    if (is_dir($dirPath . DIRECTORY_SEPARATOR . $object) && !is_link($dirPath . "/" . $object)) {
-                        $r = self::deleteFolderRecursively($dirPath. DIRECTORY_SEPARATOR .$object);
+                    if (is_dir($dirPath . DIRECTORY_SEPARATOR . $object) && !is_link($dirPath . DIRECTORY_SEPARATOR . $object)) {
+                        $r = self::deleteFolderRecursively2($dirPath. DIRECTORY_SEPARATOR .$object);
                         if($r !== true && $result !== false) {
                             $result = $r;
                         }
@@ -152,6 +152,30 @@ class FileManager {
         }
 
         return false;
+    }
+
+    /**
+     * Deletes a folder recursively
+     * 
+     * @param string $dirPath Path to the directory that should be deleted
+     * @return bool True on success or false on failure
+     */
+    public static function deleteFolderRecursively(string $dirPath) {
+        $dir = opendir($dirPath);
+        while(false !== ( $file = readdir($dir)) ) {
+            if (( $file != '.' ) && ( $file != '..' )) {
+                $full = $dirPath . DIRECTORY_SEPARATOR . $file;
+                if ( is_dir($full) ) {
+                    self::deleteFolderRecursively($full);
+                }
+                else {
+                    file_put_contents(APP_ABSOLUTE_DIR . LOG_DIR . 'deleteFolderRecursively.txt', $full . "\r\n", FILE_APPEND);
+                    unlink($full);
+                }
+            }
+        }
+        closedir($dir);
+        rmdir($dirPath);
     }
 
     /**

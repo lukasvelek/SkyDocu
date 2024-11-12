@@ -19,6 +19,7 @@ class CacheNames {
     public const METADATA_VALUES = 'customMetadataValues';
     public const VISIBLE_FOLDERS_FOR_USER = 'visibleFoldersForUser';
     public const VISIBLE_FOLDER_IDS_FOR_GROUP = 'visibleFolderIdsForGroup';
+    public const CONTAINERS = 'containers';
 }
 
 ?>

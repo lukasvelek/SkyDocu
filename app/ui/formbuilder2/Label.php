@@ -21,6 +21,8 @@ class Label extends AElement {
      * @param string $text Label text
      */
     public function __construct(string $name, string $text) {
+        parent::__construct();
+
         $this->text = $text;
         $this->for = $name;
         $this->name = 'lbl_' . $name;

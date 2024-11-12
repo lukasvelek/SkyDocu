@@ -2,6 +2,7 @@
 
 namespace App\Managers;
 
+use App\Core\Caching\CacheNames;
 use App\Core\Datetypes\DateTime;
 use App\Exceptions\EntityUpdateException;
 use App\Exceptions\GeneralException;
@@ -47,6 +48,10 @@ class UserManager extends AManager {
 
         if(!$this->userRepository->createNewUser($userId, $username, $password, $fullname, $email)) {
             throw new GeneralException('Could not create user.');
+        }
+
+        if(!$this->cacheFactory->invalidateCacheByNamespace(CacheNames::USERS)) {
+            throw new GeneralException('Could not invalidate cache.');
         }
 
         return $userId;

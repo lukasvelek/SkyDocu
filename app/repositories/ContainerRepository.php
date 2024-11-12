@@ -2,12 +2,18 @@
 
 namespace App\Repositories;
 
+use App\Core\Caching\Cache;
+use App\Core\Caching\CacheNames;
 use App\Core\DatabaseConnection;
 use App\Logger\Logger;
 
 class ContainerRepository extends ARepository {
+    private Cache $containerCache;
+
     public function __construct(DatabaseConnection $db, Logger $logger) {
         parent::__construct($db, $logger);
+
+        $this->containerCache = $this->cacheFactory->getCache(CacheNames::CONTAINERS);
     }
 
     public function composeQueryForContainers() {
@@ -46,12 +52,12 @@ class ContainerRepository extends ARepository {
     }
 
     public function getContainerById(string $containerId) {
-        $qb = $this->composeQueryForContainers();
-
-        $qb->where('containerId = ?', [$containerId])
-            ->execute();
-
-        return $qb->fetch();
+        $qb = $this->composeQueryForContainers()
+            ->where('containerId = ?', [$containerId]);
+            
+        return $this->containerCache->load($containerId, function() use ($qb) {
+            return $qb->execute()->fetch();
+        });
     }
 
     public function createNewCreationStatusEntry(string $statusId, string $containerId, int $percentFinished = 0, ?string $description = null) {

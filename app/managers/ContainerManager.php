@@ -2,6 +2,7 @@
 
 namespace App\Managers;
 
+use App\Core\Caching\CacheNames;
 use App\Core\DB\DatabaseManager;
 use App\Core\DB\DatabaseRow;
 use App\Exceptions\AException;
@@ -248,6 +249,10 @@ class ContainerManager extends AManager {
         ])) {
             throw new GeneralException('Could not change status.');
         }
+
+        if(!$this->cacheFactory->invalidateCacheByNamespace(CacheNames::CONTAINERS)) {
+            throw new GeneralException('Could not invalidate cache.');
+        }
     }
 
     public function getContainerById(string $containerId) {
@@ -283,6 +288,11 @@ class ContainerManager extends AManager {
         }
         if(!$this->containerRepository->deleteContainerStatusHistory($containerId)) {
             throw new GeneralException('COuld not delete container status history entries.');
+        }
+
+        // Invalidate container cache
+        if(!$this->cacheFactory->invalidateCacheByNamespace(CacheNames::CONTAINERS)) {
+            throw new GeneralException('Could not invalidate cache.');
         }
     }
 }

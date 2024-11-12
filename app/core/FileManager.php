@@ -127,7 +127,7 @@ class FileManager {
      * @param string $dirPath Path to the directory that should be deleted
      * @return bool True on success or false on failure
      */
-    public static function deleteFolderRecursively2(string $dirPath) {
+    public static function deleteFolderRecursively(string $dirPath, bool $root = true) {
         if(is_dir($dirPath)) {
             $result = true;
             $objects = scandir($dirPath);
@@ -135,7 +135,7 @@ class FileManager {
             foreach ($objects as $object) {
                 if ($object != "." && $object != "..") {
                     if (is_dir($dirPath . DIRECTORY_SEPARATOR . $object) && !is_link($dirPath . DIRECTORY_SEPARATOR . $object)) {
-                        $r = self::deleteFolderRecursively2($dirPath. DIRECTORY_SEPARATOR .$object);
+                        $r = self::deleteFolderRecursively($dirPath . DIRECTORY_SEPARATOR . $object, false);
                         if($r !== true && $result !== false) {
                             $result = $r;
                         }
@@ -148,34 +148,14 @@ class FileManager {
                 }
             }
 
-            return rmdir($dirPath) && $result;
+            if(!$root) {
+                return rmdir($dirPath) && $result;
+            } else {
+                return $result;
+            }
         }
 
         return false;
-    }
-
-    /**
-     * Deletes a folder recursively
-     * 
-     * @param string $dirPath Path to the directory that should be deleted
-     * @return bool True on success or false on failure
-     */
-    public static function deleteFolderRecursively(string $dirPath) {
-        $dir = opendir($dirPath);
-        while(false !== ( $file = readdir($dir)) ) {
-            if (( $file != '.' ) && ( $file != '..' )) {
-                $full = $dirPath . DIRECTORY_SEPARATOR . $file;
-                if ( is_dir($full) ) {
-                    self::deleteFolderRecursively($full);
-                }
-                else {
-                    file_put_contents(APP_ABSOLUTE_DIR . LOG_DIR . 'deleteFolderRecursively.txt', $full . "\r\n", FILE_APPEND);
-                    unlink($full);
-                }
-            }
-        }
-        closedir($dir);
-        rmdir($dirPath);
     }
 
     /**
@@ -185,11 +165,7 @@ class FileManager {
      * @return bool True on success or false on failure
      */
     public static function deleteFile(string $filePath) {
-        if(self::fileExists($filePath)) {
-            return unlink($filePath);
-        }
-
-        return false;
+        return unlink($filePath);
     }
 }
 

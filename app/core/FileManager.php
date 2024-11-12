@@ -135,12 +135,12 @@ class FileManager {
             foreach ($objects as $object) {
                 if ($object != "." && $object != "..") {
                     if (is_dir($dirPath . DIRECTORY_SEPARATOR . $object) && !is_link($dirPath . DIRECTORY_SEPARATOR . $object)) {
-                        $r = self::deleteFolderRecursively($dirPath . DIRECTORY_SEPARATOR . $object, false);
+                        $r = self::deleteFolderRecursively($dirPath . $object . DIRECTORY_SEPARATOR, false);
                         if($r !== true && $result !== false) {
                             $result = $r;
                         }
                     } else {
-                        $r = self::deleteFile($dirPath . DIRECTORY_SEPARATOR . $object);
+                        $r = self::deleteFile($dirPath . $object);
                         if($r !== true && $result !== false) {
                             $result = $r;
                         }

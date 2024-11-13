@@ -9,6 +9,7 @@ use App\Core\DB\DatabaseRow;
 use App\Exceptions\GeneralException;
 use App\Helpers\GridHelper;
 use App\Managers\Container\DocumentManager;
+use App\Modules\APresenter;
 use App\UI\GridBuilder2\Cell;
 use App\UI\GridBuilder2\GridBuilder;
 use App\UI\GridBuilder2\IGridExtendingComponent;
@@ -332,6 +333,16 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
         }
         
         return $ids;
+    }
+
+    /**
+     * Adds checkboxes to grid and forwards the selected IDs to the given handler (action in presenter)
+     * 
+     * @param APresenter $presenter Handler presenter
+     * @param string $action Handler action
+     */
+    public function setCheckboxHandler(APresenter $presenter, string $action) {
+        $this->addCheckboxes($presenter, $action);
     }
 }
 

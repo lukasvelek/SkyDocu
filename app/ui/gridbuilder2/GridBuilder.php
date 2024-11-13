@@ -12,6 +12,7 @@ use App\Exceptions\GridExportException;
 use App\Helpers\ArrayHelper;
 use App\Helpers\DateTimeFormatHelper;
 use App\Helpers\GridHelper;
+use App\Modules\APresenter;
 use App\UI\AComponent;
 use App\UI\HTML\HTML;
 use Exception;
@@ -83,6 +84,9 @@ class GridBuilder extends AComponent {
 
     protected ?QueryBuilder $filledDataSource;
 
+    private bool $hasCheckboxes;
+    private array $checkboxHandler;
+
     /**
      * Class constructor
      * 
@@ -106,6 +110,8 @@ class GridBuilder extends AComponent {
         $this->queryDependencies = [];
         $this->noFilterSqlConditions = [];
         $this->filledDataSource = null;
+        $this->hasCheckboxes = false;
+        $this->checkboxHandler = [];
     }
 
     /**
@@ -425,6 +431,7 @@ class GridBuilder extends AComponent {
 
         $template = $this->getTemplate(__DIR__ . '/grid.html');
 
+        $template->scripts = $this->createScripts();
         $template->grid = $this->table->output();
         $template->controls = $this->createGridControls();
         $template->filter_modal = '';
@@ -602,8 +609,21 @@ class GridBuilder extends AComponent {
                 }
             }
 
+            if($this->hasCheckboxes) {
+                $rowCheckbox = new RowCheckbox($rowId, $this->componentName . '_onCheckboxCheck(\'' . $rowId . '\')');
+                $_row->addCell($rowCheckbox, true);
+            }
+
             $_tableRows[] = $_row;
             $rowIndex++;
+        }
+
+        if($this->hasCheckboxes) {
+            $_headerCell = new Cell();
+            $_headerCell->setName('checkboxes');
+            $_headerCell->setHeader();
+            $_headerCell->setContent('');
+            $_tableRows['header']->addCell($_headerCell, true);
         }
 
         if(count($_tableRows) == 1) {
@@ -664,10 +684,6 @@ class GridBuilder extends AComponent {
 
                 ' . ($this->enableExport ? ('<div class="col-md-2" id="right">' . $this->createGridExportControl() . '</div>') : ('')) . '
             </div>
-
-            <span>
-                ' . $this->createScripts() . '
-            </span>
         ';
 
         return $code;
@@ -859,6 +875,43 @@ class GridBuilder extends AComponent {
                 ->setFunctionName($this->componentName . '_exportUnlimited')
                 ->setFunctionArguments($fArgs)
                 ->addWhenDoneOperation('if(obj.success) { alert("Your export will be created asynchronously. You can find it in Grid export management section."); }')
+            ;
+
+            $addScript($arb);
+        }
+
+        // CHECKBOXES
+        if($this->hasCheckboxes) {
+            $arb = new AjaxRequestBuilder();
+
+            $headerParams = [
+                'ids[]' => '_ids'
+            ];
+
+            $arb->setMethod()
+                ->setHeader($headerParams)
+                ->setAction($this->checkboxHandler['presenter'], $this->checkboxHandler['action'])
+                ->setFunctionName($this->componentName . '_onCheckboxCheck')
+                ->addBeforeAjaxOperation('
+                    const _now = Date.now();
+                    _checkboxHandlerTimestamp = _now;
+
+                    const _ids = $("input[type=checkbox]:checked").map(function(_, el) {
+                        return $(el).attr("value[]");
+                    }).get();
+
+                    await sleep(2000);
+
+                    if(_checkboxHandlerTimestamp != _now) {
+                        return;
+                    };
+
+                    if(_ids.length == 0) {
+                        return;
+                    }
+                ')
+                ->addWhenDoneOperation('alert(obj.ids);_checkboxHandlerTimestamp = null;')
+                ->addCustomArg('_ids')
             ;
 
             $addScript($arb);
@@ -1192,6 +1245,21 @@ class GridBuilder extends AComponent {
             $this->app,
             $this->gridName
         );
+    }
+
+    // CHECKBOXES
+    /**
+     * Adds checkboxes to the grid
+     * 
+     * @param APresenter $presenter Handler presenter
+     * @param string $action Handler action
+     */
+    public function addCheckboxes(APresenter $presenter, string $action) {
+        $this->hasCheckboxes = true;
+        $this->checkboxHandler = [
+            'presenter' => $presenter,
+            'action' => $action
+        ];
     }
 }
 

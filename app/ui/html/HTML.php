@@ -141,8 +141,12 @@ class HTML {
      * @param mixed $value Value
      * @return self
      */
-    public function value(mixed $value) {
-        $this->attributes['value'] = $value;
+    public function value(mixed $value, bool $isArray = false) {
+        $key = 'value';
+        if($isArray) {
+            $key .= '[]';
+        }
+        $this->attributes[$key] = $value;
         return $this;
     }
 

@@ -189,7 +189,15 @@ abstract class AGUICore {
      */
     protected function httpGet(string $key, bool $throwException = false) {
         if(isset($_GET[$key])) {
-            return htmlspecialchars($_GET[$key]);
+            if(!is_array($_GET[$key])) {
+                return htmlspecialchars($_GET[$key]);
+            } else {
+                $tmp = [];
+                foreach($_GET[$key] as $t) {
+                    $tmp[] = htmlspecialchars($t);
+                }
+                return $tmp;
+            }
         } else {
             if($throwException) {
                 throw new RequiredAttributeIsNotSetException($key, '$_GET');

@@ -75,6 +75,7 @@ class DocumentsPresenter extends AUserPresenter {
 
         $documentsGrid->showCustomMetadata();
         $documentsGrid->setCurrentFolder($this->currentFolderId);
+        $documentsGrid->setCheckboxHandler($this, 'bulkAction');
 
         return $documentsGrid;
     }
@@ -83,6 +84,12 @@ class DocumentsPresenter extends AUserPresenter {
         $folderId = $this->httpGet('folderId', true);
         $this->httpSessionSet('current_document_folder_id', $folderId);
         $this->redirect($this->createURL('list', ['folderId' => $folderId]));
+    }
+
+    public function actionBulkAction() {
+        $ids = $this->httpGet('ids', true);
+
+        return ['ids' => implode(', ', $ids)];
     }
 }
 

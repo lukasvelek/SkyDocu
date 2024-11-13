@@ -41,10 +41,22 @@ class CacheFactory {
         $this->persistentCaches = [];
     }
 
+    /**
+     * Invalidates cache by Cache instance
+     * 
+     * @param Cache $cache Cache instance
+     * @return bool True on success or false on failure
+     */
     public function invalidateCacheByCache(Cache $cache) {
         return $this->invalidateCacheByNamespace($cache->getNamespace());
     }
 
+    /**
+     * Invalidates cache by namespace
+     * 
+     * @param string $namespace Namespace
+     * @return bool True on success or false on failure
+     */
     public function invalidateCacheByNamespace(string $namespace) {
         return $this->deleteCache($namespace);
     }
@@ -154,14 +166,14 @@ class CacheFactory {
     public function saveCaches() {
         foreach($this->persistentCaches as $cache) {
             if($cache->isInvalidated()) {
-                //$this->deleteCache($cache->getNamespace());
-                $tmp = [
+                $this->deleteCache($cache->getNamespace());
+                /*$tmp = [
                     self::I_NS_DATA => [],
                     self::I_NS_CACHE_EXPIRATION => $cache->getExpirationDate()?->getResult(),
                     self::I_NS_CACHE_LAST_WRITE_DATE => $cache->getLastWriteDate()?->getResult()
                 ];
 
-                $this->saveDataToCache($cache->getNamespace(), $tmp);
+                $this->saveDataToCache($cache->getNamespace(), $tmp);*/
             } else {
                 $tmp = [
                     self::I_NS_DATA => $cache->getData(),
@@ -179,7 +191,7 @@ class CacheFactory {
      * 
      * @param string $namespace Namespace
      * @param array $data Persistent cache data
-     * @return int|false Number of bytes written or false if error occured
+     * @return bool True on success or false on failure
      */
     private function saveDataToCache(string $namespace, array $data) {
         $path = APP_ABSOLUTE_DIR . CACHE_DIR . $namespace . '\\';
@@ -206,7 +218,7 @@ class CacheFactory {
 
         $this->cacheLogger->logCacheNamespaceDeleted($namespace, __METHOD__);
 
-        return FileManager::deleteFolderRecursively($path);
+        return FileManager::deleteFolderRecursively($path, false);
     }
 }
 

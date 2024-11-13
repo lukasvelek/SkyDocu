@@ -96,7 +96,6 @@ class Cache {
     public function invalidate() {
         $this->data = [];
         $this->invalidated = true;
-        $this->cacheFactory->invalidateCacheByCache($this);
         $this->logger->logCacheInvalidated($this->namespace, __METHOD__);
     }
 

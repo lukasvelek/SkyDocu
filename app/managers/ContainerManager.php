@@ -233,12 +233,7 @@ class ContainerManager extends AManager {
     public function changeContainerStatus(string $containerId, int $newStatus, string $callingUserId, string $description) {
         $historyId = $this->createId(EntityManager::CONTAINER_STATUS_HISTORY);
 
-        $container = $this->containerRepository->getContainerById($containerId);
-        if($container === null || $container === false) {
-            throw new GeneralException('Container does not exist.');
-        }
-
-        $container = DatabaseRow::createFromDbRow($container);
+        $container = $this->getContainerById($containerId);
 
         if(!$this->containerRepository->createNewStatusHistoryEntry($historyId, $containerId, $callingUserId, $description, $container->status, $newStatus)) {
             throw new GeneralException('Could not create new status history change entry.');
@@ -256,7 +251,11 @@ class ContainerManager extends AManager {
     }
 
     public function getContainerById(string $containerId) {
-        $container = $this->containerRepository->getContainerById($containerId);
+        $cache = $this->cacheFactory->getCache(CacheNames::CONTAINERS);
+
+        $container = $cache->load($containerId, function() use ($containerId) {
+            return $this->containerRepository->getContainerById($containerId);
+        });
 
         if($container === null) {
             throw new NonExistingEntityException('Entity does not exist.');

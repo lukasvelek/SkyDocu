@@ -53,11 +53,10 @@ class ContainerRepository extends ARepository {
 
     public function getContainerById(string $containerId) {
         $qb = $this->composeQueryForContainers()
-            ->where('containerId = ?', [$containerId]);
+            ->where('containerId = ?', [$containerId])
+            ->execute();
             
-        return $this->containerCache->load($containerId, function() use ($qb) {
-            return $qb->execute()->fetch();
-        });
+        return $qb->fetch();
     }
 
     public function createNewCreationStatusEntry(string $statusId, string $containerId, int $percentFinished = 0, ?string $description = null) {

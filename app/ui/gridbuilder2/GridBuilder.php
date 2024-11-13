@@ -905,6 +905,8 @@ class GridBuilder extends AComponent {
                         return $(el).attr("value[]");
                     }).get();
 
+                    $("#modal").show(); ' . $this->componentName . '_processBulkActionsModalOpen(true);
+
                     await sleep(2000);
 
                     if(_checkboxHandlerTimestamp != _now) {
@@ -915,9 +917,11 @@ class GridBuilder extends AComponent {
                         return;
                     }
                 ')
-                ->addWhenDoneOperation('_checkboxHandlerTimestamp = null;')
                 ->updateHTMLElement('modal', 'modal')
-                ->addWhenDoneOperation('$("#modal").show(); ' . $this->componentName . '_processBulkActionsModalOpen();')
+                ->addWhenDoneOperation('_checkboxHandlerTimestamp = null;')
+                ->addWhenDoneOperation('
+                    $("#modal").show(); ' . $this->componentName . '_processBulkActionsModalOpen(false);
+                ')
                 ->addCustomArg('_ids')
             ;
 
@@ -925,7 +929,12 @@ class GridBuilder extends AComponent {
 
             $scripts[] = '
                 <script type="text/javascript">
-                    function ' . $this->componentName . '_processBulkActionsModalOpen() {
+                    function ' . $this->componentName . '_processBulkActionsModalOpen(_showLoading) {
+                        if(_showLoading) {
+                            $("#modal").html(\'<div id="bulk-actions-modal-inner" style="visibility: hidden; height: 0px; position: absolute; top: 5%; left: 5%; background-color: rgba(225, 225, 225, 0.9); z-index: 9999;"></div>\');
+                            $("#bulk-actions-modal-inner").html(\'<div id="center"><img src="resources/loading.gif" width="64"><br>Loading...</div>\');
+                        }
+
                         $("#bulk-actions-modal-inner")
                             .css("height", "15%")
                             .css("visibility", "visible")

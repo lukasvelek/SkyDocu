@@ -378,6 +378,12 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
         return ['modal' => $modal->render()];
     }
 
+    /**
+     * Gets allowed bulk actions
+     * 
+     * @param array $documentIds Selected document IDs
+     * @return array<string> Bulk action list
+     */
     private function getAllowedBulkActions(array $documentIds) {
         $bulkActions = [];
 
@@ -388,6 +394,13 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
         return $bulkActions;
     }
 
+    /**
+     * Creates bulk action links
+     * 
+     * @param array $bulkActions Allowed bulk actions
+     * @param array $documentIds Selected document IDs
+     * @return array<string> Bulk actions HTML code
+     */
     private function createBulkActions(array $bulkActions, array $documentIds) {
         $urlParams = [
             'backPage=' . $this->httpRequest->query['page'],
@@ -415,6 +428,14 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
         return $links;
     }
 
+    /**
+     * Creates link from given parameters
+     * 
+     * @param string $modulePresenter Module name and presenter name
+     * @param string $action Action name
+     * @param array $params Parameters
+     * @return string URL
+     */
     private function createLink(string $modulePresenter, string $action, array $params = []) {
         $url = '?page=' . $modulePresenter . '&action=' . $action;
 

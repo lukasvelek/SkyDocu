@@ -905,6 +905,11 @@ class GridBuilder extends AComponent {
                         return $(el).attr("value[]");
                     }).get();
 
+                    if(_ids.length == 0) {
+                        ' . $this->componentName . '_processBulkActionsModalClose();
+                        return;
+                    }
+
                     $("#modal").show(); ' . $this->componentName . '_processBulkActionsModalOpen(true);
 
                     await sleep(2000);
@@ -914,6 +919,7 @@ class GridBuilder extends AComponent {
                     };
 
                     if(_ids.length == 0) {
+                        ' . $this->componentName . '_processBulkActionsModalClose();
                         return;
                     }
                 ')
@@ -939,6 +945,11 @@ class GridBuilder extends AComponent {
                             .css("height", "15%")
                             .css("visibility", "visible")
                             .css("width", "90%");
+                    }
+
+                    function ' . $this->componentName . '_processBulkActionsModalClose() {
+                        $("#modal").html(\'\');
+                        $("#modal").hide();
                     }
                 </script>
             ';

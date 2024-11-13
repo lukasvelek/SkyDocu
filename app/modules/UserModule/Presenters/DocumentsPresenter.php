@@ -85,12 +85,6 @@ class DocumentsPresenter extends AUserPresenter {
         $this->httpSessionSet('current_document_folder_id', $folderId);
         $this->redirect($this->createURL('list', ['folderId' => $folderId]));
     }
-
-    public function actionBulkAction() {
-        $ids = $this->httpGet('ids', true);
-
-        return ['ids' => implode(', ', $ids)];
-    }
 }
 
 ?>

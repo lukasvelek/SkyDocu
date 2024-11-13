@@ -2,6 +2,7 @@
 
 namespace App\Managers\Container;
 
+use App\Core\Caching\CacheNames;
 use App\Core\DB\DatabaseRow;
 use App\Exceptions\GeneralException;
 use App\Logger\Logger;
@@ -95,16 +96,25 @@ class MetadataManager extends AManager {
             'metadataId' => $metadataId,
             'title' => $title
         ];
+        
+        $lastKey = $this->mr->getLastMetadataEnumValueKey($metadataId);
+        if($lastKey !== null) {
+            $data['metadataKey'] = ((int)$lastKey) + 1;
+        }
 
         if(!$this->mr->createNewMetadataEnumValue($data)) {
             throw new GeneralException('Database error.');
         }
+
+        $this->cacheFactory->invalidateCacheByNamespace(CacheNames::METADATA_VALUES);
     }
 
     public function updateMetadataEnumValue(string $valueId, array $data) {
         if(!$this->mr->updateMetadataEnumValue($valueId, $data)) {
             throw new GeneralException('Database error.');
         }
+
+        $this->cacheFactory->invalidateCacheByNamespace(CacheNames::METADATA_VALUES);
     }
     
     public function isMetadataEnumValueUsed(string $valueId, string $metadataId) {
@@ -125,6 +135,8 @@ class MetadataManager extends AManager {
         if(!$this->deleteMetadataEnumValue($valueId)) {
             throw new GeneralException('Database error.');
         }
+
+        $this->cacheFactory->invalidateCacheByNamespace(CacheNames::METADATA_VALUES);
     }
 }
 

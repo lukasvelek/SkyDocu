@@ -20,16 +20,17 @@ class CreateDocumentPresenter extends AUserPresenter {
         foreach($customMetadatas as $metadataId => $metadata) {
             switch($metadata->type) {
                 case CustomMetadataTypes::BOOL:
-                    $form->addCheckboxInput($metadata->title, $metadata->guiTitle . ':');
+                    $element = $form->addCheckboxInput($metadata->title, $metadata->guiTitle . ':');
                     break;
 
                 case CustomMetadataTypes::DATETIME:
-                    $form->addDateTimeInput($metadata->title, $metadata->guiTitle . ':')
+                    $element = $form->addDateTimeInput($metadata->title, $metadata->guiTitle . ':')
                         ->setRequired();
                     break;
 
                 case CustomMetadataTypes::ENUM:
-                    $selectValuesDb[$metadata->title] = $this->documentManager->getMetadataValues($metadataId);
+                    $selectValuesDb = $this->documentManager->getMetadataValues($metadataId);
+
                     $values = [];
                     foreach($selectValuesDb as $key => $title) {
                         $values[] = [
@@ -37,16 +38,22 @@ class CreateDocumentPresenter extends AUserPresenter {
                             'text' => $title
                         ];
                     }
-                    $form->addSelect($metadata->title, $metadata->guiTitle, $values, true);
+                    $element = $form->addSelect($metadata->title, $metadata->guiTitle . ':')
+                        ->addRawOptions($values);
+
                     break;
 
                 case CustomMetadataTypes::NUMBER:
-                    $form->addNumberInput($metadata->title, $metadata->guiTitle . ':', null, null, null, true);
+                    $element = $form->addNumberInput($metadata->title, $metadata->guiTitle . ':', null, null, null, true);
                     break;
 
                 case CustomMetadataTypes::TEXT:
-                    $form->addTextInput($metadata->title, $metadata->guiTitle . ':', null, true);
+                    $element = $form->addTextInput($metadata->title, $metadata->guiTitle . ':', null, true);
                     break;
+            }
+
+            if($metadata->isRequired) {
+                $element->setRequired();
             }
         }
 

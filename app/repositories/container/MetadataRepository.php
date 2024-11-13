@@ -73,9 +73,20 @@ class MetadataRepository extends ARepository {
 
         $qb->select(['*'])
             ->from('custom_metadata_list_values')
-            ->where('metadataId = ?', [$metadataId]);
+            ->where('metadataId = ?', [$metadataId])
+            ->orderBy('metadataKey');
 
         return $qb;
+    }
+
+    public function getLastMetadataEnumValueKey(string $metadataId) {
+        $qb = $this->composeQueryMetadataEnumValues($metadataId);
+        $qb->select(['metadataKey'])
+            ->orderBy('metadataKey', 'DESC')
+            ->limit(1)
+            ->execute();
+
+        return $qb->fetch('metadataKey');
     }
 
     public function createNewMetadataEnumValue(array $data) {

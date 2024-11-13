@@ -4,7 +4,6 @@ namespace App\Modules\AdminModule;
 
 use App\Components\DocumentMetadataForm\DocumentMetadataForm;
 use App\Constants\Container\CustomMetadataTypes;
-use App\Core\AjaxRequestBuilder;
 use App\Core\DB\DatabaseRow;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;

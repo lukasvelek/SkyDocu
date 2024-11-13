@@ -129,6 +129,17 @@ class DocumentRepository extends ARepository {
 
         return $qb->fetch();
     }
+
+    public function updateDocument(string $documentId, array $data) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->update('documents')
+            ->set($data)
+            ->where('documentId = ?', [$documentId])
+            ->execute();
+
+        return $qb->fetchBool();
+    }
 }
 
 ?>

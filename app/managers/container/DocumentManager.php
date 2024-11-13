@@ -4,6 +4,7 @@ namespace App\Managers\Container;
 
 use App\Constants\Container\CustomMetadataTypes;
 use App\Core\Caching\CacheNames;
+use App\Core\Datetypes\DateTime;
 use App\Core\DB\DatabaseRow;
 use App\Exceptions\GeneralException;
 use App\Exceptions\NonExistingEntityException;
@@ -203,6 +204,18 @@ class DocumentManager extends AManager {
         }
 
         return $_row;
+    }
+
+    public function updateDocument(string $documentId, array $data) {
+        $data['dateModified'] = DateTime::now();
+        
+        if(!$this->dr->updateDocument($documentId, $data)) {
+            throw new GeneralException('Database error.');
+        }
+    }
+
+    public function updateDocumentCustom(string $documentId, array $data) {
+
     }
 }
 

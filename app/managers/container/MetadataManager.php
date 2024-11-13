@@ -37,7 +37,7 @@ class MetadataManager extends AManager {
         }
 
         if(!$this->mr->createNewMetadata($data)) {
-            throw new GeneralException('Could not create new metadata.');
+            throw new GeneralException('Database error.');
         }
 
         return $metadataId;
@@ -75,10 +75,56 @@ class MetadataManager extends AManager {
         $relationId = $this->createId(EntityManager::C_CUSTOM_METADATA_FOLDER_RELATION);
 
         if(!$this->mr->createNewMetadataFolderRight($relationId, $metadataId, $folderId)) {
-            throw new GeneralException('Could not create metadata folder relation.');
+            throw new GeneralException('Database error.');
         }
 
         return $relationId;
+    }
+
+    public function removeMetadataFolderRight(string $metadataId, string $folderId) {
+        if(!$this->mr->removeMetadataFolderRight($metadataId, $folderId)) {
+            throw new GeneralException('Database error.');
+        }
+    }
+
+    public function createMetadataEnumValue(string $metadataId, string $title) {
+        $valueId = $this->createId(EntityManager::C_CUSTOM_METADATA_LIST_VALUES);
+
+        $data = [
+            'valueId' => $valueId,
+            'metadataId' => $metadataId,
+            'title' => $title
+        ];
+
+        if(!$this->mr->createNewMetadataEnumValue($data)) {
+            throw new GeneralException('Database error.');
+        }
+    }
+
+    public function updateMetadataEnumValue(string $valueId, array $data) {
+        if(!$this->mr->updateMetadataEnumValue($valueId, $data)) {
+            throw new GeneralException('Database error.');
+        }
+    }
+    
+    public function isMetadataEnumValueUsed(string $valueId, string $metadataId) {
+        $row = $this->mr->getMetadataEnumValueById($valueId);
+
+        if($row === null) {
+            throw new GeneralException('Enum value does not exist.');
+        }
+
+        $row = DatabaseRow::createFromDbRow($row);
+
+        $usages = $this->mr->getMetadataEnumValueUsage($metadataId, $row->metadataKey);
+
+        return $usages->num_rows > 0;
+    }
+
+    public function deleteMetadataEnumValue(string $valueId) {
+        if(!$this->deleteMetadataEnumValue($valueId)) {
+            throw new GeneralException('Database error.');
+        }
     }
 }
 

@@ -177,6 +177,17 @@ abstract class ARepository extends AMultipleDatabaseConnectionHandler {
 
         return $qb->fetchBool();
     }
+
+    protected function getRow(string $tableName, string $keyName, string $keyValue) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->select(['*'])
+            ->from($tableName)
+            ->where($keyName . ' = ?', [$keyValue])
+            ->execute();
+
+        return $qb->fetch();
+    }
 }
 
 ?>

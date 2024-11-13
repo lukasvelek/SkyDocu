@@ -10,6 +10,7 @@ use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
 use App\UI\FormBuilder2\FormBuilder2;
 use App\UI\FormBuilder\FormResponse;
+use App\UI\GridBuilder2\Action;
 use App\UI\GridBuilder2\Cell;
 use App\UI\GridBuilder2\Row;
 use App\UI\HTML\HTML;
@@ -221,6 +222,27 @@ class DocumentMetadataPresenter extends AAdminPresenter {
         return $grid;
     }
 
+    public function handleRemoveFolderRight() {
+        $metadataId = $this->httpGet('metadataId', true);
+        $folderId = $this->httpGet('folderId', true);
+
+        try {
+            $this->metadataRepository->beginTransaction(__METHOD__);
+
+            $this->metadataManager->removeMetadataFolderRight($metadataId, $folderId);
+
+            $this->metadataRepository->commit($this->getUserId(), __METHOD__);
+
+            $this->flashMessage('Metadata folder right removed.', 'success');
+        } catch(AException $e) {
+            $this->metadataRepository->rollback(__METHOD__);
+
+            $this->flashMessage('Could not remove metadata folder right.', 'error', 10);
+        }
+
+        $this->redirect($this->createURL('listFolderRights', ['metadataId' => $metadataId]));
+    }
+
     public function handleNewFolderRightForm(?FormResponse $fr = null) {
         if($fr !== null) {
             $metadataId = $this->httpGet('metadataId', true);
@@ -277,6 +299,172 @@ class DocumentMetadataPresenter extends AAdminPresenter {
         $form->addSubmit();
 
         return $form;
+    }
+
+    public function handleListEnumValues() {
+        $metadataId = $this->httpGet('metadataId');
+
+        $links = [
+            $this->createBackUrl('list'),
+            LinkBuilder::createSimpleLink('New value', $this->createURL('newEnumValueForm', ['metadataId' => $metadataId]), 'link')
+        ];
+
+        $this->saveToPresenterCache('links', implode('&nbsp;&nbsp;', $links));
+    }
+
+    public function renderListEnumValues() {
+        $this->template->links = $this->loadFromPresenterCache('links');
+    }
+
+    protected function createComponentMetadataEnumValuesGrid(HttpRequest $request) {
+        $grid = $this->getGridBuilder();
+
+        $grid->createDataSourceFromQueryBuilder($this->metadataRepository->composeQueryMetadataEnumValues($request->query['metadataId']), 'valueId');
+        $grid->addQueryDependency('metadataId', $request->query['metadataId']);
+
+        $grid->addColumnText('title', 'Title');
+
+        $edit = $grid->addAction('edit');
+        $edit->setTitle('Edit');
+        $edit->onCanRender[] = function() {
+            return true;
+        };
+        $edit->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) use ($request) {
+            $el = HTML::el('a')
+                    ->href($this->createURLString('editEnumValueForm', ['metadataId' => $request->query['metadataId'], 'valueId' => $primaryKey]))
+                    ->text('Edit')
+                    ->class('grid-link');
+
+            return $el;
+        };
+
+        $delete = $grid->addAction('delete');
+        $delete->setTitle('Delete');
+        $delete->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) use ($request) {
+            $result = $this->metadataManager->isMetadataEnumValueUsed($row->valueId, $request->query['metadataId']);
+
+            if($result === true) {
+                $action->setTitle('This value is being used.');
+                return false;
+            } else {
+                return true;
+            }
+        };
+        $delete->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) use ($request) {
+            $el = HTML::el('a')
+                    ->text('Delete')
+                    ->class('grid-link')
+                    ->href($this->createURLString('deleteEnumValue', ['metadataId' => $request->query['metadataId'], 'valueId' => $primaryKey]));
+
+            return $el;
+        };
+
+        return $grid;
+    }
+
+    public function handleNewEnumValueForm(?FormResponse $fr = null) {
+        $metadataId = $this->httpGet('metadataId', true);
+
+        if($fr !== null) {
+            try {
+                $this->metadataRepository->beginTransaction(__METHOD__);
+
+                $this->metadataManager->createMetadataEnumValue($metadataId, $fr->title);
+
+                $this->metadataRepository->commit($this->getUserId(), __METHOD__);
+                
+                $this->flashMessage('New metadata value created.', 'success');
+            } catch(AException $e) {
+                $this->metadataRepository->rollback(__METHOD__);
+
+                $this->flashMessage('Could not create new metadata value. Reason: ' . $e->getMessage(), 'error', 10);
+            }
+            
+            $this->redirect($this->createURL('listEnumValues', ['metadataId' => $metadataId]));
+        }
+    }
+
+    public function renderNewEnumValueForm() {
+        $this->template->links = $this->createBackUrl('listEnumValues', ['metadataId' => $this->httpGet('metadataId')]);
+    }
+
+    protected function createComponentNewMetadataEnumValueForm(HttpRequest $request) {
+        $form = new FormBuilder2($request);
+
+        $form->setAction($this->createURL('newEnumValueForm', ['metadataId' => $request->query['metadataId']]));
+
+        $form->addTextInput('title', 'Title:')
+            ->setRequired();
+
+        $form->addSubmit('Create');
+
+        return $form;
+    }
+
+    public function handleEditEnumValueForm(?FormResponse $fr = null) {
+        $metadataId = $this->httpGet('metadataId', true);
+        $valueId = $this->httpGet('valueId', true);
+
+        if($fr !== null) {
+            try {
+                $this->metadataRepository->beginTransaction(__METHOD__);
+
+                $this->metadataManager->updateMetadataEnumValue($valueId, ['title' => $fr->title]);
+
+                $this->metadataRepository->commit($this->getUserId(), __METHOD__);
+                
+                $this->flashMessage('Metadata value edited.', 'success');
+            } catch(AException $e) {
+                $this->metadataRepository->rollback(__METHOD__);
+
+                $this->flashMessage('Could not edit metadata value. Reason: ' . $e->getMessage(), 'error', 10);
+            }
+            
+            $this->redirect($this->createURL('listEnumValues', ['metadataId' => $metadataId]));
+        } else {
+            $valueRow = $this->metadataRepository->getMetadataEnumValueById($valueId);
+
+            $this->httpRequest->params['valueRow'] = DatabaseRow::createFromDbRow($valueRow);
+        }
+    }
+
+    public function renderEditEnumValueForm() {
+        $this->template->links = $this->createBackUrl('listEnumValues', ['metadataId' => $this->httpGet('metadataId')]);
+    }
+
+    protected function createComponentEditMetadataEnumValueForm(HttpRequest $request) {
+        $form = new FormBuilder2($request);
+
+        $form->setAction($this->createURL('editEnumValueForm', ['metadataId' => $request->query['metadataId'], 'valueId' => $request->query['valueId']]));
+
+        $form->addTextInput('title', 'Title:')
+            ->setRequired()
+            ->setValue($request->params['valueRow']->title);
+
+        $form->addSubmit('Create');
+
+        return $form;
+    }
+
+    public function handleDeleteEnumValue() {
+        $metadataId = $this->httpGet('metadataId', true);
+        $valueId = $this->httpGet('valueId', true);
+
+        try {
+            $this->metadataRepository->beginTransaction(__METHOD__);
+
+            $this->metadataManager->deleteMetadataEnumValue($valueId);
+
+            $this->metadataRepository->commit($this->getUserId(), __METHOD__);
+
+            $this->flashMessage('Metadata enum value deleted.', 'success');
+        } catch(AException $e) {
+            $this->metadataRepository->rollback(__METHOD__);
+
+            $this->flashMessage('Could not delete metadata enum value. Reason: ' . $e->getMessage(), 'error', 10);
+        }
+
+        $this->redirect($this->createURL('listEnumValues', ['metadataId' => $metadataId]));
     }
 }
 

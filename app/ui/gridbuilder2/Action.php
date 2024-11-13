@@ -16,7 +16,7 @@ class Action implements IHTMLOutput {
     private string $title;
 
     /**
-     * Methods called with parameters: DatabaseRow $row, Row $_row
+     * Methods called with parameters: DatabaseRow $row, Row $_row, Action &$action
      */
     public array $onCanRender;
     /**

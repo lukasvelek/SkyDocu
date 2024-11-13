@@ -34,7 +34,7 @@ class GroupManager extends AManager {
         $relationId = $this->createId(EntityManager::C_GROUP_USERS_RELATION);
 
         if(!$this->gr->addUserToGroup($relationId, $groupId, $userId)) {
-            throw new GeneralException('Could not add user to group.');
+            throw new GeneralException('Database error.');
         }
     }
 

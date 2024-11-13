@@ -549,7 +549,7 @@ class GridBuilder extends AComponent {
 
                     foreach($cAction->onCanRender as $render) {
                         try {
-                            $result = $render($row, $_row);
+                            $result = $render($row, $_row, $cAction);
 
                             if($result === true) {
                                 $canRender[$actionName] = $cAction;
@@ -1044,7 +1044,7 @@ class GridBuilder extends AComponent {
             }
         }
 
-        if(!($this instanceof IExtendingComponent)) {
+        if(!($this instanceof IGridExtendingComponent)) {
             $this->build();
         }
         return ['grid' => $this->render()];
@@ -1062,7 +1062,7 @@ class GridBuilder extends AComponent {
             }
         }
 
-        if(!($this instanceof IExtendingComponent)) {
+        if(!($this instanceof IGridExtendingComponent)) {
             $this->build();
         }
         return ['grid' => $this->render()];
@@ -1080,7 +1080,7 @@ class GridBuilder extends AComponent {
             }
         }
 
-        if(!($this instanceof IExtendingComponent)) {
+        if(!($this instanceof IGridExtendingComponent)) {
             $this->build();
         }
         return ['grid' => $this->render()];

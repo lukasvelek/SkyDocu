@@ -20,7 +20,7 @@ abstract class AException extends Exception {
 
         $this->html = $this->createHTML($name, $message);
 
-        if($createFile && FileManager::folderExists('logs\\')) {
+        if($createFile && FileManager::folderExists(LOG_DIR) && $previous === null) {
             $this->createExceptionFile($name, $message);
         }
     }

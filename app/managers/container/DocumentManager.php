@@ -142,7 +142,7 @@ class DocumentManager extends AManager {
         $documentId = $this->createId(EntityManager::C_DOCUMENTS);
 
         if(!$this->dr->createNewDocument($documentId, $metadataValues)) {
-            throw new GeneralException('Database error while creating new document.');
+            throw new GeneralException('Database error.');
         }
 
         foreach($customMetadataValues as $metadataId => $value) {
@@ -155,7 +155,7 @@ class DocumentManager extends AManager {
             ];
 
             if(!$this->dr->createNewCustomMetadataEntry($entryId, $data)) {
-                throw new GeneralException('Database error while saving custom metadata.');
+                throw new GeneralException('Database error.');
             }
         }
     }

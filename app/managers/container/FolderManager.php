@@ -83,7 +83,7 @@ class FolderManager extends AManager {
         $folderId = $this->createId(EntityManager::C_DOCUMENT_FOLDERS);
 
         if(!$this->fr->createNewFolder($folderId, $title)) {
-            throw new GeneralException('Could not create new folder.');
+            throw new GeneralException('Database error.');
         }
 
         $groupIds = $this->gr->getGroupsForUser($callingUserId);
@@ -118,7 +118,7 @@ class FolderManager extends AManager {
         }
 
         if(!$result) {
-            throw new GeneralException('Could not ' . ($new ? 'insert' : 'update') . ' group folder rights.');
+            throw new GeneralException('Database error.');
         }
 
         $this->cacheFactory->invalidateCacheByNamespace(CacheNames::VISIBLE_FOLDER_IDS_FOR_GROUP);

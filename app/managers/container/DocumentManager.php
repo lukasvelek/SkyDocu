@@ -2,9 +2,11 @@
 
 namespace App\Managers\Container;
 
+use App\Constants\Container\CustomMetadataTypes;
 use App\Core\Caching\CacheNames;
 use App\Core\DB\DatabaseRow;
 use App\Exceptions\GeneralException;
+use App\Exceptions\NonExistingEntityException;
 use App\Logger\Logger;
 use App\Managers\AManager;
 use App\Managers\EntityManager;
@@ -168,6 +170,39 @@ class DocumentManager extends AManager {
         ;
 
         return $qb->fetch('cnt');
+    }
+    
+    public function getDocumentById(string $documentId) {
+        $row = $this->dr->getDocumentById($documentId);
+
+        if($row === null) {
+            throw new NonExistingEntityException('Document does not exist.');
+        }
+
+        $_row = DatabaseRow::createFromDbRow($row);
+
+        /**
+         * @var array<string, \App\Core\DB\DatabaseRow> $customMetadatas
+         */
+        $customMetadatas = $this->getCustomMetadataForFolder($_row->folderId);
+
+        $documentCustomMetadataValues = [];
+        foreach($customMetadatas as $metadataId => $metadata) {
+            $qb = $this->composeQueryForDocumentCustomMetadataValues();
+            $qb->andWhere('metadataId = ?', [$metadataId])
+                ->andWhere('documentId = ?', [$documentId])
+                ->execute();
+
+            while($row = $qb->fetchAssoc()) {
+                $row = DatabaseRow::createFromDbRow($row);
+
+                $documentCustomMetadataValues[$metadata->title] = $row->value;
+            }
+
+            $_row->{$metadata->title} = $documentCustomMetadataValues[$metadata->title];
+        }
+
+        return $_row;
     }
 }
 

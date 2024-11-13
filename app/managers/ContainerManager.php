@@ -2,6 +2,7 @@
 
 namespace App\Managers;
 
+use App\Constants\Container\SystemGroups;
 use App\Core\Caching\CacheNames;
 use App\Core\DB\DatabaseManager;
 use App\Core\DB\DatabaseRow;
@@ -76,8 +77,8 @@ class ContainerManager extends AManager {
         $users = $this->groupManager->getGroupUsersForGroupTitle($container->title . ' - users');
 
         $groupIds = [
-            'Administrators' => $this->createIdCustomDb(EntityManager::C_GROUPS, $conn),
-            'All users' => $this->createIdCustomDb(EntityManager::C_GROUPS, $conn)
+            SystemGroups::ADMINISTRATORS => $this->createIdCustomDb(EntityManager::C_GROUPS, $conn),
+            SystemGroups::ALL_USERS => $this->createIdCustomDb(EntityManager::C_GROUPS, $conn)
         ];
 
         $folderIds = [
@@ -92,15 +93,15 @@ class ContainerManager extends AManager {
             [
                 'table' => 'groups',
                 'data' => [
-                    'groupId' => $groupIds['Administrators'],
-                    'title' => 'Administrators'
+                    'groupId' => $groupIds[SystemGroups::ADMINISTRATORS],
+                    'title' => SystemGroups::ADMINISTRATORS
                 ]
             ],
             [
                 'table' => 'groups',
                 'data' => [
-                    'groupId' => $groupIds['All users'],
-                    'title' => 'All users'
+                    'groupId' => $groupIds[SystemGroups::ALL_USERS],
+                    'title' => SystemGroups::ALL_USERS
                 ]
             ],
             [
@@ -114,7 +115,7 @@ class ContainerManager extends AManager {
                 'table' => 'document_class_group_rights',
                 'data' => [
                     'rightId' => $this->createIdCustomDb(EntityManager::C_DOCUMENT_CLASS_GROUP_RIGHTS, $conn),
-                    'groupId' => $groupIds['All users'],
+                    'groupId' => $groupIds[SystemGroups::ALL_USERS],
                     'classId' => $classIds['Default'],
                     'canView' => 1,
                     'canCreate' => 1
@@ -124,7 +125,7 @@ class ContainerManager extends AManager {
                 'table' => 'document_class_group_rights',
                 'data' => [
                     'rightId' => $this->createIdCustomDb(EntityManager::C_DOCUMENT_CLASS_GROUP_RIGHTS, $conn),
-                    'groupId' => $groupIds['Administrators'],
+                    'groupId' => $groupIds[SystemGroups::ADMINISTRATORS],
                     'classId' => $classIds['Default'],
                     'canView' => 1,
                     'canCreate' => 1,
@@ -145,7 +146,7 @@ class ContainerManager extends AManager {
                 'data' => [
                     'relationId' => $this->createIdCustomDb(EntityManager::C_DOCUMENT_FOLDER_GROUP_RELATION, $conn),
                     'folderId' => $folderIds['Default'],
-                    'groupId' => $groupIds['All users'],
+                    'groupId' => $groupIds[SystemGroups::ALL_USERS],
                     'canView' => 1,
                     'canCreate' => 1
                 ]
@@ -155,7 +156,7 @@ class ContainerManager extends AManager {
                 'data' => [
                     'relationId' => $this->createIdCustomDb(EntityManager::C_DOCUMENT_FOLDER_GROUP_RELATION, $conn),
                     'folderId' => $folderIds['Default'],
-                    'groupId' => $groupIds['Administrators'],
+                    'groupId' => $groupIds[SystemGroups::ADMINISTRATORS],
                     'canView' => 1,
                     'canCreate' => 1,
                     'canEdit' => 1,
@@ -166,7 +167,7 @@ class ContainerManager extends AManager {
                 'table' => 'group_rights_standard_operations',
                 'data' => [
                     'rightId' => $this->createIdCustomDb(EntityManager::C_GROUP_STANDARD_OPERATION_RIGHTS, $conn),
-                    'groupId' => $groupIds['Administrators'],
+                    'groupId' => $groupIds[SystemGroups::ADMINISTRATORS],
                     'canShareDocuments' => 1,
                     'canExportDocuments' => 1,
                     'canViewDocumentHistory' => 1
@@ -184,23 +185,16 @@ class ContainerManager extends AManager {
         ];
 
         foreach($users as $userId) {
-            $data[] = [
-                'table' => 'group_users_relation',
-                'data' => [
-                    'relationId' => $this->createIdCustomDb(EntityManager::C_GROUP_USERS_RELATION, $conn),
-                    'userId' => $userId,
-                    'groupId' => $groupIds['All users']
-                ]
-            ];
-
-            $data[] = [
-                'table' => 'group_users_relation',
-                'data' => [
-                    'relationId' => $this->createIdCustomDb(EntityManager::C_GROUP_USERS_RELATION, $conn),
-                    'userId' => $userId,
-                    'groupId' => $groupIds['Administrators']
-                ]
-            ];
+            foreach($groupIds as $name => $groupId) {
+                $data[] = [
+                    'table' => 'group_users_relation',
+                    'data' => [
+                        'relationId' => $this->createIdCustomDb(EntityManager::C_GROUP_USERS_RELATION, $conn),
+                        'userId' => $userId,
+                        'groupId' => $groupId
+                    ]
+                ];
+            }
         }
 
         foreach($data as $part) {

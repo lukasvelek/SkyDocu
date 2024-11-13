@@ -124,7 +124,7 @@ div[class^="fm-"], div[class*="fm-"] {
 
     width: 98%;
 
-    z-index: 9999;
+    z-index: 9990;
 }
 
 #navbar input[type=text] {

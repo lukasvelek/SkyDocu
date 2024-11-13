@@ -2,6 +2,7 @@
 
 namespace App\Components\DocumentsGrid;
 
+use App\Authorizators\DocumentBulkActionAuthorizator;
 use App\Constants\Container\CustomMetadataTypes;
 use App\Constants\Container\DocumentStatus;
 use App\Core\Application;
@@ -24,6 +25,7 @@ use App\UI\HTML\HTML;
 class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
     private string $currentUserId;
     private DocumentManager $dm;
+    private DocumentBulkActionAuthorizator $dbaa;
 
     private bool $allMetadata;
 
@@ -39,7 +41,8 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
     public function __construct(
         GridBuilder $grid,
         Application $app,
-        DocumentManager $documentManager
+        DocumentManager $documentManager,
+        DocumentBulkActionAuthorizator $dbaa
     ) {
         parent::__construct($grid->httpRequest);
         $this->setHelper(new GridHelper($app->logger, $app->currentUser->getId()));
@@ -47,6 +50,7 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
         $this->app = $app;
         $this->dm = $documentManager;
         $this->currentUserId = $app->currentUser->getId();
+        $this->dbaa = $dbaa;
 
         $this->allMetadata = false;
 
@@ -341,8 +345,84 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
      * @param APresenter $presenter Handler presenter
      * @param string $action Handler action
      */
-    public function setCheckboxHandler(APresenter $presenter, string $action) {
+    public function useCheckboxesWithCustomHandler(APresenter $presenter, string $action) {
         $this->addCheckboxes($presenter, $action);
+    }
+
+    /**
+     * Adds checkboxes to grid and forward the selected IDs to "actionBulkAction()"
+     * 
+     * @param APresenter $presenter Sender presenter
+     */
+    public function useCheckboxes(APresenter $presenter) {
+        $this->addCheckboxes2($presenter, 'bulkAction');
+    }
+
+    // HANDLERS
+    /**
+     * Handles bulk actions
+     * 
+     * @return array<string, string> Rendered modal content
+     */
+    public function actionBulkAction() {
+        $modal = new BulkActionsModal($this);
+
+        $ids = $this->httpRequest->query['ids'];
+
+        $bulkActions = $this->getAllowedBulkActions($ids);
+        $bulkActions = $this->createBulkActions($bulkActions, $ids);
+
+        $modal->setBulkActions($bulkActions);
+        $modal->startup();
+
+        return ['modal' => $modal->render()];
+    }
+
+    private function getAllowedBulkActions(array $documentIds) {
+        $bulkActions = [];
+
+        if($this->dbaa->canExecuteArchivation($this->presenter->getUserId(), $documentIds)) {
+            $bulkActions[] = 'archivation';
+        }
+
+        return $bulkActions;
+    }
+
+    private function createBulkActions(array $bulkActions, array $documentIds) {
+        $urlParams = [
+            'backPage=' . $this->httpRequest->query['page'],
+            'backAction=' . $this->httpRequest->query['action']
+        ];
+
+        foreach($documentIds as $documentId) {
+            $urlParams[] = 'documentId[]=' . $documentId;
+        }
+
+        $links = [];
+        foreach($bulkActions as $ba) {
+            $el = HTML::el('a')
+                ->class('link');
+
+            switch($ba) {
+                case 'archivation':
+                    $el->href($this->createLink('User:DocumentBulkActions', 'archiveDocuments', $urlParams))
+                        ->text('Archive');
+                    break;
+            }
+
+            $links[] = $el->toString();
+        }
+        return $links;
+    }
+
+    private function createLink(string $modulePresenter, string $action, array $params = []) {
+        $url = '?page=' . $modulePresenter . '&action=' . $action;
+
+        if(!empty($params)) {
+            $url .= '&' . implode('&', $params);
+        }
+
+        return $url;
     }
 }
 

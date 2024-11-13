@@ -3,6 +3,7 @@
 namespace App\UI\ModalBuilder;
 
 use App\Core\Http\HttpRequest;
+use App\Modules\TemplateObject;
 use App\UI\AComponent;
 use App\UI\FormBuilder\FormBuilder;
 
@@ -14,8 +15,10 @@ use App\UI\FormBuilder\FormBuilder;
 class ModalBuilder extends AComponent {
     private string $id;
     private string $title;
-    private string $content;
+    protected string $content;
     protected array $scripts;
+    protected ?string $templateFile;
+    protected ?TemplateObject $template;
 
     /**
      * Class constructor
@@ -29,6 +32,8 @@ class ModalBuilder extends AComponent {
         $this->title = 'Modal';
         $this->content = 'Modal content';
         $this->scripts = [];
+        $this->templateFile = null;
+        $this->template = null;
     }
 
     /**
@@ -58,21 +63,27 @@ class ModalBuilder extends AComponent {
         $this->content = $fb->render();
     }
 
+    public function startup() {
+        parent::startup();
+
+        $templateLink = $this->templateFile ?? __DIR__ . '/modal.html';
+
+        $this->template = $this->getTemplate($templateLink);
+    }
+
     /**
      * Renders the modal content
      * 
      * @return string HTML code
      */
     public function render() {
-        $template = $this->getTemplate(__DIR__ . '/modal.html');
+        $this->template->modal_id = $this->id;
+        $this->template->modal_title = $this->title;
+        $this->template->modal_content = $this->content;
+        $this->template->modal_close_button = $this->createCloseButton();
+        $this->template->scripts = $this->createScripts();
 
-        $template->modal_id = $this->id;
-        $template->modal_title = $this->title;
-        $template->modal_content = $this->content;
-        $template->modal_close_button = $this->createCloseButton();
-        $template->scripts = $this->createScripts();
-
-        return $template->render()->getRenderedContent();
+        return $this->template->render()->getRenderedContent();
     }
 
     /**

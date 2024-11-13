@@ -118,6 +118,17 @@ class DocumentRepository extends ARepository {
 
         return $qb->fetchBool();
     }
+
+    public function getDocumentById(string $documentId) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->select(['*'])
+            ->from('documents')
+            ->where('documentId = ?', [$documentId])
+            ->execute();
+
+        return $qb->fetch();
+    }
 }
 
 ?>

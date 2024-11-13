@@ -888,9 +888,14 @@ class GridBuilder extends AComponent {
                 'ids[]' => '_ids'
             ];
 
+            if(!array_key_exists('isComponent', $this->checkboxHandler)) {
+                $arb->setAction($this->checkboxHandler['presenter'], $this->checkboxHandler['action']);
+            } else {
+                $arb->setComponentAction($this->checkboxHandler['presenter'], $this->componentName . '-' . $this->checkboxHandler['action']);
+            }
+
             $arb->setMethod()
                 ->setHeader($headerParams)
-                ->setAction($this->checkboxHandler['presenter'], $this->checkboxHandler['action'])
                 ->setFunctionName($this->componentName . '_onCheckboxCheck')
                 ->addBeforeAjaxOperation('
                     const _now = Date.now();
@@ -910,11 +915,24 @@ class GridBuilder extends AComponent {
                         return;
                     }
                 ')
-                ->addWhenDoneOperation('alert(obj.ids);_checkboxHandlerTimestamp = null;')
+                ->addWhenDoneOperation('_checkboxHandlerTimestamp = null;')
+                ->updateHTMLElement('modal', 'modal')
+                ->addWhenDoneOperation('$("#modal").show(); ' . $this->componentName . '_processBulkActionsModalOpen();')
                 ->addCustomArg('_ids')
             ;
 
             $addScript($arb);
+
+            $scripts[] = '
+                <script type="text/javascript">
+                    function ' . $this->componentName . '_processBulkActionsModalOpen() {
+                        $("#bulk-actions-modal-inner")
+                            .css("height", "15%")
+                            .css("visibility", "visible")
+                            .css("width", "90%");
+                    }
+                </script>
+            ';
         }
 
         return implode('', $scripts);
@@ -1259,6 +1277,15 @@ class GridBuilder extends AComponent {
         $this->checkboxHandler = [
             'presenter' => $presenter,
             'action' => $action
+        ];
+    }
+
+    public function addCheckboxes2(APresenter $presenter, string $componentAction) {
+        $this->hasCheckboxes = true;
+        $this->checkboxHandler = [
+            'presenter' => $presenter,
+            'action' => $componentAction,
+            'isComponent' => true
         ];
     }
 }

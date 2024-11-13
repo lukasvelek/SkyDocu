@@ -70,12 +70,12 @@ class DocumentsPresenter extends AUserPresenter {
     }
 
     protected function createComponentDocumentsGrid(HttpRequest $request) {
-        $documentsGrid = new DocumentsGrid($this->getGridBuilder(), $this->app, $this->documentManager);
+        $documentsGrid = new DocumentsGrid($this->getGridBuilder(), $this->app, $this->documentManager, $this->documentBulkActionAuthorizator);
         $documentsGrid->setGridName('documentsGrid');
 
         $documentsGrid->showCustomMetadata();
         $documentsGrid->setCurrentFolder($this->currentFolderId);
-        $documentsGrid->setCheckboxHandler($this, 'bulkAction');
+        $documentsGrid->useCheckboxes($this);
 
         return $documentsGrid;
     }

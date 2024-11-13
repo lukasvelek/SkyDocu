@@ -3,8 +3,6 @@
 namespace App\Managers;
 
 use App\Core\Caching\CacheNames;
-use App\Core\Datetypes\DateTime;
-use App\Exceptions\EntityUpdateException;
 use App\Exceptions\GeneralException;
 use App\Exceptions\NonExistingEntityException;
 use App\Logger\Logger;

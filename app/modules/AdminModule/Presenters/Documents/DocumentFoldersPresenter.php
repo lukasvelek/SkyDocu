@@ -195,9 +195,6 @@ class DocumentFoldersPresenter extends AAdminPresenter {
 
                 $this->folderRepository->commit($this->getUserId(), __METHOD__);
 
-                $this->cacheFactory->invalidateCacheByNamespace(CacheNames::VISIBLE_FOLDER_IDS_FOR_GROUP);
-                $this->cacheFactory->invalidateCacheByNamespace(CacheNames::VISIBLE_FOLDERS_FOR_USER);
-
                 $this->flashMessage('New group added.', 'success');
             } catch(AException $e) {
                 $this->folderRepository->rollback(__METHOD__);
@@ -293,9 +290,6 @@ class DocumentFoldersPresenter extends AAdminPresenter {
                 $this->folderManager->updateGroupFolderRight($folderId, $groupId, $canView, $canCreate, $canEdit, $canDelete);
 
                 $this->folderRepository->commit($this->getUserId(), __METHOD__);
-
-                $this->cacheFactory->invalidateCacheByNamespace(CacheNames::VISIBLE_FOLDER_IDS_FOR_GROUP);
-                $this->cacheFactory->invalidateCacheByNamespace(CacheNames::VISIBLE_FOLDERS_FOR_USER);
 
                 $this->flashMessage('Group updated.', 'success');
             } catch(AException $e) {

@@ -22,6 +22,8 @@ class Button extends ACommonButton {
 
         $this->type = $type;
         $this->text = $text;
+
+        $this->addAttribute('id', 'formButton');
     }
 
     /**

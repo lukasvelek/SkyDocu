@@ -78,46 +78,6 @@ class GroupsPresenter extends ASuperAdminSettingsPresenter {
             return $el;
         };
 
-        $edit = $grid->addAction('edit');
-        $edit->setTitle('Edit');
-        $edit->onCanRender[] = function(DatabaseRow $row, Row $_row) {
-            if($row->title == 'superadministrators') {
-                return false;
-            } else {
-                return true;
-            }
-        };
-        $edit->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
-            $el = HTML::el('a')
-                ->text('Edit')
-                ->href($this->createFullURLString('SuperAdminSettings:GroupsSettings', 'editGroup', ['groupId' => $primaryKey]))
-                ->class('grid-link');
-
-            return $el;
-        };
-
-        $delete = $grid->addAction('delete');
-        $delete->setTitle('Delete');
-        $delete->onCanRender[] = function(DatabaseRow $row, Row $_row) {
-            if($row->title == 'superadministrators') {
-                return false;
-            }
-
-            if($row->containerId !== null) {
-                return false;
-            }
-
-            return true;
-        };
-        $delete->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
-            $el = HTML::el('a')
-                ->text('Delete')
-                ->href($this->createFullURLString('SuperAdminSettings:GroupsSettings', 'editGroup', ['groupId' => $primaryKey]))
-                ->class('grid-link');
-
-            return $el;
-        };
-
         return $grid;
     }
 
@@ -252,8 +212,7 @@ class GroupsPresenter extends ASuperAdminSettingsPresenter {
 
         $form->addTextInput('username', 'Search user:');
         $form->addButton('Search')
-            ->setOnClick('searchUsers(\'' . $request->query['groupId'] . '\');')
-            ->addAttribute('id', 'formSubmit');
+            ->setOnClick('searchUsers(\'' . $request->query['groupId'] . '\');');
 
         $form->addSelect('user', 'User:')
             ->setRequired();

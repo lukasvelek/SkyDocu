@@ -35,6 +35,7 @@ class FormBuilder2 extends AComponent {
         $this->name = 'MyForm';
         $this->action = [];
         $this->method = 'POST';
+        $this->labels = [];
     }
 
     /**

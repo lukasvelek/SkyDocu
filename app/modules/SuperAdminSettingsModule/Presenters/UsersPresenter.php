@@ -2,12 +2,12 @@
 
 namespace App\Modules\SuperAdminSettingsModule;
 
+use App\Core\Caching\CacheNames;
 use App\Core\DB\DatabaseRow;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
 use App\Helpers\GridHelper;
-use App\UI\FormBuilder\FormBuilder;
 use App\UI\FormBuilder\FormResponse;
 use App\UI\GridBuilder2\Row;
 use App\UI\HTML\HTML;
@@ -64,7 +64,7 @@ class UsersPresenter extends ASuperAdminSettingsPresenter {
             $el = HTML::el('a')
                 ->text('Edit')
                 ->class('grid-link')
-                ->href($this->createFullURLString('SuperAdminSettings:UsersSettings', 'editUser', ['userId' => $primaryKey]));
+                ->href($this->createFullURLString('SuperAdminSettings:Users', 'editUserForm', ['userId' => $primaryKey]));
 
             return $el;
         };
@@ -82,7 +82,7 @@ class UsersPresenter extends ASuperAdminSettingsPresenter {
             $el = HTML::el('a')
                 ->text('Delete')
                 ->class('grid-link')
-                ->href($this->createFullURLString('SuperAdminSettings:UsersSettings', 'deleteUser', ['userId' => $primaryKey]));
+                ->href($this->createFullURLString('SuperAdminSettings:Users', 'deleteUserForm', ['userId' => $primaryKey]));
 
             return $el;
         };
@@ -126,29 +126,35 @@ class UsersPresenter extends ASuperAdminSettingsPresenter {
             }
 
             $this->redirect($this->createURL('list'));
-        } else {
-            $form = new FormBuilder();
-
-            $form->setMethod()
-                ->setAction($this->createURL('newUserForm'))
-                ->addTextInput('username', 'Username:', null, true)
-                ->addTextInput('fullname', 'Full name:', null, true)
-                ->addEmailInput('email', 'Email:')
-                ->addPassword('password', 'Password:', null, true)
-                ->addPassword('password2', 'Password again:', null, true)
-                ->addSubmit('Submit')
-            ;
-
-            $this->saveToPresenterCache('form', $form);
         }
     }
 
     public function renderNewUserForm() {
-        $this->template->links = [
-            LinkBuilder::createSimpleLink('&larr; Back', $this->createURL('list'), 'link')
-        ];
+        $this->template->links = $this->createBackUrl('list');
+    }
 
-        $this->template->form = $this->loadFromPresenterCache('form');
+    protected function createComponentNewUserForm(HttpRequest $request) {
+        $form = $this->componentFactory->getFormBuilder();
+
+        $form->setAction($this->createURL('newUserForm'));
+
+        $form->addTextInput('username', 'Username:')
+            ->setRequired();
+
+        $form->addTextInput('fullname', 'Fullname:')
+            ->setRequired();
+
+        $form->addEmailInput('email', 'Email:');
+
+        $form->addPasswordInput('password', 'Password:')
+            ->setRequired();
+
+        $form->addPasswordInput('password2', 'Password again:')
+            ->setRequired();
+
+        $form->addSubmit('Add');
+
+        return $form;
     }
 
     public function handleProfile() {
@@ -180,6 +186,132 @@ class UsersPresenter extends ASuperAdminSettingsPresenter {
         $this->template->links = [
             LinkBuilder::createSimpleLink('&larr; Back', $this->createURL('list'), 'link')
         ];
+    }
+
+    public function handleEditUserForm(?FormResponse $fr = null) {
+        if($fr !== null) {
+            $userId = $this->httpGet('userId', true);
+
+            try {
+                $this->app->userRepository->beginTransaction(__METHOD__);
+
+                $data = [
+                    'username' => $fr->username,
+                    'fullname' => $fr->fullname,
+                ];
+
+                if(isset($fr->email) && $fr->email !== null) {
+                    $data['email'] = $fr->email;
+                }
+
+                $this->app->userManager->updateUser($userId, $data);
+
+                $this->app->userRepository->commit($this->getUserId(), __METHOD__);
+
+                $this->flashMessage('User updated.', 'success');
+            } catch(AException $e) {
+                $this->app->userRepository->rollback(__METHOD__);
+
+                $this->flashMessage('Could not update user. Reason: ' . $e->getMessage(), 'error', 10);
+            }
+
+            $this->redirect($this->createURL('list'));
+        }
+    }
+
+    public function renderEditUserForm() {
+        $this->template->links = $this->createBackUrl('list');
+    }
+
+    protected function createComponentEditUserForm(HttpRequest $request) {
+        $user = $this->app->userManager->getUserById($request->query['userId']);
+        
+        $form = $this->componentFactory->getFormBuilder();
+
+        $form->setAction($this->createURL('editUserForm', ['userId' => $request->query['userId']]));
+
+        $form->addTextInput('username', 'Username:')
+            ->setRequired()
+            ->setValue($user->getUsername());
+
+        $form->addTextInput('fullname', 'Fullname:')
+            ->setRequired()
+            ->setValue($user->getFullname());
+
+        $form->addEmailInput('email', 'Email:')
+            ->setValue($user->getEmail());
+
+        $form->addSubmit('Save');
+
+        return $form;
+    }
+
+    public function handleDeleteUserForm(?FormResponse $fr = null) {
+        if($fr !== null) {
+            try {
+                $user = $this->app->userManager->getUserById($this->httpGet('userId'));
+
+                if($user->getUsername() != $fr->username) {
+                    throw new GeneralException('Username entered does not match with the username of the user to be deleted.');
+                }
+
+                if(!$this->app->userAuth->authUser($fr->password)) {
+                    throw new GeneralException('Authentication failed. Bad password entered.');
+                }
+
+                $userMemberships = $this->app->groupManager->getMembershipsForUser($user->getId());
+
+                $this->app->userRepository->beginTransaction(__METHOD__);
+
+                // delete user
+                $this->app->userManager->deleteUser($user->getId());
+
+                // delete memberships
+                foreach($userMemberships as $group) {
+                    $this->app->groupManager->removeUserFromGroup($user->getId(), $group->groupId);
+                }
+
+                // invalidate membership cache
+                if(!$this->cacheFactory->invalidateCacheByNamespace(CacheNames::GROUP_MEMBERSHIPS) ||
+                   !$this->cacheFactory->invalidateCacheByNamespace(CacheNames::VISIBLE_FOLDERS_FOR_USER)) {
+                    throw new GeneralException('Could not invalidate cache.');
+                }
+
+                $this->app->userRepository->commit($this->getUserId(), __METHOD__);
+
+                $this->flashMessage('User deleted.', 'success');
+            } catch(AException $e) {
+                $this->app->userRepository->rollback(__METHOD__);
+
+                $this->flashMessage('Could not delete user. Reason: ' . $e->getMessage(), 'error', 10);
+            }
+
+            $this->redirect($this->createURL('list'));
+        }
+    }
+
+    public function renderDeleteUserForm() {
+        $this->template->links = $this->createBackUrl('list');
+    }
+
+    protected function createComponentDeleteUserForm(HttpRequest $request) {
+        $user = $this->app->userManager->getUserById($request->query['userId']);
+
+        $form = $this->componentFactory->getFormBuilder();
+
+        $form->setAction($this->createURL('deleteUserForm', ['userId' => $request->query['userId']]));
+
+        $form->addLabel('main', 'Do you want to delete user \'' . $user->getUsername() . '\'?');
+
+        $form->addTextInput('username', 'User\'s username:')
+            ->setRequired();
+
+        $form->addPasswordInput('password', 'Your password:')
+            ->setRequired();
+        
+        $form->addSubmit('Delete');
+
+        return $form;
     }
 }
 

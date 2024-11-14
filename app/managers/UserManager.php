@@ -48,7 +48,7 @@ class UserManager extends AManager {
             throw new GeneralException('Could not create user.');
         }
 
-        if(!$this->cacheFactory->invalidateCacheByNamespace(CacheNames::USERS)) {
+        if(!$this->cacheFactory->invalidateCacheByNamespace(CacheNames::USERS) || !$this->cacheFactory->invalidateCacheByNamespace(CacheNames::USERS_USERNAME_TO_ID_MAPPING)) {
             throw new GeneralException('Could not invalidate cache.');
         }
 
@@ -59,6 +59,27 @@ class UserManager extends AManager {
         $user = $this->userRepository->getUserByUsername('service_user');
 
         return $user->getId();
+    }
+
+    public function updateUser(string $userId, array $data) {
+        if(!$this->userRepository->updateUser($userId, $data)) {
+            throw new GeneralException('Database error.');
+        }
+
+        if(!$this->cacheFactory->invalidateCacheByNamespace(CacheNames::USERS) || !$this->cacheFactory->invalidateCacheByNamespace(CacheNames::USERS_USERNAME_TO_ID_MAPPING)) {
+            throw new GeneralException('Could not invalidate cache.');
+        }
+    }
+
+    public function deleteUser(string $userId) {
+        if(!$this->userRepository->deleteUser($userId)) {
+            throw new GeneralException('Database error.');
+        }
+
+        if(!$this->cacheFactory->invalidateCacheByNamespace(CacheNames::USERS) ||
+           !$this->cacheFactory->invalidateCacheByNamespace(CacheNames::USERS_USERNAME_TO_ID_MAPPING)) {
+            throw new GeneralException('Could not invalidate cache.');
+        }
     }
 }
 

@@ -208,18 +208,6 @@ class GroupsPresenter extends ASuperAdminSettingsPresenter {
     
             $this->saveToPresenterCache('links', $links);
     
-            $form = new FormBuilder();
-    
-            $form->setMethod()
-                ->setAction($this->createURL('addUserForm', ['groupId' => $groupId]))
-                ->addTextInput('username', 'Search user:', null, false)
-                ->addButton('Search', 'searchUsers(\'' . $groupId . '\')', 'formSubmit')
-                ->addSelect('user', 'User:', [], true)
-                ->addSubmit('Add')
-            ;
-    
-            $this->saveToPresenterCache('form', $form);
-    
             $arb = new AjaxRequestBuilder();
             $arb->setAction($this, 'searchUsersForAddUserForm')
                 ->setMethod()
@@ -231,6 +219,7 @@ class GroupsPresenter extends ASuperAdminSettingsPresenter {
                         alert("No users found.");
                     } else {
                         $("#user").html(obj.users);
+                        $("#formSubmit").removeAttr("disabled");
                     }
                 ')
             ;
@@ -254,6 +243,24 @@ class GroupsPresenter extends ASuperAdminSettingsPresenter {
         $this->template->group_title = $this->loadFromPresenterCache('groupName');
         $this->template->links = $this->loadFromPresenterCache('links');
         $this->template->form = $this->loadFromPresenterCache('form');
+    }
+
+    protected function createComponentAddUserForm(HttpRequest $request) {
+        $form = $this->componentFactory->getFormBuilder();
+
+        $form->setAction($this->createURL('addUserForm', ['groupId' => $request->query['groupId']]));
+
+        $form->addTextInput('username', 'Search user:');
+        $form->addButton('Search')
+            ->setOnClick('searchUsers(\'' . $request->query['groupId'] . '\');');
+
+        $form->addSelect('user', 'User:')
+            ->setRequired();
+
+        $form->addSubmit('Add')
+            ->setDisabled();
+
+        return $form;
     }
 
     public function actionSearchUsersForAddUserForm() {

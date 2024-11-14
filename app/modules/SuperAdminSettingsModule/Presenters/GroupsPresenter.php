@@ -252,7 +252,8 @@ class GroupsPresenter extends ASuperAdminSettingsPresenter {
 
         $form->addTextInput('username', 'Search user:');
         $form->addButton('Search')
-            ->setOnClick('searchUsers(\'' . $request->query['groupId'] . '\');');
+            ->setOnClick('searchUsers(\'' . $request->query['groupId'] . '\');')
+            ->addAttribute('id', 'formSubmit');
 
         $form->addSelect('user', 'User:')
             ->setRequired();

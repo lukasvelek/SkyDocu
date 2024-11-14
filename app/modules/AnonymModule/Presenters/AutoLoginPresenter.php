@@ -33,9 +33,14 @@ class AutoLoginPresenter extends AAnonymPresenter {
         if($this->app->groupManager->isUserMemberOfSuperadministrators($this->getUserId()) || ($this->app->groupManager->isUserMemberOfSuperadministrators($this->getUserId()) && ($this->httpSessionGet('container') !== null && $this->httpSessionGet('container') == 'superadministrators'))) {
             // redirect to superadmin
             return ['page' => 'SuperAdmin:Home', 'action' => 'home'];
-        } else {
+        } else if($this->httpSessionGet('container') !== null) {
             // redirect to their container
             return ['page' => 'User:Home', 'action' => 'dashboard'];
+        } else {
+            // redirect to login form
+            session_destroy();
+            $this->httpSessionSet('is_logging_in', 'true');
+            return ['page' => 'Anonym:Login', 'action' => 'loginForm'];
         }
     }
 }

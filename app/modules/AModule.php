@@ -22,7 +22,7 @@ abstract class AModule extends AGUICore {
 
     private array $flashMessages;
     protected ?TemplateObject $template;
-    private ?Logger $logger;
+    protected ?Logger $logger;
     protected HttpRequest $httpRequest;
 
     private bool $isAjax;
@@ -167,7 +167,7 @@ abstract class AModule extends AGUICore {
      * @param string $actionTitle Action title
      * @param bool $isAjax Is the request called from AJAX?
      */
-    private function startup(string $presenterTitle, string $actionTitle) {
+    protected function startup(string $presenterTitle, string $actionTitle) {
         $this->template = $this->getCommonTemplate();
 
         $realPresenterTitle = 'App\\Modules\\' . $this->title . '\\' . $presenterTitle;

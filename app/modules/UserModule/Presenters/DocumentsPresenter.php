@@ -28,7 +28,6 @@ class DocumentsPresenter extends AUserPresenter {
                 $this->redirect($this->createURL('switchFolder', ['folderId' => $vf->folderId]));
             }
         }
-
     }
     
     public function handleList() {

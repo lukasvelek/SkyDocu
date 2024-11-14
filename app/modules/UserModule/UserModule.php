@@ -2,19 +2,21 @@
 
 namespace App\Modules\UserModule;
 
-use App\Components\Navbar\Navbar;
 use App\Components\Navbar\NavbarModes;
-use App\Modules\AModule;
+use App\Modules\AContainerModule;
 
-class UserModule extends AModule {
+class UserModule extends AContainerModule {
     public function __construct() {
         parent::__construct('UserModule');
+
+        $this->navbarMode = NavbarModes::GENERAL;
     }
 
     public function renderModule() {
-        $navbar = new Navbar(NavbarModes::GENERAL, $this->app->currentUser, $this->app);
+        parent::renderModule();
+        
         if($this->template !== null) {
-            $this->template->sys_navbar = $navbar;
+            $this->template->sys_navbar = $this->navbar;
         }
     }
 }

@@ -84,6 +84,12 @@ class GroupManager extends AManager {
     public function getGroupsForUser(string $userId) {
         return $this->gr->getGroupsForUser($userId);
     }
+
+    public function getUsersForGroupTitle(string $title) {
+        $group = $this->getGroupByTitle($title);
+        
+        return $this->gr->getMembersForGroup($group->groupId);
+    }
 }
 
 ?>

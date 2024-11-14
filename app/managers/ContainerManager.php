@@ -11,7 +11,10 @@ use App\Exceptions\GeneralException;
 use App\Exceptions\NonExistingEntityException;
 use App\Helpers\ContainerCreationHelper;
 use App\Logger\Logger;
+use App\Repositories\Container\GroupRepository;
 use App\Repositories\ContainerRepository;
+use App\Repositories\ContentRepository;
+use App\Repositories\UserRepository;
 
 class ContainerManager extends AManager {
     private ContainerRepository $containerRepository;
@@ -287,6 +290,21 @@ class ContainerManager extends AManager {
         if(!$this->cacheFactory->invalidateCacheByNamespace(CacheNames::CONTAINERS)) {
             throw new GeneralException('Could not invalidate cache.');
         }
+    }
+
+    public function addUserToContainer(string $userId, string $containerId) {
+        $container = $this->getContainerById($containerId);
+
+        $conn = $this->dbManager->getConnectionToDatabase($container->databaseName);
+
+        $userRepository = new UserRepository($this->containerRepository->conn, $this->logger);
+        $groupRepository = new GroupRepository($conn, $this->logger);
+        $contentRepository = new ContentRepository($conn, $this->logger);
+        $entityManager = new EntityManager($this->logger, $contentRepository);
+
+        $groupManager = new Container\GroupManager($this->logger, $entityManager, $groupRepository, $userRepository);
+
+        $groupManager->addUserToGroupTitle(SystemGroups::ALL_USERS, $userId);
     }
 }
 

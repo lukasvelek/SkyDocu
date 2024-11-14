@@ -6,7 +6,6 @@ use App\Constants\ContainerEnvironments;
 use App\Constants\ContainerStatus;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
-use App\UI\FormBuilder2\FormBuilder2;
 use App\UI\FormBuilder\FormResponse;
 
 class LoginPresenter extends AAnonymPresenter {
@@ -33,7 +32,7 @@ class LoginPresenter extends AAnonymPresenter {
         $this->template->title = 'Login';
     }
 
-    protected function createComponentloginForm(HttpRequest $request) {
+    protected function createComponentLoginForm(HttpRequest $request) {
         $form = $this->componentFactory->getFormBuilder();
 
         $form->setAction($this->createURL('loginForm'));
@@ -85,6 +84,7 @@ class LoginPresenter extends AAnonymPresenter {
             $this->flashMessage('User is not member of any group. Therefore login is not available.', 'error', 10);
             $this->redirect($this->createURL('loginForm'));
         } else if(count($containers) == 1) {
+            $this->httpSessionSet('container', $containers[0]['value']);
             $this->redirect($this->createFullURL('Anonym:AutoLogin', 'checkLogin'));
         } else {
             $this->httpSessionSet('is_choosing_container', true);

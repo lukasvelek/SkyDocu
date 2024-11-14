@@ -138,11 +138,17 @@ class GroupsPresenter extends ASuperAdminSettingsPresenter {
 
         if($fr !== null) {
             try {
+                $group = $this->app->groupManager->getGroupById($groupId);
+
                 $this->app->groupMembershipRepository->beginTransaction(__METHOD__);
 
                 $this->app->groupManager->addUserToGroup($fr->user, $groupId);
 
                 $this->app->groupMembershipRepository->commit($this->getUserId(), __METHOD__);
+
+                if($group->containerId !== null) {
+                    $this->app->containerManager->addUserToContainer($fr->user, $group->containerId);
+                }
 
                 $this->flashMessage('User added to group.', 'success');
             } catch(AException $e) {

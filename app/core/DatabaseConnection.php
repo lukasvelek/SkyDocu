@@ -16,6 +16,7 @@ use QueryBuilder\IDbQueriable;
  */
 class DatabaseConnection implements IDbQueriable {
     private \mysqli $conn;
+    private string $dbName;
 
     /**
      * Class constructor
@@ -26,6 +27,7 @@ class DatabaseConnection implements IDbQueriable {
         try {
             $dbPort = (defined('DB_PORT') ? (!empty(DB_PORT) ? DB_PORT : null) : null);
             $this->establishConnection(DB_SERVER, DB_USER, DB_PASS, $dbName, $dbPort);
+            $this->dbName = $dbName;
         } catch(AException $e) {
             throw $e;
         }

@@ -13,7 +13,7 @@ use App\Exceptions\GeneralException;
 abstract class AMultipleDatabaseConnectionHandler {
     protected array $connections;
 
-    protected DatabaseConnection $conn;
+    public DatabaseConnection $conn;
     private DatabaseConnection $masterConnection;
 
     /**

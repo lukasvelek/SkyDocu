@@ -2,9 +2,11 @@
 
 namespace App\Components\Navbar;
 
+use App\Constants\Container\SystemGroups;
 use App\Core\Application;
 use App\Entities\UserEntity;
 use App\Helpers\LinkHelper;
+use App\Managers\Container\GroupManager;
 use App\Modules\TemplateObject;
 use App\UI\IRenderable;
 
@@ -15,15 +17,23 @@ class Navbar implements IRenderable {
     private array $hideLinks;
     private int $mode;
     private Application $app;
+    private ?GroupManager $groupManager;
 
-    public function __construct(int $mode, UserEntity $user, Application $app) {
+    public function __construct(int $mode, UserEntity $user, Application $app, ?GroupManager $groupManager) {
         $this->mode = $mode;
         $this->links = [];
         $this->template = new TemplateObject(file_get_contents(__DIR__ . '\\template.html'));
         $this->user = $user;
         $this->hideLinks = [];
         $this->app = $app;
+        $this->groupManager = $groupManager;
+    }
 
+    public function inject(GroupManager $groupManager) {
+        $this->groupManager = $groupManager;
+    }
+
+    public function startup() {
         $this->getLinks();
     }
 
@@ -44,7 +54,7 @@ class Navbar implements IRenderable {
             case NavbarModes::GENERAL:
                 $links = NavbarGeneralLinks::toArray();
 
-                if($this->app->groupManager->isUserMemberOfSuperadministrators($this->user->getId()) || in_array($this->user->getId(), $this->app->groupManager->getGroupUsersForGroupTitle('Administrators'))) {
+                if($this->app->groupManager->isUserMemberOfSuperadministrators($this->user->getId()) || ($this->groupManager !== null && in_array($this->user->getId(), $this->groupManager->getUsersForGroupTitle(SystemGroups::ADMINISTRATORS)))) {
                     $links['Settings'] = NavbarGeneralLinks::A_SETTINGS;
                 }
 

@@ -13,7 +13,7 @@ use App\Logger\Logger;
  */
 abstract class AManager {
     protected Logger $logger;
-    private ?EntityManager $entityManager;
+    protected ?EntityManager $entityManager;
     protected CacheFactory $cacheFactory;
 
     /**

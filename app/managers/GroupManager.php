@@ -3,6 +3,7 @@
 namespace App\Managers;
 
 use App\Constants\SystemGroups;
+use App\Core\Caching\CacheNames;
 use App\Core\DB\DatabaseRow;
 use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
@@ -71,6 +72,11 @@ class GroupManager extends AManager {
 
         if(!$this->gmr->addUserToGroup($groupUserId, $groupId, $userId)) {
             throw new GeneralException('User is probably member of the group.');
+        }
+
+        if(!$this->cacheFactory->invalidateCacheByNamespace(CacheNames::GROUP_MEMBERSHIPS) ||
+           !$this->cacheFactory->invalidateCacheByNamespace(CacheNames::VISIBLE_FOLDERS_FOR_USER)) {
+            throw new GeneralException('Could not invalidate cache.');
         }
     }
 

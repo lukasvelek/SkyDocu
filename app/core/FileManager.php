@@ -140,7 +140,7 @@ class FileManager {
                             $result = $r;
                         }
                     } else {
-                        file_put_contents(APP_ABSOLUTE_DIR . LOG_DIR . '__filesDownloaded.log', $dirPath . $object . "\r\n", FILE_APPEND);
+                        file_put_contents(APP_ABSOLUTE_DIR . LOG_DIR . '__filesDeleted.log', $dirPath . $object . "\r\n", FILE_APPEND);
                         $r = self::deleteFile($dirPath . $object);
                         if($r !== true && $result !== false) {
                             $result = $r;
@@ -156,7 +156,7 @@ class FileManager {
             }
         }
 
-        return false;
+        return true;
     }
 
     /**

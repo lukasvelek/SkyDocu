@@ -13,7 +13,7 @@ abstract class ACommonButton extends AElement {
      * 
      * @param bool $disabled True if the button is disabled
      */
-    public function setDisabled(bool $disabled) {
+    public function setDisabled(bool $disabled = true) {
         if($disabled) {
             $this->addAttribute('disabled');
         } else {

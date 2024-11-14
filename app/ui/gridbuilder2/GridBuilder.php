@@ -627,8 +627,13 @@ class GridBuilder extends AComponent {
         }
 
         if(count($_tableRows) == 1) {
+            $span = count($this->columns);
+            if($this->hasCheckboxes) {
+                $span++;
+            }
+
             $cell = new Cell();
-            $cell->setSpan(count($this->columns));
+            $cell->setSpan($span);
             $cell->setName('no-data-message');
             $cell->setContent('No data found.');
 

@@ -2,6 +2,7 @@
 
 namespace App\Modules\AdminModule;
 
+use App\Core\Caching\CacheNames;
 use App\Core\DB\DatabaseRow;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
@@ -157,13 +158,55 @@ class DocumentFoldersPresenter extends AAdminPresenter {
             $el = HTML::el('a')
                 ->text('Edit')
                 ->class('grid-link')
-                ->href($this->createURLString('editFolderGroupRightsForm', ['folderId' => $request->query['folderId'], 'groupId' => $primaryKey]))
+                ->href($this->createURLString('editFolderGroupRightsForm', ['folderId' => $request->query['folderId'], 'groupId' => $row->groupId]))
             ;
 
             return $el;
         };
 
         return $grid;
+    }
+
+    public function handleNewFolderGroupRightsForm(?FormResponse $fr = null) {
+        if($fr !== null) {
+            $folderId = $this->httpGet('folderId', true);
+
+            try {
+                $check = function(string $key) use ($fr) {
+                    if(isset($fr->{$key}) && $fr->{$key} == 'on') {
+                        return true;
+                    } else {
+                        return false;
+                    }
+                };
+
+                $canView = $check('canView');
+                $canCreate = $check('canCreate');
+                $canEdit = $check('canEdit');
+                $canDelete = $check('canDelete');
+
+                if(!$canView && ($canCreate || $canEdit || $canDelete)) {
+                    $canView = true;
+                }
+
+                $this->folderRepository->beginTransaction(__METHOD__);
+
+                $this->folderManager->updateGroupFolderRight($folderId, $fr->group, $canView, $canCreate, $canEdit, $canDelete);
+
+                $this->folderRepository->commit($this->getUserId(), __METHOD__);
+
+                $this->cacheFactory->invalidateCacheByNamespace(CacheNames::VISIBLE_FOLDER_IDS_FOR_GROUP);
+                $this->cacheFactory->invalidateCacheByNamespace(CacheNames::VISIBLE_FOLDERS_FOR_USER);
+
+                $this->flashMessage('New group added.', 'success');
+            } catch(AException $e) {
+                $this->folderRepository->rollback(__METHOD__);
+
+                $this->flashMessage('Could not add new group. Reason: ' . $e->getMessage(), 'error', 10);
+            }
+
+            $this->redirect($this->createURL('listGroupRights', ['folderId' => $folderId]));
+        }
     }
 
     public function renderNewFolderGroupRightsForm() {
@@ -173,26 +216,129 @@ class DocumentFoldersPresenter extends AAdminPresenter {
     }
 
     protected function createComponentNewFolderGroupRightsForm(HttpRequest $request) {
-        $groups = $this->folderRepository->composeQueryForGroupRightsInFolder($request->query['folderId']);
+        $groupsDb = $this->folderRepository->composeQueryForGroupRightsInFolder($request->query['folderId'])
+            ->execute();
+
+        $groups = [];
+        while($row = $groupsDb->fetchAssoc()) {
+            $groups[] = $row['groupId'];
+        }
+
+        $allGroupsDb = $this->groupRepository->composeQueryForGroups();
+        $allGroupsDb->andWhere($allGroupsDb->getColumnNotInValues('groupId', $groups))->execute();
+
+        $allGroups = [];
+        while($row = $allGroupsDb->fetchAssoc()) {
+            $allGroups[] = [
+                'value' => $row['groupId'],
+                'text' => $row['title']
+            ];
+        }
 
         $form = $this->componentFactory->getFormBuilder();
 
-        $form->setAction($this->createURL('newFolderGroupRightsForm', [$request->query['folderId']]));
+        $form->setAction($this->createURL('newFolderGroupRightsForm', ['folderId' => $request->query['folderId']]));
 
-        $form->addSelect('group', 'Group')
-            ->setRequired();
+        $sel = $form->addSelect('group', 'Group')
+            ->setRequired()
+            ->addRawOptions($allGroups);
+
+        $canView = $form->addCheckboxInput('canView', 'View:');
+        $canCreate = $form->addCheckboxInput('canCreate', 'Create:');
+        $canEdit = $form->addCheckboxInput('canEdit', 'Edit:');
+        $canDelete = $form->addCheckboxInput('canDelete', 'Delete:');
+
+        $submit = $form->addSubmit('Add');
+
+        if(empty($allGroups)) {
+            $sel->setDisabled();
+            $sel->addRawOption('none', 'No groups available.', true);
+
+            $canView->setDisabled();
+            $canCreate->setDisabled();
+            $canEdit->setDisabled();
+            $canDelete->setDisabled();
+
+            $submit->setDisabled();
+        }
 
         return $form;
     }
 
-    public function renderEditFolderGroupRightsForm() {
+    public function handleEditFolderGroupRightsForm(?FormResponse $fr = null) {
+        if($fr !== null) {
+            $folderId = $this->httpGet('folderId', true);
+            $groupId = $this->httpGet('groupId', true);
 
+            try {
+                $check = function(string $key) use ($fr) {
+                    if(isset($fr->{$key}) && $fr->{$key} == 'on') {
+                        return true;
+                    } else {
+                        return false;
+                    }
+                };
+
+                $canView = $check('canView');
+                $canCreate = $check('canCreate');
+                $canEdit = $check('canEdit');
+                $canDelete = $check('canDelete');
+
+                if(!$canView && ($canCreate || $canEdit || $canDelete)) {
+                    $canView = true;
+                }
+
+                $this->folderRepository->beginTransaction(__METHOD__);
+
+                $this->folderManager->updateGroupFolderRight($folderId, $groupId, $canView, $canCreate, $canEdit, $canDelete);
+
+                $this->folderRepository->commit($this->getUserId(), __METHOD__);
+
+                $this->cacheFactory->invalidateCacheByNamespace(CacheNames::VISIBLE_FOLDER_IDS_FOR_GROUP);
+                $this->cacheFactory->invalidateCacheByNamespace(CacheNames::VISIBLE_FOLDERS_FOR_USER);
+
+                $this->flashMessage('Group updated.', 'success');
+            } catch(AException $e) {
+                $this->folderRepository->rollback(__METHOD__);
+
+                $this->flashMessage('Could not update group. Reason: ' . $e->getMessage(), 'error', 10);
+            }
+
+            $this->redirect($this->createURL('listGroupRights', ['folderId' => $folderId]));
+        }
+    }
+
+    public function renderEditFolderGroupRightsForm() {
+        $this->template->links = $this->createBackUrl('listGroupRights', ['folderId' => $this->httpGet('folderId')], 'link');
     }
 
     protected function createComponentEditFolderGroupRightsForm(HttpRequest $request) {
+        $row = $this->folderRepository->composeQueryForGroupRightsInFolder($request->query['folderId']);
+        $row = $row->andWhere('groupId = ?', [$request->query['groupId']])
+            ->execute()->fetch();
+
+        $row = DatabaseRow::createFromDbRow($row);
+
+        $group = $this->groupManager->getGroupById($request->query['groupId']);
+
         $form = new FormBuilder2($request);
+        $form->setAction($this->createURL('editFolderGroupRightsForm', ['folderId' => $request->query['folderId'], 'groupId' => $request->query['groupId']]));
 
+        $form->addSelect('group', 'Group')
+            ->setRequired()
+            ->addRawOption($group->groupId, $group->title, true)
+            ->setDisabled();
 
+        $form->addCheckboxInput('canView', 'View:')
+            ->setChecked($row->canView);
+        $form->addCheckboxInput('canCreate', 'Create:')
+            ->setChecked($row->canCreate);
+        $form->addCheckboxInput('canEdit', 'Edit:')
+            ->setChecked($row->canEdit);
+        $form->addCheckboxInput('canDelete', 'Delete:')
+            ->setChecked($row->canDelete);
+
+        $form->addSubmit('Save');
 
         return $form;
     }

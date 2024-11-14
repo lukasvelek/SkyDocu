@@ -93,8 +93,6 @@ abstract class APresenter extends AGUICore {
         $this->permanentFlashMessages = [];
 
         $this->components = [];
-
-        $this->componentFactory = new ComponentFactory($this->httpRequest, $this);
     }
 
     /**
@@ -102,6 +100,7 @@ abstract class APresenter extends AGUICore {
      */
     public function startup() {
         $this->cacheFactory = new CacheFactory();
+        $this->componentFactory = new ComponentFactory($this->httpRequest, $this);
     }
 
     /**

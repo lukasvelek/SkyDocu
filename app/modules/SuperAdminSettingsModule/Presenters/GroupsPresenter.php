@@ -6,7 +6,6 @@ use App\Core\AjaxRequestBuilder;
 use App\Core\DB\DatabaseRow;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
-use App\Exceptions\GeneralException;
 use App\UI\FormBuilder\FormBuilder;
 use App\UI\FormBuilder\FormResponse;
 use App\UI\GridBuilder2\Cell;

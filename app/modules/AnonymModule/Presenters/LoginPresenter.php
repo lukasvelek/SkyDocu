@@ -7,7 +7,6 @@ use App\Constants\ContainerStatus;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
 use App\UI\FormBuilder2\FormBuilder2;
-use App\UI\FormBuilder\FormBuilder;
 use App\UI\FormBuilder\FormResponse;
 
 class LoginPresenter extends AAnonymPresenter {
@@ -35,7 +34,7 @@ class LoginPresenter extends AAnonymPresenter {
     }
 
     protected function createComponentloginForm(HttpRequest $request) {
-        $form = new FormBuilder2($request);
+        $form = $this->componentFactory->getFormBuilder();
 
         $form->setAction($this->createURL('loginForm'));
 
@@ -149,7 +148,7 @@ class LoginPresenter extends AAnonymPresenter {
             $disabled = true;
         }
 
-        $form = new FormBuilder2($request);
+        $form = $this->componentFactory->getFormBuilder();
 
         $form->setAction($this->createURL('containerForm'));
 

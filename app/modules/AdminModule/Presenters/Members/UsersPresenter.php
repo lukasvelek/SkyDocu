@@ -24,7 +24,7 @@ class UsersPresenter extends AAdminPresenter {
     }
 
     protected function createComponentUsersGrid(HttpRequest $request) {
-        $grid = $this->getGridBuilder();
+        $grid = $this->componentFactory->getGridBuilder();
 
         $userIds = $this->groupRepository->getMembersForGroup($this->groupRepository->getGroupByTitle('All users')['groupId']);
 
@@ -86,7 +86,7 @@ class UsersPresenter extends AAdminPresenter {
     }
 
     protected function createComponentNewUserForm(HttpRequest $request) {
-        $form = new FormBuilder2($request);
+        $form = $this->componentFactory->getFormBuilder();
 
         $form->setAction($this->createURL('newUserForm'));
 

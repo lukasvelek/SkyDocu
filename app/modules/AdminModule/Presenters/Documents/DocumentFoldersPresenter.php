@@ -26,7 +26,7 @@ class DocumentFoldersPresenter extends AAdminPresenter {
     }
 
     protected function createComponentDocumentFoldersGrid(HttpRequest $request) {
-        $grid = $this->getGridBuilder();
+        $grid = $this->componentFactory->getGridBuilder();
 
         $grid->createDataSourceFromQueryBuilder($this->folderManager->composeQueryForVisibleFoldersForUser($this->getUserId()), 'folderId');
 
@@ -98,7 +98,7 @@ class DocumentFoldersPresenter extends AAdminPresenter {
     }
 
     protected function createComponentNewDocumentFolderForm(HttpRequest $request) {
-        $form = new FormBuilder2($request);
+        $form = $this->componentFactory->getFormBuilder();
 
         $form->setAction($this->createURL('newFolderForm'));
 
@@ -131,7 +131,7 @@ class DocumentFoldersPresenter extends AAdminPresenter {
     }
 
     protected function createComponentDocumentFoldersGroupRightsGrid(HttpRequest $request) {
-        $grid = $this->getGridBuilder();
+        $grid = $this->componentFactory->getGridBuilder();
 
         $grid->createDataSourceFromQueryBuilder($this->folderRepository->composeQueryForGroupRightsInFolder($request->query['folderId']), 'relationId');
         $grid->addQueryDependency('folderId', $request->query['folderId']);
@@ -175,12 +175,24 @@ class DocumentFoldersPresenter extends AAdminPresenter {
     protected function createComponentNewFolderGroupRightsForm(HttpRequest $request) {
         $groups = $this->folderRepository->composeQueryForGroupRightsInFolder($request->query['folderId']);
 
-        $form = new FormBuilder2($request);
+        $form = $this->componentFactory->getFormBuilder();
 
         $form->setAction($this->createURL('newFolderGroupRightsForm', [$request->query['folderId']]));
 
         $form->addSelect('group', 'Group')
             ->setRequired();
+
+        return $form;
+    }
+
+    public function renderEditFolderGroupRightsForm() {
+
+    }
+
+    protected function createComponentEditFolderGroupRightsForm(HttpRequest $request) {
+        $form = new FormBuilder2($request);
+
+
 
         return $form;
     }

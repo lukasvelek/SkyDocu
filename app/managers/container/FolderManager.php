@@ -2,6 +2,7 @@
 
 namespace App\Managers\Container;
 
+use App\Constants\Container\SystemGroups;
 use App\Core\Caching\CacheNames;
 use App\Core\DB\DatabaseRow;
 use App\Exceptions\GeneralException;
@@ -87,9 +88,14 @@ class FolderManager extends AManager {
         }
 
         $groupIds = $this->gr->getGroupsForUser($callingUserId);
+        $administratorsGroup = $this->gr->getGroupByTitle(SystemGroups::ADMINISTRATORS);
 
         foreach($groupIds as $groupId) {
-            $this->updateGroupFolderRight($folderId, $groupId, true, true, true, true);
+            if($administratorsGroup !== null && $administratorsGroup['groupId'] == $groupId) {
+                $this->updateGroupFolderRight($folderId, $groupId, true, true, true, true);
+            } else {
+                $this->updateGroupFolderRight($folderId, $groupId, true, true, false, false);
+            }
         }
     }
 

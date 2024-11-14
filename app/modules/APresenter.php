@@ -41,7 +41,7 @@ abstract class APresenter extends AGUICore {
     private ?UserEntity $currentUser;
 
     protected ?TemplateObject $template;
-    protected ?Logger $logger;
+    public ?Logger $logger;
 
     private ArrayList $beforeRenderCallbacks;
     private ArrayList $afterRenderCallbacks;
@@ -54,6 +54,8 @@ abstract class APresenter extends AGUICore {
     private array $permanentFlashMessages;
     
     public array $components;
+
+    protected ComponentFactory $componentFactory;
 
     /**
      * The class constructor
@@ -91,6 +93,8 @@ abstract class APresenter extends AGUICore {
         $this->permanentFlashMessages = [];
 
         $this->components = [];
+
+        $this->componentFactory = new ComponentFactory($this->httpRequest, $this);
     }
 
     /**
@@ -707,6 +711,7 @@ abstract class APresenter extends AGUICore {
      * Returns a GridBuilder instance
      * 
      * @return GridBuilder GridBuilder instance
+     * @deprecated
      */
     public function getGridBuilder() {
         $grid = new GridBuilder($this->httpRequest);

@@ -29,7 +29,7 @@ class ContainersPresenter extends ASuperAdminPresenter {
     }
 
     protected function createComponentContainersGrid(HttpRequest $request) {
-        $grid = $this->getGridBuilder();
+        $grid = $this->componentFactory->getGridBuilder();
 
         $grid->createDataSourceFromQueryBuilder($this->app->containerRepository->composeQueryForContainers(), 'containerId');
         $grid->setGridName(GridHelper::GRID_CONTAINERS);
@@ -95,7 +95,7 @@ class ContainersPresenter extends ASuperAdminPresenter {
             ];
         }
 
-        $form = new FormBuilder2($request);
+        $form = $this->componentFactory->getFormBuilder();
 
         $form->setAction($this->createURL('newContainerForm'));
 

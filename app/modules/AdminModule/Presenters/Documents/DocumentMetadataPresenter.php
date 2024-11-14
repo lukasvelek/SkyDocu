@@ -7,7 +7,6 @@ use App\Constants\Container\CustomMetadataTypes;
 use App\Core\DB\DatabaseRow;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
-use App\UI\FormBuilder2\FormBuilder2;
 use App\UI\FormBuilder\FormResponse;
 use App\UI\GridBuilder2\Action;
 use App\UI\GridBuilder2\Cell;
@@ -35,7 +34,7 @@ class DocumentMetadataPresenter extends AAdminPresenter {
     }
 
     protected function createComponentMetadataGrid() {
-        $grid = $this->getGridBuilder();
+        $grid = $this->componentFactory->getGridBuilder();
 
         $grid->createDataSourceFromQueryBuilder($this->metadataRepository->composeQueryForMetadata(), 'metadataId');
 
@@ -185,7 +184,7 @@ class DocumentMetadataPresenter extends AAdminPresenter {
     }
 
     protected function createComponentMetadataFolderRightsGrid(HttpRequest $request) {
-        $grid = $this->getGridBuilder();
+        $grid = $this->componentFactory->getGridBuilder();
 
         $qb = $this->metadataRepository->composeQueryForMetadataFolderRights();
         $qb->andWhere('customMetadataId = ?', [$request->query['metadataId']]);
@@ -287,7 +286,7 @@ class DocumentMetadataPresenter extends AAdminPresenter {
     protected function createComponentNewFolderRightForm(HttpRequest $request) {
         $folders = $request->params['folders'];
 
-        $form = new FormBuilder2($request);
+        $form = $this->componentFactory->getFormBuilder();
 
         $form->setAction($this->createURL('newFolderRightForm', ['metadataId' => $request->query['metadataId']]));
 
@@ -316,7 +315,7 @@ class DocumentMetadataPresenter extends AAdminPresenter {
     }
 
     protected function createComponentMetadataEnumValuesGrid(HttpRequest $request) {
-        $grid = $this->getGridBuilder();
+        $grid = $this->componentFactory->getGridBuilder();
 
         $grid->createDataSourceFromQueryBuilder($this->metadataRepository->composeQueryMetadataEnumValues($request->query['metadataId']), 'valueId');
         $grid->addQueryDependency('metadataId', $request->query['metadataId']);
@@ -388,7 +387,7 @@ class DocumentMetadataPresenter extends AAdminPresenter {
     }
 
     protected function createComponentNewMetadataEnumValueForm(HttpRequest $request) {
-        $form = new FormBuilder2($request);
+        $form = $this->componentFactory->getFormBuilder();
 
         $form->setAction($this->createURL('newEnumValueForm', ['metadataId' => $request->query['metadataId']]));
 
@@ -432,7 +431,7 @@ class DocumentMetadataPresenter extends AAdminPresenter {
     }
 
     protected function createComponentEditMetadataEnumValueForm(HttpRequest $request) {
-        $form = new FormBuilder2($request);
+        $form = $this->componentFactory->getFormBuilder();
 
         $form->setAction($this->createURL('editEnumValueForm', ['metadataId' => $request->query['metadataId'], 'valueId' => $request->query['valueId']]));
 

@@ -24,7 +24,7 @@ class BackgroundServicesPresenter extends ASuperAdminSettingsPresenter {
     }
 
     public function createComponentBgServicesGrid(HttpRequest $request) {
-        $grid = $this->getGridBuilder();
+        $grid = $this->componentFactory->getGridBuilder();
         
         $grid->createDataSourceFromQueryBuilder($this->app->systemServicesRepository->composeQueryForServices(), 'serviceId');
         $grid->setGridName(GridHelper::GRID_BACKGROUND_SERVICES);

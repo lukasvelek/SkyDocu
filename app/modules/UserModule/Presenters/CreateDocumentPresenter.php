@@ -118,7 +118,7 @@ class CreateDocumentPresenter extends AUserPresenter {
             ];
         }
 
-        $form = new FormBuilder2($request);
+        $form = $this->componentFactory->getFormBuilder();
 
         $form->setAction($this->createURL('form', ['folderId' => $request->query['folderId']]));
 

@@ -54,7 +54,7 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
     protected function createComponentContainerStatusForm(HttpRequest $request) {
         $container = $this->app->containerManager->getContainerById($request->query['containerId']);
 
-        $form = new FormBuilder2($request);
+        $form = $this->componentFactory->getFormBuilder();
 
         $form->setAction($this->createURL('status', ['containerId' => $request->query['containerId']]));
 
@@ -110,7 +110,7 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
     }
 
     protected function createComponentContainerStatusHistoryGrid(HttpRequest $request) {
-        $grid = $this->getGridBuilder();
+        $grid = $this->componentFactory->getGridBuilder();
 
         $grid->createDataSourceFromQueryBuilder($this->app->containerRepository->composeQueryForContainerStatusHistory($request->query['containerId']), 'historyId');
         $grid->addQueryDependency('containerId', $request->query['containerId']);
@@ -193,7 +193,7 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
     protected function createComponentContainerDeleteForm(HttpRequest $request) {
         $container = $this->app->containerManager->getContainerById($request->query['containerId']);
 
-        $form = new FormBuilder2($request);
+        $form = $this->componentFactory->getFormBuilder();
 
         $form->setAction($this->createURL('containerDeleteForm', ['containerId' => $request->query['containerId']]));
 

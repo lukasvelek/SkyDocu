@@ -26,6 +26,7 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
     private string $currentUserId;
     private DocumentManager $dm;
     private DocumentBulkActionAuthorizator $dbaa;
+    private DocumentBulkActionsHelper $dbah;
 
     private bool $allMetadata;
 
@@ -52,8 +53,9 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
         $this->currentUserId = $app->currentUser->getId();
         $this->dbaa = $dbaa;
 
-        $this->allMetadata = false;
+        $this->dbah = new DocumentBulkActionsHelper($this->app, $this->dm, $this->dbaa, $this->httpRequest);
 
+        $this->allMetadata = false;
         $this->currentFolderId = null;
     }
 
@@ -369,81 +371,12 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
 
         $ids = $this->httpRequest->query['ids'];
 
-        $bulkActions = $this->getAllowedBulkActions($ids);
-        $bulkActions = $this->createBulkActions($bulkActions, $ids);
+        $bulkActions = $this->dbah->getBulkActions($ids);
 
         $modal->setBulkActions($bulkActions);
         $modal->startup();
 
         return ['modal' => $modal->render()];
-    }
-
-    /**
-     * Gets allowed bulk actions
-     * 
-     * @param array $documentIds Selected document IDs
-     * @return array<string> Bulk action list
-     */
-    private function getAllowedBulkActions(array $documentIds) {
-        $bulkActions = [];
-
-        if($this->dbaa->canExecuteArchivation($this->presenter->getUserId(), $documentIds)) {
-            $bulkActions[] = 'archivation';
-        }
-
-        return $bulkActions;
-    }
-
-    /**
-     * Creates bulk action links
-     * 
-     * @param array $bulkActions Allowed bulk actions
-     * @param array $documentIds Selected document IDs
-     * @return array<string> Bulk actions HTML code
-     */
-    private function createBulkActions(array $bulkActions, array $documentIds) {
-        $urlParams = [
-            'backPage=' . $this->httpRequest->query['page'],
-            'backAction=' . $this->httpRequest->query['action']
-        ];
-
-        foreach($documentIds as $documentId) {
-            $urlParams[] = 'documentId[]=' . $documentId;
-        }
-
-        $links = [];
-        foreach($bulkActions as $ba) {
-            $el = HTML::el('a')
-                ->class('link');
-
-            switch($ba) {
-                case 'archivation':
-                    $el->href($this->createLink('User:DocumentBulkActions', 'archiveDocuments', $urlParams))
-                        ->text('Archive');
-                    break;
-            }
-
-            $links[] = $el->toString();
-        }
-        return $links;
-    }
-
-    /**
-     * Creates link from given parameters
-     * 
-     * @param string $modulePresenter Module name and presenter name
-     * @param string $action Action name
-     * @param array $params Parameters
-     * @return string URL
-     */
-    private function createLink(string $modulePresenter, string $action, array $params = []) {
-        $url = '?page=' . $modulePresenter . '&action=' . $action;
-
-        if(!empty($params)) {
-            $url .= '&' . implode('&', $params);
-        }
-
-        return $url;
     }
 }
 

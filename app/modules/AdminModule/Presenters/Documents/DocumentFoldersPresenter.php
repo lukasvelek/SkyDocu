@@ -315,7 +315,7 @@ class DocumentFoldersPresenter extends AAdminPresenter {
 
         $group = $this->groupManager->getGroupById($request->query['groupId']);
 
-        $form = new FormBuilder2($request);
+        $form = $this->componentFactory->getFormBuilder();
         $form->setAction($this->createURL('editFolderGroupRightsForm', ['folderId' => $request->query['folderId'], 'groupId' => $request->query['groupId']]));
 
         $form->addSelect('group', 'Group')

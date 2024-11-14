@@ -4,6 +4,7 @@ namespace App\Modules\AdminModule;
 
 use App\Core\DB\DatabaseRow;
 use App\Core\Http\HttpRequest;
+use App\Exceptions\AException;
 use App\UI\FormBuilder\FormBuilder;
 use App\UI\FormBuilder\FormResponse;
 use App\UI\GridBuilder2\Row;
@@ -102,45 +103,65 @@ class GroupsPresenter extends AAdminPresenter {
     }
 
     public function handleAddMemberForm(?FormResponse $fr = null) {
-        $groupId = $this->httpGet('groupId', true);
-
         if($fr !== null) {
+            $groupId = $this->httpGet('groupId', true);
 
-        } else {
-            $container = $this->app->containerManager->getContainerById($this->httpSessionGet('container'));
+            try {
+                $this->groupRepository->beginTransaction(__METHOD__);
 
-            $containerUsers = $this->app->groupManager->getGroupUsersForGroupId($container->title . ' - users');
-            $groupUsers = $this->groupRepository->getMembersForGroup($groupId);
+                $this->groupManager->addUserToGroupId($groupId, $fr->user);
 
-            $users = [];
-            foreach($containerUsers as $user) {
-                if(!in_array($user, $groupUsers)) {
-                    $users[] = [
-                        'value' => $user,
-                        'text' => $this->app->userManager->getUserById($user)->getFullname()
-                    ];
-                }
+                $this->groupRepository->commit($this->getUserId(), __METHOD__);
+
+                $this->flashMessage('User added to group.', 'success');
+            } catch(AException $e) {
+                $this->groupRepository->rollback(__METHOD__);
+
+                $this->flashMessage('Could not add user to group. Reason: ' . $e->getMessage(), 'error', 10);
             }
 
-            $form = new FormBuilder();
-
-            $form->setMethod()
-                ->setAction($this->createURL('addMemberForm', ['groupId' => $groupId]))
-                ->addSelect('user', 'User:', $users, true)
-                ->addSubmit('Add')
-            ;
-
-            $this->saveToPresenterCache('form', $form);
+            $this->redirect($this->createURL('listMembers', ['groupId' => $groupId]));
         }
     }
 
     public function renderAddMemberForm() {
-        $groupId = $this->httpGet('groupId');
+        $this->template->links = $this->createBackUrl('listMembers', ['groupId', $this->httpGet('groupId')]);
+    }
 
-        $this->template->form = $this->loadFromPresenterCache('form');
-        $this->template->links = [
-            LinkBuilder::createSimpleLink('&larr; Back', $this->createURL('listMembers', ['groupId' => $groupId]), 'link')
-        ];
+    protected function createComponentNewMemberForm(HttpRequest $request) {
+        $container = $this->app->containerManager->getContainerById($this->httpSessionGet('container'));
+
+        $containerUsers = $this->app->groupManager->getGroupUsersForGroupId($container->title . ' - users');
+        $groupUsers = $this->groupRepository->getMembersForGroup($request->query['groupId']);
+
+        $users = [];
+        foreach($containerUsers as $user) {
+            if(!in_array($user, $groupUsers)) {
+                $users[] = [
+                    'value' => $user,
+                    'text' => $this->app->userManager->getUserById($user)->getFullname()
+                ];
+            }
+        }
+
+        $form = $this->componentFactory->getFormBuilder();
+
+        $form->setAction($this->createURL('addMemberForm', ['groupId' => $request->query['groupId']]));
+
+        $select = $form->addSelect('user', 'User:')
+            ->setRequired()
+            ->addRawOptions($users);
+
+        $submit = $form->addSubmit('Add');
+
+        if(empty($users)) {
+            $select->setDisabled();
+            $select->addRawOption('none', 'No users available.', true);
+
+            $submit->setDisabled();
+        }
+
+        return $form;
     }
 }
 

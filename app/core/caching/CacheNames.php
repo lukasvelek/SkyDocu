@@ -20,6 +20,7 @@ class CacheNames {
     public const VISIBLE_FOLDERS_FOR_USER = 'visibleFoldersForUser';
     public const VISIBLE_FOLDER_IDS_FOR_GROUP = 'visibleFolderIdsForGroup';
     public const CONTAINERS = 'containers';
+    public const GROUP_STANDARD_OPERATIONS_RIGHTS = 'groupStandardOperationsRights';
 }
 
 ?>

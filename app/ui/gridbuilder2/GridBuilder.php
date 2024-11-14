@@ -937,8 +937,8 @@ class GridBuilder extends AComponent {
                 <script type="text/javascript">
                     function ' . $this->componentName . '_processBulkActionsModalOpen(_showLoading) {
                         if(_showLoading) {
-                            $("#modal").html(\'<div id="bulk-actions-modal-inner" style="visibility: hidden; height: 0px; position: absolute; top: 5%; left: 5%; background-color: rgba(225, 225, 225, 0.9); z-index: 9999;"></div>\');
-                            $("#bulk-actions-modal-inner").html(\'<div id="center"><img src="resources/loading.gif" width="64"><br>Loading...</div>\');
+                            $("#modal").html(\'<div id="bulk-actions-modal-inner" style="visibility: hidden; height: 0px; position: absolute; top: 5%; left: 5%; background-color: rgba(225, 225, 225, 1); z-index: 9999;"></div>\');
+                            $("#bulk-actions-modal-inner").html(\'<div id="center" style="margin-top: 20px"><img src="resources/loading.gif" width="64"><br>Loading...</div>\');
                         }
 
                         $("#bulk-actions-modal-inner")

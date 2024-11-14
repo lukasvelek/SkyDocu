@@ -2,13 +2,20 @@
 
 namespace App\Repositories\Container;
 
+use App\Constants\Container\GroupStandardOperationRights;
+use App\Core\Caching\Cache;
+use App\Core\Caching\CacheNames;
 use App\Core\DatabaseConnection;
 use App\Logger\Logger;
 use App\Repositories\ARepository;
 
 class GroupRepository extends ARepository {
+    private Cache $groupStandardOperationRightsCache;
+
     public function __construct(DatabaseConnection $db, Logger $logger) {
         parent::__construct($db, $logger);
+
+        $this->groupStandardOperationRightsCache = $this->cacheFactory->getCache(CacheNames::GROUP_STANDARD_OPERATIONS_RIGHTS);
     }
 
     public function getGroupsForUser(string $userId) {
@@ -88,6 +95,47 @@ class GroupRepository extends ARepository {
             ->execute();
 
         return $qb->fetchBool();
+    }
+
+    public function getStandardGroupRightsForGroup(string $groupId) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->select(['*'])
+            ->from('group_rights_standard_operations')
+            ->where('groupId = ?', [$groupId]);
+
+        return $this->groupStandardOperationRightsCache->load($groupId, function() use ($qb) {
+            $result = $qb->execute()->fetchAll();
+
+            if($result === false || $result === null) {
+                return [
+                    GroupStandardOperationRights::CAN_SHARE_DOCUMENTS => false,
+                    GroupStandardOperationRights::CAN_EXPORT_DOCUMENTS => false,
+                    GroupStandardOperationRights::CAN_VIEW_DOCUMENT_HISTORY => false
+                ];
+            }
+
+            $share = false;
+            $export = false;
+            $viewDocumentHistory = false;
+            foreach($result as $result) {
+                if($result[GroupStandardOperationRights::CAN_SHARE_DOCUMENTS] == '1') {
+                    $share = true;
+                }
+                if($result[GroupStandardOperationRights::CAN_EXPORT_DOCUMENTS] == '1') {
+                    $export = true;
+                }
+                if($result[GroupStandardOperationRights::CAN_VIEW_DOCUMENT_HISTORY] == '1') {
+                    $viewDocumentHistory = true;
+                }
+            }
+
+            return [
+                GroupStandardOperationRights::CAN_SHARE_DOCUMENTS => $share,
+                GroupStandardOperationRights::CAN_EXPORT_DOCUMENTS => $export,
+                GroupStandardOperationRights::CAN_VIEW_DOCUMENT_HISTORY => $viewDocumentHistory
+            ];
+        });
     }
 }
 

@@ -3,6 +3,7 @@
 namespace App\Components\DocumentsGrid;
 
 use App\Authorizators\DocumentBulkActionAuthorizator;
+use App\Authorizators\GroupStandardOperationsAuthorizator;
 use App\Constants\Container\DocumentBulkActions;
 use App\Core\Application;
 use App\Core\Http\HttpRequest;
@@ -18,13 +19,15 @@ class DocumentBulkActionsHelper {
     private DocumentManager $dm;
     private Application $app;
     private DocumentBulkActionAuthorizator $dbaa;
+    private GroupStandardOperationsAuthorizator $gsoa;
 
     private HttpRequest $request;
 
-    public function __construct(Application $app, DocumentManager $dm, DocumentBulkActionAuthorizator $dbaa, HttpRequest $request) {
+    public function __construct(Application $app, DocumentManager $dm, HttpRequest $request, DocumentBulkActionAuthorizator $dbaa, GroupStandardOperationsAuthorizator $gsoa) {
         $this->dm = $dm;
         $this->app = $app;
         $this->dbaa = $dbaa;
+        $this->gsoa = $gsoa;
 
         $this->request = $request;
     }
@@ -41,6 +44,10 @@ class DocumentBulkActionsHelper {
 
         if($this->dbaa->canExecuteArchivation($this->app->currentUser->getId(), $documentIds)) {
             $bulkActions[] = DocumentBulkActions::ARCHIVATION;
+        }
+
+        if($this->gsoa->canUserShareDocuments($this->app->currentUser->getId())) {
+            $bulkActions[] = DocumentBulkActions::DOCUMENT_HISTORY;
         }
         
         // 2. Create array of bulk action url
@@ -80,6 +87,7 @@ class DocumentBulkActionsHelper {
                 break;
 
             case DocumentBulkActions::DOCUMENT_HISTORY:
+                $el->href($this->createLink('User:Documents', 'documentHistory', $urlParams));
                 break;
         }
 

@@ -3,6 +3,7 @@
 namespace App\Components\DocumentsGrid;
 
 use App\Authorizators\DocumentBulkActionAuthorizator;
+use App\Authorizators\GroupStandardOperationsAuthorizator;
 use App\Constants\Container\CustomMetadataTypes;
 use App\Constants\Container\DocumentStatus;
 use App\Core\Application;
@@ -25,8 +26,9 @@ use App\UI\HTML\HTML;
 class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
     private string $currentUserId;
     private DocumentManager $dm;
-    private DocumentBulkActionAuthorizator $dbaa;
     private DocumentBulkActionsHelper $dbah;
+    private DocumentBulkActionAuthorizator $dbaa;
+    private GroupStandardOperationsAuthorizator $gsoa;
 
     private bool $allMetadata;
 
@@ -43,7 +45,8 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
         GridBuilder $grid,
         Application $app,
         DocumentManager $documentManager,
-        DocumentBulkActionAuthorizator $dbaa
+        DocumentBulkActionAuthorizator $dbaa,
+        GroupStandardOperationsAuthorizator $gsoa
     ) {
         parent::__construct($grid->httpRequest);
         $this->setHelper(new GridHelper($app->logger, $app->currentUser->getId()));
@@ -52,8 +55,9 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
         $this->dm = $documentManager;
         $this->currentUserId = $app->currentUser->getId();
         $this->dbaa = $dbaa;
+        $this->gsoa = $gsoa;
 
-        $this->dbah = new DocumentBulkActionsHelper($this->app, $this->dm, $this->dbaa, $this->httpRequest);
+        $this->dbah = new DocumentBulkActionsHelper($this->app, $this->dm, $this->httpRequest, $this->dbaa, $this->gsoa);
 
         $this->allMetadata = false;
         $this->currentFolderId = null;

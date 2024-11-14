@@ -2,6 +2,7 @@
 
 namespace App\Managers\Container;
 
+use App\Constants\Container\GroupStandardOperationRights;
 use App\Core\DB\DatabaseRow;
 use App\Exceptions\GeneralException;
 use App\Logger\Logger;
@@ -60,6 +61,28 @@ class GroupManager extends AManager {
         $result = DatabaseRow::createFromDbRow($result);
 
         return $result;
+    }
+
+    private function commonGetGroupRightForStandardOperation(string $groupId, string $operationName) {
+        $rights = $this->gr->getStandardGroupRightsForGroup($groupId);
+
+        return $rights[$operationName];
+    }
+
+    public function canGroupShareDocuments(string $groupId) {
+        return $this->commonGetGroupRightForStandardOperation($groupId, GroupStandardOperationRights::CAN_SHARE_DOCUMENTS);
+    }
+
+    public function canGroupExportDocuments(string $groupId) {
+        return $this->commonGetGroupRightForStandardOperation($groupId, GroupStandardOperationRights::CAN_EXPORT_DOCUMENTS);
+    }
+
+    public function canGroupViewDocumentHistory(string $groupId) {
+        return $this->commonGetGroupRightForStandardOperation($groupId, GroupStandardOperationRights::CAN_VIEW_DOCUMENT_HISTORY);
+    }
+
+    public function getGroupsForUser(string $userId) {
+        return $this->gr->getGroupsForUser($userId);
     }
 }
 

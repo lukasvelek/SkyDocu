@@ -3,6 +3,7 @@
 namespace App\Modules;
 
 use App\Authorizators\DocumentBulkActionAuthorizator;
+use App\Authorizators\GroupStandardOperationsAuthorizator;
 use App\Core\DatabaseConnection;
 use App\Managers\Container\DocumentManager;
 use App\Managers\Container\FolderManager;
@@ -32,6 +33,7 @@ abstract class AContainerPresenter extends APresenter {
     protected MetadataManager $metadataManager;
 
     protected DocumentBulkActionAuthorizator $documentBulkActionAuthorizator;
+    protected GroupStandardOperationsAuthorizator $groupStandardOperationsAuthorizator;
 
     protected function __construct(string $name, string $title) {
         parent::__construct($name, $title);
@@ -53,6 +55,7 @@ abstract class AContainerPresenter extends APresenter {
         $this->metadataManager = new MetadataManager($this->logger, $this->entityManager, $this->metadataRepository, $this->folderRepository);
 
         $this->documentBulkActionAuthorizator = new DocumentBulkActionAuthorizator($containerConnection, $this->logger, $this->documentManager, $this->documentRepository, $this->app->userManager, $this->groupManager);
+        $this->groupStandardOperationsAuthorizator = new GroupStandardOperationsAuthorizator($containerConnection, $this->logger, $this->groupManager);
     }
 
     private function initRepositories(DatabaseConnection $db) {

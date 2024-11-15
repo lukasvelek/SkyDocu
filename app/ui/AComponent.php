@@ -37,7 +37,7 @@ abstract class AComponent extends AGUICore implements IRenderable {
     }
 
     /**
-     * Initial compoonent configuration
+     * Initial component configuration
      */
     public function startup() {}
 

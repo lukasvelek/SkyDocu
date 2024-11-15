@@ -35,6 +35,8 @@ class Cell extends AElement {
         $this->isHeader = false;
         $this->span = 1;
         $this->html = HTML::el('td');
+        $this->name = '';
+        $this->content = '';
     }
 
     /**

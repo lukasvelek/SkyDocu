@@ -665,3 +665,27 @@ div [id*="user-action-history-"] {
 #gridbuilder-calendar td {
     height: 100px;
 }
+
+.widget-title {
+    font-size: 24px;
+}
+
+#widget table {
+    width: 100%;
+
+    text-align: center;
+
+    border: 0;
+    border-collapse: inherit;
+    border-radius: 0;
+    
+    background-color: rgba(255, 255, 255, 0.75);
+}
+
+#widget thead th {
+    background-color: rgb(220, 220, 220);
+
+    border: 0;
+    border-collapse: inherit;
+    border-radius: 10px;
+}

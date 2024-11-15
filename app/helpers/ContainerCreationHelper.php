@@ -128,7 +128,7 @@ class ContainerCreationHelper {
                 'transactionId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',
                 'userId' => 'VARCHAR(256) NOT NULL',
                 'callingMethod' => 'TEXT NOT NULL',
-                'dateCreated' => 'DATETIME NOT NULL'
+                'dateCreated' => 'DATETIME NOT NULL DEFAULT current_timestamp()'
             ],
         ];
     }

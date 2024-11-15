@@ -15,6 +15,7 @@ use App\Repositories\Container\DocumentRepository;
 use App\Repositories\Container\FolderRepository;
 use App\Repositories\Container\GroupRepository;
 use App\Repositories\Container\MetadataRepository;
+use App\Repositories\Container\TransactionLogRepository;
 use App\Repositories\ContentRepository;
 use ReflectionClass;
 
@@ -25,6 +26,7 @@ abstract class AContainerPresenter extends APresenter {
     protected DocumentRepository $documentRepository;
     protected DocumentClassRepository $documentClassRepository;
     protected MetadataRepository $metadataRepository;
+    protected TransactionLogRepository $transactionLogRepository;
     
     protected EntityManager $entityManager;
     protected FolderManager $folderManager;

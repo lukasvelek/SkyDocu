@@ -41,11 +41,18 @@ class ContainerRepository extends ARepository {
         }
     }
 
-    public function createNewContainer(string $containerId, string $userId, string $title, string $description, string $databaseName, int $environment) {
+    public function createNewContainer(array $data) {
         $qb = $this->qb(__METHOD__);
 
-        $qb->insert('containers', ['containerId', 'title', 'description', 'userId', 'databaseName', 'environment'])
-            ->values([$containerId, $title, $description, $userId, $databaseName, $environment])
+        $keys = [];
+        $values = [];
+        foreach($data as $k => $v) {
+            $keys[] = $k;
+            $values[] = $v;
+        }
+
+        $qb->insert('containers', $keys)
+            ->values($values)
             ->execute();
 
         return $qb->fetchBool();

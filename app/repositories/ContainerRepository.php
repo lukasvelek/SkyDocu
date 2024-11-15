@@ -2,18 +2,12 @@
 
 namespace App\Repositories;
 
-use App\Core\Caching\Cache;
-use App\Core\Caching\CacheNames;
 use App\Core\DatabaseConnection;
 use App\Logger\Logger;
 
 class ContainerRepository extends ARepository {
-    private Cache $containerCache;
-
     public function __construct(DatabaseConnection $db, Logger $logger) {
         parent::__construct($db, $logger);
-
-        $this->containerCache = $this->cacheFactory->getCache(CacheNames::CONTAINERS);
     }
 
     public function composeQueryForContainers() {

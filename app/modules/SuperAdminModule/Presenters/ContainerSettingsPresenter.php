@@ -74,6 +74,10 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
                 $statuses[] = $status;
                 $disabled = true;
             } else {
+                if(in_array($key, [ContainerStatus::IS_BEING_CREATED, ContainerStatus::NEW, ContainerStatus::ERROR_DURING_CREATION])){
+                    continue;
+                }
+
                 $status = [
                     'text' => $value,
                     'value' => $key

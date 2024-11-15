@@ -99,9 +99,11 @@ class UsersPresenter extends ASuperAdminSettingsPresenter {
 
                 $ok = true;
                 try {
-                    $user = $this->app->userManager->getUserByUsername($fr->username);
+                    $user = $this->app->userManager->getUserByUsername($fr->username, false);
                     $ok = false;
-                } catch(AException) {}
+                } catch(AException $e) {
+                    $ok = true;
+                }
 
                 if($ok === false) {
                     throw new GeneralException('User with this username already exists.', null, false);

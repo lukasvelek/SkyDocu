@@ -21,11 +21,11 @@ class UserManager extends AManager {
         $this->userRepository = $userRepository;
     }
 
-    public function getUserByUsername(string $username) {
+    public function getUserByUsername(string $username, bool $saveFile = true) {
         $user = $this->userRepository->getUserByUsername($username);
 
         if($user === null) {
-            throw new NonExistingEntityException('User with username \'' . $username . '\' does not exist.');
+            throw new NonExistingEntityException('User with username \'' . $username . '\' does not exist.', null, $saveFile);
         }
 
         return $user;

@@ -89,10 +89,10 @@ class ContainerManager extends AManager {
 
         $users = $this->groupManager->getGroupUsersForGroupTitle($container->title . ' - users');
 
-        $groupIds = [
-            SystemGroups::ADMINISTRATORS => $this->createIdCustomDb(EntityManager::C_GROUPS, $conn),
-            SystemGroups::ALL_USERS => $this->createIdCustomDb(EntityManager::C_GROUPS, $conn)
-        ];
+        $groupIds = [];
+        foreach(SystemGroups::getAll() as $value => $text) {
+            $groupIds[$value] = $this->createIdCustomDb(EntityManager::C_GROUPS, $conn);
+        }
 
         $folderIds = [
             'Default' => $this->createIdCustomDb(EntityManager::C_DOCUMENT_FOLDERS, $conn)
@@ -116,6 +116,10 @@ class ContainerManager extends AManager {
                     'groupId' => $groupIds[SystemGroups::ALL_USERS],
                     'title' => SystemGroups::ALL_USERS
                 ]
+            ],
+            [
+                'table' => 'groups',
+                'data'
             ],
             [
                 'table' => 'document_classes',
@@ -196,6 +200,16 @@ class ContainerManager extends AManager {
                 ]
             ],
         ];
+
+        foreach($groupIds as $value => $groupId) {
+            $data[] = [
+                'table' => 'groups',
+                'data' => [
+                    'groupId' => $groupId,
+                    'title' => $value
+                ]
+            ];
+        }
 
         foreach($users as $userId) {
             foreach($groupIds as $name => $groupId) {

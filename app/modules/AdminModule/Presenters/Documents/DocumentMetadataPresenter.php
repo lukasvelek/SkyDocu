@@ -396,7 +396,10 @@ class DocumentMetadataPresenter extends AAdminPresenter {
     protected function createComponentMetadataEnumValuesGrid(HttpRequest $request) {
         $grid = $this->componentFactory->getGridBuilder();
 
-        $grid->createDataSourceFromQueryBuilder($this->metadataRepository->composeQueryMetadataEnumValues($request->query['metadataId']), 'valueId');
+        $qb = $this->metadataRepository->composeQueryMetadataEnumValues($request->query['metadataId']);
+        $qb->orderBy('metadataKey');
+
+        $grid->createDataSourceFromQueryBuilder($qb, 'valueId');
         $grid->addQueryDependency('metadataId', $request->query['metadataId']);
 
         $grid->addColumnText('title', 'Title');

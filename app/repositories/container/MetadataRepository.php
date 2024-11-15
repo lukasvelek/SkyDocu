@@ -84,8 +84,7 @@ class MetadataRepository extends ARepository {
 
         $qb->select(['*'])
             ->from('custom_metadata_list_values')
-            ->where('metadataId = ?', [$metadataId])
-            ->orderBy('metadataKey');
+            ->where('metadataId = ?', [$metadataId]);
 
         return $qb;
     }

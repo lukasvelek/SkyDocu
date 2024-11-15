@@ -46,7 +46,7 @@ class BulkActionsModal extends ModalBuilder {
     public function startup() {
         parent::startup();
 
-        $code = '<table><tr style="height:50px;width:75px;text-align:center;">';
+        $code = '<table><tr style="height: 50px">';
 
         foreach($this->bulkActions as $bulkAction) {
             $code .= '<td>' . $bulkAction . '</td>';

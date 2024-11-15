@@ -273,6 +273,8 @@ class ContainerManager extends AManager {
         if($container === null) {
             throw new NonExistingEntityException('Entity does not exist.');
         }
+
+        $container = $this->containerRepository->getContainerById($containerId);
         
         return DatabaseRow::createFromDbRow($container);
     }

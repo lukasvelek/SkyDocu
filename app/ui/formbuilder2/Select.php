@@ -72,8 +72,9 @@ class Select extends AInteractableElement {
         foreach($options as $option) {
             $value = $option['value'];
             $text = $option['text'];
+            $isSelected = array_key_exists('selected', $option);
 
-            $this->addRawOption($value, $text, false);
+            $this->addRawOption($value, $text, $isSelected);
         }
 
         return $this;

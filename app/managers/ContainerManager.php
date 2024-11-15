@@ -15,6 +15,7 @@ use App\Repositories\Container\GroupRepository;
 use App\Repositories\ContainerRepository;
 use App\Repositories\ContentRepository;
 use App\Repositories\UserRepository;
+use Exception;
 
 class ContainerManager extends AManager {
     public ContainerRepository $containerRepository;
@@ -67,9 +68,7 @@ class ContainerManager extends AManager {
         $container = DatabaseRow::createFromDbRow($container);
 
         try {
-            if(!$this->dbManager->createNewDatabase($container->databaseName)) {
-                throw new GeneralException('Could not create database.');
-            }
+            $this->dbManager->createNewDatabase($container->databaseName);
 
             $this->createNewContainerTables($container->databaseName);
             
@@ -103,24 +102,6 @@ class ContainerManager extends AManager {
         ];
         
         $data = [
-            [
-                'table' => 'groups',
-                'data' => [
-                    'groupId' => $groupIds[SystemGroups::ADMINISTRATORS],
-                    'title' => SystemGroups::ADMINISTRATORS
-                ]
-            ],
-            [
-                'table' => 'groups',
-                'data' => [
-                    'groupId' => $groupIds[SystemGroups::ALL_USERS],
-                    'title' => SystemGroups::ALL_USERS
-                ]
-            ],
-            [
-                'table' => 'groups',
-                'data'
-            ],
             [
                 'table' => 'document_classes',
                 'data' => [

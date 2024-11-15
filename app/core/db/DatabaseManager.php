@@ -6,6 +6,8 @@ use App\Core\DatabaseConnection;
 use App\Exceptions\AException;
 use App\Exceptions\DatabaseExecutionException;
 use App\Logger\Logger;
+use Error;
+use Exception;
 
 /**
  * DatabaseManager allows managing databases and database tables - e.g. enables manipulation with the structure.
@@ -35,12 +37,18 @@ class DatabaseManager {
      * Creates a new database
      * 
      * @param string $name Database name
-     * @return bool True on success
+     * @return True True on success
+     * @throws DatabaseExecutionException
      */
     public function createNewDatabase(string $name) {
         $sql = "CREATE DATABASE `" . $name . "`;";
 
-        $result = $this->db->query($sql);
+        $result = false;
+        try {
+            $result = $this->db->query($sql);
+        } catch(Error|Exception $e) {
+            $result = false;
+        }
 
         if($result !== false) {
             return true;

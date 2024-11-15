@@ -3,6 +3,7 @@
 namespace App\Components\Widgets\DocumentStatsWidget;
 
 use App\Components\Widgets\Widget;
+use App\Constants\Container\DocumentStatus;
 use App\Core\Http\HttpRequest;
 use App\Managers\Container\DocumentManager;
 
@@ -45,7 +46,9 @@ class DocumentStatsWidget extends Widget {
         $data = $this->fetchDataFromDb();
 
         $rows = [
-            'Total documents' => $data['totalRows']
+            'Total documents' => $data['totalRows'],
+            'New documents' => $data['newRows'],
+            'Archived documents' => $data['archivedRows']
         ];
 
         return $rows;
@@ -57,19 +60,61 @@ class DocumentStatsWidget extends Widget {
      * @param array Data rows
      */
     private function fetchDataFromDb() {
-        $qb = $this->dm->dr->composeQueryForDocuments();
-
-        $qb->select(['COUNT(*) AS cnt']);
-
-        $totalRows = $qb->execute()->fetch('cnt');
+        $totalRows = $this->fetchTotalDocumentCountFromDb();
+        $newRows = $this->fetchNewDocumentCountFromDb();
+        $archivedRows = $this->fetchArchivedDocumentCountFromDb();
 
         return [
-            'totalRows' => $totalRows
+            'totalRows' => $totalRows,
+            'newRows' => $newRows,
+            'archivedRows' => $archivedRows
         ];
     }
 
-    public function actionRefresh() {
+    /**
+     * Fetches total document count from the database
+     * 
+     * @return mixed Data from the database
+     */
+    private function fetchTotalDocumentCountFromDb() {
+        $qb = $this->dm->dr->composeQueryForDocuments();
+        $qb->select(['COUNT(*) AS cnt']);
+        return $qb->execute()->fetch('cnt');
+    }
 
+    /**
+     * Fetches new document count from the database
+     * 
+     * @return mixed Data from the database
+     */
+    private function fetchNewDocumentCountFromDb() {
+        $qb = $this->dm->dr->composeQueryForDocuments();
+        $qb->select(['COUNT(*) AS cnt'])
+            ->where('status = ?', [DocumentStatus::NEW]);
+        return $qb->execute()->fetch('cnt');
+    }
+
+    /**
+     * Fetches archived document count from the database
+     * 
+     * @return mixed Data from the database
+     */
+    private function fetchArchivedDocumentCountFromDb() {
+        $qb = $this->dm->dr->composeQueryForDocuments();
+        $qb->select(['COUNT(*) AS cnt'])
+            ->where('status = ?', [DocumentStatus::ARCHIVED]);
+        return $qb->execute()->fetch('cnt');
+    }
+
+    public function actionRefresh() {
+        $data = $this->processData();
+        $this->setData($data);
+
+        $widget = $this->build();
+
+        return [
+            'widget' => $widget
+        ];
     }
 }
 

@@ -116,6 +116,11 @@ class Widget extends AComponent {
         return $el->toString();
     }
 
+    /**
+     * Creates HTML code for JS scripts
+     * 
+     * @return string HTML code
+     */
     private function buildJSScripts() {
         $scripts = [];
 
@@ -130,6 +135,7 @@ class Widget extends AComponent {
             ->setComponentAction($this->presenter, $this->componentName . '-refresh')
             ->setFunctionName($this->componentName . '_refresh')
             ->updateHTMLElement('widget', 'widget')
+            ->enableLoadingAnimation('widget')
         ;
 
         $addScript($arb);
@@ -142,7 +148,7 @@ class Widget extends AComponent {
      * 
      * @return string HTML code
      */
-    private function build() {
+    protected function build() {
         $rows = $this->processData();
 
         $table = new Table($rows);
@@ -209,6 +215,15 @@ class Widget extends AComponent {
         }
 
         return $rows;
+    }
+
+    /**
+     * Handles widget refresh control
+     * 
+     * @return array<string, string> Array of data for conversion to JSON
+     */
+    public function actionRefresh() {
+        return ['widget' => $this->build()];
     }
 
     public static function createFromComponent(AComponent $component) {}

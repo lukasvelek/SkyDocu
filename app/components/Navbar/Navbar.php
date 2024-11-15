@@ -4,6 +4,8 @@ namespace App\Components\Navbar;
 
 use App\Constants\Container\SystemGroups;
 use App\Core\Application;
+use App\Core\Caching\CacheFactory;
+use App\Core\Caching\CacheNames;
 use App\Entities\UserEntity;
 use App\Helpers\LinkHelper;
 use App\Managers\Container\GroupManager;
@@ -18,6 +20,7 @@ class Navbar implements IRenderable {
     private int $mode;
     private Application $app;
     private ?GroupManager $groupManager;
+    private CacheFactory $cacheFactory;
 
     public function __construct(int $mode, UserEntity $user, Application $app, ?GroupManager $groupManager) {
         $this->mode = $mode;
@@ -27,6 +30,7 @@ class Navbar implements IRenderable {
         $this->hideLinks = [];
         $this->app = $app;
         $this->groupManager = $groupManager;
+        $this->cacheFactory = new CacheFactory();
     }
 
     public function inject(GroupManager $groupManager) {
@@ -83,6 +87,11 @@ class Navbar implements IRenderable {
             $this->user->getFullname() => $this->getUserProfileLink(),
             'Logout' => $this->getUserLogoutLink()
         ];
+
+        $containerSwitch = $this->getContainerSwitch();
+        if($containerSwitch !== null) {
+            $userInfoLinks = array_merge(['Containers' => $containerSwitch], $userInfoLinks);
+        }
 
         $userInfo = '';
         foreach($userInfoLinks as $title => $link) {
@@ -144,6 +153,29 @@ class Navbar implements IRenderable {
         $this->beforeRender();
 
         return $this->template->render()->getRenderedContent();
+    }
+
+    private function getContainerSwitch() {
+        $navbarMemberships = $this->cacheFactory->getCache(CacheNames::NAVBAR_CONTAINER_SWITCH_USER_MEMBERSHIPS);
+
+        $count = $navbarMemberships->load($this->app->currentUser->getId(), function() {
+            $memberships = $this->app->groupManager->getMembershipsForUser($this->app->currentUser->getId());
+
+            $count = 0;
+            foreach($memberships as $membership) {
+                if(str_contains($membership->title, ' - users')) {
+                    $count++;
+                }
+            }
+
+            return $count;
+        });
+
+        if($count > 1) {
+            return $this->createLink(['page' => 'Anonym:Login', 'action' => 'switchContainer'], 'Containers');
+        } else {
+            return null;
+        }
     }
 }
 

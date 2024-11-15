@@ -87,8 +87,15 @@ class LoginPresenter extends AAnonymPresenter {
             $this->httpSessionSet('container', $containers[0]['value']);
             $this->redirect($this->createFullURL('Anonym:AutoLogin', 'checkLogin'));
         } else {
+            $params = [];
+
+            $lastContainer = $this->httpGet('last');
+            if($lastContainer !== null) {
+                $params['lastContainer'] = $lastContainer;
+            }
+
             $this->httpSessionSet('is_choosing_container', true);
-            $this->redirect($this->createURL('containerForm'));
+            $this->redirect($this->createURL('containerForm', $params));
         }
     }
 
@@ -135,10 +142,18 @@ class LoginPresenter extends AAnonymPresenter {
             } else {
                 $title = substr($group->title, 0, (strlen($group->title) - 8)) . ' (' . ContainerEnvironments::toString($container->environment) . ')';
 
-                $containers[] = [
+                $c = [
                     'value' => $group->containerId,
                     'text' => $title
                 ];
+
+                if(array_key_exists('lastContainer', $request->query)) {
+                    if($group->containerId == $request->query['lastContainer']) {
+                        $c['selected'] = 'selected';
+                    }
+                }
+
+                $containers[] = $c;
             }
         }
 
@@ -160,6 +175,15 @@ class LoginPresenter extends AAnonymPresenter {
         $form->addSubmit('Select');
 
         return $form;
+    }
+
+    public function handleSwitchContainer() {
+        $container = $this->httpSessionGet('container');
+        $this->httpSessionSet('container', null);
+        $this->httpSessionSet('is_choosing_container', true);
+        $this->httpSessionSet('current_document_folder_id', null);
+
+        $this->redirect($this->createURL('checkContainers', ['last' => $container]));
     }
 }
 

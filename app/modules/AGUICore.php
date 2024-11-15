@@ -247,7 +247,11 @@ abstract class AGUICore {
      * @param mixed $value Data value
      */
     protected function httpSessionSet(string $key, mixed $value) {
-        $_SESSION[$key] = $value;
+        if($value === null) {
+            unset($_SESSION[$key]);
+        } else {
+            $_SESSION[$key] = $value;
+        }
     }
 }
 

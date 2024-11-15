@@ -5,7 +5,6 @@ namespace App\Repositories;
 use App\Core\Caching\Cache;
 use App\Core\Caching\CacheNames;
 use App\Core\DatabaseConnection;
-use App\Core\DB\DatabaseRow;
 use App\Logger\Logger;
 
 class GroupMembershipRepository extends ARepository {

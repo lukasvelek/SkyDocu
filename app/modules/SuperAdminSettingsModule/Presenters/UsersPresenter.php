@@ -273,12 +273,6 @@ class UsersPresenter extends ASuperAdminSettingsPresenter {
                     $this->app->groupManager->removeUserFromGroup($user->getId(), $group->groupId);
                 }
 
-                // invalidate membership cache
-                if(!$this->cacheFactory->invalidateCacheByNamespace(CacheNames::GROUP_MEMBERSHIPS) ||
-                   !$this->cacheFactory->invalidateCacheByNamespace(CacheNames::VISIBLE_FOLDERS_FOR_USER)) {
-                    throw new GeneralException('Could not invalidate cache.');
-                }
-
                 $this->app->userRepository->commit($this->getUserId(), __METHOD__);
 
                 $this->flashMessage('User deleted.', 'success');

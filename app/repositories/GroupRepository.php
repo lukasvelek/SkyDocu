@@ -11,12 +11,14 @@ use App\Logger\Logger;
 class GroupRepository extends ARepository {
     private Cache $groupCache;
     private Cache $groupTitleToIdMappingCache;
+    private Cache $userGroupMembershipsCache;
 
     public function __construct(DatabaseConnection $db, Logger $logger) {
         parent::__construct($db, $logger);
 
         $this->groupCache = $this->cacheFactory->getCache(CacheNames::GROUPS);
         $this->groupTitleToIdMappingCache = $this->cacheFactory->getCache(CacheNames::GROUP_TITLE_TO_ID_MAPPING);
+        $this->userGroupMembershipsCache = $this->cacheFactory->getCache(CacheNames::USER_GROUP_MEMBERSHIPS);
     }
 
     public function getGroupEntityById(string $groupId) {
@@ -114,15 +116,27 @@ class GroupRepository extends ARepository {
 
         $qb->select(['groupId'])
             ->from('group_users')
-            ->where('userId = ?', [$userId])
-            ->execute();
+            ->where('userId = ?', [$userId]);
+
+        return $this->userGroupMembershipsCache->load($userId, function() use ($qb) {
+            $qb->execute();
+
+            $groups = [];
+            while($row = $qb->fetchAssoc()) {
+                $groups[] = $row['groupId'];
+            }
+
+            return $groups;
+        });
+
+            /*->execute();
 
         $groups = [];
         while($row = $qb->fetchAssoc()) {
             $groups[] = $row['groupId'];
         }
 
-        return $groups;
+        return $groups;*/
     }
 }
 

@@ -259,7 +259,7 @@ class GroupsPresenter extends ASuperAdminSettingsPresenter {
 
             $this->app->groupMembershipRepository->commit($this->getUserId(), __METHOD__);
 
-            $this->flashMessage('User removed from group.');
+            $this->flashMessage('User removed from group.', 'success');
         } catch(AException $e) {
             $this->app->groupMembershipRepository->rollback(__METHOD__);
 

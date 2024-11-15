@@ -75,7 +75,8 @@ class GroupManager extends AManager {
         }
 
         if(!$this->cacheFactory->invalidateCacheByNamespace(CacheNames::GROUP_MEMBERSHIPS) ||
-           !$this->cacheFactory->invalidateCacheByNamespace(CacheNames::VISIBLE_FOLDERS_FOR_USER)) {
+           !$this->cacheFactory->invalidateCacheByNamespace(CacheNames::VISIBLE_FOLDERS_FOR_USER) ||
+           !$this->cacheFactory->invalidateCacheByNamespace(CacheNames::USER_GROUP_MEMBERSHIPS)) {
             throw new GeneralException('Could not invalidate cache.');
         }
     }
@@ -83,6 +84,12 @@ class GroupManager extends AManager {
     public function removeUserFromGroup(string $userId, string $groupId) {
         if(!$this->gmr->removeUserFromGroup($groupId, $userId)) {
             throw new GeneralException('User is not member of the group.');
+        }
+
+        if(!$this->cacheFactory->invalidateCacheByNamespace(CacheNames::GROUP_MEMBERSHIPS) ||
+            !$this->cacheFactory->invalidateCacheByNamespace(CacheNames::VISIBLE_FOLDERS_FOR_USER) ||
+            !$this->cacheFactory->invalidateCacheByNamespace(CacheNames::USER_GROUP_MEMBERSHIPS)) {
+            throw new GeneralException('Could not invalidate cache.');
         }
     }
 

@@ -17,7 +17,7 @@ use App\Repositories\ContentRepository;
 use App\Repositories\UserRepository;
 
 class ContainerManager extends AManager {
-    private ContainerRepository $containerRepository;
+    public ContainerRepository $containerRepository;
     private DatabaseManager $dbManager;
     private GroupManager $groupManager;
 

@@ -46,7 +46,7 @@ class DocumentStatsWidget extends Widget {
         $data = $this->fetchDataFromDb();
 
         $rows = [
-            'Total documents' => $data['totalRows'],
+            'All documents' => $data['totalRows'],
             'New documents' => $data['newRows'],
             'Archived documents' => $data['archivedRows']
         ];

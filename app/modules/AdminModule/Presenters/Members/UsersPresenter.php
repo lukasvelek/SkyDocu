@@ -2,6 +2,7 @@
 
 namespace App\Modules\AdminModule;
 
+use App\Constants\Container\SystemGroups;
 use App\Core\Caching\CacheNames;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
@@ -26,7 +27,7 @@ class UsersPresenter extends AAdminPresenter {
     protected function createComponentUsersGrid(HttpRequest $request) {
         $grid = $this->componentFactory->getGridBuilder();
 
-        $userIds = $this->groupRepository->getMembersForGroup($this->groupRepository->getGroupByTitle('All users')['groupId']);
+        $userIds = $this->groupRepository->getMembersForGroup($this->groupRepository->getGroupByTitle(SystemGroups::ALL_USERS)['groupId']);
 
         $qb = $this->app->userRepository->composeQueryForUsers();
         $qb->andWhere($qb->getColumnInValues('userId', $userIds));
@@ -35,6 +36,7 @@ class UsersPresenter extends AAdminPresenter {
 
         $grid->addColumnText('fullname', 'Fullname');
         $grid->addColumnText('username', 'Username');
+        $grid->addColumnText('email', 'Email');
 
         return $grid;
     }
@@ -47,7 +49,12 @@ class UsersPresenter extends AAdminPresenter {
             try {
                 $this->app->userRepository->beginTransaction(__METHOD__);
 
-                $userId = $this->app->userManager->createNewUser($fr->username, $fr->fullname, password_hash($fr->password, PASSWORD_BCRYPT), $fr->email ?? null);
+                $email = $fr->email;
+                if($email == '') {
+                    $email = null;
+                }
+
+                $userId = $this->app->userManager->createNewUser($fr->username, $fr->fullname, password_hash($fr->password, PASSWORD_BCRYPT), $email);
 
                 $containerId = $this->httpSessionGet('container');
                 $container = $this->app->containerManager->getContainerById($containerId);

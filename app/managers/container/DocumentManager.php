@@ -17,7 +17,7 @@ use App\Repositories\Container\FolderRepository;
 use App\Repositories\Container\GroupRepository;
 
 class DocumentManager extends AManager {
-    private DocumentRepository $dr;
+    public DocumentRepository $dr;
     private DocumentClassRepository $dcr;
     private GroupRepository $gr;
     private FolderRepository $fr;

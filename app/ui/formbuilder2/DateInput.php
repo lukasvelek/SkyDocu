@@ -3,18 +3,18 @@
 namespace App\UI\FormBuilder2;
 
 /**
- * Form datetime input
+ * Form date input
  * 
  * @author Lukas Velek
  */
-class DateTimeInput extends Input {
+class DateInput extends Input {
     /**
      * Class constructor
      * 
      * @param string $name Element name
      */
     public function __construct(string $name) {
-        parent::__construct('datetime-local', $name);
+        parent::__construct('date', $name);
     }
 }
 

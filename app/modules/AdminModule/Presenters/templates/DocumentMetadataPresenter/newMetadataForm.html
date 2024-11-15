@@ -38,26 +38,37 @@
             hideElement('defaultValueBoolean');
             hideElement('defaultValueDatetime');
             hideElement('defaultValueNumber');
+            hideElement('defaultValueDate');
         } else if($("#type").val() == 3 /* number */) {
             hideElement('defaultValue');
             hideElement('defaultValueBoolean');
             hideElement('defaultValueDatetime');
             showElement('defaultValueNumber');
+            hideElement('defaultValueDate');
         } else if($("#type").val() == 4 /* datetime */) {
             hideElement('defaultValue');
             hideElement('defaultValueBoolean');
             showElement('defaultValueDatetime');
             hideElement('defaultValueNumber');
+            hideElement('defaultValueDate');
         } else if($("#type").val() == 5 /* boolean */) {
             hideElement('defaultValue');
             showElement('defaultValueBoolean');
             hideElement('defaultValueDatetime');
             hideElement('defaultValueNumber');
+            hideElement('defaultValueDate');
+        } else if($("#type").val() == 6 /* date */) {
+            hideElement('defaultValue');
+            hideElement('defaultValueBoolean');
+            hideElement('defaultValueDatetime');
+            hideElement('defaultValueNumber');
+            showElement('defaultValueDate');
         } else {
             showElement('defaultValue');
             hideElement('defaultValueBoolean');
             hideElement('defaultValueDatetime');
             hideElement('defaultValueNumber');
+            hideElement('defaultValueDate');
         }
     }
 

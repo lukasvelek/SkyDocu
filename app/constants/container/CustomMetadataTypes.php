@@ -10,6 +10,7 @@ class CustomMetadataTypes extends AConstant {
     public const NUMBER = 3;
     public const DATETIME = 4;
     public const BOOL = 5;
+    public const DATE = 6;
 
     public static function toString($key): string {
         return match((int)$key) {
@@ -17,7 +18,8 @@ class CustomMetadataTypes extends AConstant {
             self::TEXT => 'Text',
             self::NUMBER => 'Number',
             self::DATETIME => 'Datetime',
-            self::BOOL => 'Boolean'
+            self::BOOL => 'Boolean',
+            self::DATE => 'Date'
         };
     }
 
@@ -27,7 +29,8 @@ class CustomMetadataTypes extends AConstant {
             self::TEXT => self::toString(self::TEXT),
             self::NUMBER => self::toString(self::NUMBER),
             self::DATETIME => self::toString(self::DATETIME),
-            self::BOOL => self::toString(self::BOOL)
+            self::DATE => self::toString(self::DATE),
+            self::BOOL => self::toString(self::BOOL),
         ];
     }
 }

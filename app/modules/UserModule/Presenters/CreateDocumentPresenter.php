@@ -28,6 +28,11 @@ class CreateDocumentPresenter extends AUserPresenter {
                         ->setRequired();
                     break;
 
+                case CustomMetadataTypes::DATE:
+                    $element = $form->addDateInput($metadata->title, $metadata->guiTitle . ':')
+                        ->setRequired();
+                    break;
+
                 case CustomMetadataTypes::ENUM:
                     $selectValuesDb = $this->documentManager->getMetadataValues($metadataId);
 

@@ -209,6 +209,30 @@ class FormBuilder2 extends AComponent {
         return $dti;
     }
 
+    /**
+     * Adds date input
+     * 
+     * @param string $name Element name
+     * @param ?string $label Label text or null
+     * @return DateInput DateInput instance
+     */
+    public function addDateInput(string $name, ?string $label = null) {
+        $di = new DateInput($name);
+        
+        $this->elements[$name] = &$di;
+
+        $this->processLabel($name, $label);
+
+        return $di;
+    }
+
+    /**
+     * Adds checkbox input
+     * 
+     * @param string $name Element name
+     * @param ?string $label Label text or null
+     * @return CheckboxInput CheckboxInput instance
+     */
     public function addCheckboxInput(string $name, ?string $label = null) {
         $ci = new CheckboxInput($name);
 

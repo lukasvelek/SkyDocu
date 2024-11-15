@@ -55,6 +55,10 @@ class DocumentMetadataForm extends FormBuilder2 {
             ->setRequired()
             ->setHidden();
 
+        $this->addDateInput('defaultValueDate', 'Default value:')
+            ->setRequired()
+            ->setHidden();
+
         $this->addNumberInput('defaultValueNumber', 'Default value:')
             ->setRequired()
             ->setHidden();

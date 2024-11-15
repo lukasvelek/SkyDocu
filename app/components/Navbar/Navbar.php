@@ -55,7 +55,7 @@ class Navbar implements IRenderable {
                 $links = NavbarGeneralLinks::toArray();
 
                 if($this->app->groupManager->isUserMemberOfSuperadministrators($this->user->getId()) || ($this->groupManager !== null && in_array($this->user->getId(), $this->groupManager->getUsersForGroupTitle(SystemGroups::ADMINISTRATORS)))) {
-                    $links['Settings'] = NavbarGeneralLinks::A_SETTINGS;
+                    $links['Administration'] = NavbarGeneralLinks::A_SETTINGS;
                 }
 
                 $this->links = $links;

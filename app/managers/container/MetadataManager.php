@@ -5,6 +5,7 @@ namespace App\Managers\Container;
 use App\Core\Caching\CacheNames;
 use App\Core\DB\DatabaseRow;
 use App\Exceptions\GeneralException;
+use App\Exceptions\NonExistingEntityException;
 use App\Logger\Logger;
 use App\Managers\AManager;
 use App\Managers\EntityManager;
@@ -42,6 +43,12 @@ class MetadataManager extends AManager {
         }
 
         return $metadataId;
+    }
+
+    public function updateMetadata(string $metadataId, array $data) {
+        if(!$this->mr->updateMetadata($metadataId, $data)) {
+            throw new GeneralException('Database error.');
+        }
     }
 
     public function getFoldersWithoutMetadataRights(string $metadataId) {
@@ -137,6 +144,16 @@ class MetadataManager extends AManager {
         }
 
         $this->cacheFactory->invalidateCacheByNamespace(CacheNames::METADATA_VALUES);
+    }
+
+    public function getMetadataById(string $metadataId) {
+        $metadata = $this->mr->getMetadataById($metadataId);
+
+        if($metadata === null) {
+            throw new NonExistingEntityException('Metadata does not exist.');
+        }
+
+        return DatabaseRow::createFromDbRow($metadata);
     }
 }
 

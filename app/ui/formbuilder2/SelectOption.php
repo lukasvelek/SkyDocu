@@ -45,6 +45,15 @@ class SelectOption extends AElement {
     }
 
     /**
+     * Sets the option text
+     * 
+     * @param string $text New text
+     */
+    public function setText(string $text) {
+        $this->text = $text;
+    }
+
+    /**
      * Renders the element to HTML code
      * 
      * @return string HTML code

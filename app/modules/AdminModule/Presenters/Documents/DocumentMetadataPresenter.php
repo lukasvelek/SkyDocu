@@ -102,6 +102,85 @@ class DocumentMetadataPresenter extends AAdminPresenter {
         return $grid;
     }
 
+    public function handleEditMetadataForm(?FormResponse $fr = null) {
+        if($fr !== null) {
+            $metadataId = $this->httpGet('metadataId', true);
+
+            $defaultValue = null;
+
+            switch($fr->type) {
+                case CustomMetadataTypes::BOOL:
+                    if(isset($fr->defaultValueBoolean) && $fr->defaultValueBoolean !== '') {
+                        $defaultValue = $fr->defaultValueBoolean;
+                    }
+                    break;
+                
+                case CustomMetadataTypes::DATETIME:
+                    if(isset($fr->defaultValueDatetime) && $fr->defaultValueDatetime !== '') {
+                        $defaultValue = $fr->defaultValueDatetime;
+                    }
+                    break;
+
+                case CustomMetadataTypes::NUMBER:
+                    if(isset($fr->defaultValueNumber) && $fr->defaultValueNumber !== '') {
+                        $defaultValue = $fr->defaultValueNumber;
+                    }
+                    break;
+
+                case CustomMetadataTypes::TEXT:
+                    if(isset($fr->defaultValue) && $fr->defaultValue !== '') {
+                        $defaultValue = $fr->defaultValue;
+                    }
+                    break;
+            }
+            
+            $isRequired = false;
+
+            if(isset($fr->isRequired) && $fr->isRequired == 'on') {
+                $isRequired = true;
+            }
+
+            $data = [
+                'title' => $fr->title,
+                'guiTitle' => $fr->guiTitle,
+                'type' => $fr->type,
+                'defaultValue' => $defaultValue,
+                'isRequired' => $isRequired ? 1 : 0
+            ];
+
+            try {
+                $this->metadataRepository->beginTransaction(__METHOD__);
+
+                $this->metadataManager->updateMetadata($metadataId, $data);
+
+                $this->metadataRepository->commit($this->getUserId(), __METHOD__);
+
+                $this->flashMessage('Metadata updated.', 'success');
+            } catch(AException $e) {
+                $this->metadataRepository->rollback(__METHOD__);
+
+                $this->flashMessage('Could not update metadata. Reason: ' . $e->getMessage(), 'error', 10);
+            }
+
+            $this->redirect($this->createURL('list'));
+        }
+    }
+
+    public function renderEditMetadataForm() {
+        $this->template->links = $this->createBackUrl('list');
+    }
+
+    protected function createComponentEditDocumentMetadataForm(HttpRequest $request) {
+        $metadata = $this->metadataManager->getMetadataById($request->query['metadataId']);
+
+        $form = new DocumentMetadataForm($request);
+
+        $form->setMetadata($metadata);
+        $form->setAction($this->createURL('editMetadataForm', ['metadataId' => $request->query['metadataId']]));
+
+        return $form;
+    }
+
     public function handleNewMetadataForm(?FormResponse $fr = null) {
         if($fr !== null) {
             $defaultValue = null;

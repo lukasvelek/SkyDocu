@@ -335,6 +335,17 @@ class FormBuilder2 extends AComponent {
         return $this->elements;
     }
 
+    /**
+     * Returns single element by name as a link
+     * 
+     * @param string $name Element name
+     * @return \App\UI\FormBuilder2\AElement Element
+     */
+    public function getElement(string $name) {
+        $el = &$this->elements[$name];
+        return $el;
+    }
+
     public static function createFromComponent(AComponent $component) {}
 }
 

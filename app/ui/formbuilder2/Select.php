@@ -13,6 +13,9 @@ class Select extends AInteractableElement {
      * @var array<SelectOption> $options
      */
     private array $options;
+
+    private mixed $selectedValue;
+    private array $alteredOptionTexts;
     
     /**
      * Class constructor
@@ -24,6 +27,26 @@ class Select extends AInteractableElement {
 
         $this->name = $name;
         $this->options = [];
+
+        $this->selectedValue = null;
+        $this->alteredOptionTexts = [];
+    }
+
+    /**
+     * Sets the selected value
+     * 
+     * @param mixed $value Value
+     */
+    public function setSelectedValue(mixed $value) {
+        $this->selectedValue = $value;
+
+        return $this;
+    }
+
+    public function alterOptionText(mixed $value, string $text) {
+        $this->alteredOptionTexts[$value] = $text;
+
+        return $this;
     }
 
     /**
@@ -49,9 +72,8 @@ class Select extends AInteractableElement {
         foreach($options as $option) {
             $value = $option['value'];
             $text = $option['text'];
-            $selected = array_key_exists('selected', $option);
 
-            $this->addRawOption($value, $text, $selected);
+            $this->addRawOption($value, $text, false);
         }
 
         return $this;
@@ -129,6 +151,12 @@ class Select extends AInteractableElement {
         $code .= '>';
 
         foreach($this->options as $option) {
+            if($this->selectedValue !== null && $option->getValue() == $this->selectedValue) {
+                $option->setSelected();
+            }
+            if(!empty($this->alteredOptionTexts) && array_key_exists($option->getValue(), $this->alteredOptionTexts)) {
+                $option->setText($this->alteredOptionTexts[$option->getValue()]);
+            }
             $code .= $option->render();
         }
 

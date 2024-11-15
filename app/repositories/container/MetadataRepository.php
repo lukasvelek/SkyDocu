@@ -37,6 +37,17 @@ class MetadataRepository extends ARepository {
         return $qb->fetchBool();
     }
 
+    public function updateMetadata(string $metadataId, array $data) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->update('custom_metadata')
+            ->set($data)
+            ->where('metadataId = ?', [$metadataId])
+            ->execute();
+
+        return $qb->fetchBool();
+    }
+
     public function composeQueryForMetadataFolderRights() {
         $qb = $this->qb(__METHOD__);
 
@@ -135,6 +146,14 @@ class MetadataRepository extends ARepository {
             ->execute();
 
         return $qb->fetchAll();
+    }
+
+    public function getMetadataById(string $metadataId) {
+        $qb = $this->composeQueryForMetadata();
+        $qb->andWhere('metadataId = ?', [$metadataId])
+            ->execute();
+
+        return $qb->fetch();
     }
 }
 

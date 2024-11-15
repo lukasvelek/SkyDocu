@@ -2,6 +2,7 @@
 
 namespace App\Modules\AdminModule;
 
+use App\Constants\ContainerEnvironments;
 use App\Core\Datetypes\DateTime;
 use App\Core\Http\HttpRequest;
 
@@ -45,6 +46,10 @@ class HomePresenter extends AAdminPresenter {
         $form->addDateTimeInput('containerDateCreated', 'Date created:')
             ->setDisabled()
             ->setValue($dateCreated);
+
+        $form->addTextInput('containerEnvironment', 'Container environment:')
+            ->setDisabled()
+            ->setValue(ContainerEnvironments::toString($container->environment));
 
         return $form;
     }

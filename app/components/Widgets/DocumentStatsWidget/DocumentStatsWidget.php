@@ -33,6 +33,7 @@ class DocumentStatsWidget extends Widget {
 
         $this->setData($data);
         $this->setTitle('Document statistics');
+        $this->enableRefresh();
     }
 
     /**
@@ -65,6 +66,10 @@ class DocumentStatsWidget extends Widget {
         return [
             'totalRows' => $totalRows
         ];
+    }
+
+    public function actionRefresh() {
+
     }
 }
 

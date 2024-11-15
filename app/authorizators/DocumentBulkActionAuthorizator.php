@@ -3,6 +3,7 @@
 namespace App\Authorizators;
 
 use App\Constants\Container\DocumentStatus;
+use App\Constants\Container\SystemGroups;
 use App\Core\DatabaseConnection;
 use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
@@ -33,6 +34,10 @@ class DocumentBulkActionAuthorizator extends AAuthorizator {
     }
 
     public function throwExceptionIfCannotExecuteArchivation(string $userId, array $documentIds) {
+        if(!in_array($userId, $this->cgm->getUsersForGroupTitle(SystemGroups::ARCHIVISTS))) {
+            throw new GeneralException('User is not member of the Archivists group.', null, false);
+        }
+
         foreach($documentIds as $documentId) {
             $document = $this->dm->getDocumentById($documentId);
 

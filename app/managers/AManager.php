@@ -29,6 +29,15 @@ abstract class AManager {
     }
 
     /**
+     * Injects custom CacheFactory instance
+     * 
+     * @param CacheFactory $cacheFactory CacheFactory intstance
+     */
+    public function injectCacheFactory(CacheFactory $cacheFactory) {
+        $this->cacheFactory = $cacheFactory;
+    }
+
+    /**
      * Generates a unique entity ID for given entity category (users, posts, topics, ...)
      * 
      * @param string $category Category (use contants in \App\Managers\EntityManager)

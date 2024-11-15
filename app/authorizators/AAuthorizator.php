@@ -29,6 +29,15 @@ abstract class AAuthorizator {
         $this->logger = $logger;
         $this->cacheFactory = new CacheFactory();
     }
+    
+    /**
+     * Injects custom CacheFactory instance
+     * 
+     * @param CacheFactory $cacheFactory CacheFactory intstance
+     */
+    public function injectCacheFactory(CacheFactory $cacheFactory) {
+        $this->cacheFactory = $cacheFactory;
+    }
 
     /**
      * Returns a new instance of QueryBuilder

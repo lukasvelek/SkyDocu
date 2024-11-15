@@ -21,6 +21,8 @@ class CacheFactory {
     /** @var array<Cache> */
     private array $persistentCaches;
 
+    private ?string $customNamespace;
+
     /**
      * Class constructor
      * 
@@ -30,6 +32,8 @@ class CacheFactory {
         $this->persistentCaches = [];
 
         $this->cacheLogger = new CacheLogger();
+
+        $this->customNamespace = null;
     }
 
     /**
@@ -39,6 +43,15 @@ class CacheFactory {
         $this->saveCaches();
 
         $this->persistentCaches = [];
+    }
+
+    /**
+     * Sets custom additional namespace
+     * 
+     * @param string $namespace Custom additional namespace
+     */
+    public function setCustomNamespace(string $namespace) {
+        $this->customNamespace = $namespace;
     }
 
     /**
@@ -121,6 +134,10 @@ class CacheFactory {
      */
     private function loadDataFromCache(string $namespace) {
         $path = APP_ABSOLUTE_DIR . CACHE_DIR . $namespace . '\\';
+
+        if($this->customNamespace !== null) {
+            $path .= $this->customNamespace . '\\';
+        }
         
         $date = new DateTime();
         $date->format('Y-m-d');
@@ -195,6 +212,10 @@ class CacheFactory {
      */
     private function saveDataToCache(string $namespace, array $data) {
         $path = APP_ABSOLUTE_DIR . CACHE_DIR . $namespace . '\\';
+
+        if($this->customNamespace !== null) {
+            $path .= $this->customNamespace . '\\';
+        }
         
         $date = new DateTime();
         $date->format('Y-m-d');
@@ -215,6 +236,10 @@ class CacheFactory {
      */
     private function deleteCache(string $namespace) {
         $path = APP_ABSOLUTE_DIR . CACHE_DIR . $namespace . '\\';
+
+        if($this->customNamespace !== null) {
+            $path .= $this->customNamespace . '\\';
+        }
 
         $this->cacheLogger->logCacheNamespaceDeleted($namespace, __METHOD__);
 

@@ -37,6 +37,15 @@ abstract class ARepository extends AMultipleDatabaseConnectionHandler {
     }
 
     /**
+     * Injects custom CacheFactory instance
+     * 
+     * @param CacheFactory $cacheFactory CacheFactory intstance
+     */
+    public function injectCacheFactory(CacheFactory $cacheFactory) {
+        $this->cacheFactory = $cacheFactory;
+    }
+
+    /**
      * Returns a new instance of QueryBuilder
      * 
      * @param string $method Method name

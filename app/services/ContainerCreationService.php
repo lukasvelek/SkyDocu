@@ -62,6 +62,7 @@ class ContainerCreationService extends AService {
             foreach($containers as $containerId) {
                 try {
                     $this->cm->changeContainerStatus($containerId, ContainerStatus::IS_BEING_CREATED, $this->serviceManager->getServiceUserId(), 'Status change due to background container creation. Container is being created.');
+                    $this->cm->changeContainerCreationStatus($containerId, 0, null);
                     
                     $this->cr->beginTransaction(__METHOD__);
 
@@ -70,10 +71,12 @@ class ContainerCreationService extends AService {
                     $this->cr->commit($this->serviceManager->getServiceUserId(), __METHOD__);
 
                     $this->cm->changeContainerStatus($containerId, ContainerStatus::NOT_RUNNING, $this->serviceManager->getServiceUserId(), 'Status change due to background container creation. Container is created and not running.');
+                    $this->cm->changeContainerCreationStatus($containerId, 100, null);
                 } catch(AException $e) {
                     $this->cr->rollback(__METHOD__);
 
                     $this->cm->changeContainerStatus($containerId, ContainerStatus::NEW, $this->serviceManager->getServiceUserId(), 'Status change due to background container creation. An error occured during container creation.');
+                    $this->cm->changeContainerCreationStatus($containerId, 0, null);
                 }
             }
 

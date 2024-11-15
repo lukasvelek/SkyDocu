@@ -257,6 +257,17 @@ class ContainerManager extends AManager {
         }
     }
 
+    public function changeContainerCreationStatus(string $containerId, int $percent, ?string $description) {
+        $data = [
+            'percentFinished' => $percent,
+            'description' => $description
+        ];
+
+        if(!$this->containerRepository->updateCreationStatusEntry($containerId, $data)) {
+            throw new GeneralException('Could not update container creation status.');
+        }
+    }
+
     public function getContainerById(string $containerId) {
         $cache = $this->cacheFactory->getCache(CacheNames::CONTAINERS);
 

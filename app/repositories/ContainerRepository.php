@@ -84,20 +84,12 @@ class ContainerRepository extends ARepository {
         return $qb->fetchBool();
     }
 
-    public function updateCreationStatusEntry(string $statusId, int $percentFinished, ?string $description = null) {
-        $data = [
-            'percentFinished' => $percentFinished
-        ];
-
-        if($description !== null) {
-            $data['description'] = $description;
-        }
-
+    public function updateCreationStatusEntry(string $containerId, array $data) {
         $qb = $this->qb(__METHOD__);
 
         $qb->update('container_creation_status')
             ->set($data)
-            ->where('statusId = ?', [$statusId])
+            ->where('containerId = ?', [$containerId])
             ->execute();
 
         return $qb->fetchBool();

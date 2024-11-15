@@ -22,7 +22,16 @@ class TransactionLogPresenter extends AAdminPresenter {
         $grid->addColumnText('callingMethod', 'Method');
         $grid->addColumnDatetime('dateCreated', 'Date');
 
-        $grid->addFilter('userId', 'User:', []);
+        $usersDb = $this->transactionLogRepository->getUserIdsInTransactionLog();
+    
+        $users = [];
+        foreach($usersDb as $userId) {
+            $user = $this->app->userManager->getUserById($userId);
+
+            $users[$userId] = $user->getFullname();
+        }
+
+        $grid->addFilter('userId', 'User:', $users);
 
         return $grid;
     }

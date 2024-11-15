@@ -3,6 +3,7 @@
 namespace App\Managers\Container;
 
 use App\Constants\Container\GroupStandardOperationRights;
+use App\Core\Caching\CacheNames;
 use App\Core\DB\DatabaseRow;
 use App\Exceptions\GeneralException;
 use App\Logger\Logger;
@@ -36,6 +37,18 @@ class GroupManager extends AManager {
 
         if(!$this->gr->addUserToGroup($relationId, $groupId, $userId)) {
             throw new GeneralException('Database error.');
+        }
+    }
+
+    public function removeUserFromGroupId(string $groupId, string $userId) {
+        if(!$this->gr->removeUserFromGroup($groupId, $userId)) {
+            throw new GeneralException('Database error.');
+        }
+
+        if(!$this->cacheFactory->invalidateCacheByNamespace(CacheNames::GROUP_MEMBERSHIPS) ||
+            !$this->cacheFactory->invalidateCacheByNamespace(CacheNames::VISIBLE_FOLDERS_FOR_USER)
+        ) {
+            throw new GeneralException('Could not invalidate cache.');
         }
     }
 

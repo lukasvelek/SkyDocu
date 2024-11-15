@@ -2,10 +2,10 @@
 
 namespace App\Modules\AdminModule;
 
+use App\Constants\Container\SystemGroups;
 use App\Core\DB\DatabaseRow;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
-use App\UI\FormBuilder\FormBuilder;
 use App\UI\FormBuilder\FormResponse;
 use App\UI\GridBuilder2\Row;
 use App\UI\HTML\HTML;
@@ -29,7 +29,7 @@ class GroupsPresenter extends AAdminPresenter {
 
         $grid->createDataSourceFromQueryBuilder($this->groupRepository->composeQueryForGroups(), 'groupId');
 
-        $grid->addColumnText('title', 'Title');
+        $grid->addColumnConst('title', 'Title', SystemGroups::class);
 
         $members = $grid->addAction('members');
         $members->onCanRender[] = function() {
@@ -78,10 +78,10 @@ class GroupsPresenter extends AAdminPresenter {
 
         $grid->addColumnUser('userId', 'User');
 
-        if($group['title'] != 'All users') {
+        if($group['title'] != SystemGroups::ALL_USERS) {
             $remove = $grid->addAction('remove');
             $remove->onCanRender[] = function(DatabaseRow $row, Row $_row) use ($group) {
-                if($this->app->groupManager->isUserMemberOfSuperadministrators($row->userId)) {
+                if($this->app->groupManager->isUserMemberOfSuperadministrators($row->userId) && $group['title'] == SystemGroups::ADMINISTRATORS) {
                     return false;
                 }
 
@@ -91,7 +91,7 @@ class GroupsPresenter extends AAdminPresenter {
                 $el = HTML::el('a')
                     ->title('Remove')
                     ->text('Remove')
-                    ->href($this->createURLString('removeGroupMember', ['groupId' => $request->query['groupId'], 'userId' => $primaryKey]))
+                    ->href($this->createURLString('removeGroupMember', ['groupId' => $request->query['groupId'], 'userId' => $row->userId]))
                     ->class('grid-link')
                 ;
 
@@ -125,13 +125,13 @@ class GroupsPresenter extends AAdminPresenter {
     }
 
     public function renderAddMemberForm() {
-        $this->template->links = $this->createBackUrl('listMembers', ['groupId', $this->httpGet('groupId')]);
+        $this->template->links = $this->createBackUrl('listMembers', ['groupId' => $this->httpGet('groupId')]);
     }
 
     protected function createComponentNewMemberForm(HttpRequest $request) {
         $container = $this->app->containerManager->getContainerById($this->httpSessionGet('container'));
 
-        $containerUsers = $this->app->groupManager->getGroupUsersForGroupId($container->title . ' - users');
+        $containerUsers = $this->app->groupManager->getGroupUsersForGroupTitle($container->title . ' - users');
         $groupUsers = $this->groupRepository->getMembersForGroup($request->query['groupId']);
 
         $users = [];
@@ -162,6 +162,27 @@ class GroupsPresenter extends AAdminPresenter {
         }
 
         return $form;
+    }
+
+    public function handleRemoveGroupMember() {
+        $groupId = $this->httpGet('groupId', true);
+        $userId = $this->httpGet('userId', true);
+
+        try {
+            $this->groupRepository->beginTransaction(__METHOD__);
+
+            $this->groupManager->removeUserFromGroupId($groupId, $userId);
+
+            $this->groupRepository->commit($this->getUserId(), __METHOD__);
+
+            $this->flashMessage('User removed from group.', 'success');
+        } catch(AException $e) {
+            $this->groupRepository->rollback(__METHOD__);
+
+            $this->flashMessage('Could not remove user from group. Reason: ' . $e->getMessage(), 'error', 10);
+        }
+
+        $this->redirect($this->createURL('listMembers', ['groupId' => $groupId]));
     }
 }
 

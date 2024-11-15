@@ -97,6 +97,18 @@ class GroupRepository extends ARepository {
         return $qb->fetchBool();
     }
 
+    public function removeUserFromGroup(string $groupId, string $userId) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->delete()
+            ->from('group_users_relation')
+            ->where('groupId = ?', [$groupId])
+            ->andWhere('userId = ?', [$userId])
+            ->execute();
+
+        return $qb->fetchBool();
+    }
+
     public function getStandardGroupRightsForGroup(string $groupId) {
         $qb = $this->qb(__METHOD__);
 

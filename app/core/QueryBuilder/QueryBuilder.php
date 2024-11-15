@@ -864,7 +864,7 @@ class QueryBuilder
 
         $keyArray = [];
         foreach($this->queryData['keys'] as $key) {
-            if($key == '*' || str_starts_with($key, 'COUNT')) {
+            if($key == '*' || str_starts_with($key, 'COUNT') || str_starts_with($key, 'DISTINCT')) {
                 $keyArray[] = $key;
             } else {
                 $keyArray[] = (self::USE_BACKTICKS ? '`' : '') . $key . (self::USE_BACKTICKS ? '`' : '');

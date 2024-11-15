@@ -23,7 +23,7 @@ class TransactionLogRepository extends ARepository {
     public function getUserIdsInTransactionLog() {
         $qb = $this->qb(__METHOD__);
 
-        $qb->select(['userId'])
+        $qb->select(['DISTINCT userId'])
             ->from('transaction_log')
             ->execute();
 

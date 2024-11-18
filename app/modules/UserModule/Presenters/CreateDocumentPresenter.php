@@ -49,11 +49,26 @@ class CreateDocumentPresenter extends AUserPresenter {
                     break;
 
                 case CustomMetadataTypes::NUMBER:
-                    $element = $form->addNumberInput($metadata->title, $metadata->guiTitle . ':', null, null, null, true);
+                    $element = $form->addNumberInput($metadata->title, $metadata->guiTitle . ':');
                     break;
 
                 case CustomMetadataTypes::TEXT:
-                    $element = $form->addTextInput($metadata->title, $metadata->guiTitle . ':', null, true);
+                    $element = $form->addTextInput($metadata->title, $metadata->guiTitle . ':');
+                    break;
+
+                default:
+                    if($metadata->type >= 100) {
+                        $element = $form->addSelect($metadata->title, $metadata->guiTitle . ':');
+
+                        $values = $this->enumManager->getMetadataEnumValuesByMetadataTypeForSelect($metadata);
+
+                        if($values === null) {
+                            break;
+                        }
+
+                        $element->addRawOptions($values);
+                    }
+
                     break;
             }
 
@@ -86,7 +101,9 @@ class CreateDocumentPresenter extends AUserPresenter {
             $customMetadataValues = [];
             foreach($customMetadatas as $metadataId => $metadata) {
                 if(isset($fr->{$metadata->title})) {
-                    $customMetadataValues[$metadataId] = $fr->{$metadata->title};
+                    if($fr->{$metadata->title} != 'null') {
+                        $customMetadataValues[$metadataId] = $fr->{$metadata->title};
+                    }
                 }
             }
 

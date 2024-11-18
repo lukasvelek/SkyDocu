@@ -66,7 +66,7 @@ class UsersPresenter extends AAdminPresenter {
 
                 $this->groupRepository->beginTransaction(__METHOD__);
                 
-                $this->groupManager->addUserToGroupTitle(GroupManager::ALL_USERS, $userId);
+                $this->groupManager->addUserToGroupTitle(SystemGroups::ALL_USERS, $userId);
 
                 $this->cacheFactory->invalidateCacheByNamespace(CacheNames::GROUP_MEMBERSHIPS);
                 $this->cacheFactory->invalidateCacheByNamespace(CacheNames::USER_GROUP_MEMBERSHIPS);

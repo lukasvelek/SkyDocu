@@ -94,7 +94,7 @@ class ContainerCreationHelper {
                 'entryId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',
                 'documentId' => 'VARCHAR(256) NOT NULL',
                 'metadataId' => 'VARCHAR(256) NOT NULL',
-                'value' => 'TEXT NOT NULL'
+                'value' => 'TEXT NULL'
             ],
             'custom_metadata_list_values' => [
                 'valueId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',

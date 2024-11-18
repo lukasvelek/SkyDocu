@@ -144,6 +144,15 @@ class ArrayList {
     }
 
     /**
+     * Checks if the array is empty
+     * 
+     * @return bool True if empty or false if not
+     */
+    public function isEmpty() {
+        return empty($this->_data);
+    }
+
+    /**
      * Goes through all values and if it is a callable, then it executes it
      * 
      * @return bool True if at least once a callable was executed or false if not
@@ -303,7 +312,7 @@ class ArrayList {
             }
         }
 
-        return true;
+        return false;
     }
 }
 

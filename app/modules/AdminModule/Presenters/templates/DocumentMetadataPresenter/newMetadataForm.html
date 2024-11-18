@@ -33,7 +33,7 @@
     hideDefaultValueSelect();
 
     function hideDefaultValueSelect() {
-        if($("#type").val() == 1 /* enum */) {
+        if($("#type").val() == 1 /* enum */ || $("#type").val() >= 100 /* system enums */) {
             hideElement('defaultValue');
             hideElement('defaultValueBoolean');
             hideElement('defaultValueDatetime');

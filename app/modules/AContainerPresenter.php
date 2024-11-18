@@ -2,18 +2,16 @@
 
 namespace App\Modules;
 
-use App\Authorizators\AAuthorizator;
 use App\Authorizators\DocumentBulkActionAuthorizator;
 use App\Authorizators\GroupStandardOperationsAuthorizator;
 use App\Core\Caching\CacheFactory;
 use App\Core\DatabaseConnection;
-use App\Managers\AManager;
 use App\Managers\Container\DocumentManager;
+use App\Managers\Container\EnumManager;
 use App\Managers\Container\FolderManager;
 use App\Managers\Container\GroupManager;
 use App\Managers\Container\MetadataManager;
 use App\Managers\EntityManager;
-use App\Repositories\ARepository;
 use App\Repositories\Container\DocumentClassRepository;
 use App\Repositories\Container\DocumentRepository;
 use App\Repositories\Container\FolderRepository;
@@ -37,6 +35,7 @@ abstract class AContainerPresenter extends APresenter {
     protected DocumentManager $documentManager;
     protected GroupManager $groupManager;
     protected MetadataManager $metadataManager;
+    protected EnumManager $enumManager;
 
     protected DocumentBulkActionAuthorizator $documentBulkActionAuthorizator;
     protected GroupStandardOperationsAuthorizator $groupStandardOperationsAuthorizator;
@@ -63,6 +62,7 @@ abstract class AContainerPresenter extends APresenter {
         $this->documentManager = new DocumentManager($this->logger, $this->entityManager, $this->documentRepository, $this->documentClassRepository, $this->groupRepository, $this->folderRepository);
         $this->groupManager = new GroupManager($this->logger, $this->entityManager, $this->groupRepository, $this->app->userRepository);
         $this->metadataManager = new MetadataManager($this->logger, $this->entityManager, $this->metadataRepository, $this->folderRepository);
+        $this->enumManager = new EnumManager($this->logger, $this->entityManager, $this->app->userRepository, $this->app->groupManager, $container);
 
         $this->injectCacheFactoryToManagers();
 

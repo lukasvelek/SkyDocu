@@ -8,9 +8,11 @@ use App\Constants\Container\CustomMetadataTypes;
 use App\Constants\Container\DocumentStatus;
 use App\Core\Application;
 use App\Core\DB\DatabaseRow;
+use App\Enums\AEnumForMetadata;
 use App\Exceptions\GeneralException;
 use App\Helpers\GridHelper;
 use App\Managers\Container\DocumentManager;
+use App\Managers\Container\EnumManager;
 use App\Modules\APresenter;
 use App\UI\GridBuilder2\Cell;
 use App\UI\GridBuilder2\GridBuilder;
@@ -29,6 +31,7 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
     private DocumentBulkActionsHelper $dbah;
     private DocumentBulkActionAuthorizator $dbaa;
     private GroupStandardOperationsAuthorizator $gsoa;
+    private EnumManager $em;
 
     private bool $allMetadata;
 
@@ -46,7 +49,8 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
         Application $app,
         DocumentManager $documentManager,
         DocumentBulkActionAuthorizator $dbaa,
-        GroupStandardOperationsAuthorizator $gsoa
+        GroupStandardOperationsAuthorizator $gsoa,
+        EnumManager $em
     ) {
         parent::__construct($grid->httpRequest);
         $this->setHelper(new GridHelper($app->logger, $app->currentUser->getId()));
@@ -56,6 +60,7 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
         $this->currentUserId = $app->currentUser->getId();
         $this->dbaa = $dbaa;
         $this->gsoa = $gsoa;
+        $this->em = $em;
 
         $this->dbah = new DocumentBulkActionsHelper($this->app, $this->dm, $this->httpRequest, $this->dbaa, $this->gsoa);
 
@@ -206,8 +211,52 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
                 case CustomMetadataTypes::NUMBER:
                     $this->appendNumberCustomMetadata($metadata, $documentCustomMetadataValues);
                     break;
+
+                default:
+                    if($metadata->type >= 100) { // system custom enums
+                        $this->appendSystemEnumCustomMetadata($metadata, $documentCustomMetadataValues);
+                    }
+                    break;
             }
         }
+    }
+
+    /**
+     * Appends system enums
+     * 
+     * @param DatabaseRow $metadata Metadata database row
+     * @param array $documentCustomMetadata Custom metadata values for documents
+     */
+    private function appendSystemEnumCustomMetadata(DatabaseRow $metadata, array $documentCustomMetadataValues) {
+        $values = $this->em->getMetadataEnumValuesByMetadataType($metadata);
+
+        $col = $this->addColumnText($metadata->title, $metadata->guiTitle);
+        $col->onRenderColumn[] = function(DatabaseRow $row, Row $_row, Cell $cell, HTML $html, mixed $value) use ($values, $documentCustomMetadataValues, $metadata) {
+            if(array_key_exists($row->documentId, $documentCustomMetadataValues)) {
+                $tmp = $documentCustomMetadataValues[$row->documentId][$metadata->title];
+
+                if($values->keyExists($tmp)) {
+                    return $values->get($tmp)[AEnumForMetadata::TITLE];
+                } else {
+                    return null;
+                }
+            } else {
+                return null;
+            }
+        };
+        $col->onExportColumn[] = function(DatabaseRow $row, mixed $value) use ($metadata, $documentCustomMetadataValues, $values) {
+            if(array_key_exists($row->documentId, $documentCustomMetadataValues)) {
+                $tmp = $documentCustomMetadataValues[$row->documentId][$metadata->title];
+
+                if($values->keyExists($tmp)) {
+                    return $values->get($tmp)[AEnumForMetadata::TITLE];
+                } else {
+                    return '-';
+                }
+            } else {
+                return '-';
+            }
+        };
     }
 
     /**

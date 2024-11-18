@@ -10,9 +10,7 @@ class HomePresenter extends ASuperAdminPresenter {
         parent::__construct('HomePresenter', 'Home');
     }
 
-    public function renderHome() {
-
-    }
+    public function renderHome() {}
 
     protected function createComponentContainerStatsWidget(HttpRequest $request) {
         $widget = new ContainerStatsWidget($request, $this->app->containerManager);

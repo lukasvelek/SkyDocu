@@ -13,9 +13,6 @@ use App\Repositories\Container\GroupRepository;
 use App\Repositories\UserRepository;
 
 class GroupManager extends AManager {
-    public const ALL_USERS = 'All users';
-    public const ADMINISTRATORS = 'Administrators';
-
     private GroupRepository $gr;
     private UserRepository $ur;
 

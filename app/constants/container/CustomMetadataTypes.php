@@ -12,6 +12,9 @@ class CustomMetadataTypes extends AConstant {
     public const BOOL = 5;
     public const DATE = 6;
 
+    // Numbers bigger than 100 are system enums
+    public const SYSTEM_USER = 100;
+
     public static function toString($key): string {
         return match((int)$key) {
             self::ENUM => 'Enum',
@@ -19,7 +22,8 @@ class CustomMetadataTypes extends AConstant {
             self::NUMBER => 'Number',
             self::DATETIME => 'Datetime',
             self::BOOL => 'Boolean',
-            self::DATE => 'Date'
+            self::DATE => 'Date',
+            self::SYSTEM_USER => 'User'
         };
     }
 
@@ -31,6 +35,7 @@ class CustomMetadataTypes extends AConstant {
             self::DATETIME => self::toString(self::DATETIME),
             self::DATE => self::toString(self::DATE),
             self::BOOL => self::toString(self::BOOL),
+            self::SYSTEM_USER => self::toString(self::SYSTEM_USER)
         ];
     }
 }

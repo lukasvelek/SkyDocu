@@ -431,6 +431,9 @@ abstract class APresenter extends AGUICore {
         return $this->template;
     }
 
+    /**
+     * Fills the template with system attributes
+     */
     private function fillSystemAttributesToTemplate() {
         $date = new DateTime();
         $date->format('Y');

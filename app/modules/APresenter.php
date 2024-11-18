@@ -509,9 +509,7 @@ abstract class APresenter extends AGUICore {
         $ok = false;
         $templateContent = null;
 
-        $handleAction = 'handle' . ucfirst($this->action);
-        $renderAction = 'render' . ucfirst($this->action);
-
+        // If the call is AJAX or component AJAX, only action<Name>() has to be handled
         if($this->isAjax && !$this->isComponentAjax) {
             $result = $this->processAction($moduleName);
             if($result !== null) {
@@ -519,34 +517,13 @@ abstract class APresenter extends AGUICore {
             }
         }
 
-        if(method_exists($this, $handleAction)) {
-            $ok = true;
-            $params = $this->getQueryParams();
-            $handleResult = $this->logger->stopwatch(function() use ($handleAction, $params) {
-                if(isset($params['isFormSubmit']) == '1') {
-                    $fr = $this->createFormResponse();
-                    return $this->$handleAction($fr);
-                } else {
-                    return $this->$handleAction();
-                }
-            }, 'App\\Modules\\' . $moduleName . '\\' . $this->title . '::' . $handleAction);
-        }
+        // Process handle<Name>()
+        $this->processHandle($moduleName, $ok);
 
-        if(isset($handleResult) && $handleResult !== null) {
-            return new TemplateObject($handleResult);
-        }
+        // Process render<Name>()
+        $templateContent = $this->processRender($ok);
 
-        if(method_exists($this, $renderAction)) {
-            $ok = true;
-            $templatePath = __DIR__ . '\\' . $this->params['module'] . '\\Presenters\\templates\\' . $this->name . '\\' . $this->action . '.html';
-
-            if(!file_exists($templatePath)) {
-                throw new TemplateDoesNotExistException($this->action, $templatePath);
-            }
-
-            $templateContent = $this->getTemplate($templatePath);
-        }
-
+        // There has been an error during action handling or rendering
         if($ok === false) {
             if($this->isAjax && !$this->isComponentAjax) {
                 $this->redirect(['page' => 'Error:E404', 'reason' => 'ActionDoesNotExist']);
@@ -559,18 +536,43 @@ abstract class APresenter extends AGUICore {
             }
         }
 
+        // Process component action
+        $templateContent = $this->processComponentAction($templateContent);
+
+        $this->beforeRenderCallbacks->executeCallables([$this->template]);
+
+        return $templateContent;
+    }
+
+    /**
+     * Processes component action
+     * 
+     * @param ?TemplateObject $templateContent TemplateObject instance or null
+     * @return TemplateObject
+     */
+    private function processComponentAction(?TemplateObject $templateContent) {
         if(isset($this->httpRequest->query['do'])) {
+            if($templateContent === null) {
+                return;
+            }
+
+            // Split the component action parameter
             $do = $this->httpRequest->query['do'];
             $doParts = explode('-', $do);
+
             if(count($doParts) < 2) {
                 return;
             }
+
             $componentName = $doParts[0];
-            if($this->isAjax()) {
+
+            if($this->isAjax) {
                 $methodName = 'action' . ucfirst($doParts[1]);
             } else {
                 $methodName = 'handle' . ucfirst($doParts[1]);
             }
+
+            // Get the arguments
             $methodArgs = [];
             if(count($doParts) > 2) {
                 for($i = 2; $i < count($doParts); $i++) {
@@ -578,13 +580,15 @@ abstract class APresenter extends AGUICore {
                 }
             }
 
+            // Get the component
             $component = $templateContent->getComponent($componentName);
 
+            // Handle the component action
             if($component !== null) {
                 if(method_exists($component, $methodName)) {
                     $result = $this->logger->stopwatch(function() use ($component, $methodName) {
                         try {
-                            if(isset($this->httpRequest->query['isFormSubmit']) && $this->httpRequest->query['isFormSubmit'] == '1') {
+                            if(isset($this->httpRequest->query['isFormSubmit']) && $this->httpRequest->query['isFormSubmit'] == '1') { // it is a form
                                 $fr = $this->createFormResponse();
                                 $result = $component->processMethod($methodName, [$this->httpRequest, $fr]);
                             } else {
@@ -598,7 +602,6 @@ abstract class APresenter extends AGUICore {
                                     return ['error' => '1', 'errorMsg' => 'Error: ' . $e->getMessage()];
                                 }
                             }
-                            //return ['error' => '1', 'errorMsg' => 'Error: ' . $e->getMessage()];
                             throw $e;
                         }
                         return $result;
@@ -615,11 +618,56 @@ abstract class APresenter extends AGUICore {
                     throw new ActionDoesNotExistException('Method \'' . $component::class . '::' . $methodName . '()\' does not exist.');
                 }
             }
+        } else {
+            return $templateContent;
         }
+    }
 
-        $this->beforeRenderCallbacks->executeCallables([$this->template]);
+    /**
+     * Processes handle<Name>() action
+     * 
+     * @param string $moduleName Module name
+     * @param bool $ok
+     */
+    private function processHandle(string $moduleName, bool &$ok) {
+        $handleAction = 'handle' . ucfirst($this->action);
+        
+        if(method_exists($this, $handleAction)) {
+            $ok = true;
+            $params = $this->getQueryParams();
+            $this->logger->stopwatch(function() use ($handleAction, $params) {
+                if(isset($params['isFormSubmit']) == '1') {
+                    $fr = $this->createFormResponse();
+                    return $this->$handleAction($fr);
+                } else {
+                    return $this->$handleAction();
+                }
+            }, 'App\\Modules\\' . $moduleName . '\\' . $this->title . '::' . $handleAction);
+        }
+    }
 
-        return $templateContent;
+    /**
+     * Processes render<Name>() action
+     * 
+     * @param bool $ok
+     * @return TemplateObject|null TemplateObject or null
+     */
+    private function processRender(bool &$ok) {
+        $renderAction = 'render' . ucfirst($this->action);
+
+        if(method_exists($this, $renderAction)) {
+            $ok = true;
+            
+            $templatePath = __DIR__ . '\\' . $this->params['module'] . '\\Presenters\\templates\\' . $this->name . '\\' . $this->action . '.html';
+
+            if(!file_exists($templatePath)) {
+                throw new TemplateDoesNotExistException($this->action, $templatePath);
+            }
+
+            return $this->getTemplate($templatePath);
+        } else {
+            return null;
+        }
     }
 
     /**

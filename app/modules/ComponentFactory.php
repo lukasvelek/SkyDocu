@@ -2,6 +2,7 @@
 
 namespace App\Modules;
 
+use App\Components\Sidebar\Sidebar2;
 use App\Core\Http\HttpRequest;
 use App\Helpers\GridHelper;
 use App\UI\FormBuilder2\FormBuilder2;
@@ -47,6 +48,16 @@ class ComponentFactory {
     public function getFormBuilder() {
         $form = new FormBuilder2($this->request);
         return $form;
+    }
+
+    /**
+     * Returns a Sidebar2 instance
+     * 
+     * @return Sidebar2 Sidebar2 instance
+     */
+    public function getSidebar() {
+        $sidebar = new Sidebar2($this->request);
+        return $sidebar;
     }
 }
 

@@ -3,6 +3,7 @@
 namespace App\Modules\UserModule;
 
 use App\Components\DocumentsGrid\DocumentsGrid;
+use App\Components\DocumentsGrid\DocumentsSharedWithMeGrid;
 use App\Components\Sidebar\Sidebar;
 use App\Constants\Container\CustomMetadataTypes;
 use App\Constants\Container\DocumentStatus;
@@ -35,22 +36,16 @@ class DocumentsPresenter extends AUserPresenter {
             }
         }
     }
-    
-    public function handleList() {
-        $folderId = $this->httpGet('folderId');
 
-        if($folderId !== null) {
-            $this->currentFolderId = $folderId;
-        }
+    protected function createComponentFoldersSidebar(HttpRequest $request) {
+        $sidebar = $this->componentFactory->getSidebar();
 
-        $foldersSidebar = new Sidebar();
-        
         $visibleFolders = $this->folderManager->getVisibleFoldersForUser($this->getUserId());
 
         foreach($visibleFolders as $vf) {
             $active = false;
 
-            if($this->currentFolderId == $vf->folderId) {
+            if($this->currentFolderId == $vf->folderId && $this->getAction() == 'list') {
                 $active = true;
                 $this->saveToPresenterCache('folderTitle', $vf->title);
             }
@@ -59,11 +54,18 @@ class DocumentsPresenter extends AUserPresenter {
                 $this->redirect($this->createURL('switchFolder', ['folderId' => $vf->folderId]));
             }
             
-            $foldersSidebar->addLink($vf->title, $this->createURL('switchFolder', ['folderId' => $vf->folderId]), $active);
-            //$foldersSidebar->addJSLink($vf->title, 'documentsGrid_gridRefresh(0, \'' . $vf->folderId . '\')', $active);
+            $sidebar->addLink($vf->title, $this->createURL('switchFolder', ['folderId' => $vf->folderId]), $active);
         }
 
-        $this->saveToPresenterCache('sidebar', $foldersSidebar->render());
+        return $sidebar;
+    }
+    
+    public function handleList() {
+        $folderId = $this->httpGet('folderId');
+
+        if($folderId !== null) {
+            $this->currentFolderId = $folderId;
+        }
     }
 
     public function renderList() {
@@ -79,7 +81,6 @@ class DocumentsPresenter extends AUserPresenter {
         $documentsGrid->setGridName('documentsGrid');
 
         $documentsGrid->showCustomMetadata();
-        $documentsGrid->setCurrentFolder($this->currentFolderId);
         $documentsGrid->useCheckboxes($this);
 
         return $documentsGrid;

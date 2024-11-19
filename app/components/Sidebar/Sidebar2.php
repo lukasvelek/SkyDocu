@@ -2,22 +2,17 @@
 
 namespace App\Components\Sidebar;
 
+use App\Core\Http\HttpRequest;
 use App\Modules\TemplateObject;
-use App\UI\IRenderable;
+use App\UI\AComponent;
 
-/**
- * Sidebar is component used for displaying links or other information on the side of the screen
- * 
- * @author Lukas Velek
- */
-class Sidebar implements IRenderable {
+class Sidebar2 extends AComponent {
     private array $links;
     private TemplateObject $template;
 
-    /**
-     * Class constructor
-     */
-    public function __construct() {
+    public function __construct(HttpRequest $request) {
+        parent::__construct($request);
+
         $this->links = [];
         $this->template = new TemplateObject(file_get_contents(__DIR__ . '\\template.html'));
     }
@@ -58,25 +53,6 @@ class Sidebar implements IRenderable {
     }
 
     /**
-     * Renders the content to HTML code
-     * 
-     * @return string HTML code
-     */
-    public function render() {
-        $linkCode = '';
-        foreach($this->links as $link) {
-            if($link == '<hr>') {
-                $linkCode .= $link;
-            } else {
-                $linkCode .= $link . '<br>';
-            }
-        }
-        $this->template->links = $linkCode;
-
-        return $this->template->render()->getRenderedContent();
-    }
-
-    /**
      * Composes URL to single line
      * 
      * @param array $urlParts URL parts
@@ -112,6 +88,29 @@ class Sidebar implements IRenderable {
 
         $code = '<a class="sidebar-link" href="' . $url . '">' . $title . '</a>';
         return $code;
+    }
+
+    /**
+     * Renders the content to HTML code
+     * 
+     * @return string HTML code
+     */
+    public function render() {
+        $linkCode = '';
+        foreach($this->links as $link) {
+            if($link == '<hr>') {
+                $linkCode .= $link;
+            } else {
+                $linkCode .= $link . '<br>';
+            }
+        }
+        $this->template->links = $linkCode;
+
+        return $this->template->render()->getRenderedContent();
+    }
+
+    public static function createFromComponent(AComponent $component) {
+        
     }
 }
 

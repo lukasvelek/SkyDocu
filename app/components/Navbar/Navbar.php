@@ -163,7 +163,7 @@ class Navbar implements IRenderable {
 
             $count = 0;
             foreach($memberships as $membership) {
-                if(str_contains($membership->title, ' - users')) {
+                if(str_contains($membership->title, ' - users') || $membership->title == \App\Constants\SystemGroups::SUPERADMINISTRATORS) {
                     $count++;
                 }
             }

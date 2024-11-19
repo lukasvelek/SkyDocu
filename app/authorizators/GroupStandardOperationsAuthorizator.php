@@ -16,6 +16,14 @@ class GroupStandardOperationsAuthorizator extends AAuthorizator {
         $this->gm = $gm;
     }
 
+    public function canUserViewDocumentHistory(string $userId) {
+        return $this->commonCanUserX($userId, GroupStandardOperationRights::CAN_VIEW_DOCUMENT_HISTORY);
+    }
+
+    public function canUserExportDocuments(string $userId) {
+        return $this->commonCanUserX($userId, GroupStandardOperationRights::CAN_EXPORT_DOCUMENTS);
+    }
+
     public function canUserShareDocuments(string $userId) {
         return $this->commonCanUserX($userId, GroupStandardOperationRights::CAN_SHARE_DOCUMENTS);
     }

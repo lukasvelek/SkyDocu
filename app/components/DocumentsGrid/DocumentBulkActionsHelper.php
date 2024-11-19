@@ -46,7 +46,7 @@ class DocumentBulkActionsHelper {
             $bulkActions[] = DocumentBulkActions::ARCHIVATION;
         }
 
-        if($this->gsoa->canUserShareDocuments($this->app->currentUser->getId())) {
+        if($this->gsoa->canUserViewDocumentHistory($this->app->currentUser->getId())) {
             $bulkActions[] = DocumentBulkActions::DOCUMENT_HISTORY;
         }
         

@@ -25,8 +25,8 @@ abstract class AService implements IRunnable {
         $this->logInfo('Service ' . $this->serviceName . ' started.');
     }
 
-    protected function serviceStop() {
-        $this->serviceManager->stopService($this->serviceName);
+    protected function serviceStop(bool $error = false) {
+        $this->serviceManager->stopService($this->serviceName, $error);
         $this->logInfo('Service ' . $this->serviceName . ' ended.');
     }
 

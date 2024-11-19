@@ -98,7 +98,7 @@ class Application {
         $this->dbManager = new DatabaseManager($this->db, $this->logger);
 
         $this->entityManager = new EntityManager($this->logger, $this->contentRepository);
-        $this->serviceManager = new ServiceManager($this->systemServicesRepository, $this->userRepository);
+        $this->serviceManager = new ServiceManager($this->systemServicesRepository, $this->userRepository, $this->entityManager);
         $this->userManager = new UserManager($this->logger, $this->userRepository, $this->entityManager);
         $this->groupManager = new GroupManager($this->logger, $this->entityManager, $this->groupRepository, $this->groupMembershipRepository);
         $this->containerManager = new ContainerManager($this->logger, $this->entityManager, $this->containerRepository, $this->dbManager, $this->groupManager);

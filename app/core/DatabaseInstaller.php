@@ -108,6 +108,12 @@ class DatabaseInstaller {
                 'dateStarted' => 'DATETIME NULL',
                 'dateEnded' => 'DATETIME NULL',
                 'status' => 'INT(4) NOT NULL DEFAULT 1'
+            ],
+            'system_services_history' => [
+                'historyId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',
+                'serviceId' => 'VARCHAR(256) NOT NULL',
+                'dateCreated' => 'DATETIME NOT NULL DEFAULT current_timestamp()',
+                'status' => 'INT(4) NOT NULL'
             ]
         ];
 

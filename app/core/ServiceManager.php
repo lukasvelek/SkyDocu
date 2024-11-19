@@ -2,9 +2,12 @@
 
 namespace App\Core;
 
+use App\Constants\SystemServiceHistoryStatus;
 use App\Constants\SystemServiceStatus;
+use App\Exceptions\AException;
 use App\Exceptions\FileDoesNotExistException;
 use App\Exceptions\ServiceException;
+use App\Managers\EntityManager;
 use App\Repositories\SystemServicesRepository;
 use App\Repositories\UserRepository;
 
@@ -16,6 +19,7 @@ use App\Repositories\UserRepository;
 class ServiceManager {
     private SystemServicesRepository $ssr;
     private UserRepository $ur;
+    private EntityManager $em;
 
     /**
      * Class constructor
@@ -23,9 +27,10 @@ class ServiceManager {
      * @param SystemServicesRepository $ssr SystemServicesRepository instance
      * @param UserRepository $ur UserRepository instance
      */
-    public function __construct(SystemServicesRepository $ssr, UserRepository $ur) {
+    public function __construct(SystemServicesRepository $ssr, UserRepository $ur, EntityManager $em) {
         $this->ssr = $ssr;
         $this->ur = $ur;
+        $this->em = $em;
     }
 
     /**
@@ -82,15 +87,29 @@ class ServiceManager {
     }
 
     /**
-     * Updates service status to "Not running"
+     * Updates service status to "Not running" and creates a service history entry
      * 
      * @param string $serviceTitle Service name
+     * @param bool $error Finished with error?
+     * @throws ServiceException
      */
-    public function stopService(string $serviceTitle) {
+    public function stopService(string $serviceTitle, bool $error) {
         $serviceId = $this->getServiceId($serviceTitle);
 
         if(!$this->ssr->updateService($serviceId, ['dateEnded' => date('Y-m-d H:i:s'), 'status' => SystemServiceStatus::NOT_RUNNING])) {
             throw new ServiceException('Could not update service status.');
+        }
+
+        try {
+            $historyId = $this->em->generateEntityId(EntityManager::SERVICE_HISTORY);
+
+            $status = $error ? SystemServiceHistoryStatus::ERROR : SystemServiceHistoryStatus::SUCCESS;
+
+            if(!$this->ssr->createHistoryEntry($historyId, $serviceId, $status)) {
+                throw new ServiceException('Could not create service history entry.');
+            }
+        } catch(AException $e) {
+            throw new ServiceException('Could not create service history entry.', $e);
         }
     }
 

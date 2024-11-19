@@ -37,7 +37,7 @@ class ContainerCreationService extends AService {
             $this->serviceStop();
         } catch(AException|Exception|Error $e) {
             $this->logError($e->getMessage());
-            $this->serviceStop();
+            $this->serviceStop(true);
 
             throw $e;
         }

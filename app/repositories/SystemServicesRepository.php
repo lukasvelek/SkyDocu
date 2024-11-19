@@ -69,6 +69,26 @@ class SystemServicesRepository extends ARepository {
 
         return $qb;
     }
+
+    public function createHistoryEntry(string $historyId, string $serviceId, int $status) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->insert('system_services_history', ['historyId', 'serviceId', 'status'])
+            ->values([$historyId, $serviceId, $status])
+            ->execute();
+
+        return $qb->fetchAll();
+    }
+
+    public function composeQueryForServiceHistory(string $serviceId) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->select(['*'])
+            ->from('system_services_history')
+            ->where('serviceId = ?', [$serviceId]);
+
+        return $qb;
+    }
 }
 
 ?>

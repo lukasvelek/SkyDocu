@@ -60,6 +60,20 @@ class BackgroundServicesPresenter extends ASuperAdminSettingsPresenter {
             return $el;
         };
 
+        $history = $grid->addAction('history');
+        $history->setTitle('History');
+        $history->onCanRender[] = function(DatabaseRow $row, Row $_row) {
+            return true;
+        };
+        $history->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
+            $el = HTML::el('a')
+                ->class('grid-link')
+                ->href($this->createFullURLString('SuperAdminSettings:BackgroundServicesHistory', 'list', ['serviceId' => $primaryKey]))
+                ->text('History');
+
+            return $el;
+        };
+
         return $grid;
     }
 

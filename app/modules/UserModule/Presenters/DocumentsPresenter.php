@@ -3,8 +3,6 @@
 namespace App\Modules\UserModule;
 
 use App\Components\DocumentsGrid\DocumentsGrid;
-use App\Components\DocumentsGrid\DocumentsSharedWithMeGrid;
-use App\Components\Sidebar\Sidebar;
 use App\Constants\Container\CustomMetadataTypes;
 use App\Constants\Container\DocumentStatus;
 use App\Core\DB\DatabaseRow;
@@ -25,16 +23,6 @@ class DocumentsPresenter extends AUserPresenter {
         parent::startup();
 
         $this->currentFolderId = $this->httpSessionGet('current_document_folder_id');
-    }
-
-    private function getDefaultFolder() {
-        $visibleFolders = $this->folderManager->getVisibleFoldersForUser($this->getUserId());
-
-        foreach($visibleFolders as $vf) {
-            if($this->currentFolderId === null && $vf->title == 'Default') {
-                $this->redirect($this->createURL('switchFolder', ['folderId' => $vf->folderId]));
-            }
-        }
     }
 
     protected function createComponentFoldersSidebar(HttpRequest $request) {

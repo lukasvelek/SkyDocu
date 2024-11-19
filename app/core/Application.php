@@ -31,7 +31,7 @@ use ReflectionClass;
 
 /**
  * Application class that contains all objects and useful functions.
- * It is also the starting point of all the application's behavior.
+ * It is also the starting point of the application.
  * 
  * @author Lukas Velek
  */

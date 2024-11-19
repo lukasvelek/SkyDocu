@@ -21,6 +21,7 @@ class DocumentManager extends AManager {
     private DocumentClassRepository $dcr;
     private GroupRepository $gr;
     private FolderRepository $fr;
+    private EnumManager $em;
 
     public function __construct(Logger $logger, EntityManager $entityManager, DocumentRepository $dr, DocumentClassRepository $dcr, GroupRepository $gr, FolderRepository $fr) {
         parent::__construct($logger, $entityManager);
@@ -29,6 +30,10 @@ class DocumentManager extends AManager {
         $this->dcr = $dcr;
         $this->gr = $gr;
         $this->fr = $fr;
+    }
+
+    public function inject(EnumManager $em) {
+        $this->em = $em;
     }
 
     public function composeQueryForDocuments(string $userId, string $folderId, bool $allMetadata) {
@@ -174,36 +179,49 @@ class DocumentManager extends AManager {
     }
     
     public function getDocumentById(string $documentId) {
-        $row = $this->dr->getDocumentById($documentId);
+        $docuRow = $this->dr->getDocumentById($documentId);
 
-        if($row === null) {
+        if($docuRow === null) {
             throw new NonExistingEntityException('Document does not exist.');
         }
 
-        $_row = DatabaseRow::createFromDbRow($row);
+        $docuRow = DatabaseRow::createFromDbRow($docuRow);
 
         /**
          * @var array<string, \App\Core\DB\DatabaseRow> $customMetadatas
          */
-        $customMetadatas = $this->getCustomMetadataForFolder($_row->folderId);
+        $customMetadatas = $this->getCustomMetadataForFolder($docuRow->folderId);
 
         $documentCustomMetadataValues = [];
         foreach($customMetadatas as $metadataId => $metadata) {
-            $qb = $this->composeQueryForDocumentCustomMetadataValues();
-            $qb->andWhere('metadataId = ?', [$metadataId])
-                ->andWhere('documentId = ?', [$documentId])
-                ->execute();
-
-            while($row = $qb->fetchAssoc()) {
-                $row = DatabaseRow::createFromDbRow($row);
-
-                $documentCustomMetadataValues[$metadata->title] = $row->value;
+            if($docuRow->{$metadata->title} === null) {
+                continue;
             }
 
-            $_row->{$metadata->title} = $documentCustomMetadataValues[$metadata->title];
+            if($metadata->type >= 100) { // system enums
+                $metadataValues = $this->em->getMetadataEnumValuesByMetadataType($metadata);
+                if($metadataValues !== null) {
+                    $docuMetadataValue = $docuRow->{$metadata->title};
+
+                    $docuRow->{$metadata->title} = $metadataValues->$docuMetadataValue;
+                }
+            } else {
+                $qb = $this->composeQueryForDocumentCustomMetadataValues();
+                $qb->andWhere('metadataId = ?', [$metadataId])
+                    ->andWhere('documentId = ?', [$documentId])
+                    ->execute();
+
+                while($metaValueRow = $qb->fetchAssoc()) {
+                    $metaValueRow = DatabaseRow::createFromDbRow($metaValueRow);
+
+                    $documentCustomMetadataValues[$metadata->title] = $metaValueRow->value;
+                }
+
+                $docuRow->{$metadata->title} = $documentCustomMetadataValues[$metadata->title];
+            }
         }
 
-        return $_row;
+        return $docuRow;
     }
 
     public function updateDocument(string $documentId, array $data) {

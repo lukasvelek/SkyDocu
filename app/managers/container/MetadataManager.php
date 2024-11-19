@@ -4,6 +4,7 @@ namespace App\Managers\Container;
 
 use App\Core\Caching\CacheNames;
 use App\Core\DB\DatabaseRow;
+use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
 use App\Exceptions\NonExistingEntityException;
 use App\Logger\Logger;
@@ -154,6 +155,39 @@ class MetadataManager extends AManager {
         }
 
         return DatabaseRow::createFromDbRow($metadata);
+    }
+
+    public function getMetadataForFolder(string $folderId) {
+        $qb = $this->mr->composeQueryForMetadataFolderRights();
+        $qb->andWhere('folderId = ?', [$folderId]);
+        $qb->execute();
+
+        $metadatas = [];
+        while($row = $qb->fetchAssoc()) {
+            $metadataId = $row['customMetadataId'];
+            
+            try {
+                $metadata = $this->getMetadataById($metadataId);
+            } catch(AException $e) {
+                continue;
+            }
+
+            $metadatas[$metadata->title] = $metadata;
+        }
+
+        return $metadatas;
+    }
+
+    public function getMetadataEnumValues(string $metadataId) {
+        $qb = $this->mr->composeQueryMetadataEnumValues($metadataId);
+        $qb->execute();
+
+        $values = [];
+        while($row = $qb->fetchAssoc()) {
+            $values[$row['metadataKey']] = $row['title'];
+        }
+
+        return $values;
     }
 }
 

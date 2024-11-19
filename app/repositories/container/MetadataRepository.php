@@ -154,6 +154,14 @@ class MetadataRepository extends ARepository {
 
         return $qb->fetch();
     }
+
+    public function getMetadataByTitle(string $title) {
+        $qb = $this->composeQueryForMetadata();
+        $qb->andWhere('title = ?', [$title])
+            ->execute();
+
+        return $qb->fetchAll();
+    }
 }
 
 ?>

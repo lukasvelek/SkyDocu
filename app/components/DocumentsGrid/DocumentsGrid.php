@@ -37,6 +37,8 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
 
     private ?string $currentFolderId;
 
+    private bool $showDocumentInfoLink;
+
     /**
      * Class constructor
      * 
@@ -66,6 +68,8 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
 
         $this->allMetadata = false;
         $this->currentFolderId = null;
+
+        $this->showDocumentInfoLink = true;
     }
 
     /**
@@ -92,6 +96,20 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
     }
 
     /**
+     * Displays document information page link
+     */
+    public function showDocumentInfo() {
+        $this->showDocumentInfoLink = true;
+    }
+
+    /**
+     * Hides document information page link
+     */
+    public function hideDocumentInfo() {
+        $this->showDocumentInfoLink = false;
+    }
+
+    /**
      * Adds system metadata columns and if any custom metadata exist then it also adds custom metadata columns. It also adds values of the custom metadata. Finally it renders the grid.
      * 
      * @return string HTML code
@@ -107,6 +125,8 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
             $this->appendCustomMetadata();
         }
 
+        $this->appendActions();
+
         $this->setup();
 
         return parent::render();
@@ -117,6 +137,27 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
      */
     private function setup() {
         $this->addQueryDependency('folderId', $this->getFolderId());
+    }
+
+    /**
+     * Appends grid actions
+     */
+    private function appendActions() {
+        if($this->showDocumentInfoLink) {
+            $info = $this->addAction('info');
+            $info->setTitle('Information');
+            $info->onCanRender[] = function() {
+                return true;
+            };
+            $info->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
+                $el = HTML::el('a');
+                $el->href($this->createFullURLString('User:Documents', 'info', ['documentId' => $primaryKey]))
+                    ->text('Information')
+                    ->class('grid-link');
+
+                return $el;
+            };
+        }
     }
 
     /**
@@ -363,6 +404,9 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
     private function appendEnumCustomMetadata(DatabaseRow $metadata, array $metadataSelectValues, array $documentCustomMetadataValues) {
         $col = $this->addColumnText($metadata->title, $metadata->guiTitle);
         $col->onRenderColumn[] = function(DatabaseRow $row, Row $_row, Cell $cell, HTML $html, mixed $value) use ($documentCustomMetadataValues, $metadataSelectValues, $metadata) {
+            if(!isset($documentCustomMetadataValues[$row->documentId][$metadata->title])) {
+                return '-';
+            }
             $tmp = $documentCustomMetadataValues[$row->documentId][$metadata->title];
             $tmp = $metadataSelectValues[$metadata->title][$tmp];
 

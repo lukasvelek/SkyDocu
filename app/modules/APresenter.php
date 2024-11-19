@@ -194,39 +194,6 @@ abstract class APresenter extends AGUICore {
     }
 
     /**
-     * Creates a full URL with parameters and returns it as a string
-     * 
-     * @param string $modulePresenter Module and presenter name
-     * @param string $action Action name
-     * @param array $params Custom URL params
-     * @return string URL as string
-     */
-    public function createFullURLString(string $modulePresenter, string $action, array $params = []) {
-        $urlParts = $this->createFullURL($modulePresenter, $action, $params);
-
-        $tmp = [];
-        foreach($urlParts as $k => $v) {
-            $tmp[] = $k . '=' . $v;
-        }
-
-        return '?' . implode('&', $tmp);
-    }
-
-    /**
-     * Creates a full URL with parameters
-     * 
-     * @param string $modulePresenter Module and presenter name
-     * @param string $action Action name
-     * @param array $params Custom URL params
-     * @return array URL
-     */
-    public function createFullURL(string $modulePresenter, string $action, array $params = []) {
-        $url = ['page' => $modulePresenter, 'action' => $action];
-
-        return array_merge($url, $params);
-    }
-
-    /**
      * Returns a URL with parameters saved in the presenter class
      * 
      * @param string $action Action name

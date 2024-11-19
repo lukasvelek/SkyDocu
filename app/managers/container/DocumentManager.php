@@ -194,30 +194,21 @@ class DocumentManager extends AManager {
 
         $documentCustomMetadataValues = [];
         foreach($customMetadatas as $metadataId => $metadata) {
-            if($docuRow->{$metadata->title} === null) {
-                continue;
+            $qb = $this->composeQueryForDocumentCustomMetadataValues();
+            $qb->andWhere('metadataId = ?', [$metadataId])
+                ->andWhere('documentId = ?', [$documentId])
+                ->execute();
+
+            while($metaValueRow = $qb->fetchAssoc()) {
+                $metaValueRow = DatabaseRow::createFromDbRow($metaValueRow);
+
+                $documentCustomMetadataValues[$metadata->title] = $metaValueRow->value;
             }
 
-            if($metadata->type >= 100) { // system enums
-                $metadataValues = $this->em->getMetadataEnumValuesByMetadataType($metadata);
-                if($metadataValues !== null) {
-                    $docuMetadataValue = $docuRow->{$metadata->title};
-
-                    $docuRow->{$metadata->title} = $metadataValues->$docuMetadataValue;
-                }
-            } else {
-                $qb = $this->composeQueryForDocumentCustomMetadataValues();
-                $qb->andWhere('metadataId = ?', [$metadataId])
-                    ->andWhere('documentId = ?', [$documentId])
-                    ->execute();
-
-                while($metaValueRow = $qb->fetchAssoc()) {
-                    $metaValueRow = DatabaseRow::createFromDbRow($metaValueRow);
-
-                    $documentCustomMetadataValues[$metadata->title] = $metaValueRow->value;
-                }
-
+            if(array_key_exists($metadata->title, $documentCustomMetadataValues)) {
                 $docuRow->{$metadata->title} = $documentCustomMetadataValues[$metadata->title];
+            } else {
+                $docuRow->{$metadata->title} = null;
             }
         }
 

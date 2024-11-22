@@ -166,7 +166,7 @@ class Application {
             $this->currentUser = $this->userRepository->getUserById($_SESSION['userId']);
         } else {
             if((!isset($_GET['page']) || (isset($_GET['page']) && $_GET['page'] != 'Anonym:Logout')) && !isset($_SESSION['is_logging_in'])) {
-                $this->redirect(['page' => 'Anonym:Logout', 'action' => 'logout']);
+                //$this->redirect(['page' => 'Anonym:Logout', 'action' => 'logout']); // had to be commented because it caused a overflow because of infinite redirects
 
                 if($message != '') {
                     $fmHash = $this->flashMessage($message);

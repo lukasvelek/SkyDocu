@@ -38,7 +38,6 @@ class AutoLoginPresenter extends AAnonymPresenter {
             return ['page' => 'User:Home', 'action' => 'dashboard'];
         } else {
             // redirect to login form
-            session_destroy();
             $this->httpSessionSet('is_logging_in', 'true');
             return ['page' => 'Anonym:Login', 'action' => 'loginForm'];
         }

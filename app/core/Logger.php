@@ -25,6 +25,7 @@ class Logger implements ILoggerCallable {
     private int $sqlLogLevel;
     private ?string $specialFilename;
     private int $stopwatchLogLevel;
+    private ?string $containerId;
 
     /**
      * Class constructor
@@ -34,6 +35,7 @@ class Logger implements ILoggerCallable {
         $this->logLevel = LOG_LEVEL;
         $this->specialFilename = null;
         $this->stopwatchLogLevel = LOG_STOPWATCH;
+        $this->containerId = null;
     }
 
     /**
@@ -117,8 +119,6 @@ class Logger implements ILoggerCallable {
         $newText = '[' . $date . '] [' . strtoupper(self::LOG_SQL) . '] [' . (int)($msTaken) . ' s] ' . $method . '(): ' . $sql;
 
         if($this->sqlLogLevel >= 1) {
-            $newText = '[' . $date . '] [' . strtoupper(self::LOG_SQL) . '] [' . $msTaken . ' s] ' . $method . '(): ' . $sql;
-
             $oldSpecialFilename = $this->specialFilename;
             $this->specialFilename = 'sql-log';
             $this->writeLog($newText);
@@ -237,6 +237,10 @@ class Logger implements ILoggerCallable {
     private function writeLog(string $text) {
         $folder = APP_ABSOLUTE_DIR . LOG_DIR;
 
+        if($this->containerId !== null) {
+            $folder .= $this->containerId . '\\';
+        }
+
         $date = new DateTime();
         $date->format('Y-m-d');
         
@@ -257,6 +261,15 @@ class Logger implements ILoggerCallable {
         } else {
             return false;
         }
+    }
+
+    /**
+     * Sets the container ID
+     * 
+     * @param string $containerId Container ID
+     */
+    public function setContainerId(string $containerId) {
+        $this->containerId = $containerId;
     }
 }
 

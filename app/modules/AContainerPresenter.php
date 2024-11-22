@@ -55,6 +55,8 @@ abstract class AContainerPresenter extends APresenter {
 
         $this->containerId = $containerId;
 
+        $this->logger->setContainerId($this->containerId);
+
         $this->initRepositories($containerConnection);
 
         $this->entityManager = new EntityManager($this->logger, $this->contentRepository);

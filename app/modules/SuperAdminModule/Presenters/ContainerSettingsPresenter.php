@@ -2,6 +2,7 @@
 
 namespace App\Modules\SuperAdminModule;
 
+use App\Components\ContainerUsageStatsGraph\ContainerUsageStatsGraph;
 use App\Constants\ContainerStatus;
 use App\Core\DB\DatabaseRow;
 use App\Core\Http\HttpRequest;
@@ -209,7 +210,15 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
     }
 
     public function renderUsageStatistics() {
-        
+
+    }
+
+    protected function createComponentContainerUsageStatsGraph(HttpRequest $request) {
+        $graph = new ContainerUsageStatsGraph($request, $this->app->containerRepository);
+
+        $graph->setContainerId($request->query['containerId']);
+
+        return $graph;
     }
 }
 

@@ -201,6 +201,16 @@ class ContainerRepository extends ARepository {
 
         return $qb->fetch('cnt');
     }
+
+    public function composeQueryForContainerUsageStatistics(string $containerId) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->select(['*'])
+            ->from('container_usage_statistics')
+            ->where('containerId = ?', [$containerId]);
+
+        return $qb;
+    }
 }
 
 ?>

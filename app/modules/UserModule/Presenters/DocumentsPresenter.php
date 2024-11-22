@@ -68,6 +68,7 @@ class DocumentsPresenter extends AUserPresenter {
         $documentsGrid = new DocumentsGrid($this->componentFactory->getGridBuilder(), $this->app, $this->documentManager, $this->documentBulkActionAuthorizator, $this->groupStandardOperationsAuthorizator, $this->enumManager);
         $documentsGrid->setGridName('documentsGrid');
 
+        $documentsGrid->setCurrentFolder($this->currentFolderId);
         $documentsGrid->showCustomMetadata();
         $documentsGrid->useCheckboxes($this);
 

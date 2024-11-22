@@ -262,7 +262,8 @@ class DatabaseInstaller {
         $this->logger->info('Adding system services.', __METHOD__);
 
         $services = [
-            'ContainerCreation' => 'container_creation_service.php'
+            'ContainerCreation' => 'container_creation_service.php',
+            'LogRotate' => 'log_rotate_service.php'
         ];
 
         foreach($services as $title => $path) {

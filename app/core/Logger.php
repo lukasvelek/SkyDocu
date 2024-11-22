@@ -84,7 +84,7 @@ class Logger implements ILoggerCallable {
      */
     private function logService(string $serviceName, string $text, string $type = self::LOG_INFO) {
         $oldSpecialFilename = $this->specialFilename;
-        $this->specialFilename = 'service_log';
+        $this->specialFilename = 'service-log';
 
         $date = new DateTime();
         $text = '[' . $date . '] [' . strtoupper($type) . '] ' . $serviceName . ': ' . $text;
@@ -120,7 +120,7 @@ class Logger implements ILoggerCallable {
             $newText = '[' . $date . '] [' . strtoupper(self::LOG_SQL) . '] [' . $msTaken . ' s] ' . $method . '(): ' . $sql;
 
             $oldSpecialFilename = $this->specialFilename;
-            $this->specialFilename = 'sql_log';
+            $this->specialFilename = 'sql-log';
             $this->writeLog($newText);
             $this->specialFilename = $oldSpecialFilename;
         }

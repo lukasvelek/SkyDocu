@@ -53,10 +53,11 @@ class FileManager {
      * Returns all files in a given directory
      * 
      * @param string $dirPath Path to the directory (root in method's context)
+     * @param bool $recursiveEnabled Is recursive file finding enabled?
      * @return array Array of filenames (key is relative path and value is absolute path)
      */
-    public static function getFilesInFolder(string $dirPath) {
-        $recursive = function (string $dirPath, array &$objects) {
+    public static function getFilesInFolder(string $dirPath, bool $recursiveEnabled = true) {
+        $recursive = function (string $dirPath, array &$objects) use ($recursiveEnabled) {
             $contents = scandir($dirPath);
 
             unset($contents[0], $contents[1]);
@@ -67,7 +68,9 @@ class FileManager {
                 if(!is_dir($realObject)) {
                     $objects[$content] = $realObject;
                 } else {
-                    $this($realObject, $objects);
+                    if($recursiveEnabled) {
+                        $this($realObject, $objects);
+                    }
                 }
             }
         };
@@ -167,6 +170,17 @@ class FileManager {
      */
     public static function deleteFile(string $filePath) {
         return unlink($filePath);
+    }
+
+    /**
+     * Moves a file from one destination to another
+     * 
+     * @param string $oldPath Old path
+     * @param string $newPath New path
+     * @return bool True on success or false on failure
+     */
+    public static function moveFile(string $oldPath, string $newPath) {
+        return rename($oldPath, $newPath);
     }
 }
 

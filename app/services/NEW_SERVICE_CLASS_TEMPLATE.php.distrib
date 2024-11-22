@@ -21,7 +21,7 @@ class SERVICE_NAME extends AService {
             $this->serviceStop();
         } catch(AException|Exception $e) {
             $this->logError($e->getMessage());
-            $this->serviceStop();
+            $this->serviceStop(true);
             
             throw $e;
         }

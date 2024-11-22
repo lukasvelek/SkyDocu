@@ -20,10 +20,16 @@ class ContainersPresenter extends ASuperAdminPresenter {
         parent::__construct('ContainersPresenter', 'Containers');
     }
 
-    public function renderList() {
-        $this->template->links = [
+    public function handleList() {
+        $links = [
             LinkBuilder::createSimpleLink('New container', $this->createURL('newContainerForm'), 'link')
         ];
+
+        $this->saveToPresenterCache('links', implode('&nbsp;&nbsp;', $links));
+    }
+
+    public function renderList() {
+        $this->template->links = $this->loadFromPresenterCache('links');
     }
 
     protected function createComponentContainersGrid(HttpRequest $request) {

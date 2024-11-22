@@ -22,6 +22,7 @@ class EntityManager extends AManager {
     public const CONTAINER_CREATION_STATUS = 'container_creation_status';
     public const CONTAINER_STATUS_HISTORY = 'container_status_history';
     public const SERVICE_HISTORY = 'system_services_history';
+    public const CONTAINER_USAGE_STATISTICS = 'container_usage_statistics';
 
     public const C_GROUPS = 'groups';
     public const C_DOCUMENT_CLASSES = 'document_classes';
@@ -125,6 +126,7 @@ class EntityManager extends AManager {
             self::CONTAINER_CREATION_STATUS => 'statusId',
             self::CONTAINER_STATUS_HISTORY => 'historyId',
             self::SERVICE_HISTORY => 'historyId',
+            self::CONTAINER_USAGE_STATISTICS => 'entryId',
 
             self::C_GROUPS => 'groupId',
             self::C_DOCUMENT_CLASSES => 'classId',

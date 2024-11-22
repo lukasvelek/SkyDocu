@@ -15,7 +15,6 @@ use App\Repositories\Container\GroupRepository;
 use App\Repositories\ContainerRepository;
 use App\Repositories\ContentRepository;
 use App\Repositories\UserRepository;
-use Exception;
 
 class ContainerManager extends AManager {
     public ContainerRepository $containerRepository;

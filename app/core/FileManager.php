@@ -57,7 +57,7 @@ class FileManager {
      * @return array Array of filenames (key is relative path and value is absolute path)
      */
     public static function getFilesInFolder(string $dirPath, bool $recursiveEnabled = true) {
-        $recursive = function (string $dirPath, array &$objects) use ($recursiveEnabled) {
+        $recursive = function (string $dirPath, array &$objects) use ($recursiveEnabled, &$recursive) {
             $contents = scandir($dirPath);
 
             unset($contents[0], $contents[1]);
@@ -68,8 +68,8 @@ class FileManager {
                 if(!is_dir($realObject)) {
                     $objects[$content] = $realObject;
                 } else {
-                    if($recursiveEnabled) {
-                        $this($realObject, $objects);
+                    if($recursiveEnabled === true) {
+                        $recursive($realObject, $objects);
                     }
                 }
             }

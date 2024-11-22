@@ -270,7 +270,8 @@ class DatabaseInstaller {
 
         $services = [
             'ContainerCreation' => 'container_creation_service.php',
-            'LogRotate' => 'log_rotate_service.php'
+            'LogRotate' => 'log_rotate_service.php',
+            'ContainerUsageStatistics' => 'container_usage_statistics_service.php'
         ];
 
         foreach($services as $title => $path) {

@@ -179,6 +179,28 @@ class ContainerRepository extends ARepository {
 
         return $qb->fetchBool();
     }
+
+    public function insertNewContainerUsageStatisticsEntry(string $entryId, string $containerId, int $totalSqlQueries, string $date) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->insert('container_usage_statistics', ['entryId', 'containerId', 'totalSqlQueries', 'date'])
+            ->values([$entryId, $containerId, $totalSqlQueries, $date])
+            ->execute();
+
+        return $qb->fetchBool();
+    }
+
+    public function getContainerUsageStatisticsForDate(string $containerId, string $date) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->select(['COUNT(entryId) AS cnt'])
+            ->from('container_usage_statistics')
+            ->where('containerId = ?', [$containerId])
+            ->andWhere('date = ?', [$date])
+            ->execute();
+
+        return $qb->fetch('cnt');
+    }
 }
 
 ?>

@@ -8,7 +8,6 @@ use App\Core\DB\DatabaseRow;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
-use App\UI\FormBuilder2\FormBuilder2;
 use App\UI\FormBuilder\FormResponse;
 use App\UI\GridBuilder2\Cell;
 use App\UI\GridBuilder2\Row;
@@ -102,6 +101,71 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
         $form->addSubmit('Save');
 
         return $form;
+    }
+
+    protected function createComponentContainerPermanentFlashMessageForm(HttpRequest $request) {
+        $container = $this->app->containerManager->getContainerById($request->query['containerId']);
+
+        $form = $this->componentFactory->getFormBuilder();
+
+        $form->setAction($this->createURL('statusPermanentFlashMessage', ['containerId' => $request->query['containerId']]));
+
+        $permanentFlashMessage = $form->addTextArea('permanentFlashMessage', 'Flash message text:')
+            ->setRequired();
+
+        $permanentFlashMessage->setContent($container->permanentFlashMessage);
+
+        $form->addSubmit('Save');
+        $form->addButton('Clear')
+            ->setOnClick('location.href = \'' . $this->createURLString('statusClearPermanentFlashMessage', ['containerId' => $container->containerId]) . '\';');
+
+        return $form;
+    }
+
+    public function handleStatusPermanentFlashMessage(?FormResponse $fr = null) {
+        $containerId = $this->httpGet('containerId', true);
+        
+        if($fr !== null) {
+            try {
+                $this->app->containerRepository->beginTransaction(__METHOD__);
+
+                $data['permanentFlashMessage'] = $fr->permanentFlashMessage;
+
+                $this->app->containerManager->updateContainer($containerId, $data);
+
+                $this->app->containerRepository->commit($this->getUserId(), __METHOD__);
+
+                $this->flashMessage('Permanent flash message successfully saved.', 'success');
+            } catch(AException $e) {
+                $this->app->containerRepository->rollback(__METHOD__);
+
+                $this->flashMessage('Could not update permanent flash message.', 'error', 10);
+            }
+
+            $this->redirect($this->createURL('status', ['containerId' => $containerId]));
+        }
+    }
+
+    public function handleStatusClearPermanentFlashMessage() {
+        $containerId = $this->httpGet('containerId', true);
+
+        try {
+            $this->app->containerRepository->beginTransaction(__METHOD__);
+
+            $data['permanentFlashMessage'] = null;
+
+            $this->app->containerManager->updateContainer($containerId, $data);
+
+            $this->app->containerRepository->commit($this->getUserId(), __METHOD__);
+
+            $this->flashMessage('Permanent flash message successfully cleared.', 'success');
+        } catch(AException $e) {
+            $this->app->containerRepository->rollback(__METHOD__);
+
+            $this->flashMessage('Could not clear permanent flash message.', 'error', 10);
+        }
+
+        $this->redirect($this->createURL('status', ['containerId' => $containerId]));
     }
 
     public function renderListStatusHistory() {
@@ -209,9 +273,7 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
         return $form;
     }
 
-    public function renderUsageStatistics() {
-
-    }
+    public function renderUsageStatistics() {}
 
     protected function createComponentContainerUsageStatsGraph(HttpRequest $request) {
         $graph = new ContainerUsageStatsGraph($request, $this->app->containerRepository);

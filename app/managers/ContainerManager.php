@@ -329,6 +329,16 @@ class ContainerManager extends AManager {
 
         $groupManager->addUserToGroupTitle(SystemGroups::ALL_USERS, $userId);
     }
+
+    public function updateContainer(string $containerId, array $data) {
+        if(!$this->containerRepository->updateContainer($containerId, $data)) {
+            throw new GeneralException('Database error.');
+        }
+
+        if(!$this->cacheFactory->invalidateCacheByNamespace(CacheNames::CONTAINERS)) {
+            throw new GeneralException('Could not invalidate cache.');
+        }
+    }
 }
 
 ?>

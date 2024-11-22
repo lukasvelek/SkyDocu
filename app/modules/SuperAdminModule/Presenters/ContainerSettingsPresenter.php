@@ -207,6 +207,10 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
 
         return $form;
     }
+
+    public function renderUsageStatistics() {
+        
+    }
 }
 
 ?>

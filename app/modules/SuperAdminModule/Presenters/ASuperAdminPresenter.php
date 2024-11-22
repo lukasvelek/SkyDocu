@@ -34,6 +34,7 @@ abstract class ASuperAdminPresenter extends APresenter {
         $advanced = $this->checkAction('advanced');
         $usageStatistics = $this->checkAction('usageStatistics');
 
+        $sidebar->addLink('&larr; Back', $this->createFullURL('SuperAdmin:Containers', 'list'));
         $sidebar->addLink('Home', $this->createURL('home', ['containerId' => $containerId]), $home);
         $sidebar->addLink('Status', $this->createURL('status', ['containerId' => $containerId]), $status);
         $sidebar->addLink('Usage statistics', $this->createURL('usageStatistics', ['containerId' => $containerId]), $usageStatistics);

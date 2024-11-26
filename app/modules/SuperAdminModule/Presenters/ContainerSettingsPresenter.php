@@ -2,6 +2,7 @@
 
 namespace App\Modules\SuperAdminModule;
 
+use App\Components\ContainerUsageAverageResponseTimeGraph\ContainerUsageAverageResponseTimeGraph;
 use App\Components\ContainerUsageStatsGraph\ContainerUsageStatsGraph;
 use App\Constants\ContainerStatus;
 use App\Core\DB\DatabaseRow;
@@ -279,6 +280,16 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
         $graph = new ContainerUsageStatsGraph($request, $this->app->containerRepository);
 
         $graph->setContainerId($request->query['containerId']);
+        $graph->setCanvasWidth(400);
+
+        return $graph;
+    }
+
+    protected function createComponentContainerUsageAverageResponseTimeGraph(HttpRequest $request) {
+        $graph = new ContainerUsageAverageResponseTimeGraph($request, $this->app->containerRepository);
+
+        $graph->setContainerId($request->query['containerId']);
+        $graph->setCanvasWidth(400);
 
         return $graph;
     }

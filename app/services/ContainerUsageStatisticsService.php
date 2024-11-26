@@ -132,7 +132,17 @@ class ContainerUsageStatisticsService extends AService {
 
             $lines = explode("\r\n", $content);
 
-            return count($lines) - 1;
+            $totalTimeTaken = 0.0;
+            foreach($lines as $line) {
+                $lineParts = explode(' ', $line);
+                $timeTaken = explode(' ', $lineParts[2])[0];
+                $totalTimeTaken += (float)$timeTaken;
+            }
+
+            return [
+                'count' => (count($lines) - 1),
+                'averageTimeTaken' => $totalTimeTaken
+            ];
         } catch(AException|Exception $e) {
             return 0;
         }
@@ -141,8 +151,10 @@ class ContainerUsageStatisticsService extends AService {
     private function saveUsageToDb(array $results) {
         foreach($results as $containerId => $data) {
             $this->logInfo('Saving analysis results for container \'' . $containerId . '\'.');
-            foreach($data as $date => $totalSqlQueries) {
-                
+            foreach($data as $date => $measuredData) {
+                $totalSqlQueries = $measuredData['count'];
+                $averageTimeTaken = $measuredData['averageTimeTaken'];
+
                 $count = $this->containerRepository->getContainerUsageStatisticsForDate($containerId, $date);
                 if($count > 0) {
                     $this->logInfo('Analysis results for date \'' . $date . '\' already exist skipping.');
@@ -157,7 +169,7 @@ class ContainerUsageStatisticsService extends AService {
                     
                     $entryId = $this->containerManager->entityManager->generateEntityId(EntityManager::CONTAINER_USAGE_STATISTICS);
 
-                    $this->containerRepository->insertNewContainerUsageStatisticsEntry($entryId, $containerId, $totalSqlQueries, $date);
+                    $this->containerRepository->insertNewContainerUsageStatisticsEntry($entryId, $containerId, $totalSqlQueries, $averageTimeTaken, $date);
 
                     $this->containerRepository->commit($this->serviceManager->getServiceUserId(), __METHOD__);
 

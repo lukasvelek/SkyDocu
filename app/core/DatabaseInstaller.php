@@ -120,6 +120,7 @@ class DatabaseInstaller {
                 'entryId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',
                 'containerId' => 'VARCHAR(256) NOT NULL',
                 'totalSqlQueries' => 'INT(32) NOT NULL',
+                'averageTimeTaken' => 'VARCHAR(256) NOT NULL',
                 'date' => 'DATETIME NOT NULL',
                 'dateCreated' => 'DATETIME NOT NULL DEFAULT current_timestamp()'
             ]

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Components\ContainerUsageStatsGraph;
+namespace App\Components\ContainerUsageAverageResponseTimeGraph;
 
 use App\Core\Datetypes\DateTime;
 use App\Core\Http\HttpRequest;
@@ -8,7 +8,7 @@ use App\Exceptions\GeneralException;
 use App\Repositories\ContainerRepository;
 use App\UI\AComponent;
 
-class ContainerUsageStatsGraph extends AComponent {
+class ContainerUsageAverageResponseTimeGraph extends AComponent {
     private ?string $containerId;
     private string $title;
     private ContainerRepository $containerRepository;
@@ -19,7 +19,7 @@ class ContainerUsageStatsGraph extends AComponent {
         parent::__construct($request);
 
         $this->containerRepository = $containerRepository;
-        $this->title = 'Container usage statistics';
+        $this->title = 'Container usage average response time';
         $this->containerId = null;
         $this->numberOfColumns = 7;
         $this->canvasWidth = 500;
@@ -65,7 +65,7 @@ class ContainerUsageStatsGraph extends AComponent {
 
         $entries = [];
         while($row = $qb->fetchAssoc()) {
-            $entries[$row['date']] = $row['totalSqlQueries'];
+            $entries[$row['date']] = $row['averageTimeTaken'];
         }
 
         return $entries;
@@ -82,13 +82,13 @@ class ContainerUsageStatsGraph extends AComponent {
             (async function() {
                 const _data = [' . $this->getFormattedData() . '];
 
-                new Chart(document.getElementById("canvas_containerUsageStats"), 
+                new Chart(document.getElementById("canvas_containerUsageAverageResponseTime"), 
                 {
-                    type: "bar",
+                    type: "line",
                     data: {
                         labels: _data.map(row => row.date),
                         datasets: [{
-                            label: "Database queries",
+                            label: "Database query average response times",
                             data: _data.map(row => row.queryCount)
                         }]
                     }

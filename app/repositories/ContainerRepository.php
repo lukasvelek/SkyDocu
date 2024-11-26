@@ -180,11 +180,11 @@ class ContainerRepository extends ARepository {
         return $qb->fetchBool();
     }
 
-    public function insertNewContainerUsageStatisticsEntry(string $entryId, string $containerId, int $totalSqlQueries, string $date) {
+    public function insertNewContainerUsageStatisticsEntry(string $entryId, string $containerId, int $totalSqlQueries, float $averageTimeTaken, string $date) {
         $qb = $this->qb(__METHOD__);
 
-        $qb->insert('container_usage_statistics', ['entryId', 'containerId', 'totalSqlQueries', 'date'])
-            ->values([$entryId, $containerId, $totalSqlQueries, $date])
+        $qb->insert('container_usage_statistics', ['entryId', 'containerId', 'totalSqlQueries', 'averageTimeTaken', 'date'])
+            ->values([$entryId, $containerId, $totalSqlQueries, $averageTimeTaken, $date])
             ->execute();
 
         return $qb->fetchBool();

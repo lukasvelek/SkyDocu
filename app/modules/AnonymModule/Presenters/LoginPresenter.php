@@ -123,7 +123,7 @@ class LoginPresenter extends AAnonymPresenter {
     protected function createComponentContainerForm(HttpRequest $request) {
         $groups = $this->app->groupManager->getMembershipsForUser($this->getUserId());
 
-        $count = 0;
+        $containers = [];
         foreach($groups as $group) {
             if($group->containerId !== null) {
                 $container = $this->app->containerManager->getContainerById($group->containerId);
@@ -133,11 +133,33 @@ class LoginPresenter extends AAnonymPresenter {
                 }
             }
 
-            $count++;
+            if($group->title == 'superadministrators') {
+                $c = [
+                    'value' => $group->title,
+                    'text' => 'Superadministration'
+                ];
+
+                array_unshift($containers, $c);
+            } else {
+                $title = substr($group->title, 0, (strlen($group->title) - 8)) . ' (' . ContainerEnvironments::toString($container->environment) . ')';
+
+                $c = [
+                    'value' => $group->containerId,
+                    'text' => $title
+                ];
+
+                if(array_key_exists('lastContainer', $this->httpRequest->query)) {
+                    if($group->containerId == $this->httpRequest->query['lastContainer']) {
+                        $c['selected'] = 'selected';
+                    }
+                }
+
+                $containers[] = $c;
+            }
         }
 
         $form = new ContainerSelectionForm($request);
-        $form->setContainerCount($count);
+        $form->setContainers($containers);
         $form->setAction($this->createURL('containerForm'));
 
         return $form;

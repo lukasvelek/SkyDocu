@@ -12,6 +12,7 @@ class ContainerSelectionForm extends FormBuilder2 {
     private const MAX_CONTAINER_COUNT_FOR_SEARCH_FORM = 5;
 
     private bool $useSearchForm;
+    private array $containers;
 
     public function __construct(HttpRequest $request) {
         parent::__construct($request);
@@ -19,6 +20,13 @@ class ContainerSelectionForm extends FormBuilder2 {
         $this->componentName = 'ContainerSelectionForm';
 
         $this->useSearchForm = false;
+        $this->containers = [];
+    }
+
+    public function setContainers(array $containers) {
+        $this->containers = $containers;
+
+        $this->setContainerCount(count($containers));
     }
 
     public function setContainerCount(int $count) {
@@ -116,6 +124,10 @@ class ContainerSelectionForm extends FormBuilder2 {
     }
 
     private function getContainers(?string $query = null) {
+        if(!empty($this->containers)) {
+            return $this->containers;
+        }
+
         $groups = $this->app->groupManager->getMembershipsForUser($this->presenter->getUserId());
 
         $containers = [];

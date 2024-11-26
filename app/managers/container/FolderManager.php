@@ -127,8 +127,21 @@ class FolderManager extends AManager {
             throw new GeneralException('Database error.');
         }
 
-        $this->cacheFactory->invalidateCacheByNamespace(CacheNames::VISIBLE_FOLDER_IDS_FOR_GROUP);
-        $this->cacheFactory->invalidateCacheByNamespace(CacheNames::VISIBLE_FOLDERS_FOR_USER);
+        if(!$this->cacheFactory->invalidateCacheByNamespace(CacheNames::VISIBLE_FOLDER_IDS_FOR_GROUP) ||
+            !$this->cacheFactory->invalidateCacheByNamespace(CacheNames::VISIBLE_FOLDERS_FOR_USER)) {
+            throw new GeneralException('Could not invalidate cache.');
+        }
+    }
+
+    public function deleteGroupFolderRight(string $folderId, string $groupId) {
+        if(!$this->fr->removeGroupFolderRelation($folderId, $groupId)) {
+            throw new GeneralException('Database error.');
+        }
+
+        if(!$this->cacheFactory->invalidateCacheByNamespace(CacheNames::VISIBLE_FOLDER_IDS_FOR_GROUP) ||
+            !$this->cacheFactory->invalidateCacheByNamespace(CacheNames::VISIBLE_FOLDERS_FOR_USER)) {
+            throw new GeneralException('Could not invalidate cache.');
+        }
     }
 
     public function getFolderById(string $folderId) {

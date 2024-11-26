@@ -122,6 +122,18 @@ class FolderRepository extends ARepository {
 
         return $qb->fetchBool();
     }
+    
+    public function removeGroupFolderRelation(string $folderId, string $groupId) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->delete()
+            ->from('document_folder_group_relation')
+            ->where('folderId = ?', [$folderId])
+            ->andWhere('groupId = ?', [$groupId])
+            ->execute();
+
+        return $qb->fetchBool();
+    }
 
     public function createNewFolder(string $folderId, string $title) {
         $qb = $this->qb(__METHOD__);

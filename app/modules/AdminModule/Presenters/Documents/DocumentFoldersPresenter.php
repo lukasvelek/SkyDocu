@@ -2,12 +2,14 @@
 
 namespace App\Modules\AdminModule;
 
+use App\Constants\Container\SystemGroups;
 use App\Core\Caching\CacheNames;
 use App\Core\DB\DatabaseRow;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
 use App\UI\FormBuilder2\FormBuilder2;
 use App\UI\FormBuilder\FormResponse;
+use App\UI\GridBuilder2\Action;
 use App\UI\GridBuilder2\Cell;
 use App\UI\GridBuilder2\Row;
 use App\UI\HTML\HTML;
@@ -141,7 +143,11 @@ class DocumentFoldersPresenter extends AAdminPresenter {
         $col->onRenderColumn[] = function(DatabaseRow $row, Row $_row, Cell $cell, HTML $html, mixed $value) {
             $group = $this->groupRepository->getGroupById($value);
 
-            return $group['title'];
+            if(array_key_exists($group['title'], SystemGroups::getAll())) {
+                return SystemGroups::toString($group['title']);
+            } else {
+                return $group['title'];
+            }
         };
         
         $grid->addColumnBoolean('canView', 'View');
@@ -164,7 +170,45 @@ class DocumentFoldersPresenter extends AAdminPresenter {
             return $el;
         };
 
+        $delete = $grid->addAction('delete');
+        $delete->setTitle('Delete');
+        $delete->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) {
+            $group = $this->groupRepository->getGroupById($row->groupId);
+
+            return !($group['title'] == 'administrators');
+        };
+        $delete->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) use ($request) {
+            $el = HTML::el('a')
+                ->text('Delete')
+                ->class('grid-link')
+                ->href($this->createURLString('deleteFolderGroupRights', ['folderId' => $request->query['folderId'], 'groupId' => $row->groupId]))
+            ;
+
+            return $el;
+        };
+
         return $grid;
+    }
+
+    public function handleDeleteFolderGroupRights() {
+        $folderId = $this->httpGet('folderId', true);
+        $groupId = $this->httpGet('groupId', true);
+
+        try {
+            $this->folderRepository->beginTransaction(__METHOD__);
+
+            $this->folderManager->deleteGroupFolderRight($folderId, $groupId);
+
+            $this->folderRepository->commit($this->getUserId(), __METHOD__);
+
+            $this->flashMessage('Group rights deleted.', 'success');
+        } catch(AException $e) {
+            $this->folderRepository->rollback(__METHOD__);
+
+            $this->flashMessage('Could not delete group rights. Reason: ' . $e->getMessage(), 'error', 10);
+        }
+
+        $this->redirect($this->createURL('listGroupRights', ['folderId' => $folderId]));
     }
 
     public function handleNewFolderGroupRightsForm(?FormResponse $fr = null) {
@@ -226,9 +270,15 @@ class DocumentFoldersPresenter extends AAdminPresenter {
 
         $allGroups = [];
         while($row = $allGroupsDb->fetchAssoc()) {
+            $title = $row['title'];
+
+            if(array_key_exists($title, SystemGroups::getAll())) {
+                $title = SystemGroups::toString($title);
+            }
+
             $allGroups[] = [
                 'value' => $row['groupId'],
-                'text' => $row['title']
+                'text' => $title
             ];
         }
 

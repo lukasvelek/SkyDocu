@@ -252,7 +252,8 @@ class ContainerManager extends AManager {
             throw new GeneralException('Could not change status.');
         }
 
-        if(!$this->cacheFactory->invalidateCacheByNamespace(CacheNames::CONTAINERS)) {
+        if(!$this->cacheFactory->invalidateCacheByNamespace(CacheNames::CONTAINERS) ||
+           !$this->cacheFactory->invalidateCacheByNamespace(CacheNames::NAVBAR_CONTAINER_SWITCH_USER_MEMBERSHIPS)) {
             throw new GeneralException('Could not invalidate cache.');
         }
     }

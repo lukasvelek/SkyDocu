@@ -59,22 +59,22 @@ class LoginPresenter extends AAnonymPresenter {
                 if($container->status == ContainerStatus::NEW || $container->status == ContainerStatus::IS_BEING_CREATED || $container->status == ContainerStatus::NOT_RUNNING) {
                     continue;
                 }
-            }
 
-            if($group->title == 'superadministrators') {
-                $c = [
-                    'value' => $group->title,
-                    'text' => 'Superadministration'
-                ];
-
-                array_unshift($containers, $c);
-            } else {
-                $title = substr($group->title, 0, (strlen($group->title) - 8));
-
-                $containers[] = [
-                    'value' => $group->containerId,
-                    'text' => $title
-                ];
+                if($group->title == 'superadministrators') {
+                    $c = [
+                        'value' => $group->title,
+                        'text' => 'Superadministration'
+                    ];
+    
+                    array_unshift($containers, $c);
+                } else {
+                    $title = substr($group->title, 0, (strlen($group->title) - 8));
+    
+                    $containers[] = [
+                        'value' => $group->containerId,
+                        'text' => $title
+                    ];
+                }
             }
         }
 

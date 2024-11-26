@@ -51,6 +51,10 @@ class GroupManager extends AManager {
                 }
             }
         }
+
+        if(!$this->cacheFactory->invalidateCacheByNamespace(CacheNames::GROUPS)) {
+            throw new GeneralException('Could not invalidate cache.');
+        }
     }
 
     public function getGroupById(string $groupId) {

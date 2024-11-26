@@ -38,7 +38,7 @@ abstract class AGUICore {
 
         $jsAutoRemoveScript = '<script type="text/javascript">autoHideFlashMessage(\'fm-' . $fmc . '\', ' . $autoCloseLengthInSeconds . ')</script>';
 
-        $code = '<div id="fm-' . $fmc . '" class="row fm-' . $type . '"><div class="col-md"><p class="fm-text">' . $text . '</p></div><div class="col-md-1" id="right">' . ($custom ? '' : ($permanent ? $removeLink : '')) . '</div><div id="fm-' . $fmc . '-progress-bar" style="position: absolute; left: 0; bottom: 1%; border-bottom: 2px solid black"></div>' . ($custom ? '' : ($permanent ? '' : $jsAutoRemoveScript)) . '</div>';
+        $code = '<div id="fm-' . $fmc . '" class="row fm-' . $type . '"><div class="col-md"><p class="fm-text">' . $text . '</p></div><div class="col-md-1" id="right">' . ($custom ? '' : ($permanent ? '' : $removeLink)) . '</div><div id="fm-' . $fmc . '-progress-bar" style="position: absolute; left: 0; bottom: 1%; border-bottom: 2px solid black"></div>' . ($custom ? '' : ($permanent ? '' : $jsAutoRemoveScript)) . '</div>';
 
         return $code;
     }

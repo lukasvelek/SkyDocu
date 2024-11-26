@@ -4,6 +4,7 @@ namespace App\Logger;
 
 use App\Core\Datetypes\DateTime;
 use App\Core\FileManager;
+use App\Helpers\DateTimeFormatHelper;
 use Exception;
 use QueryBuilder\ILoggerCallable;
 
@@ -46,13 +47,15 @@ class Logger implements ILoggerCallable {
      * @return mixed Result of $function
      */
     public function stopwatch(callable $function, string $method) {
-        $time = time();
+        $time = hrtime(true);
 
         $result = $function();
 
-        $diff = time() - $time;
+        $diff = hrtime(true) - $time;
 
-        $this->log($method, 'Time taken: ' . $diff . ' seconds', self::LOG_STOPWATCH);
+        $diff = DateTimeFormatHelper::convertNsToMs($diff);
+
+        $this->log($method, 'Time taken: ' . $diff . ' ms', self::LOG_STOPWATCH);
 
         return $result;
     }
@@ -101,9 +104,9 @@ class Logger implements ILoggerCallable {
      * 
      * @param string $sqlQuery SQL string
      * @param string $method Calling method
-     * @param null|float $msTaken Milliseconds taken
+     * @param null|int|float $msTaken Milliseconds taken
      */
-    public function sql(string $sql, string $method, ?float $msTaken) {
+    public function sql(string $sql, string $method, null|int|float $msTaken) {
         $this->logSQL($method, $sql, ($msTaken ?? 0.0));
     }
 
@@ -112,11 +115,11 @@ class Logger implements ILoggerCallable {
      * 
      * @param string $method Calling method
      * @param string $sql SQL string
-     * @param float $msTaken Milliseconds taken
+     * @param null|int|float $msTaken Milliseconds taken
      */
-    private function logSQL(string $method, string $sql, float $msTaken) {
+    private function logSQL(string $method, string $sql, null|int|float $msTaken) {
         $date = new DateTime();
-        $newText = '[' . $date . '] [' . strtoupper(self::LOG_SQL) . '] [' . (int)($msTaken) . ' s] ' . $method . '(): ' . $sql;
+        $newText = '[' . $date . '] [' . strtoupper(self::LOG_SQL) . '] [' . (float)($msTaken) . ' ms] ' . $method . '(): ' . $sql;
 
         if($this->sqlLogLevel >= 1) {
             $oldSpecialFilename = $this->specialFilename;

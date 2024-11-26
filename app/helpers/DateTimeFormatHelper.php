@@ -58,6 +58,16 @@ class DateTimeFormatHelper {
 
         return $tt->toString();
     }
+
+    /**
+     * Converts nanoseconds to milliseconds
+     * 
+     * @param int|float $ns Nanoseconds
+     * @return int|float Milliseconds
+     */
+    public static function convertNsToMs(int|float $ns) {
+        return $ns / 1e+6;
+    }
 }
 
 ?>

@@ -4,6 +4,7 @@ namespace QueryBuilder;
 
 use App\Exceptions\AException;
 use App\Exceptions\DatabaseExecutionException;
+use App\Helpers\DateTimeFormatHelper;
 use Exception;
 
 /**
@@ -912,11 +913,11 @@ class QueryBuilder
     }
 
     /**
-     * Logs an SQL string (with the number of miliseconds it took)
+     * Logs an SQL string (with the number of milliseconds it took)
      * 
-     * @param float $msTaken Miliseconds the SQL query took
+     * @param null|int|float $msTaken Milliseconds the SQL query took
      */
-    private function log(?float $msTaken = null) {
+    private function log(null|int|float $msTaken = null) {
         if($this->logger !== NULL) {
             $this->logger->sql($this->sql, $this->callingMethod, $msTaken);
         }
@@ -934,19 +935,21 @@ class QueryBuilder
         $tsEnd = null;
 
         $q = function(string $sql, array $params) use (&$tsStart, &$tsEnd) {
-            $tsStart = time();
+            $tsStart = hrtime(true);
             try {
                 $result = $this->conn->query($sql, $params);
             } catch(\mysqli_sql_exception $e) {
                 throw new DatabaseExecutionException($e, $sql, $e);
             }
-            $tsEnd = time();
+            $tsEnd = hrtime(true);
             return $result;
         };
         
         $result = $q($sql, $params);
         
-        $diff = (float)$tsEnd - (float)$tsStart;
+        $diff = $tsEnd - $tsStart;
+
+        $diff = DateTimeFormatHelper::convertNsToMs($diff);
 
         $this->log($diff);
 

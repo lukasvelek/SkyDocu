@@ -88,7 +88,7 @@ class ContainerUsageAverageResponseTimeGraph extends AComponent {
                     data: {
                         labels: _data.map(row => row.date),
                         datasets: [{
-                            label: "Database query average response times",
+                            label: "[ms] Response time",
                             data: _data.map(row => row.queryCount)
                         }]
                     }

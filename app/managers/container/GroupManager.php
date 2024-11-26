@@ -101,6 +101,20 @@ class GroupManager extends AManager {
         
         return $this->gr->getMembersForGroup($group->groupId);
     }
+
+    public function createNewGroup(string $title) {
+        $groupId = $this->createId(EntityManager::C_GROUPS);
+
+        if(!$this->gr->createNewGroup($groupId, $title)) {
+            throw new GeneralException('Database error.');
+        }
+
+        if(!$this->cacheFactory->invalidateCacheByNamespace(CacheNames::GROUPS) ||
+            !$this->cacheFactory->invalidateCacheByNamespace(CacheNames::GROUP_MEMBERSHIPS) ||
+            !$this->cacheFactory->invalidateCacheByNamespace(CacheNames::USER_GROUP_MEMBERSHIPS)) {
+            throw new GeneralException('Could not invalidate cache.');
+        }
+    }
 }
 
 ?>

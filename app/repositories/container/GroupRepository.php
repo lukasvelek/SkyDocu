@@ -149,6 +149,16 @@ class GroupRepository extends ARepository {
             ];
         });
     }
+
+    public function createNewGroup(string $groupId, string $groupTitle) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->insert('groups', ['groupId', 'title'])
+            ->values([$groupId, $groupTitle])
+            ->execute();
+
+        return $qb->fetchBool();
+    }
 }
 
 ?>

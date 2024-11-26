@@ -7,6 +7,7 @@ use App\Core\DB\DatabaseRow;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
 use App\UI\FormBuilder\FormResponse;
+use App\UI\GridBuilder2\Cell;
 use App\UI\GridBuilder2\Row;
 use App\UI\HTML\HTML;
 use App\UI\LinkBuilder;
@@ -29,7 +30,14 @@ class GroupsPresenter extends AAdminPresenter {
 
         $grid->createDataSourceFromQueryBuilder($this->groupRepository->composeQueryForGroups(), 'groupId');
 
-        $grid->addColumnConst('title', 'Title', SystemGroups::class);
+        $col = $grid->addColumnText('title', 'Title');
+        $col->onRenderColumn[] = function(DatabaseRow $row, Row $_row, Cell $cell, HTML $html, mixed $value) {
+            if(array_key_exists($value, SystemGroups::getAll())) {
+                return SystemGroups::toString($value);
+            } else {
+                return $value;
+            }
+        };
 
         $members = $grid->addAction('members');
         $members->onCanRender[] = function() {
@@ -183,6 +191,43 @@ class GroupsPresenter extends AAdminPresenter {
         }
 
         $this->redirect($this->createURL('listMembers', ['groupId' => $groupId]));
+    }
+
+    public function handleNewForm(?FormResponse $fr = null) {
+        if($fr !== null) {
+            try {
+                $this->groupRepository->beginTransaction(__METHOD__);
+
+                $this->groupManager->createNewGroup($fr->title);
+
+                $this->groupRepository->commit($this->getUserId(), __METHOD__);
+
+                $this->flashMessage('Group created successfully.', 'success');
+            } catch(AException $e) {
+                $this->groupRepository->rollback(__METHOD__);
+
+                $this->flashMessage('Could not create new group. Reason: ' . $e->getMessage(), 'error', 10);
+            }
+
+            $this->redirect($this->createURL('list'));
+        }
+    }
+
+    public function renderNewForm() {
+        $this->template->links = $this->createBackUrl('list');
+    }
+
+    protected function createComponentNewGroupForm(HttpRequest $request) {
+        $form = $this->componentFactory->getFormBuilder();
+
+        $form->setAction($this->createURL('newForm'));
+
+        $form->addTextInput('title', 'Title:')
+            ->setRequired();
+
+        $form->addSubmit('Create');
+
+        return $form;
     }
 }
 

@@ -2,6 +2,7 @@
 
 namespace App\Modules\AnonymModule;
 
+use App\Components\ContainerSelectionForm\ContainerSelectionForm;
 use App\Constants\ContainerEnvironments;
 use App\Constants\ContainerStatus;
 use App\Core\Http\HttpRequest;
@@ -122,7 +123,7 @@ class LoginPresenter extends AAnonymPresenter {
     protected function createComponentContainerForm(HttpRequest $request) {
         $groups = $this->app->groupManager->getMembershipsForUser($this->getUserId());
 
-        $containers = [];
+        $count = 0;
         foreach($groups as $group) {
             if($group->containerId !== null) {
                 $container = $this->app->containerManager->getContainerById($group->containerId);
@@ -132,47 +133,12 @@ class LoginPresenter extends AAnonymPresenter {
                 }
             }
 
-            if($group->title == 'superadministrators') {
-                $c = [
-                    'value' => $group->title,
-                    'text' => 'Superadministration'
-                ];
-
-                array_unshift($containers, $c);
-            } else {
-                $title = substr($group->title, 0, (strlen($group->title) - 8)) . ' (' . ContainerEnvironments::toString($container->environment) . ')';
-
-                $c = [
-                    'value' => $group->containerId,
-                    'text' => $title
-                ];
-
-                if(array_key_exists('lastContainer', $request->query)) {
-                    if($group->containerId == $request->query['lastContainer']) {
-                        $c['selected'] = 'selected';
-                    }
-                }
-
-                $containers[] = $c;
-            }
+            $count++;
         }
 
-        $disabled = false;
-        if(empty($containers)) {
-            $this->addScript('alert("No containers are available.");');
-            $disabled = true;
-        }
-
-        $form = $this->componentFactory->getFormBuilder();
-
+        $form = new ContainerSelectionForm($request);
+        $form->setContainerCount($count);
         $form->setAction($this->createURL('containerForm'));
-
-        $form->addSelect('container', 'Container:')
-            ->setRequired()
-            ->addRawOptions($containers)
-            ->setDisabled($disabled);
-
-        $form->addSubmit('Select');
 
         return $form;
     }

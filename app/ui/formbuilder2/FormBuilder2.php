@@ -22,6 +22,7 @@ class FormBuilder2 extends AComponent {
     private string $name;
     private array $action;
     private string $method;
+    private array $scripts;
     
     /**
      * Class constructor
@@ -36,6 +37,18 @@ class FormBuilder2 extends AComponent {
         $this->action = [];
         $this->method = 'POST';
         $this->labels = [];
+        $this->scripts = [];
+    }
+
+    /**
+     * Adds form JS script code
+     * 
+     * @param string $rawJsCode Raw JS code
+     */
+    public function addScript(string $rawJsCode) {
+        $code = '<script type="text/javascript">' . $rawJsCode . '</script>';
+
+        $this->scripts[] = $code;
     }
 
     /**
@@ -73,6 +86,7 @@ class FormBuilder2 extends AComponent {
     public function render() {
         $template = $this->getTemplate(__DIR__ . '/form.html');
         $template->form = $this->build();
+        $template->scripts = implode('', $this->scripts);
         
         return $template->render()->getRenderedContent();
     }

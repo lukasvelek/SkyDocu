@@ -135,8 +135,8 @@ class ContainerUsageStatisticsService extends AService {
             $totalTimeTaken = 0.0;
             foreach($lines as $line) {
                 $lineParts = explode(' ', $line);
-                $timeTaken = explode(' ', $lineParts[2])[0];
-                $totalTimeTaken += (float)$timeTaken;
+                $timeTaken = substr($lineParts[3], 1);
+                $totalTimeTaken = $totalTimeTaken + (float)$timeTaken;
             }
 
             return [
@@ -153,7 +153,7 @@ class ContainerUsageStatisticsService extends AService {
             $this->logInfo('Saving analysis results for container \'' . $containerId . '\'.');
             foreach($data as $date => $measuredData) {
                 $totalSqlQueries = $measuredData['count'];
-                $averageTimeTaken = $measuredData['averageTimeTaken'];
+                $averageTimeTaken = (float)$measuredData['averageTimeTaken'];
 
                 $count = $this->containerRepository->getContainerUsageStatisticsForDate($containerId, $date);
                 if($count > 0) {

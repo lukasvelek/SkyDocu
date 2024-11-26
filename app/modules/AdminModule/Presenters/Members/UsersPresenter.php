@@ -6,8 +6,6 @@ use App\Constants\Container\SystemGroups;
 use App\Core\Caching\CacheNames;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
-use App\Managers\Container\GroupManager;
-use App\UI\FormBuilder2\FormBuilder2;
 use App\UI\FormBuilder\FormResponse;
 use App\UI\LinkBuilder;
 
@@ -75,7 +73,7 @@ class UsersPresenter extends AAdminPresenter {
 
                 $this->app->userRepository->commit($this->getUserId(), __METHOD__);
 
-                $this->flashMessage('User created successfully.');
+                $this->flashMessage('User created successfully.', 'success');
             } catch(AException $e) {
                 $this->groupRepository->rollback(__METHOD__);
                 $this->app->userRepository->rollback(__METHOD__);

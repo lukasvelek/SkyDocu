@@ -38,6 +38,13 @@ class GroupsPresenter extends AAdminPresenter {
                 return $value;
             }
         };
+        $col->onExportColumn[] = function(DatabaseRow $row, mixed $value) {
+            if(array_key_exists($value, SystemGroups::getAll())) {
+                return SystemGroups::toString($value);
+            } else {
+                return $value;
+            }
+        };
 
         $members = $grid->addAction('members');
         $members->onCanRender[] = function() {

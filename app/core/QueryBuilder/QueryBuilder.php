@@ -71,7 +71,7 @@ class QueryBuilder
      */
     public function getColumnInValues(string $column, array $values) {
         if(count($values) == 0) {
-            return '1=1';
+            return '1=0';
         }
 
         $code = $column . ' IN (';
@@ -104,7 +104,7 @@ class QueryBuilder
      */
     public function getColumnNotInValues(string $column, array $values) {
         if(count($values) == 0) {
-            return '1=1';
+            return '1=0';
         }
         
         $code = $column . ' NOT IN (';

@@ -177,6 +177,17 @@ class MetadataManager extends AManager {
 
         return $metadatas;
     }
+    
+    public function composeQueryForMetadataForFolder(string $folderId) {
+        $rightsQb = $this->mr->composeQueryForMetadataFolderRights()
+            ->andWhere('folderId = ?', [$folderId])
+            ->select(['customMetadataId']);
+
+        $qb = $this->mr->composeQueryForMetadata();
+        $qb->andWhere('metadataId IN (' . $rightsQb->getSQL() . ')');
+
+        return $qb;
+    }
 
     public function getMetadataEnumValues(string $metadataId) {
         $qb = $this->mr->composeQueryMetadataEnumValues($metadataId);

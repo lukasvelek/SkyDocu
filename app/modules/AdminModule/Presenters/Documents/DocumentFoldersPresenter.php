@@ -2,6 +2,7 @@
 
 namespace App\Modules\AdminModule;
 
+use App\Constants\Container\CustomMetadataTypes;
 use App\Constants\Container\SystemGroups;
 use App\Core\Caching\CacheNames;
 use App\Core\DB\DatabaseRow;
@@ -34,6 +35,20 @@ class DocumentFoldersPresenter extends AAdminPresenter {
         $grid->createDataSourceFromQueryBuilder($this->folderManager->composeQueryForVisibleFoldersForUser($this->getUserId()), 'folderId');
 
         $grid->addColumnText('title', 'Title');
+
+        $metadata = $grid->addAction('metadata');
+        $metadata->setTitle('Metadata');
+        $metadata->onCanRender[] = function() {
+            return true;
+        };
+        $metadata->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
+            $el = HTML::el('a')
+                ->class('grid-link')
+                ->href($this->createURLString('listMetadata', ['folderId' => $primaryKey]))
+                ->text('Metadata');
+
+            return $el;
+        };
 
         $groupRights = $grid->addAction('groupRights');
         $groupRights->setTitle('Group rights');
@@ -385,6 +400,32 @@ class DocumentFoldersPresenter extends AAdminPresenter {
         $form->addSubmit('Save');
 
         return $form;
+    }
+
+    public function handleListMetadata() {
+        $links = [
+            $this->createBackUrl('list')
+        ];
+
+        $this->saveToPresenterCache('links', implode('&nbsp;&nbsp;', $links));
+    }
+
+    public function renderListMetadata() {
+        $this->template->links = $this->loadFromPresenterCache('links');
+    }
+
+    protected function createComponentFolderMetadataGrid(HttpRequest $request) {
+        $grid = $this->componentFactory->getGridBuilder();
+
+        $grid->createDataSourceFromQueryBuilder($this->metadataManager->composeQueryForMetadataForFolder($request->query['folderId']), 'metadataId');
+        $grid->addQueryDependency('folderId', $request->query['folderId']);
+
+        $grid->addColumnText('title', 'Title');
+        $grid->addColumnText('guiTitle', 'GUI title');
+        $grid->addColumnConst('type', 'Type', CustomMetadataTypes::class);
+        $grid->addColumnBoolean('isRequired', 'Is required');
+
+        return $grid;
     }
 }
 

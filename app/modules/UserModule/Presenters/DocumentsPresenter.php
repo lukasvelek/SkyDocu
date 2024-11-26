@@ -30,6 +30,7 @@ class DocumentsPresenter extends AUserPresenter {
 
         $visibleFolders = $this->folderManager->getVisibleFoldersForUser($this->getUserId());
 
+        $foldersToSort = [];
         foreach($visibleFolders as $vf) {
             $active = false;
 
@@ -42,7 +43,13 @@ class DocumentsPresenter extends AUserPresenter {
                 $this->redirect($this->createURL('switchFolder', ['folderId' => $vf->folderId]));
             }
             
-            $sidebar->addLink($vf->title, $this->createURL('switchFolder', ['folderId' => $vf->folderId]), $active);
+            $foldersToSort[$vf->title] = ['folderId' => $vf->folderId, 'active' => $active];
+        }
+
+        ksort($foldersToSort);
+
+        foreach($foldersToSort as $title => $data) {
+            $sidebar->addLink($title, $this->createURL('switchFolder', ['folderId' => $data['folderId']]), $data['active']);
         }
 
         return $sidebar;

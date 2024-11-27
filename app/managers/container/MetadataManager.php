@@ -200,6 +200,17 @@ class MetadataManager extends AManager {
 
         return $values;
     }
+
+    public function composeQueryForMetadataNotInFolder(string $folderId) {
+        $rightsQb = $this->mr->composeQueryForMetadataFolderRights()
+            ->andWhere('folderId = ?', [$folderId])
+            ->select(['customMetadataId']);
+
+        $qb = $this->mr->composeQueryForMetadata();
+        $qb->andWhere('metadataId NOT IN (' . $rightsQb->getSQL() . ')');
+
+        return $qb;
+    }
 }
 
 ?>

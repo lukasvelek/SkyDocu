@@ -403,8 +403,11 @@ class DocumentFoldersPresenter extends AAdminPresenter {
     }
 
     public function handleListMetadata() {
+        $folderId = $this->httpGet('folderId', true);
+
         $links = [
-            $this->createBackUrl('list')
+            $this->createBackUrl('list'),
+            LinkBuilder::createSimpleLink('Add metadata', $this->createURL('addMetadataToFolderForm', ['folderId' => $folderId]), 'link')
         ];
 
         $this->saveToPresenterCache('links', implode('&nbsp;&nbsp;', $links));
@@ -425,7 +428,96 @@ class DocumentFoldersPresenter extends AAdminPresenter {
         $grid->addColumnConst('type', 'Type', CustomMetadataTypes::class);
         $grid->addColumnBoolean('isRequired', 'Is required');
 
+        $delete = $grid->addAction('delete');
+        $delete->setTitle('Delete');
+        $delete->onCanRender[] = function() {
+            return true;
+        };
+        $delete->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
+            $el = HTML::el('a')
+                ->text('Remove')
+                ->href($this->createURLString('removeMetadataFromFolder', ['metadataId' => $row->customMetadataId, 'folderId' => $row->folderId]))
+                ->class('grid-link');
+
+            return $el;
+        };
+
         return $grid;
+    }
+
+    public function handleAddMetadataToFolderForm(?FormResponse $fr = null) {
+        $folderId = $this->httpGet('folderId', true);
+
+        if($fr !== null) {
+            try {
+                $this->metadataRepository->beginTransaction(__METHOD__);
+
+                $this->metadataManager->createMetadataFolderRight($fr->metadata, $folderId);
+
+                $this->metadataRepository->commit($this->getUserId(), __METHOD__);
+
+                $this->flashMessage('Metadata added to folder.', 'success');
+            } catch(AException $e) {
+                $this->metadataRepository->rollback(__METHOD__);
+
+                $this->flashMessage('Could not add metadata to folder. Reason: ' . $e->getMessage(), 'error', 10);
+            }
+
+            $this->redirect($this->createURL('listMetadata', ['folderId' => $folderId]));
+        }
+    }
+
+    public function renderAddMetadataToFolderForm() {
+        $this->template->links = $this->createBackUrl('listMetadata', ['folderId' => $this->httpGet('folderId')]);
+    }
+
+    protected function createComponentAddMetadataToFolderForm(HttpRequest $request) {
+        $qb = $this->metadataManager->composeQueryForMetadataNotInFolder($request->query['folderId']);
+        $qb->execute();
+
+        $metadataSelect = [];
+        while($row = $qb->fetchAssoc()) {
+            $row = DatabaseRow::createFromDbRow($row);
+
+            $metadataSelect[] = [
+                'value' => $row->metadataId,
+                'text' => $row->guiTitle . ' (' . $row->title . ')'
+            ];
+        }
+
+        $form = $this->componentFactory->getFormBuilder();
+
+        $form->setAction($this->createURL('addMetadataToFolderForm', ['folderId' => $request->query['folderId']]));
+
+        $form->addSelect('metadata', 'Metadata:')
+            ->addRawOptions($metadataSelect)
+            ->setDisabled(count($metadataSelect) == 0);
+
+        $form->addSubmit('Add')
+            ->setDisabled(count($metadataSelect) == 0);
+
+        return $form;
+    }
+
+    public function handleRemoveMetadataFromFolder() {
+        $folderId = $this->httpGet('folderId', true);
+        $metadataId = $this->httpGet('metadataId', true);
+
+        try {
+            $this->metadataRepository->beginTransaction(__METHOD__);
+
+            $this->metadataManager->removeMetadataFolderRight($metadataId, $folderId);
+
+            $this->metadataRepository->commit($this->getUserId(), __METHOD__);
+
+            $this->flashMessage('Metadata removed from folder.', 'success');
+        } catch(AException $e) {
+            $this->metadataRepository->rollback(__METHOD__);
+
+            $this->flashMessage('Could not remove metadata from folder. Reason: ' . $e->getMessage(), 'error', 10);
+        }
+
+        $this->redirect($this->createURL('listMetadata', ['folderId' => $folderId]));
     }
 }
 

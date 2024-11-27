@@ -48,8 +48,16 @@ class BulkActionsModal extends ModalBuilder {
 
         $code = '<table><tr style="height: 50px">';
 
+        $count = 0;
         foreach($this->bulkActions as $bulkAction) {
+            if($count == 4) {
+                $code .= '</tr><tr style="height: 50px">';
+                $count = 0;
+            }
+
             $code .= '<td>' . $bulkAction . '</td>';
+
+            $count++;
         }
 
         $code .= '</tr></table>';

@@ -31,12 +31,18 @@ class DocumentFoldersPresenter extends AAdminPresenter {
 
         if($this->httpGet('folderId') !== null) {
             $folderId = $this->httpGet('folderId');
-
+            
             $newFolderLink = LinkBuilder::createSimpleLink('New folder', $this->createURL('newFolderForm', ['folderId' => $folderId]), 'link');
-
+            
             $folderPathToRoot = $this->folderManager->getFolderPathToRoot($folderId);
 
-            foreach($folderPathToRoot as $_folderId => $_folder) {
+            if(count($folderPathToRoot) >= MAX_CONTAINER_DOCUMENT_FOLDER_NESTING_LEVEL) {
+                $newFolderLink = $this->createFlashMessage('info', 'Cannot create new folder, because the maximum nesting level was reached.', 0, false, true);
+            }
+
+            foreach($folderPathToRoot as $_folder) {
+                $_folderId = $_folder->folderId;
+                
                 if($_folderId != $folderId) {
                     $folderPathArray[] = LinkBuilder::createSimpleLink($_folder->title, $this->createURL('list', ['folderId' => $_folderId]), 'link');
                 } else {

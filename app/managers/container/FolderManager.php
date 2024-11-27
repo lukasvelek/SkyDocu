@@ -184,26 +184,28 @@ class FolderManager extends AManager {
      */
     public function getFolderPathToRoot(string $folderId) {
         $folders = [];
-
-        $getFolder = function(string $folderId) use (&$folders, &$getFolder) {
-            $folder = $this->getFolderById($folderId);
-
-            if($folder->parentFolderId !== null) {
-                $folders[$folder->parentFolderId] = $getFolder($folder->parentFolderId);
-            } else {
-                return $folder;
-            }
-        };
-
-        $getFolder($folderId);
+        
+        $run = true;
 
         $folder = $this->getFolderById($folderId);
+        
+        $folderIds = [];
+        $folderObjs = [];
+        do {
+            if($folder->parentFolderId === null) {
+                $run = false;
+            }
+            array_unshift($folderIds, $folder->folderId);
+            $folderObjs[$folder->folderId] = $folder;
+            
+            if($folder->parentFolderId !== null) {
+                $folder = $this->getFolderById($folder->parentFolderId);
+            }
+        } while($run === true);
 
-        $tmp = [
-            $folderId => $folder
-        ];
-
-        $folders = array_merge($folders, $tmp);
+        foreach($folderIds as $folderId) {
+            $folders[] = $folderObjs[$folderId];
+        }
 
         return $folders;
     }

@@ -7,7 +7,7 @@ use App\Modules\TemplateObject;
 use App\UI\AComponent;
 
 class Sidebar2 extends AComponent {
-    private array $links;
+    protected array $links;
     private TemplateObject $template;
 
     public function __construct(HttpRequest $request) {
@@ -79,7 +79,7 @@ class Sidebar2 extends AComponent {
      * @param bool $isActive Is link active?
      * @return string HTML code
      */
-    private function createLink(string $title, array $url, bool $isActive) {
+    protected function createLink(string $title, array $url, bool $isActive) {
         $url = $this->composeURL($url);
 
         if($isActive) {
@@ -109,9 +109,7 @@ class Sidebar2 extends AComponent {
         return $this->template->render()->getRenderedContent();
     }
 
-    public static function createFromComponent(AComponent $component) {
-        
-    }
+    public static function createFromComponent(AComponent $component) {}
 }
 
 ?>

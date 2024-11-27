@@ -161,14 +161,14 @@ class FolderManager extends AManager {
         $qb = $this->composeQueryForSubfoldersForFolder($folderId);
         $qb->execute();
 
-        $parentFolders = [];
+        $subfolders = [];
         while($row = $qb->fetchAssoc()) {
             $row = DatabaseRow::createFromDbRow($row);
 
-            $parentFolders[] = $row;
+            $subfolders[] = $row;
         }
 
-        return $parentFolders;
+        return $subfolders;
     }
 
     public function composeQueryForSubfoldersForFolder(string $folderId) {

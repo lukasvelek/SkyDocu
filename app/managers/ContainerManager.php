@@ -76,6 +76,7 @@ class ContainerManager extends AManager {
             $this->dbManager->createNewDatabase($container->databaseName);
 
             $this->createNewContainerTables($container->databaseName);
+            $this->createContainerTablesIndexes($container->databaseName);
             
             $exceptions = [];
             $this->insertNewContainerDefaultDataAsync($containerId, $container, $container->databaseName, $exceptions);
@@ -230,6 +231,24 @@ class ContainerManager extends AManager {
             if(!$this->dbManager->createTable($name, $definition, $dbName)) {
                 throw new GeneralException('Could not create database table.');
             }
+        }
+    }
+
+    private function createContainerTablesIndexes(string $dbName) {
+        $indexes = ContainerCreationHelper::getContainerTableIndexDefinitions();
+
+        $count = 1;
+        foreach($indexes as $tableName => $columns) {
+            try {
+                if(!$this->dbManager->createTableIndex($dbName, $count, $tableName, $columns)) {
+                    throw new GeneralException('Could not create database table indexes.');
+                }
+            } catch(AException $e) {
+                $this->logger->exception($e, __METHOD__);
+                continue;
+            }
+
+            $count++;
         }
     }
 

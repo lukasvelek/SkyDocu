@@ -178,6 +178,55 @@ class DatabaseManager {
             throw $e;
         }
     }
+
+    /**
+     * Creates table indexes
+     * If there is already an index with given name it is dropped
+     * 
+     * @param string $databaseName Database name
+     * @param int $index Index index
+     * @param string $tableName Table name
+     * @param array $keys Columns
+     * @return true
+     */
+    public function createTableIndex(string $databaseName, int $index, string $tableName, array $keys) {
+        try {
+            $conn = $this->getConnectionToDatabase($databaseName);
+        } catch(AException $e) {
+            throw $e;
+        }
+
+        $indexName = $tableName . '_i' . $index;
+
+        $sql = "DROP INDEX IF EXISTS `$indexName` ON `$tableName`";
+
+        try {
+            $result = $conn->query($sql);
+
+            if($result !== false) {
+            } else {
+                throw new DatabaseExecutionException('Could not drop existing index.', $sql);
+            }
+        } catch(AException $e) {
+            throw $e;
+        }
+
+        $cols = implode(', ', $keys);
+
+        $sql = "CREATE INDEX $indexName ON $tableName ($cols)";
+
+        try {
+            $result = $conn->query($sql);
+
+            if($result !== false) {
+                return true;
+            } else {
+                throw new DatabaseExecutionException('Could not create new index.', $sql);
+            }
+        } catch(AException $e) {
+            throw $e;
+        }
+    }
 }
 
 ?>

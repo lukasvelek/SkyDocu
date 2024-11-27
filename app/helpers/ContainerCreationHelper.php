@@ -132,6 +132,44 @@ class ContainerCreationHelper {
             ],
         ];
     }
+
+    public static function getContainerTableIndexDefinitions() {
+        return [
+            'documents' => [
+                'folderId'
+            ],
+            'document_folder_group_relation' => [
+                'folderId',
+                'groupId',
+                'canView'
+            ],
+            'document_folder_custom_metadata_relation' => [
+                'customMetadataId',
+                'folderId'
+            ],
+            'documents_custom_metadata' => [
+                'documentId'
+            ],
+            'custom_metadata_list_values' => [
+                'metadataId'
+            ],
+            'group_users_relation' => [
+                'userId',
+                'groupId'
+            ],
+            'group_rights_standard_operations' => [
+                'groupId'
+            ],
+            'document_sharing' => [
+                'authorUserId'
+            ],
+            'document_class_group_rights' => [
+                'groupId',
+                'classId',
+                'canView'
+            ]
+        ];
+    }
 }
 
 ?>

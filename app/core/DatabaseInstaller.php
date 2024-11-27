@@ -32,7 +32,7 @@ class DatabaseInstaller {
         $this->logger->info('Database installation started.', __METHOD__);
 
         $this->createTables();
-        //$this->createIndexes();
+        $this->createIndexes();
         $this->createUsers();
         $this->createGroupsAndTheirMembers();
         $this->addSystemServices();
@@ -156,7 +156,31 @@ class DatabaseInstaller {
         $this->logger->info('Creating indexes.', __METHOD__);
 
         $indexes = [
-            
+            'containers' => [
+                'databaseName'
+            ],
+            'container_creation_status' => [
+                'containerId'
+            ],
+            'container_status_history' => [
+                'containerId'
+            ],
+            'container_usage_statistics' => [
+                'containerId'
+            ],
+            'groups' => [
+                'containerId'
+            ],
+            'group_users' => [
+                'groupId',
+                'userId'
+            ],
+            'system_services_history' => [
+                'serviceId'
+            ],
+            'users' => [
+                'username'
+            ]
         ];
 
         $indexCount = [];

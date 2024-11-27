@@ -55,14 +55,7 @@ class FoldersSidebar extends Sidebar2 {
             $isDefault = true;
         }
 
-        $spaces = '';
-        if($level > 0) {
-            for($i = 0; $i < $level; $i++) {
-                $spaces .= '&nbsp;&nbsp;';
-            }
-        }
-
-        $title = $spaces . $folder->row->title;
+        $title = $folder->row->title;
         $params = [];
 
         if($folder->row->title != 'Default') {
@@ -76,10 +69,18 @@ class FoldersSidebar extends Sidebar2 {
             $active = true;
         }
 
+        $link = $this->createLink($title, $this->presenter->createURL($this->action, $params), $active);
+
+        if($level > 0) {
+            $space = 5 * $level; // 5px * nesting level -> more subtle than &nbsp;&nbsp;
+
+            $link = '<span style="margin-left: ' . $space . 'px">' . $link . '</span>';
+        }
+
         if($isDefault === true) {
-            array_splice($list, $level, 0, $this->createLink($title, $this->presenter->createURL($this->action, $params), $active));
+            array_splice($list, $level, 0, $link);
         } else {
-            $list[] = $this->createLink($title, $this->presenter->createURL($this->action, $params), $active);
+            $list[] = $link;
         }
 
         $this->_list[$folder->parentFolderId ?? 'null'][] = $folder;

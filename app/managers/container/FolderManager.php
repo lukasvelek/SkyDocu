@@ -154,6 +154,57 @@ class FolderManager extends AManager {
 
         return DatabaseRow::createFromDbRow($folder);
     }
+
+    public function getSubfoldersForFolder(string $folderId, bool $recursive = false) {
+        $qb = $this->composeQueryForSubfoldersForFolder($folderId);
+        $qb->execute();
+
+        $parentFolders = [];
+        while($row = $qb->fetchAssoc()) {
+            $row = DatabaseRow::createFromDbRow($row);
+
+            $parentFolders[] = $row;
+        }
+
+        return $parentFolders;
+    }
+
+    public function composeQueryForSubfoldersForFolder(string $folderId) {
+        $qb = $this->fr->composeQueryForFolders();
+        $qb->andWhere('parentFolderId = ?', [$folderId])
+            ->orderBy('title');
+
+        return $qb;
+    }
+
+    /**
+     * Returns all folders that the given folder is subfolder on
+     */
+    public function getFolderPathToRoot(string $folderId) {
+        $folders = [];
+
+        $getFolder = function(string $folderId) use (&$folders, &$getFolder) {
+            $folder = $this->getFolderById($folderId);
+
+            if($folder->parentFolderId !== null) {
+                $folders[$folder->parentFolderId] = $getFolder($folder->parentFolderId);
+            } else {
+                return $folder;
+            }
+        };
+
+        $getFolder($folderId);
+
+        $folder = $this->getFolderById($folderId);
+
+        $tmp = [
+            $folderId => $folder
+        ];
+
+        $folders = array_merge($folders, $tmp);
+
+        return $folders;
+    }
 }
 
 ?>

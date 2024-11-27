@@ -82,9 +82,15 @@ class DocumentFoldersPresenter extends AAdminPresenter {
             return true;
         };
         $subfolders->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
+            $params = ['folderId' => $primaryKey];
+
+            if($row->parentFolderId !== null) {
+                $params['parentFolderId'] = $row->parentFolderId;
+            }
+
             $el = HTML::el('a')
                 ->class('grid-link')
-                ->href($this->createURLString('list', ['folderId' => $primaryKey]))
+                ->href($this->createURLString('list', $params))
                 ->text('Subfolders');
 
             return $el;
@@ -96,9 +102,15 @@ class DocumentFoldersPresenter extends AAdminPresenter {
             return true;
         };
         $metadata->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
+            $params = ['folderId' => $primaryKey];
+
+            if($row->parentFolderId !== null) {
+                $params['parentFolderId'] = $row->parentFolderId;
+            }
+
             $el = HTML::el('a')
                 ->class('grid-link')
-                ->href($this->createURLString('listMetadata', ['folderId' => $primaryKey]))
+                ->href($this->createURLString('listMetadata', $params))
                 ->text('Metadata');
 
             return $el;
@@ -110,9 +122,15 @@ class DocumentFoldersPresenter extends AAdminPresenter {
             return true;
         };
         $groupRights->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
+            $params = ['folderId' => $primaryKey];
+
+            if($row->parentFolderId !== null) {
+                $params['parentFolderId'] = $row->parentFolderId;
+            }
+
             $el = HTML::el('a')
                 ->class('grid-link')
-                ->href($this->createURLString('listGroupRights', ['folderId' => $primaryKey]))
+                ->href($this->createURLString('listGroupRights', $params))
                 ->text('Group rights');
 
             return $el;
@@ -132,9 +150,15 @@ class DocumentFoldersPresenter extends AAdminPresenter {
             return true;
         };
         $deleteFolder->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
+            $params = ['folderId' => $primaryKey];
+
+            if($row->parentFolderId !== null) {
+                $params['parentFolderId'] = $row->parentFolderId;
+            }
+
             $el = HTML::el('a')
                     ->class('grid-link')
-                    ->href($this->createURLString('deleteFolder', ['folderId' => $primaryKey]))
+                    ->href($this->createURLString('deleteFolder', $params))
                     ->text('Delete');
 
             return $el;
@@ -204,14 +228,20 @@ class DocumentFoldersPresenter extends AAdminPresenter {
 
     public function handleListGroupRights() {
         $folderId = $this->httpGet('folderId', true);
+        $parentFolderId = $this->httpGet('parentFolderId') ?? $folderId;
 
         $folder = $this->folderManager->getFolderById($folderId);
 
         $this->saveToPresenterCache('folderTitle', $folder->title);
 
+        $params = ['folderId' => $folderId];
+        if($parentFolderId != $folderId) {
+            $params['parentFolderId'] = $parentFolderId;
+        }
+
         $links = [
-            LinkBuilder::createSimpleLink('&larr; Back', $this->createURL('list'), 'link'),
-            LinkBuilder::createSimpleLink('Add group', $this->createURL('newFolderGroupRightsForm', ['folderId' => $folderId]), 'link')
+            LinkBuilder::createSimpleLink('&larr; Back', $this->createURL('list', ['folderId' => $parentFolderId]), 'link'),
+            LinkBuilder::createSimpleLink('Add group', $this->createURL('newFolderGroupRightsForm', $params), 'link')
         ];
 
         $this->saveToPresenterCache('links', implode('&nbsp;&nbsp;', $links));
@@ -250,10 +280,15 @@ class DocumentFoldersPresenter extends AAdminPresenter {
             return true;
         };
         $edit->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) use ($request) {
+            $params = ['folderId' => $request->query['folderId'], 'groupId' => $row->groupId];
+            if(array_key_exists('parentFolderId', $request->query)) {
+                $params['parentFolderId'] = $request->query['parentFolderId'];
+            }
+
             $el = HTML::el('a')
                 ->text('Edit')
                 ->class('grid-link')
-                ->href($this->createURLString('editFolderGroupRightsForm', ['folderId' => $request->query['folderId'], 'groupId' => $row->groupId]))
+                ->href($this->createURLString('editFolderGroupRightsForm', $params))
             ;
 
             return $el;
@@ -267,10 +302,15 @@ class DocumentFoldersPresenter extends AAdminPresenter {
             return !($group['title'] == 'administrators');
         };
         $delete->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) use ($request) {
+            $params = ['folderId' => $request->query['folderId'], 'groupId' => $row->groupId];
+            if(array_key_exists('parentFolderId', $request->query)) {
+                $params['parentFolderId'] = $request->query['parentFolderId'];
+            }
+
             $el = HTML::el('a')
                 ->text('Delete')
                 ->class('grid-link')
-                ->href($this->createURLString('deleteFolderGroupRights', ['folderId' => $request->query['folderId'], 'groupId' => $row->groupId]))
+                ->href($this->createURLString('deleteFolderGroupRights', $params))
             ;
 
             return $el;
@@ -281,6 +321,7 @@ class DocumentFoldersPresenter extends AAdminPresenter {
 
     public function handleDeleteFolderGroupRights() {
         $folderId = $this->httpGet('folderId', true);
+        $parentFolderId = $this->httpGet('parentFolderId') ?? $folderId;
         $groupId = $this->httpGet('groupId', true);
 
         try {
@@ -297,12 +338,18 @@ class DocumentFoldersPresenter extends AAdminPresenter {
             $this->flashMessage('Could not delete group rights. Reason: ' . $e->getMessage(), 'error', 10);
         }
 
-        $this->redirect($this->createURL('listGroupRights', ['folderId' => $folderId]));
+        $params = ['folderId' => $folderId];
+        if($parentFolderId != $folderId) {
+            $params['parentFolderId'] = $parentFolderId;
+        }
+
+        $this->redirect($this->createURL('listGroupRights', $params));
     }
 
     public function handleNewFolderGroupRightsForm(?FormResponse $fr = null) {
         if($fr !== null) {
             $folderId = $this->httpGet('folderId', true);
+            $parentFolderId = $this->httpGet('parentFolderId') ?? $folderId;
 
             try {
                 $check = function(string $key) use ($fr) {
@@ -335,13 +382,26 @@ class DocumentFoldersPresenter extends AAdminPresenter {
                 $this->flashMessage('Could not add new group. Reason: ' . $e->getMessage(), 'error', 10);
             }
 
-            $this->redirect($this->createURL('listGroupRights', ['folderId' => $folderId]));
+            $params = ['folderId' => $folderId];
+            if($parentFolderId != $folderId) {
+                $params['parentFolderId'] = $parentFolderId;
+            }
+
+            $this->redirect($this->createURL('listGroupRights', $params));
         }
     }
 
     public function renderNewFolderGroupRightsForm() {
+        $folderId = $this->httpGet('folderId');
+        $parentFolderId = $this->httpGet('parentFolderId') ?? $folderId;
+
+        $params = ['folderId' => $folderId];
+        if($parentFolderId != $folderId) {
+            $params['parentFolderId'] = $parentFolderId;
+        }
+
         $this->template->links = [
-            LinkBuilder::createSimpleLink('&larr; Back', $this->createURL('listGroupRights', ['folderId' => $this->httpGet('folderId')]), 'link')
+            LinkBuilder::createSimpleLink('&larr; Back', $this->createURL('listGroupRights', $params), 'link')
         ];
     }
 
@@ -373,7 +433,12 @@ class DocumentFoldersPresenter extends AAdminPresenter {
 
         $form = $this->componentFactory->getFormBuilder();
 
-        $form->setAction($this->createURL('newFolderGroupRightsForm', ['folderId' => $request->query['folderId']]));
+        $params = ['folderId' => $request->query['folderId']];
+        if(array_key_exists('parentFolderId', $request->query)) {
+            $params['parentFolderId'] = $request->query['parentFolderId'];
+        }
+
+        $form->setAction($this->createURL('newFolderGroupRightsForm', $params));
 
         $sel = $form->addSelect('group', 'Group')
             ->setRequired()
@@ -404,6 +469,7 @@ class DocumentFoldersPresenter extends AAdminPresenter {
     public function handleEditFolderGroupRightsForm(?FormResponse $fr = null) {
         if($fr !== null) {
             $folderId = $this->httpGet('folderId', true);
+            $parentFolderId = $this->httpGet('parentFolderId') ?? $folderId;
             $groupId = $this->httpGet('groupId', true);
 
             try {
@@ -436,13 +502,26 @@ class DocumentFoldersPresenter extends AAdminPresenter {
 
                 $this->flashMessage('Could not update group. Reason: ' . $e->getMessage(), 'error', 10);
             }
+            
+            $params = ['folderId' => $folderId];
+            if($parentFolderId != $folderId) {
+                $params['parentFolderId'] = $parentFolderId;
+            }
 
-            $this->redirect($this->createURL('listGroupRights', ['folderId' => $folderId]));
+            $this->redirect($this->createURL('listGroupRights', $params));
         }
     }
 
     public function renderEditFolderGroupRightsForm() {
-        $this->template->links = $this->createBackUrl('listGroupRights', ['folderId' => $this->httpGet('folderId')], 'link');
+        $folderId = $this->httpGet('folderId');
+        $parentFolderId = $this->httpGet('parentFolderId') ?? $folderId;
+
+        $params = ['folderId' => $folderId];
+        if($parentFolderId != $folderId) {
+            $params['parentFolderId'] = $parentFolderId;
+        }
+
+        $this->template->links = $this->createBackUrl('listGroupRights', $params, 'link');
     }
 
     protected function createComponentEditFolderGroupRightsForm(HttpRequest $request) {
@@ -455,7 +534,13 @@ class DocumentFoldersPresenter extends AAdminPresenter {
         $group = $this->groupManager->getGroupById($request->query['groupId']);
 
         $form = $this->componentFactory->getFormBuilder();
-        $form->setAction($this->createURL('editFolderGroupRightsForm', ['folderId' => $request->query['folderId'], 'groupId' => $request->query['groupId']]));
+        
+        $params = ['folderId' => $request->query['folderId'], 'groupId' => $request->query['groupId']];
+        if(array_key_exists('parentFolderId', $request->query['parentFolderId'])) {
+            $params['parentFolderId'] = $request->query['parentFolderId'];
+        }
+
+        $form->setAction($this->createURL('editFolderGroupRightsForm', $params));
 
         $form->addSelect('group', 'Group')
             ->setRequired()
@@ -478,10 +563,16 @@ class DocumentFoldersPresenter extends AAdminPresenter {
 
     public function handleListMetadata() {
         $folderId = $this->httpGet('folderId', true);
+        $parentFolderId = $this->httpGet('parentFolderId') ?? $folderId;
+
+        $params = ['folderId' => $folderId];
+        if($parentFolderId != $folderId) {
+            $params['parentFolderId'] = $parentFolderId;
+        }
 
         $links = [
-            $this->createBackUrl('list'),
-            LinkBuilder::createSimpleLink('Add metadata', $this->createURL('addMetadataToFolderForm', ['folderId' => $folderId]), 'link')
+            $this->createBackUrl('list', ['folderId' => $parentFolderId]),
+            LinkBuilder::createSimpleLink('Add metadata', $this->createURL('addMetadataToFolderForm', $params), 'link')
         ];
 
         $this->saveToPresenterCache('links', implode('&nbsp;&nbsp;', $links));
@@ -507,10 +598,15 @@ class DocumentFoldersPresenter extends AAdminPresenter {
         $delete->onCanRender[] = function() {
             return true;
         };
-        $delete->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
+        $delete->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) use ($request) {
+            $params = ['metadataId' => $row->customMetadataId, 'folderId' => $row->folderId];
+            if(array_key_exists('parentFolderId', $request->query)) {
+                $params['parentFolderId'] = $request->query['parentFolderId'];
+            }
+
             $el = HTML::el('a')
                 ->text('Remove')
-                ->href($this->createURLString('removeMetadataFromFolder', ['metadataId' => $row->customMetadataId, 'folderId' => $row->folderId]))
+                ->href($this->createURLString('removeMetadataFromFolder', $params))
                 ->class('grid-link');
 
             return $el;
@@ -521,6 +617,7 @@ class DocumentFoldersPresenter extends AAdminPresenter {
 
     public function handleAddMetadataToFolderForm(?FormResponse $fr = null) {
         $folderId = $this->httpGet('folderId', true);
+        $parentFolderId = $this->httpGet('parentFolderId') ?? $folderId;
 
         if($fr !== null) {
             try {
@@ -537,12 +634,24 @@ class DocumentFoldersPresenter extends AAdminPresenter {
                 $this->flashMessage('Could not add metadata to folder. Reason: ' . $e->getMessage(), 'error', 10);
             }
 
-            $this->redirect($this->createURL('listMetadata', ['folderId' => $folderId]));
+            $params = ['folderId' => $folderId];
+            if($parentFolderId != $folderId) {
+                $params['parentFolderId'] = $parentFolderId;
+            }
+
+            $this->redirect($this->createURL('listMetadata', $params));
         }
     }
 
     public function renderAddMetadataToFolderForm() {
-        $this->template->links = $this->createBackUrl('listMetadata', ['folderId' => $this->httpGet('folderId')]);
+        $folderId = $this->httpGet('folderId');
+        $parentFolderId = $this->httpGet('parentFolderId') ?? $folderId;
+
+        $params = ['folderId' => $folderId];
+        if($parentFolderId != $folderId) {
+            $params['parentFolderId'] = $parentFolderId;
+        }
+        $this->template->links = $this->createBackUrl('listMetadata', $params);
     }
 
     protected function createComponentAddMetadataToFolderForm(HttpRequest $request) {
@@ -561,6 +670,11 @@ class DocumentFoldersPresenter extends AAdminPresenter {
 
         $form = $this->componentFactory->getFormBuilder();
 
+        $params = ['folderId' => $request->query['folderId']];
+        if(array_key_exists('parentFolderId', $request->query)) {
+            $params['parentFolderId'] = $request->query['parentFolderId'];
+        }
+
         $form->setAction($this->createURL('addMetadataToFolderForm', ['folderId' => $request->query['folderId']]));
 
         $form->addSelect('metadata', 'Metadata:')
@@ -575,6 +689,7 @@ class DocumentFoldersPresenter extends AAdminPresenter {
 
     public function handleRemoveMetadataFromFolder() {
         $folderId = $this->httpGet('folderId', true);
+        $parentFolderId = $this->httpGet('parentFolderId') ?? $folderId;
         $metadataId = $this->httpGet('metadataId', true);
 
         try {
@@ -589,6 +704,11 @@ class DocumentFoldersPresenter extends AAdminPresenter {
             $this->metadataRepository->rollback(__METHOD__);
 
             $this->flashMessage('Could not remove metadata from folder. Reason: ' . $e->getMessage(), 'error', 10);
+        }
+
+        $params = ['folderId' => $folderId];
+        if($parentFolderId != $folderId) {
+            $params['parentFolderId'] = $parentFolderId;
         }
 
         $this->redirect($this->createURL('listMetadata', ['folderId' => $folderId]));

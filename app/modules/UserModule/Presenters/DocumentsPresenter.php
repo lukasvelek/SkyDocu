@@ -3,6 +3,7 @@
 namespace App\Modules\UserModule;
 
 use App\Components\DocumentsGrid\DocumentsGrid;
+use App\Components\FoldersSidebar\FoldersSidebar;
 use App\Constants\Container\CustomMetadataTypes;
 use App\Constants\Container\DocumentStatus;
 use App\Core\DB\DatabaseRow;
@@ -26,31 +27,7 @@ class DocumentsPresenter extends AUserPresenter {
     }
 
     protected function createComponentFoldersSidebar(HttpRequest $request) {
-        $sidebar = $this->componentFactory->getSidebar();
-
-        $visibleFolders = $this->folderManager->getVisibleFoldersForUser($this->getUserId());
-
-        $foldersToSort = [];
-        foreach($visibleFolders as $vf) {
-            $active = false;
-
-            if($this->currentFolderId == $vf->folderId && $this->getAction() == 'list') {
-                $active = true;
-                $this->saveToPresenterCache('folderTitle', $vf->title);
-            }
-
-            if($this->currentFolderId === null && $vf->title == 'Default') {
-                $this->redirect($this->createURL('switchFolder', ['folderId' => $vf->folderId]));
-            }
-            
-            $foldersToSort[$vf->title] = ['folderId' => $vf->folderId, 'active' => $active];
-        }
-
-        ksort($foldersToSort);
-
-        foreach($foldersToSort as $title => $data) {
-            $sidebar->addLink($title, $this->createURL('switchFolder', ['folderId' => $data['folderId']]), $data['active']);
-        }
+        $sidebar = new FoldersSidebar($request, $this->folderManager, 'list');
 
         return $sidebar;
     }
@@ -60,6 +37,12 @@ class DocumentsPresenter extends AUserPresenter {
 
         if($folderId !== null) {
             $this->currentFolderId = $folderId;
+        }
+
+        if($this->currentFolderId !== null) {
+            $folder = $this->folderManager->getFolderById($this->currentFolderId);
+
+            $this->saveToPresenterCache('folderTitle', $folder->title);
         }
     }
 

@@ -21,18 +21,74 @@ class DocumentFoldersPresenter extends AAdminPresenter {
         $this->setDocuments();
     }
 
-    public function renderList() {
-        $this->template->links = [
-            LinkBuilder::createSimpleLink('New folder', $this->createURL('newFolderForm'), 'link')
+    public function handleList() {
+        $links = [];
+
+        $newFolderLink = LinkBuilder::createSimpleLink('New folder', $this->createURL('newFolderForm'), 'link');
+        $folderPathArray = [
+            LinkBuilder::createSimpleLink('Home', $this->createURL('list'), 'link')
         ];
+
+        if($this->httpGet('folderId') !== null) {
+            $folderId = $this->httpGet('folderId');
+            
+            $newFolderLink = LinkBuilder::createSimpleLink('New folder', $this->createURL('newFolderForm', ['folderId' => $folderId]), 'link');
+            
+            $folderPathToRoot = $this->folderManager->getFolderPathToRoot($folderId);
+
+            if(count($folderPathToRoot) >= MAX_CONTAINER_DOCUMENT_FOLDER_NESTING_LEVEL) {
+                $newFolderLink = $this->createFlashMessage('info', 'Cannot create new folder, because the maximum nesting level was reached.', 0, false, true);
+            }
+
+            foreach($folderPathToRoot as $_folder) {
+                $_folderId = $_folder->folderId;
+                
+                if($_folderId != $folderId) {
+                    $folderPathArray[] = LinkBuilder::createSimpleLink($_folder->title, $this->createURL('list', ['folderId' => $_folderId]), 'link');
+                } else {
+                    $folderPathArray[] = '<span id="link">' . $_folder->title . '</span>';
+                }
+            }
+        }
+        
+        $folderPath = implode(' > ', $folderPathArray);
+        $links[] = $newFolderLink;
+
+        $this->saveToPresenterCache('links', implode('&nbsp;&nbsp;', $links));
+        $this->saveToPresenterCache('folderPath', $folderPath);
+    }
+
+    public function renderList() {
+        $this->template->links = $this->loadFromPresenterCache('links');
+        $this->template->folder_path = $this->loadFromPresenterCache('folderPath');
     }
 
     protected function createComponentDocumentFoldersGrid(HttpRequest $request) {
         $grid = $this->componentFactory->getGridBuilder();
 
-        $grid->createDataSourceFromQueryBuilder($this->folderManager->composeQueryForVisibleFoldersForUser($this->getUserId()), 'folderId');
+        $qb = $this->folderManager->composeQueryForVisibleFoldersForUser($this->getUserId());
+
+        if(array_key_exists('folderId', $request->query)) {
+            $qb = $this->folderManager->composeQueryForSubfoldersForFolder($request->query['folderId']);
+        }
+
+        $grid->createDataSourceFromQueryBuilder($qb, 'folderId');
 
         $grid->addColumnText('title', 'Title');
+
+        $subfolders = $grid->addAction('subfolders');
+        $subfolders->setTitle('Subfolders');
+        $subfolders->onCanRender[] = function(DatabaseRow $row) {
+            return true;
+        };
+        $subfolders->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
+            $el = HTML::el('a')
+                ->class('grid-link')
+                ->href($this->createURLString('list', ['folderId' => $primaryKey]))
+                ->text('Subfolders');
+
+            return $el;
+        };
 
         $metadata = $grid->addAction('metadata');
         $metadata->setTitle('Metadata');
@@ -88,35 +144,55 @@ class DocumentFoldersPresenter extends AAdminPresenter {
     }
 
     public function handleNewFolderForm(?FormResponse $fr = null) {
+        $folderId = $this->httpGet('folderId');
+
         if($fr !== null) {
             try {
                 $this->folderRepository->beginTransaction(__METHOD__);
 
-                $this->folderManager->createNewFolder($fr->title, $this->getUserId());
+                $this->folderManager->createNewFolder($fr->title, $this->getUserId(), $folderId);
 
                 $this->folderRepository->commit($this->getUserId(), __METHOD__);
 
-                $this->flashMessage('Folder created.', 'success', 5);
+                $this->flashMessage('Folder created.', 'success');
             } catch(AException $e) {
                 $this->folderRepository->rollback(__METHOD__);
                 
                 $this->flashMessage('Could not create new folder.', 'error', 10);
             }
 
-            $this->redirect($this->createURL('list'));
+            if($folderId !== null) {
+                $this->redirect($this->createURL('list', ['folderId' => $folderId]));
+            } else {
+                $this->redirect($this->createURL('list'));
+            }
+        } else {
+            $backLink = '';
+            if($folderId !== null) {
+                $backLink = $this->createBackUrl('list', ['folderId' => $folderId]);
+            } else {
+                $backLink = $this->createBackUrl('list');
+            }
+
+            $this->saveToPresenterCache('links', $backLink);
         }
     }
 
     public function renderNewFolderForm() {
-        $this->template->links = [
-            LinkBuilder::createSimpleLink('&larr; Back', $this->createURL('list'), 'link')
-        ];
+        $this->template->links = $this->loadFromPresenterCache('links');
     }
 
     protected function createComponentNewDocumentFolderForm(HttpRequest $request) {
+        $url = '';
+        if(array_key_exists('folderId', $request->query)) {
+            $url = $this->createURL('newFolderForm', ['folderId' => $request->query['folderId']]);
+        } else {
+            $url = $this->createURL('newFolderForm');
+        }
+
         $form = $this->componentFactory->getFormBuilder();
 
-        $form->setAction($this->createURL('newFolderForm'));
+        $form->setAction($url);
 
         $form->addTextInput('title', 'Title:')
             ->setRequired();

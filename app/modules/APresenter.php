@@ -40,7 +40,7 @@ abstract class APresenter extends AGUICore {
     private bool $lock;
     private ?UserEntity $currentUser;
 
-    protected ?TemplateObject $template;
+    public ?TemplateObject $template;
     public ?Logger $logger;
 
     private ArrayList $beforeRenderCallbacks;

@@ -75,7 +75,8 @@ class FolderManager extends AManager {
 
         $qb = $this->fr->composeQueryForFolders();
 
-        $qb->where($qb->getColumnInValues('folderId', $folderIds));
+        $qb->where($qb->getColumnInValues('folderId', $folderIds))
+            ->orderBy('title');
 
         return $qb;
     }

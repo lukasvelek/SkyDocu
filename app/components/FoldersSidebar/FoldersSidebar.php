@@ -14,12 +14,17 @@ use App\Managers\Container\FolderManager;
 class FoldersSidebar extends Sidebar2 {
     private FolderManager $folderManager;
     private string $action;
+    private array $positions;
+    private array $_list;
 
     public function __construct(HttpRequest $request, FolderManager $folderManager, string $action) {
         parent::__construct($request);
 
         $this->folderManager = $folderManager;
         $this->action = $action;
+
+        $this->positions = [];
+        $this->_list = [];
     }
 
     public function startup() {
@@ -41,9 +46,14 @@ class FoldersSidebar extends Sidebar2 {
      * @param Folder $folder Current folder entity
      * @param array $list Current link list
      * @param int $level Current nesting level
+     * @param bool $isDefault Is default? (DO NOT USE)
      */
-    private function createFolderList(Folder $folder, array &$list, int $level) {
+    private function createFolderList(Folder $folder, array &$list, int $level, bool $isDefault = false) {
         $subfolders = $this->folderManager->getSubfoldersForFolder($folder->folderId);
+
+        if($folder->row->title == 'Default') {
+            $isDefault = true;
+        }
 
         $spaces = '';
         if($level > 0) {
@@ -66,11 +76,17 @@ class FoldersSidebar extends Sidebar2 {
             $active = true;
         }
 
-        $list[] = $this->createLink($title, $this->presenter->createURL($this->action, $params), $active);
+        if($isDefault === true) {
+            array_splice($list, $level, 0, $this->createLink($title, $this->presenter->createURL($this->action, $params), $active));
+        } else {
+            $list[] = $this->createLink($title, $this->presenter->createURL($this->action, $params), $active);
+        }
+
+        $this->_list[$folder->parentFolderId ?? 'null'][] = $folder;
 
         if(count($subfolders) > 0) {
             foreach($subfolders as $subfolder) {
-                $this->createFolderList(new Folder($subfolder), $list, $level + 1);
+                $this->createFolderList(new Folder($subfolder), $list, $level + 1, $isDefault);
             }
         }
     }

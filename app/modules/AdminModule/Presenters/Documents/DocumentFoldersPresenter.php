@@ -144,18 +144,22 @@ class DocumentFoldersPresenter extends AAdminPresenter {
             try {
                 $this->folderRepository->beginTransaction(__METHOD__);
 
-                $this->folderManager->createNewFolder($fr->title, $this->getUserId());
+                $this->folderManager->createNewFolder($fr->title, $this->getUserId(), $folderId);
 
                 $this->folderRepository->commit($this->getUserId(), __METHOD__);
 
-                $this->flashMessage('Folder created.', 'success', 5);
+                $this->flashMessage('Folder created.', 'success');
             } catch(AException $e) {
                 $this->folderRepository->rollback(__METHOD__);
                 
                 $this->flashMessage('Could not create new folder.', 'error', 10);
             }
 
-            $this->redirect($this->createURL('list'));
+            if($folderId !== null) {
+                $this->redirect($this->createURL('list', ['folderId' => $folderId]));
+            } else {
+                $this->redirect($this->createURL('list'));
+            }
         } else {
             $backLink = '';
             if($folderId !== null) {

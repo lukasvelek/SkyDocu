@@ -135,11 +135,19 @@ class FolderRepository extends ARepository {
         return $qb->fetchBool();
     }
 
-    public function createNewFolder(string $folderId, string $title) {
+    public function createNewFolder(string $folderId, string $title, ?string $parentFolderId = null) {
         $qb = $this->qb(__METHOD__);
 
-        $qb->insert('document_folders', ['folderId', 'title'])
-            ->values([$folderId, $title])
+        $keys = ['folderId', 'title'];
+        $values = [$folderId, $title];
+
+        if($parentFolderId !== null) {
+            $keys[] = 'parentFolderId';
+            $values[] = $parentFolderId;
+        }
+
+        $qb->insert('document_folders', $keys)
+            ->values($values)
             ->execute();
 
         return $qb->fetchBool();

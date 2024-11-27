@@ -81,21 +81,23 @@ class FolderManager extends AManager {
         return $qb;
     }
 
-    public function createNewFolder(string $title, string $callingUserId) {
+    public function createNewFolder(string $title, string $callingUserId, ?string $parentFolderId = null) {
         $folderId = $this->createId(EntityManager::C_DOCUMENT_FOLDERS);
 
-        if(!$this->fr->createNewFolder($folderId, $title)) {
+        if(!$this->fr->createNewFolder($folderId, $title, $parentFolderId)) {
             throw new GeneralException('Database error.');
         }
 
-        $groupIds = $this->gr->getGroupsForUser($callingUserId);
-        $administratorsGroup = $this->gr->getGroupByTitle(SystemGroups::ADMINISTRATORS);
+        if($parentFolderId === null) {
+            $groupIds = $this->gr->getGroupsForUser($callingUserId);
+            $administratorsGroup = $this->gr->getGroupByTitle(SystemGroups::ADMINISTRATORS);
 
-        foreach($groupIds as $groupId) {
-            if($administratorsGroup !== null && $administratorsGroup['groupId'] == $groupId) {
-                $this->updateGroupFolderRight($folderId, $groupId, true, true, true, true);
-            } else {
-                $this->updateGroupFolderRight($folderId, $groupId, true, true, false, false);
+            foreach($groupIds as $groupId) {
+                if($administratorsGroup !== null && $administratorsGroup['groupId'] == $groupId) {
+                    $this->updateGroupFolderRight($folderId, $groupId, true, true, true, true);
+                } else {
+                    $this->updateGroupFolderRight($folderId, $groupId, true, true, false, false);
+                }
             }
         }
     }

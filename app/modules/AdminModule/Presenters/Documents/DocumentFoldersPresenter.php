@@ -34,6 +34,20 @@ class DocumentFoldersPresenter extends AAdminPresenter {
 
         $grid->addColumnText('title', 'Title');
 
+        $subfolders = $grid->addAction('subfolders');
+        $subfolders->setTitle('Subfolders');
+        $subfolders->onCanRender[] = function() {
+            return true;
+        };
+        $subfolders->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
+            $el = HTML::el('a')
+                ->class('grid-link')
+                ->href($this->createURLString('list', ['folderId' => $primaryKey]))
+                ->text('Subfolders');
+
+            return $el;
+        };
+
         $metadata = $grid->addAction('metadata');
         $metadata->setTitle('Metadata');
         $metadata->onCanRender[] = function() {

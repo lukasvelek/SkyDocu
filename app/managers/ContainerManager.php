@@ -330,7 +330,12 @@ class ContainerManager extends AManager {
         }
 
         // Invalidate container cache
-        if(!$this->cacheFactory->invalidateCacheByNamespace(CacheNames::CONTAINERS)) {
+        if(!$this->cacheFactory->invalidateCacheByNamespace(CacheNames::CONTAINERS) ||
+            !$this->cacheFactory->invalidateCacheByNamespace(CacheNames::GROUPS) ||
+            !$this->cacheFactory->invalidateCacheByNamespace(CacheNames::GROUP_MEMBERSHIPS) ||
+            !$this->cacheFactory->invalidateCacheByNamespace(CacheNames::GROUP_TITLE_TO_ID_MAPPING) ||
+            !$this->cacheFactory->invalidateCacheByNamespace(CacheNames::USER_GROUP_MEMBERSHIPS) ||
+            !$this->cacheFactory->invalidateCacheByNamespace(CacheNames::NAVBAR_CONTAINER_SWITCH_USER_MEMBERSHIPS)) {
             throw new GeneralException('Could not invalidate cache.');
         }
     }

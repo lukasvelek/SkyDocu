@@ -50,7 +50,8 @@ class ContainerCreationHelper {
             'document_folders' => [
                 'folderId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',
                 'title' => 'VARCHAR(256) NOT NULL',
-                'isSystem' => 'INT(2) NOT NULL DEFAULT 0'
+                'isSystem' => 'INT(2) NOT NULL DEFAULT 0',
+                'parentFolderId' => 'VARCHAR(256) NULL'
             ],
             'document_folder_custom_metadata_relation' => [
                 'relationId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',

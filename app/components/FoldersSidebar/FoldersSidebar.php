@@ -14,7 +14,6 @@ use App\Managers\Container\FolderManager;
 class FoldersSidebar extends Sidebar2 {
     private FolderManager $folderManager;
     private string $action;
-    private array $positions;
     private array $_list;
 
     public function __construct(HttpRequest $request, FolderManager $folderManager, string $action) {
@@ -22,8 +21,7 @@ class FoldersSidebar extends Sidebar2 {
 
         $this->folderManager = $folderManager;
         $this->action = $action;
-
-        $this->positions = [];
+        
         $this->_list = [];
     }
 

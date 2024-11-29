@@ -2,6 +2,7 @@
 
 namespace App\Managers\Container;
 
+use App\Constants\Container\GridNames;
 use App\Core\DB\DatabaseRow;
 use App\Exceptions\GeneralException;
 use App\Logger\Logger;
@@ -52,6 +53,32 @@ class GridManager extends AManager {
 
     public function composeQueryForGridConfigurations() {
         return $this->gr->composeQueryForGridConfigurations();
+    }
+
+    public function getGridsWithNoConfiguration(bool $forSelect) {
+        $qb = $this->gr->composeQueryForGridConfigurations();
+        $qb->execute();
+
+        $gridsDb = [];
+        while($row = $qb->fetchAssoc()) {
+            $gridsDb[] = $row['gridName'];
+        }
+
+        $gridsToShow = [];
+        foreach(GridNames::getAll() as $value => $text) {
+            if(!in_array($value, $gridsDb)) {
+                if($forSelect) {
+                    $gridsToShow[] = [
+                        'value' => $value,
+                        'text' => $text
+                    ];
+                } else {
+                    $gridsToShow[$value] = $text;
+                }
+            }
+        }
+
+        return $gridsToShow;
     }
 }
 

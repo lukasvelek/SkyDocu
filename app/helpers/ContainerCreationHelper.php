@@ -131,6 +131,12 @@ class ContainerCreationHelper {
                 'callingMethod' => 'TEXT NOT NULL',
                 'dateCreated' => 'DATETIME NOT NULL DEFAULT current_timestamp()'
             ],
+            'grid_configuration' => [
+                'configurationId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',
+                'gridName' => 'VARCHAR(256) NOT NULL',
+                'columnConfiguration' => 'TEXT NOT NULL',
+                'dateCreated' => 'DATETIME NOT NULL DEFAULT current_timestamp()'
+            ]
         ];
     }
 
@@ -168,6 +174,9 @@ class ContainerCreationHelper {
                 'groupId',
                 'classId',
                 'canView'
+            ],
+            'grid_configuration' => [
+                'gridName'
             ]
         ];
     }

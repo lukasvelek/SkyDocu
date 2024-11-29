@@ -6,6 +6,7 @@ use App\Authorizators\DocumentBulkActionAuthorizator;
 use App\Authorizators\GroupStandardOperationsAuthorizator;
 use App\Constants\Container\CustomMetadataTypes;
 use App\Constants\Container\DocumentStatus;
+use App\Constants\Container\GridNames;
 use App\Core\Application;
 use App\Core\DB\DatabaseRow;
 use App\Enums\AEnumForMetadata;
@@ -137,6 +138,7 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
      */
     private function setup() {
         $this->addQueryDependency('folderId', $this->getFolderId());
+        $this->setGridName(GridNames::DOCUMENTS_GRID);
     }
 
     /**

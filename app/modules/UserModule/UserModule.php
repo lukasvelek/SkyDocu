@@ -11,14 +11,6 @@ class UserModule extends AContainerModule {
 
         $this->navbarMode = NavbarModes::GENERAL;
     }
-
-    public function renderModule() {
-        parent::renderModule();
-        
-        if($this->template !== null) {
-            $this->template->sys_navbar = $this->navbar;
-        }
-    }
 }
 
 ?>

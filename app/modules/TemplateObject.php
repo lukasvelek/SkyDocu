@@ -176,6 +176,15 @@ class TemplateObject {
             $this->$ev = $extendingObject->$ev;
         }
     }
+
+    /**
+     * Returns template content
+     * 
+     * @return string Template content
+     */
+    public function getTemplateContent() {
+        return $this->__templateContent;
+    }
 }
 
 ?>

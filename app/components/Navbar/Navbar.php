@@ -6,29 +6,31 @@ use App\Constants\Container\SystemGroups;
 use App\Core\Application;
 use App\Core\Caching\CacheFactory;
 use App\Core\Caching\CacheNames;
+use App\Core\Http\HttpRequest;
 use App\Entities\UserEntity;
 use App\Helpers\LinkHelper;
 use App\Managers\Container\GroupManager;
 use App\Modules\TemplateObject;
+use App\UI\AComponent;
 use App\UI\IRenderable;
 
-class Navbar implements IRenderable {
+class Navbar extends AComponent {
     private array $links;
     private TemplateObject $template;
     private UserEntity $user;
     private array $hideLinks;
     private int $mode;
-    private Application $app;
     private ?GroupManager $groupManager;
     private CacheFactory $cacheFactory;
 
-    public function __construct(int $mode, UserEntity $user, Application $app, ?GroupManager $groupManager) {
+    public function __construct(HttpRequest $httpRequest, int $mode, UserEntity $user, ?GroupManager $groupManager) {
+        parent::__construct($httpRequest);
+
         $this->mode = $mode;
         $this->links = [];
         $this->template = new TemplateObject(file_get_contents(__DIR__ . '\\template.html'));
         $this->user = $user;
         $this->hideLinks = [];
-        $this->app = $app;
         $this->groupManager = $groupManager;
         $this->cacheFactory = new CacheFactory();
     }
@@ -172,11 +174,15 @@ class Navbar implements IRenderable {
         });
 
         if($count > 1) {
-            return $this->createLink(['page' => 'Anonym:Login', 'action' => 'switchContainer'], 'Containers');
+            $url = ['page' => 'Anonym:Login', 'action' => 'switchContainer'];
+
+            return $this->createLink($url, 'Containers');
         } else {
             return null;
         }
     }
+
+    public static function createFromComponent(AComponent $component) {}
 }
 
 ?>

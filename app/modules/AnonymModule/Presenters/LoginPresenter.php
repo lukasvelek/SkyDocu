@@ -5,6 +5,7 @@ namespace App\Modules\AnonymModule;
 use App\Components\ContainerSelectionForm\ContainerSelectionForm;
 use App\Constants\ContainerEnvironments;
 use App\Constants\ContainerStatus;
+use App\Constants\SystemGroups;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
 use App\UI\FormBuilder\FormResponse;
@@ -61,20 +62,20 @@ class LoginPresenter extends AAnonymPresenter {
                     continue;
                 }
 
-                if($group->title == 'superadministrators') {
+                $title = substr($group->title, 0, (strlen($group->title) - 8));
+    
+                $containers[] = [
+                    'value' => $group->containerId,
+                    'text' => $title
+                ];
+            } else {
+                if($group->title == SystemGroups::SUPERADMINISTRATORS) {
                     $c = [
                         'value' => $group->title,
                         'text' => 'Superadministration'
                     ];
     
                     array_unshift($containers, $c);
-                } else {
-                    $title = substr($group->title, 0, (strlen($group->title) - 8));
-    
-                    $containers[] = [
-                        'value' => $group->containerId,
-                        'text' => $title
-                    ];
                 }
             }
         }

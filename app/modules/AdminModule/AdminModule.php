@@ -12,14 +12,6 @@ class AdminModule extends AContainerModule {
 
         $this->navbarMode = NavbarModes::ADMINISTRATION;
     }
-
-    public function renderModule() {
-        parent::renderModule();
-
-        if($this->template !== null) {
-            $this->template->sys_navbar = $this->navbar;
-        }
-    }
 }
 
 ?>

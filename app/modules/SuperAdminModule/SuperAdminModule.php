@@ -2,7 +2,6 @@
 
 namespace App\Modules\SuperAdminModule;
 
-use App\Components\Navbar\Navbar;
 use App\Components\Navbar\NavbarModes;
 use App\Modules\AModule;
 
@@ -11,12 +10,8 @@ class SuperAdminModule extends AModule {
         parent::__construct('SuperAdminModule');
     }
 
-    public function renderModule() {
-        $navbar = new Navbar(NavbarModes::SUPERADMINISTRATION, $this->app->currentUser, $this->app, null);
-        $navbar->startup();
-        if($this->template !== null) {
-            $this->template->sys_navbar = $navbar;
-        }
+    protected function createComponentSysNavbar() {
+        return $this->createNavbarInstance(NavbarModes::SUPERADMINISTRATION, null);
     }
 }
 

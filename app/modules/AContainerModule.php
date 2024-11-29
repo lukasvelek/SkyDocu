@@ -34,14 +34,22 @@ abstract class AContainerModule extends AModule {
 
         $this->groupManager = new GroupManager($this->logger, $entityManager, $groupRepository, $userRepository);
 
-        $this->navbar = new Navbar($this->navbarMode, $this->app->currentUser, $this->app, $this->groupManager);
+        /**
+         * Injects GroupManager instance that was just created into the navbar component
+         */
+        $this->navbar->inject($this->groupManager);
     }
 
-    public function renderModule() {
-        parent::renderModule();
+    /**
+     * Creates the navbar component and saves it to the local $this->navbar variable and returns its link
+     * 
+     * @return Navbar
+     */
+    protected function createComponentSysNavbar() {
+        $this->navbar = $this->createNavbarInstance($this->navbarMode, null);
+        $navbar = &$this->navbar;
 
-        $this->navbar->inject($this->groupManager);
-        $this->navbar->startup();
+        return $navbar;
     }
 }
 

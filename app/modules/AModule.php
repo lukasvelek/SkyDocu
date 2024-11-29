@@ -2,12 +2,14 @@
 
 namespace App\Modules;
 
+use App\Components\Navbar\Navbar;
 use App\Core\Caching\CacheFactory;
 use App\Core\Caching\CacheNames;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
 use App\Exceptions\TemplateDoesNotExistException;
 use App\Logger\Logger;
+use App\Managers\Container\GroupManager;
 use Exception;
 
 /**
@@ -39,6 +41,7 @@ abstract class AModule extends AGUICore {
         $this->template = null;
         $this->logger = null;
         $this->isAjax = false;
+        $this->module = $this;
     }
 
     /**
@@ -181,6 +184,7 @@ abstract class AModule extends AGUICore {
         $this->presenter->setApplication($this->app);
         $this->presenter->setHttpRequest($this->httpRequest);
         $this->presenter->setPresenter($this->presenter);
+        $this->presenter->setModule($this);
         $this->presenter->lock();
         
         $this->presenter->startup();
@@ -224,6 +228,23 @@ abstract class AModule extends AGUICore {
      */
     public function getTitle() {
         return $this->title;
+    }
+
+    /**
+     * Creates navbar instance using given parameters
+     * 
+     * @param int $mode Navbar mode
+     * @param null|GroupManager $groupManager GroupManager instance or null
+     * @return Navbar Navbar instance
+     */
+    protected function createNavbarInstance(int $mode, ?GroupManager $groupManager) {
+        $navbar = new Navbar($this->httpRequest, $mode, $this->app->currentUser, $groupManager);
+
+        $navbar->setApplication($this->app);
+        $navbar->startup();
+        $navbar->setComponentName('navbar');
+
+        return $navbar;
     }
 }
 

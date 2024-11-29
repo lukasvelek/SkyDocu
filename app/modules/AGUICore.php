@@ -21,6 +21,7 @@ abstract class AGUICore {
     protected HttpRequest $httpRequest;
     protected Application $app;
     protected ?APresenter $presenter;
+    protected ?AModule $module;
 
     /**
      * Creates a flash message and returns its HTML code
@@ -62,6 +63,24 @@ abstract class AGUICore {
     }
 
     /**
+     * Sets the current Presenter instance
+     * 
+     * @param APresenter $presenter Current presenter instance
+     */
+    public function setPresenter(APresenter $presenter) {
+        $this->presenter = $presenter;
+    }
+
+    /**
+     * Sets the current Module instance
+     * 
+     * @param AModule $module Current module instance
+     */
+    public function setModule(AModule $module) {
+        $this->module = $module;
+    }
+
+    /**
      * Returns a template or null
      * 
      * @param string $file Template file path
@@ -72,9 +91,9 @@ abstract class AGUICore {
             $content = FileManager::loadFile($file);
             $template = new TemplateObject($content);
 
-            if(isset($this->presenter)) {
+            if(isset($this->presenter) || isset($this->module)) {
                 try {
-                    $this->checkComponents($content, $template);
+                    $this->checkComponents($template);
                 } catch(AException $e) {
                     throw new GeneralException('Could not render template. Reason: ' . $e->getMessage(), $e, false);
                 }
@@ -89,11 +108,10 @@ abstract class AGUICore {
     /**
      * Checks if components exist
      * 
-     * @param string $templateContent Template content
      * @param TemplateObject $template Template
      */
-    private function checkComponents(string $templateContent, TemplateObject $template) {
-        $components = TemplateHelper::loadComponentsFromTemplateContent($templateContent);
+    protected function checkComponents(TemplateObject $template) {
+        $components = TemplateHelper::loadComponentsFromTemplateContent($template->getTemplateContent());
 
         foreach($components as $componentName => $componentAction) {
             if(method_exists($this, $componentAction)) {
@@ -106,7 +124,9 @@ abstract class AGUICore {
 
                 if($component instanceof AComponent) {
                     $component->setComponentName($componentName);
-                    $component->setPresenter($this->presenter);
+                    if(isset($this->presenter)) {
+                        $component->setPresenter($this->presenter);
+                    }
                     $component->setApplication($this->app);
                     $component->startup();
 
@@ -118,15 +138,6 @@ abstract class AGUICore {
                 throw new GeneralException('No method \'' . $this::class . '::' . $componentAction . '()\' exists.', null, false);
             }
         }
-    }
-
-    /**
-     * Sets the current Presenter instance
-     * 
-     * @param APresenter $presenter Current presenter instance
-     */
-    public function setPresenter(APresenter $presenter) {
-        $this->presenter = $presenter;
     }
 
     /**

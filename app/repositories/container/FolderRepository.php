@@ -2,15 +2,9 @@
 
 namespace App\Repositories\Container;
 
-use App\Core\DatabaseConnection;
-use App\Logger\Logger;
 use App\Repositories\ARepository;
 
 class FolderRepository extends ARepository {
-    public function __construct(DatabaseConnection $conn, Logger $logger) {
-        parent::__construct($conn, $logger);
-    }
-
     public function composeQueryForFolders() {
         $qb = $this->qb(__METHOD__);
 

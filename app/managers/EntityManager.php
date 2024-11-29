@@ -37,6 +37,7 @@ class EntityManager extends AManager {
     public const C_CUSTOM_METADATA = 'custom_metadata';
     public const C_CUSTOM_METADATA_FOLDER_RELATION = 'document_folder_custom_metadata_relation';
     public const C_CUSTOM_METADATA_LIST_VALUES = 'custom_metadata_list_values';
+    public const C_GRID_CONFIGURATION = 'grid_configuration';
 
     private const __MAX__ = 100;
 
@@ -140,7 +141,8 @@ class EntityManager extends AManager {
             self::C_GROUP_USERS_RELATION => 'relationId',
             self::C_CUSTOM_METADATA => 'metadataId',
             self::C_CUSTOM_METADATA_FOLDER_RELATION => 'relationId',
-            self::C_CUSTOM_METADATA_LIST_VALUES => 'valueId'
+            self::C_CUSTOM_METADATA_LIST_VALUES => 'valueId',
+            self::C_GRID_CONFIGURATION => 'configurationId'
         };
     }
 }

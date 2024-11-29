@@ -2,15 +2,9 @@
 
 namespace App\Repositories\Container;
 
-use App\Core\DatabaseConnection;
-use App\Logger\Logger;
 use App\Repositories\ARepository;
 
 class MetadataRepository extends ARepository {
-    public function __construct(DatabaseConnection $db, Logger $logger) {
-        parent::__construct($db, $logger);
-    }
-
     public function composeQueryForMetadata() {
         $qb = $this->qb(__METHOD__);
 

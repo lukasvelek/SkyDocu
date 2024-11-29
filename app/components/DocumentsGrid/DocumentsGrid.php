@@ -5,7 +5,9 @@ namespace App\Components\DocumentsGrid;
 use App\Authorizators\DocumentBulkActionAuthorizator;
 use App\Authorizators\GroupStandardOperationsAuthorizator;
 use App\Constants\Container\CustomMetadataTypes;
+use App\Constants\Container\DocumentsGridSystemMetadata;
 use App\Constants\Container\DocumentStatus;
+use App\Constants\Container\GridNames;
 use App\Core\Application;
 use App\Core\DB\DatabaseRow;
 use App\Enums\AEnumForMetadata;
@@ -13,6 +15,7 @@ use App\Exceptions\GeneralException;
 use App\Helpers\GridHelper;
 use App\Managers\Container\DocumentManager;
 use App\Managers\Container\EnumManager;
+use App\Managers\Container\GridManager;
 use App\Modules\APresenter;
 use App\UI\GridBuilder2\Cell;
 use App\UI\GridBuilder2\GridBuilder;
@@ -32,6 +35,7 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
     private DocumentBulkActionAuthorizator $dbaa;
     private GroupStandardOperationsAuthorizator $gsoa;
     private EnumManager $em;
+    private GridManager $gm;
 
     private bool $allMetadata;
 
@@ -52,7 +56,8 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
         DocumentManager $documentManager,
         DocumentBulkActionAuthorizator $dbaa,
         GroupStandardOperationsAuthorizator $gsoa,
-        EnumManager $em
+        EnumManager $em,
+        GridManager $gm
     ) {
         parent::__construct($grid->httpRequest);
         $this->setHelper(new GridHelper($app->logger, $app->currentUser->getId()));
@@ -63,6 +68,7 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
         $this->dbaa = $dbaa;
         $this->gsoa = $gsoa;
         $this->em = $em;
+        $this->gm = $gm;
 
         $this->dbah = new DocumentBulkActionsHelper($this->app, $this->dm, $this->httpRequest, $this->dbaa, $this->gsoa);
 
@@ -137,6 +143,7 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
      */
     private function setup() {
         $this->addQueryDependency('folderId', $this->getFolderId());
+        $this->setGridName(GridNames::DOCUMENTS_GRID);
     }
 
     /**
@@ -192,9 +199,44 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
      * Appends system metadata
      */
     private function appendSystemMetadata() {
-        $this->addColumnText('title', 'Title');
-        $this->addColumnUser('authorUserId', 'Author');
-        $this->addColumnConst('status', 'Status', DocumentStatus::class);
+        $config = $this->getGridConfiguration();
+
+        if($config === null) {
+            $this->addColumnText(DocumentsGridSystemMetadata::TITLE, DocumentsGridSystemMetadata::toString(DocumentsGridSystemMetadata::TITLE));
+            $this->addColumnUser(DocumentsGridSystemMetadata::AUTHOR_USER_ID, DocumentsGridSystemMetadata::toString(DocumentsGridSystemMetadata::AUTHOR_USER_ID));
+            $this->addColumnConst(DocumentsGridSystemMetadata::STATUS, DocumentsGridSystemMetadata::toString(DocumentsGridSystemMetadata::STATUS), DocumentStatus::class);
+        } else {
+            foreach($config as $column) {
+                switch($column) {
+                    case DocumentsGridSystemMetadata::TITLE:
+                        $this->addColumnText(DocumentsGridSystemMetadata::TITLE, DocumentsGridSystemMetadata::toString(DocumentsGridSystemMetadata::TITLE));
+                        break;
+
+                    case DocumentsGridSystemMetadata::AUTHOR_USER_ID:
+                        $this->addColumnUser(DocumentsGridSystemMetadata::AUTHOR_USER_ID, DocumentsGridSystemMetadata::toString(DocumentsGridSystemMetadata::AUTHOR_USER_ID));
+                        break;
+
+                    case DocumentsGridSystemMetadata::STATUS:
+                        $this->addColumnConst(DocumentsGridSystemMetadata::STATUS, DocumentsGridSystemMetadata::toString(DocumentsGridSystemMetadata::STATUS), DocumentStatus::class);
+                        break;
+                }
+            }
+        }
+    }
+
+    /**
+     * Attempts to get grid configuration
+     * 
+     * @return ?array Array of visible system metadata or null if no configuration exists
+     */
+    private function getGridConfiguration() {
+        $row = $this->gm->getGridConfigurationForGridName(GridNames::DOCUMENTS_GRID);
+
+        if($row === null) {
+            return null;
+        }
+
+        return explode(';', $row->columnConfiguration);
     }
 
     /**

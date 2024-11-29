@@ -239,9 +239,7 @@ abstract class AModule extends AGUICore {
      */
     protected function createNavbarInstance(int $mode, ?GroupManager $groupManager) {
         $navbar = new Navbar($this->httpRequest, $mode, $this->app->currentUser, $groupManager);
-
-        $navbar->setApplication($this->app);
-        $navbar->startup();
+        
         $navbar->setComponentName('navbar');
 
         return $navbar;

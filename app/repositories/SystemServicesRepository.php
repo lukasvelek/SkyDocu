@@ -2,15 +2,9 @@
 
 namespace App\Repositories;
 
-use App\Core\DatabaseConnection;
 use App\Entities\SystemServiceEntity;
-use App\Logger\Logger;
 
 class SystemServicesRepository extends ARepository {
-    public function __construct(DatabaseConnection $db, Logger $logger) {
-        parent::__construct($db, $logger);
-    }
-
     public function getAllServices() {
         $qb = $this->qb(__METHOD__);
         

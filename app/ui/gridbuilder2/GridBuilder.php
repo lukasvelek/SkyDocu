@@ -436,6 +436,7 @@ class GridBuilder extends AComponent {
         $template->controls = $this->createGridControls();
         $template->filter_modal = '';
         $template->filters = $this->createGridFilterControls();
+        $template->grid_name = $this->gridName;
 
         return $template->render()->getRenderedContent();
     }

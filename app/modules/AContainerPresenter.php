@@ -9,12 +9,14 @@ use App\Core\DatabaseConnection;
 use App\Managers\Container\DocumentManager;
 use App\Managers\Container\EnumManager;
 use App\Managers\Container\FolderManager;
+use App\Managers\Container\GridManager;
 use App\Managers\Container\GroupManager;
 use App\Managers\Container\MetadataManager;
 use App\Managers\EntityManager;
 use App\Repositories\Container\DocumentClassRepository;
 use App\Repositories\Container\DocumentRepository;
 use App\Repositories\Container\FolderRepository;
+use App\Repositories\Container\GridRepository;
 use App\Repositories\Container\GroupRepository;
 use App\Repositories\Container\MetadataRepository;
 use App\Repositories\Container\TransactionLogRepository;
@@ -29,6 +31,7 @@ abstract class AContainerPresenter extends APresenter {
     protected DocumentClassRepository $documentClassRepository;
     protected MetadataRepository $metadataRepository;
     protected TransactionLogRepository $transactionLogRepository;
+    protected GridRepository $gridRepository;
     
     protected EntityManager $entityManager;
     protected FolderManager $folderManager;
@@ -36,6 +39,7 @@ abstract class AContainerPresenter extends APresenter {
     protected GroupManager $groupManager;
     protected MetadataManager $metadataManager;
     protected EnumManager $enumManager;
+    protected GridManager $gridManager;
 
     protected DocumentBulkActionAuthorizator $documentBulkActionAuthorizator;
     protected GroupStandardOperationsAuthorizator $groupStandardOperationsAuthorizator;
@@ -65,6 +69,7 @@ abstract class AContainerPresenter extends APresenter {
         $this->groupManager = new GroupManager($this->logger, $this->entityManager, $this->groupRepository, $this->app->userRepository);
         $this->metadataManager = new MetadataManager($this->logger, $this->entityManager, $this->metadataRepository, $this->folderRepository);
         $this->enumManager = new EnumManager($this->logger, $this->entityManager, $this->app->userRepository, $this->app->groupManager, $container);
+        $this->gridManager = new GridManager($this->logger, $this->entityManager, $this->gridRepository);
 
         $this->injectCacheFactoryToManagers();
 

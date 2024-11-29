@@ -102,27 +102,51 @@ class FormBuilder2 extends AComponent {
         $form->setMethod($this->method);
 
         foreach($this->elements as $name => $element) {
-            $label = null;
-            if(array_key_exists($name, $this->labels)) {
-                $label = $this->labels[$name];
-            }
-
-            if($element instanceof AInteractableElement) {
-                if($element->isRequired()) {
-                    $label->setRequired();
-                }
-            }
-
-            $row = new Row($label, $element, 'row_' . $name);
-
-            if($element->isHidden()) {
-                $row->hide();
-            }
+            $row = $this->buildElement($name, $element);
 
             $form->addRow($row);
         }
 
         return $form->render();
+    }
+
+    /**
+     * Builds a element row - label and the element itself
+     * 
+     * @param string $name Element name
+     * @param AElement $element Element
+     * @return Row Element row instance
+     */
+    protected function buildElement(string $name, AElement $element) {
+        $label = null;
+        if(array_key_exists($name, $this->labels)) {
+            $label = $this->labels[$name];
+        }
+
+        if($element instanceof AInteractableElement) {
+            if($element->isRequired()) {
+                $label->setRequired();
+            }
+        }
+
+        $row = new Row($label, $element, 'row_' . $name);
+
+        if($element->isHidden()) {
+            $row->hide();
+        }
+
+        return $row;
+    }
+
+    /**
+     * Adds empty layout section
+     * 
+     * @param string $name Section name
+     */
+    public function addLayoutSection(string $name) {
+        $fls = new FormLayoutSection($name);
+
+        $this->elements[$name] = &$fls;
     }
 
     /**

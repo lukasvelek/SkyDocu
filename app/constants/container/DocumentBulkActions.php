@@ -14,13 +14,6 @@ class DocumentBulkActions extends AConstant {
             self::DOCUMENT_HISTORY => 'History'
         };
     }
-
-    public static function getAll(): array {
-        return [
-            self::ARCHIVATION => self::toString(self::ARCHIVATION),
-            self::DOCUMENT_HISTORY => self::toString(self::DOCUMENT_HISTORY),
-        ];
-    }
 }
 
 ?>

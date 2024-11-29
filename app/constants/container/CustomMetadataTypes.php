@@ -26,18 +26,6 @@ class CustomMetadataTypes extends AConstant {
             self::SYSTEM_USER => 'User'
         };
     }
-
-    public static function getAll(): array {
-        return [
-            self::ENUM => self::toString(self::ENUM),
-            self::TEXT => self::toString(self::TEXT),
-            self::NUMBER => self::toString(self::NUMBER),
-            self::DATETIME => self::toString(self::DATETIME),
-            self::DATE => self::toString(self::DATE),
-            self::BOOL => self::toString(self::BOOL),
-            self::SYSTEM_USER => self::toString(self::SYSTEM_USER)
-        ];
-    }
 }
 
 ?>

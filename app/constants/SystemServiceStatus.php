@@ -12,13 +12,6 @@ class SystemServiceStatus extends AConstant {
             self::RUNNING => 'Running'
         };
     }
-
-    public static function getAll(): array {
-        return [
-            self::NOT_RUNNING => self::toString(self::NOT_RUNNING),
-            self::RUNNING => self::toString(self::RUNNING)
-        ];
-    }
 }
 
 ?>

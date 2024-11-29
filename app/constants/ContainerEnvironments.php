@@ -14,14 +14,6 @@ class ContainerEnvironments extends AConstant {
             self::PROD => 'Prod'
         };
     }
-
-    public static function getAll(): array {
-        return [
-            self::DEV => self::toString(self::DEV),
-            self::TEST => self::toString(self::TEST),
-            self::PROD => self::toString(self::PROD)
-        ];
-    }
 }
 
 ?>

@@ -12,13 +12,6 @@ class SystemServiceHistoryStatus extends AConstant {
             self::ERROR => 'Error'
         };
     }
-
-    public static function getAll(): array {
-        return [
-            self::ERROR => self::toString(self::ERROR),
-            self::SUCCESS => self::toString(self::SUCCESS)
-        ];
-    }
 }
 
 ?>

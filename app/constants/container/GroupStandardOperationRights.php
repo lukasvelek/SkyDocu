@@ -16,14 +16,6 @@ class GroupStandardOperationRights extends AConstant {
             self::CAN_VIEW_DOCUMENT_HISTORY => 'Can view document history'
         };
     }
-
-    public static function getAll(): array {
-        return [
-            self::CAN_SHARE_DOCUMENTS => self::toString(self::CAN_SHARE_DOCUMENTS),
-            self::CAN_EXPORT_DOCUMENTS => self::toString(self::CAN_EXPORT_DOCUMENTS),
-            self::CAN_VIEW_DOCUMENT_HISTORY => self::toString(self::CAN_VIEW_DOCUMENT_HISTORY),
-        ];
-    }
 }
 
 ?>

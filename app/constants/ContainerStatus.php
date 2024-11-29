@@ -9,16 +9,6 @@ class ContainerStatus extends AConstant {
     public const NOT_RUNNING = 4;
     public const ERROR_DURING_CREATION = 5;
 
-    public static function getAll(): array {
-        return [
-            self::NEW => self::toString(self::NEW),
-            self::IS_BEING_CREATED => self::toString(self::IS_BEING_CREATED),
-            self::RUNNING => self::toString(self::RUNNING),
-            self::NOT_RUNNING => self::toString(self::NOT_RUNNING),
-            self::ERROR_DURING_CREATION => self::toString(self::ERROR_DURING_CREATION)
-        ];
-    }
-
     public static function toString(mixed $key): string {
         return match((int)$key) {
             self::NEW => 'New',

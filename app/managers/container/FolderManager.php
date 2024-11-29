@@ -157,6 +157,20 @@ class FolderManager extends AManager {
         return DatabaseRow::createFromDbRow($folder);
     }
 
+    public function getDefaultFolder() {
+        $qb = $this->fr->composeQueryForFolders();
+        $folder = $qb->andWhere('isSystem = 1')
+            ->andWhere('title = ?', ['Default'])
+            ->execute()
+            ->fetch();
+
+        if($folder === null) {
+            throw new NonExistingEntityException('Default folder does not exist.');
+        }
+
+        return DatabaseRow::createFromDbRow($folder);
+    }
+
     public function getSubfoldersForFolder(string $folderId, bool $recursive = false) {
         $qb = $this->composeQueryForSubfoldersForFolder($folderId);
         $qb->execute();

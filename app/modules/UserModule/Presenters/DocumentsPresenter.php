@@ -37,6 +37,9 @@ class DocumentsPresenter extends AUserPresenter {
 
         if($folderId !== null) {
             $this->currentFolderId = $folderId;
+        } else if($folderId === null && $this->currentFolderId === null && $this->httpSessionGet('current_document_folder_id') === null) {
+            $folder = $this->folderManager->getDefaultFolder();
+            $this->redirect($this->createURL('switchFolder', ['folderId' => $folder->folderId]));
         }
 
         if($this->currentFolderId !== null) {

@@ -1,0 +1,6 @@
+logs/
+cache/
+*.bak
+config.php
+*.tmp
+install

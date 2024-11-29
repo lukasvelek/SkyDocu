@@ -1,0 +1,82 @@
+<div class="row">
+    <div class="col-md">
+        <div class="row">
+            <div class="col-md" id="center">
+                <p id="page-title">New document metadata</p>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-3 col-lg-4"></div>
+
+            <div class="col-md col-lg">
+                <div class="row">
+                    <div class="col-md">
+                        $LINKS$
+                    </div>
+                </div>
+
+                <hr>
+
+                <div class="row">
+                    <div class="col-md" id="form">
+                        $component newDocumentMetadataForm$
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3 col-lg-4"></div>
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+    hideDefaultValueSelect();
+
+    function hideDefaultValueSelect() {
+        if($("#type").val() == 1 /* enum */ || $("#type").val() >= 100 /* system enums */) {
+            hideElement('defaultValue');
+            hideElement('defaultValueBoolean');
+            hideElement('defaultValueDatetime');
+            hideElement('defaultValueNumber');
+            hideElement('defaultValueDate');
+        } else if($("#type").val() == 3 /* number */) {
+            hideElement('defaultValue');
+            hideElement('defaultValueBoolean');
+            hideElement('defaultValueDatetime');
+            showElement('defaultValueNumber');
+            hideElement('defaultValueDate');
+        } else if($("#type").val() == 4 /* datetime */) {
+            hideElement('defaultValue');
+            hideElement('defaultValueBoolean');
+            showElement('defaultValueDatetime');
+            hideElement('defaultValueNumber');
+            hideElement('defaultValueDate');
+        } else if($("#type").val() == 5 /* boolean */) {
+            hideElement('defaultValue');
+            showElement('defaultValueBoolean');
+            hideElement('defaultValueDatetime');
+            hideElement('defaultValueNumber');
+            hideElement('defaultValueDate');
+        } else if($("#type").val() == 6 /* date */) {
+            hideElement('defaultValue');
+            hideElement('defaultValueBoolean');
+            hideElement('defaultValueDatetime');
+            hideElement('defaultValueNumber');
+            showElement('defaultValueDate');
+        } else {
+            showElement('defaultValue');
+            hideElement('defaultValueBoolean');
+            hideElement('defaultValueDatetime');
+            hideElement('defaultValueNumber');
+            hideElement('defaultValueDate');
+        }
+    }
+
+    function showElement(_name) {
+        $("#row_" + _name).show();
+    }
+
+    function hideElement(_name) {
+        $("#row_" + _name).hide();
+    }
+</script>

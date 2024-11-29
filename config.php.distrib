@@ -1,0 +1,62 @@
+<?php
+
+//
+//                      LOGGING
+//
+
+/**
+ * Application log level
+ * 
+ * 0 - no log
+ * 1 - errors only
+ * 2 - warnings and errors
+ * 3 - everything except for cache
+ * 4 - everything with cache
+ */
+define('LOG_LEVEL', 0);
+/**
+ * SQL queries logging
+ * 
+ * 0 - off
+ * 1 - on
+ */
+define('SQL_LOG_LEVEL', 0);
+/**
+ * Stopwatch logging
+ * 
+ * 0 - off
+ * 1 - on
+ */
+define('LOG_STOPWATCH', 0);
+
+//
+//                      DIRECTORIES
+//
+
+define('LOG_DIR', '');
+define('CACHE_DIR', '');
+define('CONTAINERS_DIR', '');
+
+define('APP_ABSOLUTE_DIR', '');
+define('PHP_ABSOLUTE_DIR', '');
+
+//
+//                      GENERAL
+//
+
+define('APP_HOSTNAME', '');
+define('GRID_SIZE', 20);
+define('MAX_GRID_EXPORT_SIZE', 100);
+define('MAX_CONTAINER_DOCUMENT_FOLDER_NESTING_LEVEL', 5);
+
+//
+//                      DATABASE
+//
+
+define('DB_SERVER', '');
+//define('DB_PORT', '');
+define('DB_USER', '');
+define('DB_PASS', '');
+define('DB_MASTER_NAME', '');
+
+?>

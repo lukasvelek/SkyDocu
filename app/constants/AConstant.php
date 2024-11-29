@@ -16,7 +16,7 @@ abstract class AConstant implements IToStringConstant {
      * 
      * @return array All constant values
      */
-    public static function getAll() {
+    public static function getAll(): array {
         $rc = new ReflectionClass(static::class);
         $constants = $rc->getConstants();
 

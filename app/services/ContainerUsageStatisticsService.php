@@ -139,9 +139,11 @@ class ContainerUsageStatisticsService extends AService {
                 $totalTimeTaken = $totalTimeTaken + (float)$timeTaken;
             }
 
+            $averageTimeTaken = ceil($totalTimeTaken / count($lines));
+
             return [
                 'count' => (count($lines) - 1),
-                'averageTimeTaken' => $totalTimeTaken
+                'averageTimeTaken' => $averageTimeTaken
             ];
         } catch(AException|Exception $e) {
             return 0;

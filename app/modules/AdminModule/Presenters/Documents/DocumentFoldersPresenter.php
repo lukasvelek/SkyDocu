@@ -68,8 +68,10 @@ class DocumentFoldersPresenter extends AAdminPresenter {
 
         $qb = $this->folderManager->composeQueryForVisibleFoldersForUser($this->getUserId());
 
+        $isSubfolder = false;
         if(array_key_exists('folderId', $request->query)) {
             $qb = $this->folderManager->composeQueryForSubfoldersForFolder($request->query['folderId']);
+            $isSubfolder = true;
         }
 
         $grid->createDataSourceFromQueryBuilder($qb, 'folderId');
@@ -118,8 +120,8 @@ class DocumentFoldersPresenter extends AAdminPresenter {
 
         $groupRights = $grid->addAction('groupRights');
         $groupRights->setTitle('Group rights');
-        $groupRights->onCanRender[] = function(DatabaseRow $row, Row $_row) {
-            return true;
+        $groupRights->onCanRender[] = function(DatabaseRow $row, Row $_row) use ($isSubfolder) {
+            return !$isSubfolder;
         };
         $groupRights->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
             $params = ['folderId' => $primaryKey];
@@ -144,6 +146,10 @@ class DocumentFoldersPresenter extends AAdminPresenter {
             }
             
             if($this->documentManager->getDocumentCountForFolder($row->folderId) > 0) {
+                return false;
+            }
+
+            if(count($this->folderManager->getSubfoldersForFolder($row->folderId)) > 0) {
                 return false;
             }
 

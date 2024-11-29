@@ -33,14 +33,20 @@ class GridManager extends AManager {
         return $this->getGridConfigurationForGridName($gridName) !== null;
     }
 
+    private function processColumnsArrayToString(array $columns) {
+        return implode(';', $columns);
+    }
+
     public function createGridConfiguration(string $gridName, array $columns) {
-        if(!$this->gr->insertGridConfiguration($gridName, $columns)) {
+        $configurationId = $this->createId(EntityManager::C_GRID_CONFIGURATION);
+
+        if(!$this->gr->insertGridConfiguration($configurationId, $gridName, $this->processColumnsArrayToString($columns))) {
             throw new GeneralException('Database error.');
         }
     }
 
     public function updateGridConfiguration(string $gridName, array $columns) {
-        if(!$this->gr->updateGridConfiguration($gridName, $columns)) {
+        if(!$this->gr->updateGridConfiguration($gridName, $this->processColumnsArrayToString($columns))) {
             throw new GeneralException('Database error.');
         }
     }

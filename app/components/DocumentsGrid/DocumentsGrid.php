@@ -5,6 +5,7 @@ namespace App\Components\DocumentsGrid;
 use App\Authorizators\DocumentBulkActionAuthorizator;
 use App\Authorizators\GroupStandardOperationsAuthorizator;
 use App\Constants\Container\CustomMetadataTypes;
+use App\Constants\Container\DocumentsGridSystemMetadata;
 use App\Constants\Container\DocumentStatus;
 use App\Constants\Container\GridNames;
 use App\Core\Application;
@@ -194,9 +195,9 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
      * Appends system metadata
      */
     private function appendSystemMetadata() {
-        $this->addColumnText('title', 'Title');
-        $this->addColumnUser('authorUserId', 'Author');
-        $this->addColumnConst('status', 'Status', DocumentStatus::class);
+        $this->addColumnText(DocumentsGridSystemMetadata::TITLE, DocumentsGridSystemMetadata::toString(DocumentsGridSystemMetadata::TITLE));
+        $this->addColumnUser(DocumentsGridSystemMetadata::AUTHOR_USER_ID, DocumentsGridSystemMetadata::toString(DocumentsGridSystemMetadata::AUTHOR_USER_ID));
+        $this->addColumnConst(DocumentsGridSystemMetadata::STATUS, DocumentsGridSystemMetadata::toString(DocumentsGridSystemMetadata::STATUS), DocumentStatus::class);
     }
 
     /**

@@ -20,17 +20,17 @@ class GridRepository extends ARepository {
         return $this->deleteEntryById('grid_configuration', 'gridName', $gridName);
     }
 
-    public function insertGridConfiguration(string $gridName, array $columns) {
+    public function insertGridConfiguration(string $configurationId, string $gridName, string $columns) {
         $qb = $this->qb(__METHOD__);
 
-        $qb->insert('grid_configuration', ['gridName', 'columnConfiguration'])
-            ->values([$gridName, $columns])
+        $qb->insert('grid_configuration', ['configurationId', 'gridName', 'columnConfiguration'])
+            ->values([$configurationId, $gridName, $columns])
             ->execute();
 
         return $qb->fetchBool();
     }
 
-    public function updateGridConfiguration(string $gridName, array $columns) {
+    public function updateGridConfiguration(string $gridName, string $columns) {
         $qb = $this->qb(__METHOD__);
 
         $qb->update('grid_configuration')

@@ -66,7 +66,6 @@ class EntityManager extends AManager {
 
             $primaryKeyName = $this->getPrimaryKeyNameByCategory($category);
 
-            //$unique = $this->cr->checkIdIsUnique($category, $primaryKeyName, $entityId);
             $cr = new ContentRepository($customConn, $this->logger);
             $unique = $cr->checkIdIsUnique($category, $primaryKeyName, $entityId);
 

@@ -53,7 +53,7 @@ abstract class AProcess {
     }
 
     /**
-     * Setups the object
+     * Sets up the object
      */
     public function startup() {
         $this->useDbTransactions = true;

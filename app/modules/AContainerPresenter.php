@@ -19,6 +19,7 @@ use App\Repositories\Container\FolderRepository;
 use App\Repositories\Container\GridRepository;
 use App\Repositories\Container\GroupRepository;
 use App\Repositories\Container\MetadataRepository;
+use App\Repositories\Container\ProcessRepository;
 use App\Repositories\Container\TransactionLogRepository;
 use App\Repositories\ContentRepository;
 use ReflectionClass;
@@ -32,6 +33,7 @@ abstract class AContainerPresenter extends APresenter {
     protected MetadataRepository $metadataRepository;
     protected TransactionLogRepository $transactionLogRepository;
     protected GridRepository $gridRepository;
+    protected ProcessRepository $processRepository;
     
     protected EntityManager $entityManager;
     protected FolderManager $folderManager;
@@ -46,8 +48,12 @@ abstract class AContainerPresenter extends APresenter {
 
     protected string $containerId;
 
+    private array $_reflectionParamsCache;
+
     protected function __construct(string $name, string $title) {
         parent::__construct($name, $title);
+
+        $this->_reflectionParamsCache = [];
     }
 
     public function startup() {
@@ -71,14 +77,58 @@ abstract class AContainerPresenter extends APresenter {
         $this->enumManager = new EnumManager($this->logger, $this->entityManager, $this->app->userRepository, $this->app->groupManager, $container);
         $this->gridManager = new GridManager($this->logger, $this->entityManager, $this->gridRepository);
 
+        $this->initManagers();
         $this->injectCacheFactoryToManagers();
 
-        $this->documentManager->inject($this->enumManager);
+        $this->documentManager->enumManager = $this->enumManager;
 
         $this->documentBulkActionAuthorizator = new DocumentBulkActionAuthorizator($containerConnection, $this->logger, $this->documentManager, $this->documentRepository, $this->app->userManager, $this->groupManager);
         $this->groupStandardOperationsAuthorizator = new GroupStandardOperationsAuthorizator($containerConnection, $this->logger, $this->groupManager);
 
         $this->injectCacheFactoryToAuthorizators();
+    }
+
+    private function initManagers() {
+        $managers = [
+            'processManager' => [
+                $this->processRepository,
+                $this->groupManager
+            ]
+        ];
+
+        $notFound = [];
+        foreach($managers as $varName => $args) {
+            if(array_key_exists($varName, $this->_reflectionParamsCache)) {
+                $class = $this->_reflectionParamsCache[$varName];
+
+                /**
+                 * @var \App\Managers\AManager $obj
+                 */
+                $obj = new $class(...$args);
+                $obj->inject($this->logger, $this->entityManager);
+                $this->{$varName} = $obj;
+            } else {
+                $notFound[] = $varName;
+            }
+        }
+
+        if(!empty($notFound)) {
+            $rc = new ReflectionClass($this);
+            $rpa = $rc->getProperties();
+            foreach($rpa as $rp) {
+                $class = $rp->getType();
+                $name = $rp->getName();
+                
+                if(in_array($name, $notFound)) {
+                    /**
+                     * @var \App\Managers\AManager $obj
+                     */
+                    $obj = new $class(...$args);
+                    $obj->inject($this->logger, $this->entityManager);
+                    $this->{$varName} = $obj;
+                }
+            }
+        }
     }
 
     private function initRepositories(DatabaseConnection $db) {
@@ -92,6 +142,8 @@ abstract class AContainerPresenter extends APresenter {
         foreach($rpa as $rp) {
             $rt = $rp->getType();
             $name = $rp->getName();
+
+            $this->_reflectionParamsCache[$name] = $rt;
 
             if(str_contains($rt, 'Repository')) {
                 $className = (string)$rt;

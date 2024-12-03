@@ -21,7 +21,7 @@ class DocumentManager extends AManager {
     private DocumentClassRepository $dcr;
     private GroupRepository $gr;
     private FolderRepository $fr;
-    private EnumManager $em;
+    public EnumManager $enumManager;
 
     public function __construct(Logger $logger, EntityManager $entityManager, DocumentRepository $dr, DocumentClassRepository $dcr, GroupRepository $gr, FolderRepository $fr) {
         parent::__construct($logger, $entityManager);
@@ -30,10 +30,6 @@ class DocumentManager extends AManager {
         $this->dcr = $dcr;
         $this->gr = $gr;
         $this->fr = $fr;
-    }
-
-    public function inject(EnumManager $em) {
-        $this->em = $em;
     }
 
     public function composeQueryForDocuments(string $userId, string $folderId, bool $allMetadata) {

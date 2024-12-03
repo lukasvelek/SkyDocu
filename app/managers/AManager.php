@@ -23,8 +23,26 @@ abstract class AManager {
      * @param null|EntityManager $entityManager Entity manager or null
      */
     protected function __construct(Logger $logger, ?EntityManager $entityManager) {
+        $this->inject($logger, $entityManager);
+    }
+
+    /**
+     * Injects same parameters as constructor
+     * 
+     * @param Logger $logger Logger instance
+     * @param null|EntityManager $entityManager Entity manager or null
+     */
+    public function inject(Logger $logger, ?EntityManager $entityManager) {
         $this->logger = $logger;
         $this->entityManager = $entityManager;
+        
+        $this->startup();
+    }
+
+    /**
+     * Sets up the object
+     */
+    protected function startup() {
         $this->cacheFactory = new CacheFactory();
     }
 

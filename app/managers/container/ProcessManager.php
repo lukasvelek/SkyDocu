@@ -17,6 +17,10 @@ class ProcessManager extends AManager {
     public function __construct(ProcessRepository $pr, GroupManager $gm) {
         $this->pr = $pr;
         $this->gm = $gm;
+    }
+
+    public function startup() {
+        parent::startup();
 
         $this->processTypes = $this->cacheFactory->getCache(CacheNames::PROCESS_TYPES);
     }

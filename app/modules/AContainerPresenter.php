@@ -12,6 +12,7 @@ use App\Managers\Container\FolderManager;
 use App\Managers\Container\GridManager;
 use App\Managers\Container\GroupManager;
 use App\Managers\Container\MetadataManager;
+use App\Managers\Container\ProcessManager;
 use App\Managers\EntityManager;
 use App\Repositories\Container\DocumentClassRepository;
 use App\Repositories\Container\DocumentRepository;
@@ -42,6 +43,7 @@ abstract class AContainerPresenter extends APresenter {
     protected MetadataManager $metadataManager;
     protected EnumManager $enumManager;
     protected GridManager $gridManager;
+    protected ProcessManager $processManager;
 
     protected DocumentBulkActionAuthorizator $documentBulkActionAuthorizator;
     protected GroupStandardOperationsAuthorizator $groupStandardOperationsAuthorizator;
@@ -98,13 +100,15 @@ abstract class AContainerPresenter extends APresenter {
 
         $notFound = [];
         foreach($managers as $varName => $args) {
-            if(array_key_exists($varName, $this->_reflectionParamsCache)) {
+            if(!empty($this->_reflectionParamsCache) && array_key_exists($varName, $this->_reflectionParamsCache)) {
                 $class = $this->_reflectionParamsCache[$varName];
+
+                $className = (string)$class;
 
                 /**
                  * @var \App\Managers\AManager $obj
                  */
-                $obj = new $class(...$args);
+                $obj = new $className(...$args);
                 $obj->inject($this->logger, $this->entityManager);
                 $this->{$varName} = $obj;
             } else {
@@ -120,12 +124,15 @@ abstract class AContainerPresenter extends APresenter {
                 $name = $rp->getName();
                 
                 if(in_array($name, $notFound)) {
+                    $className = (string)$class;
+
                     /**
                      * @var \App\Managers\AManager $obj
                      */
-                    $obj = new $class(...$args);
+                    $obj = new $className(...$args);
                     $obj->inject($this->logger, $this->entityManager);
                     $this->{$varName} = $obj;
+                    $this->_reflectionParamsCache[$varName] = $class;
                 }
             }
         }

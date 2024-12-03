@@ -26,7 +26,6 @@ use App\UI\HTML\HTML;
 class ProcessesGrid extends GridBuilder implements IGridExtendingComponent {
     private string $currentUserId;
     private GridManager $gridManager;
-    private Application $app;
     private ProcessGridDataSourceHelper $dsHelper;
     private string $view;
     private ProcessManager $processManager;
@@ -72,6 +71,8 @@ class ProcessesGrid extends GridBuilder implements IGridExtendingComponent {
     }
 
     protected function prerender() {
+        $this->createDataSource();
+        
         $this->appendSystemMetadata();
 
         $this->setup();

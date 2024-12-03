@@ -13,6 +13,7 @@ use App\Core\DB\DatabaseRow;
 use App\Enums\AEnumForMetadata;
 use App\Exceptions\GeneralException;
 use App\Helpers\GridHelper;
+use App\Lib\Processes\ProcessFactory;
 use App\Managers\Container\DocumentManager;
 use App\Managers\Container\EnumManager;
 use App\Managers\Container\GridManager;
@@ -53,6 +54,7 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
      * @param GroupStandardOperationsAuthorizator $gsoa
      * @param EnumManager $em
      * @param GridManager $gm
+     * @param ProcessFactory $pf
      */
     public function __construct(
         GridBuilder $grid,
@@ -61,7 +63,8 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
         DocumentBulkActionAuthorizator $dbaa,
         GroupStandardOperationsAuthorizator $gsoa,
         EnumManager $em,
-        GridManager $gm
+        GridManager $gm,
+        ProcessFactory $pf
     ) {
         parent::__construct($grid->httpRequest);
         $this->setHelper(new GridHelper($app->logger, $app->currentUser->getId()));
@@ -74,7 +77,7 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
         $this->em = $em;
         $this->gm = $gm;
 
-        $this->dbah = new DocumentBulkActionsHelper($this->app, $this->dm, $this->httpRequest, $this->dbaa, $this->gsoa);
+        $this->dbah = new DocumentBulkActionsHelper($this->app, $this->dm, $this->httpRequest, $this->dbaa, $this->gsoa, $pf);
 
         $this->allMetadata = false;
         $this->currentFolderId = null;

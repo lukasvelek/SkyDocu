@@ -5,8 +5,10 @@ namespace App\Components\DocumentsGrid;
 use App\Authorizators\DocumentBulkActionAuthorizator;
 use App\Authorizators\GroupStandardOperationsAuthorizator;
 use App\Constants\Container\DocumentBulkActions;
+use App\Constants\Container\SystemProcessTypes;
 use App\Core\Application;
 use App\Core\Http\HttpRequest;
+use App\Lib\Processes\ProcessFactory;
 use App\Managers\Container\DocumentManager;
 use App\UI\HTML\HTML;
 
@@ -20,14 +22,16 @@ class DocumentBulkActionsHelper {
     private Application $app;
     private DocumentBulkActionAuthorizator $dbaa;
     private GroupStandardOperationsAuthorizator $gsoa;
+    private ProcessFactory $pf;
 
     private HttpRequest $request;
 
-    public function __construct(Application $app, DocumentManager $dm, HttpRequest $request, DocumentBulkActionAuthorizator $dbaa, GroupStandardOperationsAuthorizator $gsoa) {
+    public function __construct(Application $app, DocumentManager $dm, HttpRequest $request, DocumentBulkActionAuthorizator $dbaa, GroupStandardOperationsAuthorizator $gsoa, ProcessFactory $pf) {
         $this->dm = $dm;
         $this->app = $app;
         $this->dbaa = $dbaa;
         $this->gsoa = $gsoa;
+        $this->pf = $pf;
 
         $this->request = $request;
     }
@@ -41,6 +45,7 @@ class DocumentBulkActionsHelper {
     public function getBulkActions(array $documentIds) {
         // 1. Create array of allowed bulk actions
         $bulkActions = [];
+        $processBulkActions = [];
 
         if($this->dbaa->canExecuteArchivation($this->app->currentUser->getId(), $documentIds)) {
             $bulkActions[] = DocumentBulkActions::ARCHIVATION;
@@ -49,15 +54,65 @@ class DocumentBulkActionsHelper {
         if($this->gsoa->canUserViewDocumentHistory($this->app->currentUser->getId())) {
             $bulkActions[] = DocumentBulkActions::DOCUMENT_HISTORY;
         }
+
+        // 1b. Create array of allowed processes
+        $this->appendProcessBulkActions($documentIds, $processBulkActions);
         
         // 2. Create array of bulk action url
         $bulkActionsUrl = [];
         foreach($bulkActions as $bulkAction) {
             $bulkActionsUrl[] = $this->createBulkActionUrl($documentIds, $bulkAction);
         }
+        foreach($processBulkActions as $processBulkAction) {
+            $bulkActionsUrl[] = $this->createBulkActionUrlForProcess($documentIds, $processBulkAction);
+        }
 
         // 3. Return the bulk action url array
         return $bulkActionsUrl;
+    }
+
+    /**
+     * Returns all available process bulk actions for given array of document IDs
+     * 
+     * @param array<string> $documentIds Document IDs
+     * @param array<string> Bulk actions
+     */
+    private function appendProcessBulkActions(array $documentIds, array &$bulkActions) {
+        // Shredding
+        $p = $this->pf->createShreddingProcess();
+        if($p->canExecute($documentIds, $this->request->currentUser->getId())) {
+            $bulkActions[] = SystemProcessTypes::SHREDDING;
+        }
+    }
+
+    /**
+     * Creates single line process bulk action handler URL
+     * 
+     * @param array $documentIds Selected document IDs
+     * @param string $bulkAction Bulk action
+     */
+    private function createBulkActionUrlForProcess(array $documentIds, string $bulkAction) {
+        $urlParams = [
+            'backPage=' . $this->request->query['page'],
+            'backAction=' . $this->request->query['action'],
+            'process=' . $bulkAction
+        ];
+
+        foreach($documentIds as $documentId) {
+            $urlParams[] = 'documentId[]=' . $documentId;
+        }
+
+        $el = HTML::el('a')
+                ->class('link')
+                ->text(SystemProcessTypes::toString($bulkAction));
+
+        switch($bulkAction) {
+            case SystemProcessTypes::SHREDDING:
+                $el->href($this->createLink('User:DocumentBulkActions', 'startProcess', $urlParams));
+                break;
+        }
+
+        return $el->toString();
     }
 
     /**

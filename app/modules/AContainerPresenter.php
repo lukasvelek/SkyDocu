@@ -6,6 +6,7 @@ use App\Authorizators\DocumentBulkActionAuthorizator;
 use App\Authorizators\GroupStandardOperationsAuthorizator;
 use App\Core\Caching\CacheFactory;
 use App\Core\DatabaseConnection;
+use App\Lib\Processes\ProcessFactory;
 use App\Managers\Container\DocumentManager;
 use App\Managers\Container\EnumManager;
 use App\Managers\Container\FolderManager;
@@ -48,6 +49,8 @@ abstract class AContainerPresenter extends APresenter {
     protected DocumentBulkActionAuthorizator $documentBulkActionAuthorizator;
     protected GroupStandardOperationsAuthorizator $groupStandardOperationsAuthorizator;
 
+    protected ProcessFactory $processFactory;
+
     protected string $containerId;
 
     private array $_reflectionParamsCache;
@@ -88,6 +91,16 @@ abstract class AContainerPresenter extends APresenter {
         $this->groupStandardOperationsAuthorizator = new GroupStandardOperationsAuthorizator($containerConnection, $this->logger, $this->groupManager);
 
         $this->injectCacheFactoryToAuthorizators();
+
+        $this->processFactory = new ProcessFactory(
+            $this->documentManager,
+            $this->groupStandardOperationsAuthorizator,
+            $this->documentBulkActionAuthorizator,
+            $this->app->userManager,
+            $this->groupManager,
+            $this->app->currentUser,
+            $this->containerId
+        );
     }
 
     private function initManagers() {

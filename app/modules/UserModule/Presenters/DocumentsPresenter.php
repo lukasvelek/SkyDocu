@@ -65,7 +65,8 @@ class DocumentsPresenter extends AUserPresenter {
             $this->documentBulkActionAuthorizator,
             $this->groupStandardOperationsAuthorizator,
             $this->enumManager,
-            $this->gridManager
+            $this->gridManager,
+            $this->processFactory
         );
 
         $documentsGrid->setCurrentFolder($this->currentFolderId);

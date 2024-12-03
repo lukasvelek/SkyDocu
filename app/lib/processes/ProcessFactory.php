@@ -37,8 +37,8 @@ class ProcessFactory {
      */
     public function __construct(
         DocumentManager $documentManager,
-        DocumentBulkActionAuthorizator $documentBulkActionAuthorizator,
         GroupStandardOperationsAuthorizator $groupStandardOperationsAuthorizator,
+        DocumentBulkActionAuthorizator $documentBulkActionAuthorizator,
         UserManager $userManager,
         GroupManager $groupManager,
         UserEntity $currentUser,
@@ -75,6 +75,14 @@ class ProcessFactory {
         );
         $obj->setContainerId($this->containerId);
         $obj->startup();
+        return $obj;
+    }
+
+    /**
+     * @return ShreddingProcess
+     */
+    public function createShreddingProcess() {
+        $obj = $this->commonCreate(ShreddingProcess::class);
         return $obj;
     }
 }

@@ -49,6 +49,10 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
      * @param GridBuilder $grid GridBuilder instance
      * @param Application $app Application instance
      * @param DocumentManager $documentManager DocumentManager instance
+     * @param DocumentBulkActionAuthorizator $dbaa DocumentBulkActionAuthorizator instance
+     * @param GroupStandardOperationsAuthorizator $gsoa
+     * @param EnumManager $em
+     * @param GridManager $gm
      */
     public function __construct(
         GridBuilder $grid,
@@ -115,12 +119,7 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
         $this->showDocumentInfoLink = false;
     }
 
-    /**
-     * Adds system metadata columns and if any custom metadata exist then it also adds custom metadata columns. It also adds values of the custom metadata. Finally it renders the grid.
-     * 
-     * @return string HTML code
-     */
-    public function render() {
+    protected function prerender() {
         $this->createDataSource();
 
         $this->fetchDataFromDb();
@@ -135,7 +134,7 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
 
         $this->setup();
 
-        return parent::render();
+        parent::prerender();
     }
 
     /**
@@ -167,9 +166,6 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
         }
     }
 
-    /**
-     * Creates data source for the grid
-     */
     public function createDataSource() {
         $folderId = $this->getFolderId();
 

@@ -425,9 +425,7 @@ class GridBuilder extends AComponent {
      * @return string HTML code
      */
     public function render() {
-        $this->fetchDataFromDb(true);
-
-        $this->build();
+        $this->prerender();
 
         $template = $this->getTemplate(__DIR__ . '/grid.html');
 
@@ -439,6 +437,14 @@ class GridBuilder extends AComponent {
         $template->grid_name = $this->gridName;
 
         return $template->render()->getRenderedContent();
+    }
+
+    /**
+     * Prerenders the grid
+     */
+    protected function prerender() {
+        $this->fetchDataFromDb(true);
+        $this->build();
     }
 
     /**

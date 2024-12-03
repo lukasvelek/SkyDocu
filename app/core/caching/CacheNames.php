@@ -23,6 +23,7 @@ class CacheNames {
     public const GROUP_STANDARD_OPERATIONS_RIGHTS = 'groupStandardOperationsRights';
     public const USER_GROUP_MEMBERSHIPS = 'userGroupMemberships';
     public const NAVBAR_CONTAINER_SWITCH_USER_MEMBERSHIPS = 'navbarContainerSwitchUserMemberships';
+    public const PROCESS_TYPES = 'processTypes';
 }
 
 ?>

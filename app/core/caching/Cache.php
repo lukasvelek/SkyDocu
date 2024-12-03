@@ -76,7 +76,6 @@ class Cache {
      * @param mixed $key Data key
      * @param callback $generator Data generator
      * @param array $generatorDependencies Data generator dependencies (arguments)
-     * @return void
      */
     public function save(mixed $key, callable $generator, array $generatorDependencies = []) {
         try {
@@ -162,6 +161,15 @@ class Cache {
      */
     public function getNamespace() {
         return $this->namespace;
+    }
+
+    /**
+     * Is cache filled?
+     * 
+     * @return bool True if data is cache or false if the cache is empty
+     */
+    public function isCached() {
+        return !empty($this->cache);
     }
 }
 

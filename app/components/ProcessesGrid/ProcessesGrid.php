@@ -10,9 +10,11 @@ use App\Core\Application;
 use App\Core\DB\DatabaseRow;
 use App\Exceptions\AException;
 use App\Helpers\GridHelper;
+use App\Helpers\ProcessHelper;
 use App\Managers\Container\DocumentManager;
 use App\Managers\Container\GridManager;
 use App\Managers\Container\ProcessManager;
+use App\UI\GridBuilder2\Action;
 use App\UI\GridBuilder2\Cell;
 use App\UI\GridBuilder2\GridBuilder;
 use App\UI\GridBuilder2\IGridExtendingComponent;
@@ -76,6 +78,8 @@ class ProcessesGrid extends GridBuilder implements IGridExtendingComponent {
         
         $this->appendSystemMetadata();
 
+        $this->appendActions();
+
         $this->setup();
 
         parent::prerender();
@@ -92,6 +96,40 @@ class ProcessesGrid extends GridBuilder implements IGridExtendingComponent {
         $qb = $this->dsHelper->composeQuery($this->view, $this->currentUserId);
 
         $this->createDataSourceFromQueryBuilder($qb, 'processId');
+    }
+
+    /**
+     * Appends actions to grid
+     */
+    private function appendActions() {
+        $open = $this->addAction('open');
+        $open->setTitle('Open');
+        $open->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) {
+            switch($this->view) {
+                case ProcessGridViews::VIEW_WAITING_FOR_ME:
+                case ProcessGridViews::VIEW_WITH_ME:
+                case ProcessGridViews::VIEW_STARTED_BY_ME:
+                    return true;
+
+                case ProcessGridViews::VIEW_ALL:
+                    if($row->authorUserId == $this->currentUserId) {
+                        return true;
+                    } else {
+                        return ProcessHelper::isUserInProcessWorkflow($this->currentUserId, $row);
+                    }
+                    break;
+            }
+
+            return false;
+        };
+        $open->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
+            $el = HTML::el('a');
+            $el->href($this->createFullURLString('User:Processes', 'profile', ['processId' => $primaryKey]))
+                ->text('Open')
+                ->class('grid-link');
+
+            return $el;
+        };
     }
 
     /**

@@ -7,6 +7,7 @@ use App\Core\Caching\Cache;
 use App\Core\Caching\CacheNames;
 use App\Core\DB\DatabaseRow;
 use App\Exceptions\GeneralException;
+use App\Helpers\ProcessHelper;
 use App\Managers\AManager;
 use App\Managers\EntityManager;
 use App\Repositories\Container\ProcessRepository;
@@ -31,7 +32,7 @@ class ProcessManager extends AManager {
     public function startProcess(string $documentId, string $type, string $userId, string $currentOfficerId, array $workflowUserIds) {
         $processId = $this->createId(EntityManager::C_PROCESSES);
 
-        $workflowConverted = implode(';', $workflowUserIds);
+        $workflowConverted = ProcessHelper::convertWorkflowToDb($workflowUserIds);
 
         $data = [
             'documentId' => $documentId,

@@ -87,7 +87,7 @@ abstract class AContainerPresenter extends APresenter {
 
         $this->documentManager->enumManager = $this->enumManager;
 
-        $this->documentBulkActionAuthorizator = new DocumentBulkActionAuthorizator($containerConnection, $this->logger, $this->documentManager, $this->documentRepository, $this->app->userManager, $this->groupManager);
+        $this->documentBulkActionAuthorizator = new DocumentBulkActionAuthorizator($containerConnection, $this->logger, $this->documentManager, $this->documentRepository, $this->app->userManager, $this->groupManager, $this->processManager);
         $this->groupStandardOperationsAuthorizator = new GroupStandardOperationsAuthorizator($containerConnection, $this->logger, $this->groupManager);
 
         $this->injectCacheFactoryToAuthorizators();
@@ -99,7 +99,8 @@ abstract class AContainerPresenter extends APresenter {
             $this->app->userManager,
             $this->groupManager,
             $this->app->currentUser,
-            $this->containerId
+            $this->containerId,
+            $this->processManager
         );
     }
 

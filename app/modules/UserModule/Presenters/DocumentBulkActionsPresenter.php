@@ -48,6 +48,46 @@ class DocumentBulkActionsPresenter extends AContainerPresenter {
 
         return $this->createFullURL($page, $action);
     }
+
+    public function handleStartProcess() {
+        $process = $this->httpGet('process', true);
+        $documentIds = $this->httpRequest->query['documentId'];
+
+        $exceptions = [];
+
+        try {
+            $result = $this->processFactory->startDocumentProcess($process, $documentIds, $exceptions);
+
+            if(!empty($exceptions)) {
+                /**
+                 * @var AException $exception
+                 */
+                foreach($exceptions as $exception) {
+                    $this->flashMessage('Error during process: ' . $exception->getMessage(), 'error', 10);
+                }
+            }
+
+            if($result === true && empty($exception)) {
+                $this->flashMessage('Process run successfully.', 'success');
+            } else {
+                $this->flashMessage('An error occurred while running process.', 'error', 10);
+            }
+        } catch(AException $e) {
+            $this->flashMessage('An error occurred while running process. Reason: ' . $e->getMessage(), 'error', 10);
+        }
+
+        $backPage = $this->httpGet('backPage');
+        $backAction = $this->httpGet('backAction');
+
+        $backUrl = [];
+        if($backPage !== null && $backAction !== null) {
+            $backUrl = ['page' => $backPage, 'action' => $backAction];
+        } else {
+            $backUrl = $this->createFullURL('User:Documents', 'list');
+        }
+
+        $this->redirect($backUrl);
+    }
 }
 
 ?>

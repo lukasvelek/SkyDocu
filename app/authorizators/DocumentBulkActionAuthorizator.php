@@ -10,6 +10,7 @@ use App\Exceptions\GeneralException;
 use App\Logger\Logger;
 use App\Managers\Container\DocumentManager;
 use App\Managers\Container\GroupManager;
+use App\Managers\Container\ProcessManager;
 use App\Managers\UserManager;
 use App\Repositories\Container\DocumentRepository;
 use Exception;
@@ -19,14 +20,16 @@ class DocumentBulkActionAuthorizator extends AAuthorizator {
     private DocumentRepository $dr;
     private UserManager $um;
     private GroupManager $cgm;
+    private ProcessManager $pm;
 
-    public function __construct(DatabaseConnection $db, Logger $logger, DocumentManager $dm, DocumentRepository $dr, UserManager $um, GroupManager $cgm) {
+    public function __construct(DatabaseConnection $db, Logger $logger, DocumentManager $dm, DocumentRepository $dr, UserManager $um, GroupManager $cgm, ProcessManager $pm) {
         parent::__construct($db, $logger);
 
         $this->dm = $dm;
         $this->dr = $dr;
         $this->um = $um;
         $this->cgm = $cgm;
+        $this->pm = $pm;
     }
 
     public function canExecuteArchivation(string $userId, array $documentIds) {
@@ -44,6 +47,22 @@ class DocumentBulkActionAuthorizator extends AAuthorizator {
             if($document->status != DocumentStatus::NEW) {
                 throw new GeneralException('Document\'s status must be \'new\' but it is \'' . DocumentStatus::toString($document->status) . '\'.', null, false);
             }
+        }
+    }
+
+    public function canExecuteShreddingRequest(string $userId, string $documentId) {
+        return $this->internalExecute('throwExceptionIfCannotExecuteShreddingRequest', $userId, $documentId);
+    }
+
+    public function throwExceptionIfCannotExecuteShreddingRequest(string $userId, string $documentId) {
+        $document = $this->dm->getDocumentById($documentId);
+
+        if(!in_array($document->status, [DocumentStatus::NEW, DocumentStatus::ARCHIVED])) {
+            throw new GeneralException(sprintf('Document\'s status must be \'%s\' or \'%s\' but it is \'%s\'.', DocumentStatus::toString(DocumentStatus::NEW), DocumentStatus::toString(DocumentStatus::ARCHIVED), DocumentStatus::toString($document->status)), null, false);
+        }
+
+        if($this->pm->isDocumentInProcess($documentId)) {
+            throw new GeneralException('Document already is in a process.');
         }
     }
 

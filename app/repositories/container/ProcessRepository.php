@@ -2,6 +2,7 @@
 
 namespace App\Repositories\Container;
 
+use App\Constants\Container\ProcessStatus;
 use App\Repositories\ARepository;
 
 class ProcessRepository extends ARepository {
@@ -66,6 +67,27 @@ class ProcessRepository extends ARepository {
             ->execute();
 
         return $qb->fetch();
+    }
+
+    public function getProcessesForDocument(string $documentId, bool $activeOnly = true) {
+        $qb = $this->qb(__METHOD__);
+        
+        $qb->select(['*'])
+            ->from('processes')
+            ->where('documentId = ?', [$documentId]);
+
+        if($activeOnly) {
+            $qb->andWhere('status <> ?', [ProcessStatus::FINISHED]);
+        }
+
+        $qb->execute();
+
+        $processes = [];
+        while($row = $qb->fetchAssoc()) {
+            $processes[] = $row;
+        }
+
+        return $processes;
     }
 }
 

@@ -5,6 +5,7 @@ namespace App\Components\ProcessesGrid;
 use App\Constants\Container\GridNames;
 use App\Constants\Container\ProcessesGridSystemMetadata;
 use App\Constants\Container\ProcessGridViews;
+use App\Constants\Container\SystemProcessTypes;
 use App\Core\Application;
 use App\Core\DB\DatabaseRow;
 use App\Exceptions\AException;
@@ -133,14 +134,14 @@ class ProcessesGrid extends GridBuilder implements IGridExtendingComponent {
                         $type = $this->getTypeByKey($value);
 
                         $el = HTML::el('span')
-                                ->text($type->title);
+                                ->text($type);
 
                         return $el;
                     };
                     $col->onExportColumn[] = function(DatabaseRow $row, mixed $value) {
                         $type = $this->getTypeByKey($value);
 
-                        return $type->title;
+                        return $type;
                     };
                     break;
             }
@@ -148,7 +149,7 @@ class ProcessesGrid extends GridBuilder implements IGridExtendingComponent {
     }
 
     private function getTypeByKey(string $key) {
-        return $this->processManager->getProcessTypeByKey($key);
+        return SystemProcessTypes::gridToString($key);
     }
 
     private function getDocumentById(string $documentId) {

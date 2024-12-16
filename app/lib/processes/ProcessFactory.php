@@ -4,9 +4,13 @@ namespace App\Lib\Processes;
 
 use App\Authorizators\DocumentBulkActionAuthorizator;
 use App\Authorizators\GroupStandardOperationsAuthorizator;
+use App\Constants\Container\SystemProcessTypes;
 use App\Entities\UserEntity;
+use App\Exceptions\GeneralException;
+use App\Lib\Processes\Shredding\ShreddingRequestProcess;
 use App\Managers\Container\DocumentManager;
 use App\Managers\Container\GroupManager;
+use App\Managers\Container\ProcessManager;
 use App\Managers\UserManager;
 
 /**
@@ -21,6 +25,7 @@ class ProcessFactory {
     private UserManager $userManager;
     private GroupManager $groupManager;
     private UserEntity $currentUser;
+    public ProcessManager $processManager;
 
     private string $containerId;
 
@@ -33,6 +38,7 @@ class ProcessFactory {
      * @param UserManager $userManager UserManager instance
      * @param GroupManager $groupManager GroupManager instance
      * @param UserEntity $currentUser Current user UserEntity instance
+     * @param ProcessManager $processManager ProcessManager instance
      * @param string $containerId Container ID
      */
     public function __construct(
@@ -42,7 +48,8 @@ class ProcessFactory {
         UserManager $userManager,
         GroupManager $groupManager,
         UserEntity $currentUser,
-        string $containerId
+        string $containerId,
+        ProcessManager $processManager
     ) {
         $this->documentManager = $documentManager;
         $this->groupStandardOperationsAuthorizator = $groupStandardOperationsAuthorizator;
@@ -51,16 +58,17 @@ class ProcessFactory {
         $this->groupManager = $groupManager;
         $this->currentUser = $currentUser;
         $this->containerId = $containerId;
+        $this->processManager = $processManager;
     }
 
     /**
-     * Internal method for creating AProcess instances
+     * Internal method for creating document AProcess instances
      * 
      * @param string $class Class name (e.g., ShreddingProcess::class)
      * @param array $args Class arguments
      * @return AProcess Class instance
      */
-    private function commonCreate(string $class, array $args = []) {
+    private function commonDocumentCreate(string $class, array $args = []) {
         /**
          * @var AProcess $obj
          */
@@ -71,7 +79,8 @@ class ProcessFactory {
             $this->documentBulkActionAuthorizator,
             $this->userManager,
             $this->groupManager,
-            $this->currentUser
+            $this->currentUser,
+            $this->processManager
         );
         $obj->setContainerId($this->containerId);
         $obj->startup();
@@ -81,9 +90,40 @@ class ProcessFactory {
     /**
      * @return ShreddingProcess
      */
-    public function createShreddingProcess() {
-        $obj = $this->commonCreate(ShreddingProcess::class);
+    public function createDocumentShreddingProcess() {
+        $obj = $this->commonDocumentCreate(ShreddingProcess::class);
         return $obj;
+    }
+
+    /**
+     * @return ShreddingRequestProcess
+     */
+    public function createDocumentShreddingRequestProcess() {
+        $obj = $this->commonDocumentCreate(ShreddingRequestProcess::class);
+        return $obj;
+    }
+
+    /**
+     * Starts a document process synchronously
+     * 
+     * @param string $name Process name
+     * @param array $documentIds Document IDs
+     * @param array $exceptions Exceptions thrown
+     * @return bool True on success or false on failure
+     */
+    public function startDocumentProcess(string $name, array $documentIds, array &$exceptions) {
+        switch($name) {
+            case SystemProcessTypes::SHREDDING:
+                $obj = $this->createDocumentShreddingProcess();
+                return $obj->execute($documentIds, $this->currentUser->getId(), $exceptions);
+
+            case SystemProcessTypes::SHREDDING_REQUEST:
+                $obj = $this->createDocumentShreddingRequestProcess();
+                return $obj->execute($documentIds, $this->currentUser->getId(), $exceptions);
+
+            default:
+                throw new GeneralException('Process with name \'' . $name . '\' does not exist.');
+        }
     }
 }
 

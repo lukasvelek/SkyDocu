@@ -6,11 +6,15 @@ use App\Constants\Container\ProcessStatus;
 use App\Repositories\ARepository;
 
 class ProcessRepository extends ARepository {
-    public function commonComposeQuery() {
+    public function commonComposeQuery(bool $onlyNotFinished = true) {
         $qb = $this->qb(__METHOD__);
 
         $qb->select(['*'])
             ->from('processes');
+
+        if($onlyNotFinished) {
+            $qb->andWhere('status = ?', [ProcessStatus::IN_PROGRESS]);
+        }
 
         return $qb;
     }

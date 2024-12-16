@@ -42,6 +42,9 @@ class ProcessGridDataSourceHelper {
 
             case ProcessGridViews::VIEW_WITH_ME:
                 return $this->composeQueryWithMe($currentUserId);
+
+            case ProcessGridViews::VIEW_FINISHED:
+                return $this->composeQueryFinished($currentUserId);
         }
     }
 
@@ -86,6 +89,17 @@ class ProcessGridDataSourceHelper {
     }
 
     /**
+     * Composes query for VIEW_FINISHED
+     * 
+     * @param string $currentUserId Current user ID
+     */
+    private function composeQueryFinished(string $currentUserId) {
+        $qb = $this->processRepository->commonComposeQuery(false);
+        $qb->andWhere('(authorUserId = ? OR currentOfficerUserId = ? OR workflowUserIds LIKE ?)', [$currentUserId, $currentUserId, '%' . $currentUserId . '%']);
+        return $qb;
+    }
+
+    /**
      * Gets metadata for appending for given view
      * 
      * @param string $view View name
@@ -121,6 +135,7 @@ class ProcessGridDataSourceHelper {
                 ProcessesGridSystemMetadata::DATE_CREATED,
                 ProcessesGridSystemMetadata::STATUS
             ],
+            ProcessGridViews::VIEW_FINISHED => array_keys(ProcessesGridSystemMetadata::getAll())
         };
     }
 }

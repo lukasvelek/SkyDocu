@@ -20,6 +20,10 @@ class ShreddingProcess extends ADocumentBulkProcess {
     public function execute(array $documentIds, ?string $userId = null, array &$exceptions = []): bool {
         return true;
     }
+
+    public function finalExecute(string $documentId, ?string $userId = null): bool {
+        return true;
+    }
 }
 
 ?>

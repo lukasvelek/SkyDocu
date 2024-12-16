@@ -97,13 +97,15 @@ class ProcessGridDataSourceHelper {
                 ProcessesGridSystemMetadata::TYPE,
                 ProcessesGridSystemMetadata::AUTHOR_USER_ID,
                 ProcessesGridSystemMetadata::CURRENT_OFFICER_USER_ID,
-                ProcessesGridSystemMetadata::DATE_CREATED
+                ProcessesGridSystemMetadata::DATE_CREATED,
+                ProcessesGridSystemMetadata::STATUS
             ],
             ProcessGridViews::VIEW_STARTED_BY_ME => [
                 ProcessesGridSystemMetadata::DOCUMENT_ID,
                 ProcessesGridSystemMetadata::TYPE,
                 ProcessesGridSystemMetadata::CURRENT_OFFICER_USER_ID,
-                ProcessesGridSystemMetadata::DATE_CREATED
+                ProcessesGridSystemMetadata::DATE_CREATED,
+                ProcessesGridSystemMetadata::STATUS
             ],
             ProcessGridViews::VIEW_WAITING_FOR_ME => [
                 ProcessesGridSystemMetadata::DOCUMENT_ID,
@@ -116,7 +118,8 @@ class ProcessGridDataSourceHelper {
                 ProcessesGridSystemMetadata::TYPE,
                 ProcessesGridSystemMetadata::AUTHOR_USER_ID,
                 ProcessesGridSystemMetadata::CURRENT_OFFICER_USER_ID,
-                ProcessesGridSystemMetadata::DATE_CREATED
+                ProcessesGridSystemMetadata::DATE_CREATED,
+                ProcessesGridSystemMetadata::STATUS
             ],
         };
     }

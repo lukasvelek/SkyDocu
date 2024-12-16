@@ -19,6 +19,15 @@ abstract class ADocumentBulkProcess extends AProcess {
     public abstract function canExecute(array $documentIds, ?string $userId = null, array &$exceptions = []): bool;
 
     /**
+     * Performs final execution of the process main operation. Usually called after workflow has been successfully finished.
+     * 
+     * @param string $documentId Document ID
+     * @param ?string $userId User ID
+     * @return bool True if operation was successful or false if not
+     */
+    public abstract function finalExecute(string $documentId, ?string $userId = null): bool;
+
+    /**
      * Evaluates correct result for method 'execute' based on the number of thrown exceptions.
      * 
      * If there are no exceptions the result is true. If there are more documents than exceptions than the result is true.

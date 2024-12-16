@@ -125,6 +125,25 @@ class ProcessFactory {
                 throw new GeneralException('Process with name \'' . $name . '\' does not exist.');
         }
     }
+
+    /**
+     * Starts a document process final execution synchronously
+     * 
+     * @param string $name Process name
+     * @param string $documentId Document ID
+     * @return bool True on success or false on failure
+     */
+    public function startDocumentProcessFinalExecute(string $name, string $documentId) {
+        switch($name) {
+            case SystemProcessTypes::SHREDDING_REQUEST:
+                $obj = $this->createDocumentShreddingRequestProcess();
+                return $obj->finalExecute($documentId, $this->currentUser->getId());
+                break;
+
+            default:
+                throw new GeneralException('Process with name \'' . $name . '\' does not exist.');
+        }
+    }
 }
 
 ?>

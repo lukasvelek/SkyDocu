@@ -93,7 +93,7 @@ abstract class AProcess {
     }
 
     /**
-     * Performs current operation on given array of document IDs
+     * Performs current operation on given array of document IDs - usually for creating workflows -> starting processes
      * 
      * @param array $documentIds Array of Document IDs
      * @param ?string $userId User ID or null if current user should be used

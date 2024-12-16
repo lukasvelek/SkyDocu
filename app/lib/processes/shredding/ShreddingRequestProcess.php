@@ -2,6 +2,7 @@
 
 namespace App\Lib\Processes\Shredding;
 
+use App\Constants\Container\DocumentStatus;
 use App\Constants\Container\SystemProcessTypes;
 use App\Exceptions\AException;
 use App\Lib\Processes\ADocumentBulkProcess;
@@ -49,6 +50,16 @@ class ShreddingRequestProcess extends ADocumentBulkProcess {
         }
 
         return $workflow;
+    }
+
+    public function finalExecute(string $documentId, ?string $userId = null): bool {
+        $data = [
+            'status' => DocumentStatus::READY_FOR_SHREDDING
+        ];
+
+        $this->documentManager->updateDocument($documentId, $data);
+
+        return true;
     }
 }
 

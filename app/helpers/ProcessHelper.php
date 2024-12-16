@@ -44,6 +44,24 @@ class ProcessHelper {
 
         return explode(';', $workflowUsers);
     }
+
+    /**
+     * Checks if user is last user in process workflow
+     * 
+     * @param string $userId User ID
+     * @param array $workflowUsers Workflow users
+     * @return bool
+     */
+    public static function isUserLastInWorkflow(string $userId, array $workflowUsers) {
+        $i = 0;
+        foreach($workflowUsers as $user) {
+            if($user == $userId) {
+                break;
+            }
+        }
+
+        return ($i + 1) == count($workflowUsers);
+    }
 }
 
 ?>

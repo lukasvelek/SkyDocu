@@ -5,6 +5,7 @@ namespace App\Components\ProcessesGrid;
 use App\Constants\Container\GridNames;
 use App\Constants\Container\ProcessesGridSystemMetadata;
 use App\Constants\Container\ProcessGridViews;
+use App\Constants\Container\ProcessStatus;
 use App\Constants\Container\SystemProcessTypes;
 use App\Core\Application;
 use App\Core\DB\DatabaseRow;
@@ -181,6 +182,10 @@ class ProcessesGrid extends GridBuilder implements IGridExtendingComponent {
 
                         return $type;
                     };
+                    break;
+
+                case ProcessesGridSystemMetadata::STATUS:
+                    $this->addColumnConst($name, $text, ProcessStatus::class);
                     break;
             }
         }

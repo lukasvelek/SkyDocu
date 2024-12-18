@@ -148,7 +148,8 @@ class ContainerUsageStatisticsService extends AService {
 
             return [
                 'count' => (count($lines) - 1),
-                'averageTimeTaken' => $averageTimeTaken
+                'averageTimeTaken' => $averageTimeTaken,
+                'totalTimeTaken' => $totalTimeTaken
             ];
         } catch(AException|Exception $e) {
             return 0;
@@ -161,6 +162,7 @@ class ContainerUsageStatisticsService extends AService {
             foreach($data as $date => $measuredData) {
                 $totalSqlQueries = $measuredData['count'];
                 $averageTimeTaken = (float)$measuredData['averageTimeTaken'];
+                $totalTimeTaken = (float)$measuredData['totalTimeTaken'];
 
                 $count = $this->containerRepository->getContainerUsageStatisticsForDate($containerId, $date);
                 if($count > 0) {
@@ -176,7 +178,7 @@ class ContainerUsageStatisticsService extends AService {
                     
                     $entryId = $this->containerManager->entityManager->generateEntityId(EntityManager::CONTAINER_USAGE_STATISTICS);
 
-                    $this->containerRepository->insertNewContainerUsageStatisticsEntry($entryId, $containerId, $totalSqlQueries, $averageTimeTaken, $date);
+                    $this->containerRepository->insertNewContainerUsageStatisticsEntry($entryId, $containerId, $totalSqlQueries, $averageTimeTaken, $date, $totalTimeTaken);
 
                     $this->containerRepository->commit($this->serviceManager->getServiceUserId(), __METHOD__);
 

@@ -95,7 +95,8 @@ class ProcessGridDataSourceHelper {
      */
     private function composeQueryFinished(string $currentUserId) {
         $qb = $this->processRepository->commonComposeQuery(false);
-        $qb->andWhere('(authorUserId = ? OR currentOfficerUserId = ? OR workflowUserIds LIKE ?)', [$currentUserId, $currentUserId, '%' . $currentUserId . '%']);
+        $qb->andWhere('(authorUserId = :author OR currentOfficerUserId = :currentOfficer OR workflowUserIds LIKE :workflow)');
+        $qb->setParams([':author' => $currentUserId, ':currentOfficer' => $currentUserId, ':workflow' => '%' . $currentUserId . '%']);
         return $qb;
     }
 

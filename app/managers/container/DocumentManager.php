@@ -38,16 +38,7 @@ class DocumentManager extends AManager {
 
         $groupIds = $this->gr->getGroupsForUser($userId);
 
-        $classes = [];
-        foreach($groupIds as $groupId) {
-            $classesTmp = $this->dcr->getVisibleClassesForGroup($groupId);
-
-            foreach($classesTmp as $classId) {
-                if(!in_array($classId, $classes)) {
-                    $classes[] = $classId;
-                }
-            }
-        }
+        $classes = $this->dcr->getVisibleClassesForGroups($groupIds);
 
         if(empty($classes)) {
             $qb->andWhere('1=0');

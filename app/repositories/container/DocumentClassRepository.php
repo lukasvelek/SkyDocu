@@ -51,6 +51,30 @@ class DocumentClassRepository extends ARepository {
         return $classes;
     }
 
+    public function composeQueryForClassesForGroups(array $groupIds) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->select(['classId'])
+            ->from('document_class_group_rights')
+            ->where($qb->getColumnInValues('groupId', $groupIds));
+
+        return $qb;
+    }
+
+    public function getVisibleClassesForGroups(array $groupIds) {
+        $qb = $this->composeQueryForClassesForGroups($groupIds)
+            ->andWhere('canView = 1');
+
+        $qb->execute();
+
+        $classes = [];
+        while($row = $qb->fetchAssoc()) {
+            $classes[] = $row['classId'];
+        }
+
+        return $classes;
+    }
+
     public function getDocumentClassById(string $classId) {
         $qb = $this->composeQueryForClasses();
         $qb->andWhere('classId = ?', [$classId])

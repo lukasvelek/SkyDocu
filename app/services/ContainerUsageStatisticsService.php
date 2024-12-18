@@ -134,6 +134,11 @@ class ContainerUsageStatisticsService extends AService {
 
             $totalTimeTaken = 0.0;
             foreach($lines as $line) {
+                // we only want lines with real data not with stack trace
+                if(!str_starts_with($line, '[')) {
+                    continue;
+                }
+
                 $lineParts = explode(' ', $line);
                 $timeTaken = substr($lineParts[3], 1);
                 $totalTimeTaken = $totalTimeTaken + (float)$timeTaken;

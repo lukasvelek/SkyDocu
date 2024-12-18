@@ -57,7 +57,7 @@ class DocumentBulkActionAuthorizator extends AAuthorizator {
     public function throwExceptionIfCannotExecuteShreddingRequest(string $userId, string $documentId) {
         $document = $this->dm->getDocumentById($documentId);
 
-        if(!in_array($document->status, [DocumentStatus::NEW, DocumentStatus::ARCHIVED])) {
+        if($document->status != DocumentStatus::ARCHIVED) {
             throw new GeneralException(sprintf('Document\'s status must be \'%s\' or \'%s\' but it is \'%s\'.', DocumentStatus::toString(DocumentStatus::NEW), DocumentStatus::toString(DocumentStatus::ARCHIVED), DocumentStatus::toString($document->status)), null, false);
         }
 

@@ -1,10 +1,11 @@
 <?php
 
-namespace App\Lib\Processes;
+namespace App\Lib\Processes\Shredding;
 
 use App\Constants\Container\DocumentStatus;
 use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
+use App\Lib\Processes\ADocumentBulkProcess;
 
 class ShreddingProcess extends ADocumentBulkProcess {
     public function canExecute(array $documentIds, ?string $userId = null, array &$exceptions = []): bool {

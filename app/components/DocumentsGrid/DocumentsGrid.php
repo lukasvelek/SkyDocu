@@ -127,7 +127,7 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
     protected function prerender() {
         $this->createDataSource();
 
-        //$this->fetchDataFromDb();
+        $this->fetchDataFromDb();
 
         $this->appendSystemMetadata();
 
@@ -221,9 +221,18 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
                     break;
 
                 case DocumentsGridSystemMetadata::IS_IN_PROCESS:
+                    $dataSource = clone $this->filledDataSource;
+
+                    $documentIds = [];
+                    while($row = $dataSource->fetchAssoc()) {
+                        $documentIds[] = $row['documentId'];
+                    }
+
+                    $documentsInProcess = $this->pf->processManager->areDocumentsInProcesses($documentIds);
+
                     $col = $this->addColumnBoolean(DocumentsGridSystemMetadata::IS_IN_PROCESS, DocumentsGridSystemMetadata::toString(DocumentsGridSystemMetadata::IS_IN_PROCESS));
-                    array_unshift($col->onRenderColumn, function(DatabaseRow $row, Row $_row, Cell $cell, HTML $html, mixed $value) {
-                        return $this->pf->processManager->isDocumentInProcess($row->documentId);
+                    array_unshift($col->onRenderColumn, function(DatabaseRow $row, Row $_row, Cell $cell, HTML $html, mixed $value) use ($documentsInProcess) {
+                        return array_key_exists($row->documentId, $documentsInProcess);
                     });
                     break;
             }

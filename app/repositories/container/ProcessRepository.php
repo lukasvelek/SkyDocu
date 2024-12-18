@@ -102,6 +102,24 @@ class ProcessRepository extends ARepository {
 
         return $qb->fetch();
     }
+
+    public function getActiveProcessCountForDocuments(array $documentIds) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->select(['documentId', 'COUNT(processId) AS cnt'])
+            ->from('processes')
+            ->where('( ' . $qb->getColumnInValues('documentId', $documentIds) . ' )')
+            ->andWhere('( status <> ? )', [ProcessStatus::FINISHED]);
+
+        $qb->execute();
+
+        $result = [];
+        while($row = $qb->fetchAssoc()) {
+            $result[$row['documentId']] = $row['cnt'];
+        }
+
+        return $result;
+    }
 }
 
 ?>

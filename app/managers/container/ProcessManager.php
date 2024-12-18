@@ -116,6 +116,19 @@ class ProcessManager extends AManager {
         return !empty($processes);
     }
 
+    public function areDocumentsInProcesses(array $documentIds) {
+        $tmp = $this->pr->getActiveProcessCountForDocuments($documentIds);
+
+        $result = [];
+        foreach($tmp as $documentId => $count) {
+            if($count > 0) {
+                $result[] = $documentId;
+            }
+        }
+
+        return $result;
+    }
+
     public function getProcessById(string $processId) {
         if(!array_key_exists($processId, $this->mProcessesCache)) {
             $row = $this->pr->getProcessById($processId);

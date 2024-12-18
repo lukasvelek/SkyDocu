@@ -3,6 +3,7 @@
 namespace App\Lib\Processes;
 
 use App\Constants\Container\DocumentStatus;
+use App\Constants\Container\SystemProcessTypes;
 use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
 
@@ -17,6 +18,14 @@ class ArchivingProcess extends ADocumentBulkProcess {
         foreach($documentIds as $documentId) {
             try {
                 $this->documentBulkActionAuthorizator->throwExceptionIfCannotExecuteArchivation($userId ?? $this->currentUser->getId(), $documentId);
+
+                if($userId === null) {
+                    $userId = $this->currentUser->getId();
+                }
+
+                if(!$this->processManager->saveProcess($documentId, SystemProcessTypes::ARCHIVATION, $userId, $userId, [$userId])) {
+                    throw new GeneralException('Database error.');
+                }
 
                 if(!$this->finalExecute($documentId, $userId)) {
                     $text = 'Could not archive document.';

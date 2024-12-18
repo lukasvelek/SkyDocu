@@ -197,10 +197,22 @@ class ProcessesGrid extends GridBuilder implements IGridExtendingComponent {
         }
     }
 
+    /**
+     * Gets process type's grid title by it's key
+     * 
+     * @param string $key Process type key
+     * @return string Process type's grid title
+     */
     private function getTypeByKey(string $key) {
         return SystemProcessTypes::gridToString($key);
     }
 
+    /**
+     * Gets document's title by it's ID
+     * 
+     * @param string $documentId Document ID
+     * @return string Document's title or #ERROR on error
+     */
     private function getDocumentById(string $documentId) {
         $result = '';
 

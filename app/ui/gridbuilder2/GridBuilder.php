@@ -900,6 +900,12 @@ class GridBuilder extends AComponent {
                 'ids[]' => '_ids'
             ];
 
+            if(array_key_exists('params', $this->checkboxHandler)) {
+                foreach($this->checkboxHandler['params'] as $paramName => $paramKey) {
+                    $headerParams[$paramName] = $paramKey;
+                }
+            }
+
             if(!array_key_exists('isComponent', $this->checkboxHandler)) {
                 $arb->setAction($this->checkboxHandler['presenter'], $this->checkboxHandler['action']);
             } else {
@@ -1312,13 +1318,23 @@ class GridBuilder extends AComponent {
         ];
     }
 
-    public function addCheckboxes2(APresenter $presenter, string $componentAction) {
+    /**
+     * Adds checkboxes to the grid
+     * 
+     * @param APresenter $presenter Handler presenter
+     * @param string $action Handler action
+     */
+    public function addCheckboxes2(APresenter $presenter, string $componentAction, array $params = []) {
         $this->hasCheckboxes = true;
         $this->checkboxHandler = [
             'presenter' => $presenter,
             'action' => $componentAction,
             'isComponent' => true
         ];
+
+        if(!empty($params)) {
+            $this->checkboxHandler['params'] = $params;
+        }
     }
 }
 

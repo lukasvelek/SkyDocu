@@ -502,7 +502,12 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
      * @param APresenter $presenter Sender presenter
      */
     public function useCheckboxes(APresenter $presenter) {
-        $this->addCheckboxes2($presenter, 'bulkAction');
+        $params = [];
+        if(array_key_exists('folderId', $this->httpRequest->query)) {
+            $params['folderId'] = $this->httpRequest->query['folderId'];
+        }
+
+        $this->addCheckboxes2($presenter, 'bulkAction', $params);
     }
 
     // HANDLERS

@@ -110,6 +110,10 @@ class DocumentBulkActionsHelper {
             'process=' . $bulkAction
         ];
 
+        if(array_key_exists('folderId', $this->request->query)) {
+            $urlParams[] = 'backFolderId=' . $this->request->query['folderId'];
+        }
+
         foreach($documentIds as $documentId) {
             $urlParams[] = 'documentId[]=' . $documentId;
         }
@@ -134,6 +138,10 @@ class DocumentBulkActionsHelper {
             'backAction=' . $this->request->query['action']
         ];
 
+        if(array_key_exists('folderId', $this->request->query)) {
+            $urlParams['backFolderId'] = $this->request->query['folderId'];
+        }
+
         foreach($documentIds as $documentId) {
             $urlParams[] = 'documentId[]=' . $documentId;
         }
@@ -143,11 +151,6 @@ class DocumentBulkActionsHelper {
                 ->text(DocumentBulkActions::toString($bulkAction));
 
         switch($bulkAction) {
-            case DocumentBulkActions::ARCHIVATION:
-                $el->href($this->createLink('User:DocumentBulkActions', 'archiveDocuments', $urlParams));
-
-                break;
-
             case DocumentBulkActions::DOCUMENT_HISTORY:
                 $el->href($this->createLink('User:Documents', 'documentHistory', $urlParams));
                 break;

@@ -76,6 +76,8 @@ class ProcessesGrid extends GridBuilder implements IGridExtendingComponent {
 
     protected function prerender() {
         $this->createDataSource();
+
+        $this->fetchDataFromDb();
         
         $this->appendSystemMetadata();
 
@@ -159,17 +161,24 @@ class ProcessesGrid extends GridBuilder implements IGridExtendingComponent {
                     break;
 
                 case ProcessesGridSystemMetadata::DOCUMENT_ID:
-                    $col = $this->addColumnText($name, $text);
-                    $col->onRenderColumn[] = function(DatabaseRow $row, Row $_row, Cell $cell, HTML $html, mixed $value) {
-                        $document = $this->getDocumentById($value);
+                    $dataSource = clone $this->filledDataSource;
 
+                    $documentIds = [];
+                    while($row = $dataSource->fetchAssoc()) {
+                        $documentIds[] = $row['documentId'];
+                    }
+
+                    $documentTitles = $this->getDocumentTitlesByIds($documentIds);
+
+                    $col = $this->addColumnText($name, $text);
+                    $col->onRenderColumn[] = function(DatabaseRow $row, Row $_row, Cell $cell, HTML $html, mixed $value) use ($documentTitles) {
                         $el = HTML::el('span')
-                                ->text($document);
+                                ->text($documentTitles[$value]);
 
                         return $el;
                     };
-                    $col->onExportColumn[] = function(DatabaseRow $row, mixed $value) {
-                        return $this->getDocumentById($value);
+                    $col->onExportColumn[] = function(DatabaseRow $row, mixed $value) use ($documentTitles) {
+                        return $documentTitles[$value];
                     };
                     break;
 
@@ -208,22 +217,25 @@ class ProcessesGrid extends GridBuilder implements IGridExtendingComponent {
     }
 
     /**
-     * Gets document's title by it's ID
+     * Returns array of document titles for given document IDs
      * 
-     * @param string $documentId Document ID
-     * @return string Document's title or #ERROR on error
+     * @param array $documentIds Document IDs
+     * @return array<string, string> Documents titles or #ERROR on error
      */
-    private function getDocumentById(string $documentId) {
-        $result = '';
+    private function getDocumentTitlesByIds(array $documentIds) {
+        $data = [];
 
-        try {
-            $document = $this->documentManager->getDocumentById($documentId);
-            $result = $document->title;
-        } catch(AException $e) {
-            $result = '#ERROR';
+        $dbData = $this->documentManager->getDocumentsByIds($documentIds);
+
+        foreach($documentIds as $documentId) {
+            if(!array_key_exists($documentId, $dbData)) {
+                $data[$documentId] = '#ERROR';
+            } else {
+                $data[$documentId] = $dbData[$documentId]->title;
+            }
         }
 
-        return $result;
+        return $data;
     }
 }
 

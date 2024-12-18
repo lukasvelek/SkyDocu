@@ -52,7 +52,7 @@ class ProcessesGrid extends GridBuilder implements IGridExtendingComponent {
         DocumentManager $documentManager
     ) {
         parent::__construct($grid->httpRequest);
-        $this->setHelper(new GridHelper($app->logger, $app->currentUser->getId()));
+        $this->setHelper($grid->getHelper());
 
         $this->app = $app;
         $this->gridManager = $gridManager;

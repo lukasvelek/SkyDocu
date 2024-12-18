@@ -133,6 +133,15 @@ class GridBuilder extends AComponent {
     }
 
     /**
+     * Returns the GridHelper instance
+     * 
+     * @return GridHelper GridHelper instance
+     */
+    public function getHelper() {
+        return $this->helper;
+    }
+
+    /**
      * Sets the grid name
      * 
      * @param string $name Grid name

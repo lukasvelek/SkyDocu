@@ -45,7 +45,7 @@ class ProcessesPresenter extends AUserPresenter {
 
     protected function createComponentProcessesGrid(HttpRequest $request) {
         $grid = new ProcessesGrid(
-            $this->componentFactory->getGridBuilder(),
+            $this->componentFactory->getGridBuilder($this->containerId),
             $this->app,
             $this->gridManager,
             $this->processManager,

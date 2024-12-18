@@ -26,7 +26,7 @@ class GroupsPresenter extends AAdminPresenter {
     }
 
     protected function createComponentGroupsGrid(HttpRequest $request) {
-        $grid = $this->componentFactory->getGridBuilder();
+        $grid = $this->componentFactory->getGridBuilder($this->containerId);
 
         $grid->createDataSourceFromQueryBuilder($this->groupRepository->composeQueryForGroups(), 'groupId');
 
@@ -84,7 +84,7 @@ class GroupsPresenter extends AAdminPresenter {
     }
 
     protected function createComponentGroupMembersGrid(HttpRequest $request) {
-        $grid = $this->componentFactory->getGridBuilder();
+        $grid = $this->componentFactory->getGridBuilder($this->containerId);
 
         $group = $this->groupRepository->getGroupById($request->query['groupId']);
 

@@ -64,7 +64,7 @@ class DocumentFoldersPresenter extends AAdminPresenter {
     }
 
     protected function createComponentDocumentFoldersGrid(HttpRequest $request) {
-        $grid = $this->componentFactory->getGridBuilder();
+        $grid = $this->componentFactory->getGridBuilder($this->containerId);
 
         $qb = $this->folderManager->composeQueryForVisibleFoldersForUser($this->getUserId());
 
@@ -259,7 +259,7 @@ class DocumentFoldersPresenter extends AAdminPresenter {
     }
 
     protected function createComponentDocumentFoldersGroupRightsGrid(HttpRequest $request) {
-        $grid = $this->componentFactory->getGridBuilder();
+        $grid = $this->componentFactory->getGridBuilder($this->containerId);
 
         $grid->createDataSourceFromQueryBuilder($this->folderRepository->composeQueryForGroupRightsInFolder($request->query['folderId']), 'relationId');
         $grid->addQueryDependency('folderId', $request->query['folderId']);
@@ -589,7 +589,7 @@ class DocumentFoldersPresenter extends AAdminPresenter {
     }
 
     protected function createComponentFolderMetadataGrid(HttpRequest $request) {
-        $grid = $this->componentFactory->getGridBuilder();
+        $grid = $this->componentFactory->getGridBuilder($this->containerId);
 
         $grid->createDataSourceFromQueryBuilder($this->metadataManager->composeQueryForMetadataForFolder($request->query['folderId']), 'metadataId');
         $grid->addQueryDependency('folderId', $request->query['folderId']);

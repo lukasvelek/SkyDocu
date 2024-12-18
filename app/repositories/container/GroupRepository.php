@@ -3,19 +3,14 @@
 namespace App\Repositories\Container;
 
 use App\Constants\Container\GroupStandardOperationRights;
-use App\Core\Caching\Cache;
 use App\Core\Caching\CacheNames;
 use App\Core\DatabaseConnection;
 use App\Logger\Logger;
 use App\Repositories\ARepository;
 
 class GroupRepository extends ARepository {
-    private Cache $groupStandardOperationRightsCache;
-
     public function __construct(DatabaseConnection $db, Logger $logger) {
         parent::__construct($db, $logger);
-
-        $this->groupStandardOperationRightsCache = $this->cacheFactory->getCache(CacheNames::GROUP_STANDARD_OPERATIONS_RIGHTS);
     }
 
     public function getGroupsForUser(string $userId) {
@@ -116,7 +111,9 @@ class GroupRepository extends ARepository {
             ->from('group_rights_standard_operations')
             ->where('groupId = ?', [$groupId]);
 
-        return $this->groupStandardOperationRightsCache->load($groupId, function() use ($qb) {
+        $cache = $this->cacheFactory->getCache(CacheNames::GROUP_STANDARD_OPERATIONS_RIGHTS);
+
+        return $cache->load($groupId, function() use ($qb) {
             $result = $qb->execute()->fetchAll();
 
             if($result === false || $result === null) {

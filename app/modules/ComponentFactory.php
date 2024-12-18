@@ -33,9 +33,9 @@ class ComponentFactory {
      * 
      * @return GridBuilder GridBuilder instance
      */
-    public function getGridBuilder() {
+    public function getGridBuilder(?string $containerId = null) {
         $grid = new GridBuilder($this->request);
-        $helper = new GridHelper($this->presenter->logger, $this->presenter->getUserId());
+        $helper = new GridHelper($this->presenter->logger, $this->presenter->getUserId(), $containerId);
         $grid->setHelper($helper);
         return $grid;
     }

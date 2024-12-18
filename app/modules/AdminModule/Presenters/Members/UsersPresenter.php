@@ -23,7 +23,7 @@ class UsersPresenter extends AAdminPresenter {
     }
 
     protected function createComponentUsersGrid(HttpRequest $request) {
-        $grid = $this->componentFactory->getGridBuilder();
+        $grid = $this->componentFactory->getGridBuilder($this->containerId);
 
         $userIds = $this->groupRepository->getMembersForGroup($this->groupRepository->getGroupByTitle(SystemGroups::ALL_USERS)['groupId']);
 

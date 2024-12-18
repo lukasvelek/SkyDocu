@@ -34,7 +34,7 @@ class DocumentMetadataPresenter extends AAdminPresenter {
     }
 
     protected function createComponentMetadataGrid() {
-        $grid = $this->componentFactory->getGridBuilder();
+        $grid = $this->componentFactory->getGridBuilder($this->containerId);
 
         $grid->createDataSourceFromQueryBuilder($this->metadataRepository->composeQueryForMetadata(), 'metadataId');
 
@@ -263,7 +263,7 @@ class DocumentMetadataPresenter extends AAdminPresenter {
     }
 
     protected function createComponentMetadataFolderRightsGrid(HttpRequest $request) {
-        $grid = $this->componentFactory->getGridBuilder();
+        $grid = $this->componentFactory->getGridBuilder($this->containerId);
 
         $qb = $this->metadataRepository->composeQueryForMetadataFolderRights();
         $qb->andWhere('customMetadataId = ?', [$request->query['metadataId']]);
@@ -394,7 +394,7 @@ class DocumentMetadataPresenter extends AAdminPresenter {
     }
 
     protected function createComponentMetadataEnumValuesGrid(HttpRequest $request) {
-        $grid = $this->componentFactory->getGridBuilder();
+        $grid = $this->componentFactory->getGridBuilder($this->containerId);
 
         $qb = $this->metadataRepository->composeQueryMetadataEnumValues($request->query['metadataId']);
         $qb->orderBy('metadataKey');

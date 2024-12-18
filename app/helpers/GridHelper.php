@@ -29,14 +29,18 @@ class GridHelper {
      * 
      * @param Logger $logger Logger instance
      * @param string $currentUserId Current user ID
+     * @param ?string $containerId Current container ID
      */
-    public function __construct(Logger $logger, string $currentUserId) {
+    public function __construct(Logger $logger, string $currentUserId, ?string $containerId = null) {
         $this->logger = $logger;
         $this->currentUserId = $currentUserId;
 
         $this->gridPageData = [];
 
         $this->cacheFactory = new CacheFactory();
+        if($containerId !== null) {
+            $this->cacheFactory->setCustomNamespace($containerId);
+        }
         $this->gridPageDataCache = $this->cacheFactory->getCache(CacheNames::GRID_PAGE_DATA);
     }
 

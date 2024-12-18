@@ -3,8 +3,6 @@
 namespace App\Managers\Container;
 
 use App\Constants\Container\ProcessStatus;
-use App\Constants\Container\SystemProcessTypes;
-use App\Core\Caching\Cache;
 use App\Core\Caching\CacheNames;
 use App\Core\DB\DatabaseRow;
 use App\Exceptions\AException;
@@ -19,8 +17,6 @@ class ProcessManager extends AManager {
     public ProcessRepository $pr;
     private GroupManager $gm;
 
-    private Cache $processTypes;
-
     private array $mProcessesCache;
     
     public function __construct(ProcessRepository $pr, GroupManager $gm) {
@@ -32,8 +28,6 @@ class ProcessManager extends AManager {
 
     public function startup() {
         parent::startup();
-
-        $this->processTypes = $this->cacheFactory->getCache(CacheNames::PROCESS_TYPES);
     }
 
     public function startProcess(string $documentId, string $type, string $userId, string $currentOfficerId, array $workflowUserIds) {
@@ -103,7 +97,9 @@ class ProcessManager extends AManager {
     }
 
     public function getProcessTypeByKey(string $key) {
-        return $this->processTypes->load($key, function() use ($key) {
+        $cache = $this->cacheFactory->getCache(CacheNames::PROCESS_TYPES);
+
+        return $cache->load($key, function() use ($key) {
             $row = $this->pr->getProcessTypeByKey($key);
 
             return DatabaseRow::createFromDbRow($row);

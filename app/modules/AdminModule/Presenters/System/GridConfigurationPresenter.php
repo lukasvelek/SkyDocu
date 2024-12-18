@@ -25,7 +25,7 @@ class GridConfigurationPresenter extends AAdminPresenter {
     }
 
     protected function createComponentGridConfigurationGrid(HttpRequest $request) {
-        $grid = $this->componentFactory->getGridBuilder();
+        $grid = $this->componentFactory->getGridBuilder($this->containerId);
 
         $grid->setGridName('gridConfigurationGrid');
         $grid->createDataSourceFromQueryBuilder($this->gridManager->composeQueryForGridConfigurations(), 'configurationId');

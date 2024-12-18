@@ -736,19 +736,6 @@ abstract class APresenter extends AGUICore {
     }
 
     /**
-     * Returns a GridBuilder instance
-     * 
-     * @return GridBuilder GridBuilder instance
-     * @deprecated
-     */
-    public function getGridBuilder() {
-        $grid = new GridBuilder($this->httpRequest);
-        $helper = new GridHelper($this->logger, $this->getUserId());
-        $grid->setHelper($helper);
-        return $grid;
-    }
-
-    /**
      * Creates a link leading to an action in current presenter. It is used for links back.
      * 
      * @param string $action Action name

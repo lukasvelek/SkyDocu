@@ -56,6 +56,7 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
      * @param EnumManager $em
      * @param GridManager $gm
      * @param ProcessFactory $pf
+     * @param string $containerId
      */
     public function __construct(
         GridBuilder $grid,
@@ -68,7 +69,7 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
         ProcessFactory $pf
     ) {
         parent::__construct($grid->httpRequest);
-        $this->setHelper(new GridHelper($app->logger, $app->currentUser->getId()));
+        $this->setHelper($grid->getHelper());
 
         $this->app = $app;
         $this->dm = $documentManager;

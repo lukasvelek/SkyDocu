@@ -14,8 +14,8 @@ use App\UI\GridBuilder2\GridBuilder;
  * @author Lukas Velek
  */
 class ComponentFactory {
-    private HttpRequest $request;
-    private APresenter $presenter;
+    protected HttpRequest $request;
+    protected APresenter $presenter;
 
     /**
      * Class constructor

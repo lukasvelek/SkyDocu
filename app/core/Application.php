@@ -276,6 +276,8 @@ class Application {
             }
         }
 
+        $request->currentUser = $this->currentUser;
+
         return $request;
     }
 

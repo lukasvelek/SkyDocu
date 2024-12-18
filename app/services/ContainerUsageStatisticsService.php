@@ -76,7 +76,7 @@ class ContainerUsageStatisticsService extends AService {
         foreach($containers as $containerId) {
             $this->logInfo('Starting to search for log files for container \'' . $containerId . '\'.');
 
-            $containerFiles = FileManager::getFilesInFolder(APP_ABSOLUTE_DIR . LOG_DIR . $containerId);
+            $containerFiles = FileManager::getFilesInFolder(APP_ABSOLUTE_DIR . LOG_DIR . 'containers\\' . $containerId);
 
             $this->logInfo('Found ' . count($containerFiles) . 'log files for container \'' . $containerId . '\'.');
 

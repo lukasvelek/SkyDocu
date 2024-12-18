@@ -13,6 +13,7 @@ use App\Core\DB\DatabaseRow;
 use App\Enums\AEnumForMetadata;
 use App\Exceptions\GeneralException;
 use App\Helpers\GridHelper;
+use App\Lib\Processes\ProcessFactory;
 use App\Managers\Container\DocumentManager;
 use App\Managers\Container\EnumManager;
 use App\Managers\Container\GridManager;
@@ -36,6 +37,7 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
     private GroupStandardOperationsAuthorizator $gsoa;
     private EnumManager $em;
     private GridManager $gm;
+    private ProcessFactory $pf;
 
     private bool $allMetadata;
 
@@ -49,6 +51,11 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
      * @param GridBuilder $grid GridBuilder instance
      * @param Application $app Application instance
      * @param DocumentManager $documentManager DocumentManager instance
+     * @param DocumentBulkActionAuthorizator $dbaa DocumentBulkActionAuthorizator instance
+     * @param GroupStandardOperationsAuthorizator $gsoa
+     * @param EnumManager $em
+     * @param GridManager $gm
+     * @param ProcessFactory $pf
      */
     public function __construct(
         GridBuilder $grid,
@@ -57,7 +64,8 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
         DocumentBulkActionAuthorizator $dbaa,
         GroupStandardOperationsAuthorizator $gsoa,
         EnumManager $em,
-        GridManager $gm
+        GridManager $gm,
+        ProcessFactory $pf
     ) {
         parent::__construct($grid->httpRequest);
         $this->setHelper(new GridHelper($app->logger, $app->currentUser->getId()));
@@ -69,8 +77,9 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
         $this->gsoa = $gsoa;
         $this->em = $em;
         $this->gm = $gm;
+        $this->pf = $pf;
 
-        $this->dbah = new DocumentBulkActionsHelper($this->app, $this->dm, $this->httpRequest, $this->dbaa, $this->gsoa);
+        $this->dbah = new DocumentBulkActionsHelper($this->app, $this->dm, $this->httpRequest, $this->dbaa, $this->gsoa, $pf);
 
         $this->allMetadata = false;
         $this->currentFolderId = null;
@@ -115,12 +124,7 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
         $this->showDocumentInfoLink = false;
     }
 
-    /**
-     * Adds system metadata columns and if any custom metadata exist then it also adds custom metadata columns. It also adds values of the custom metadata. Finally it renders the grid.
-     * 
-     * @return string HTML code
-     */
-    public function render() {
+    protected function prerender() {
         $this->createDataSource();
 
         $this->fetchDataFromDb();
@@ -135,7 +139,7 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
 
         $this->setup();
 
-        return parent::render();
+        parent::prerender();
     }
 
     /**
@@ -167,9 +171,6 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
         }
     }
 
-    /**
-     * Creates data source for the grid
-     */
     public function createDataSource() {
         $folderId = $this->getFolderId();
 
@@ -202,24 +203,29 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
         $config = $this->getGridConfiguration();
 
         if($config === null) {
-            $this->addColumnText(DocumentsGridSystemMetadata::TITLE, DocumentsGridSystemMetadata::toString(DocumentsGridSystemMetadata::TITLE));
-            $this->addColumnUser(DocumentsGridSystemMetadata::AUTHOR_USER_ID, DocumentsGridSystemMetadata::toString(DocumentsGridSystemMetadata::AUTHOR_USER_ID));
-            $this->addColumnConst(DocumentsGridSystemMetadata::STATUS, DocumentsGridSystemMetadata::toString(DocumentsGridSystemMetadata::STATUS), DocumentStatus::class);
-        } else {
-            foreach($config as $column) {
-                switch($column) {
-                    case DocumentsGridSystemMetadata::TITLE:
-                        $this->addColumnText(DocumentsGridSystemMetadata::TITLE, DocumentsGridSystemMetadata::toString(DocumentsGridSystemMetadata::TITLE));
-                        break;
+            $config = array_keys(DocumentsGridSystemMetadata::getAll());
+        }
 
-                    case DocumentsGridSystemMetadata::AUTHOR_USER_ID:
-                        $this->addColumnUser(DocumentsGridSystemMetadata::AUTHOR_USER_ID, DocumentsGridSystemMetadata::toString(DocumentsGridSystemMetadata::AUTHOR_USER_ID));
-                        break;
+        foreach($config as $column) {
+            switch($column) {
+                case DocumentsGridSystemMetadata::TITLE:
+                    $this->addColumnText(DocumentsGridSystemMetadata::TITLE, DocumentsGridSystemMetadata::toString(DocumentsGridSystemMetadata::TITLE));
+                    break;
 
-                    case DocumentsGridSystemMetadata::STATUS:
-                        $this->addColumnConst(DocumentsGridSystemMetadata::STATUS, DocumentsGridSystemMetadata::toString(DocumentsGridSystemMetadata::STATUS), DocumentStatus::class);
-                        break;
-                }
+                case DocumentsGridSystemMetadata::AUTHOR_USER_ID:
+                    $this->addColumnUser(DocumentsGridSystemMetadata::AUTHOR_USER_ID, DocumentsGridSystemMetadata::toString(DocumentsGridSystemMetadata::AUTHOR_USER_ID));
+                    break;
+
+                case DocumentsGridSystemMetadata::STATUS:
+                    $this->addColumnConst(DocumentsGridSystemMetadata::STATUS, DocumentsGridSystemMetadata::toString(DocumentsGridSystemMetadata::STATUS), DocumentStatus::class);
+                    break;
+
+                case DocumentsGridSystemMetadata::IS_IN_PROCESS:
+                    $col = $this->addColumnBoolean(DocumentsGridSystemMetadata::IS_IN_PROCESS, DocumentsGridSystemMetadata::toString(DocumentsGridSystemMetadata::IS_IN_PROCESS));
+                    array_unshift($col->onRenderColumn, function(DatabaseRow $row, Row $_row, Cell $cell, HTML $html, mixed $value) {
+                        return $this->pf->processManager->isDocumentInProcess($row->documentId);
+                    });
+                    break;
             }
         }
     }

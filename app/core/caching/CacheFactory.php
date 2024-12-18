@@ -184,13 +184,6 @@ class CacheFactory {
         foreach($this->persistentCaches as $cache) {
             if($cache->isInvalidated()) {
                 $this->deleteCache($cache->getNamespace());
-                /*$tmp = [
-                    self::I_NS_DATA => [],
-                    self::I_NS_CACHE_EXPIRATION => $cache->getExpirationDate()?->getResult(),
-                    self::I_NS_CACHE_LAST_WRITE_DATE => $cache->getLastWriteDate()?->getResult()
-                ];
-
-                $this->saveDataToCache($cache->getNamespace(), $tmp);*/
             } else {
                 $tmp = [
                     self::I_NS_DATA => $cache->getData(),

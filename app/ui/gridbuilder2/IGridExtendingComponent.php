@@ -8,6 +8,11 @@ namespace App\UI\GridBuilder2;
  * @author Lukas Velek
  */
 interface IGridExtendingComponent {
+    /**
+     * Creates data source for the grid
+     * 
+     * @internal
+     */
     function createDataSource();
 }
 

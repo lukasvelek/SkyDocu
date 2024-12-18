@@ -6,12 +6,14 @@ use App\Authorizators\DocumentBulkActionAuthorizator;
 use App\Authorizators\GroupStandardOperationsAuthorizator;
 use App\Core\Caching\CacheFactory;
 use App\Core\DatabaseConnection;
+use App\Lib\Processes\ProcessFactory;
 use App\Managers\Container\DocumentManager;
 use App\Managers\Container\EnumManager;
 use App\Managers\Container\FolderManager;
 use App\Managers\Container\GridManager;
 use App\Managers\Container\GroupManager;
 use App\Managers\Container\MetadataManager;
+use App\Managers\Container\ProcessManager;
 use App\Managers\EntityManager;
 use App\Repositories\Container\DocumentClassRepository;
 use App\Repositories\Container\DocumentRepository;
@@ -19,6 +21,7 @@ use App\Repositories\Container\FolderRepository;
 use App\Repositories\Container\GridRepository;
 use App\Repositories\Container\GroupRepository;
 use App\Repositories\Container\MetadataRepository;
+use App\Repositories\Container\ProcessRepository;
 use App\Repositories\Container\TransactionLogRepository;
 use App\Repositories\ContentRepository;
 use ReflectionClass;
@@ -32,6 +35,7 @@ abstract class AContainerPresenter extends APresenter {
     protected MetadataRepository $metadataRepository;
     protected TransactionLogRepository $transactionLogRepository;
     protected GridRepository $gridRepository;
+    protected ProcessRepository $processRepository;
     
     protected EntityManager $entityManager;
     protected FolderManager $folderManager;
@@ -40,14 +44,21 @@ abstract class AContainerPresenter extends APresenter {
     protected MetadataManager $metadataManager;
     protected EnumManager $enumManager;
     protected GridManager $gridManager;
+    protected ProcessManager $processManager;
 
     protected DocumentBulkActionAuthorizator $documentBulkActionAuthorizator;
     protected GroupStandardOperationsAuthorizator $groupStandardOperationsAuthorizator;
 
+    protected ProcessFactory $processFactory;
+
     protected string $containerId;
+
+    private array $_reflectionParamsCache;
 
     protected function __construct(string $name, string $title) {
         parent::__construct($name, $title);
+
+        $this->_reflectionParamsCache = [];
     }
 
     public function startup() {
@@ -71,14 +82,74 @@ abstract class AContainerPresenter extends APresenter {
         $this->enumManager = new EnumManager($this->logger, $this->entityManager, $this->app->userRepository, $this->app->groupManager, $container);
         $this->gridManager = new GridManager($this->logger, $this->entityManager, $this->gridRepository);
 
+        $this->initManagers();
         $this->injectCacheFactoryToManagers();
 
-        $this->documentManager->inject($this->enumManager);
+        $this->documentManager->enumManager = $this->enumManager;
 
-        $this->documentBulkActionAuthorizator = new DocumentBulkActionAuthorizator($containerConnection, $this->logger, $this->documentManager, $this->documentRepository, $this->app->userManager, $this->groupManager);
+        $this->documentBulkActionAuthorizator = new DocumentBulkActionAuthorizator($containerConnection, $this->logger, $this->documentManager, $this->documentRepository, $this->app->userManager, $this->groupManager, $this->processManager);
         $this->groupStandardOperationsAuthorizator = new GroupStandardOperationsAuthorizator($containerConnection, $this->logger, $this->groupManager);
 
         $this->injectCacheFactoryToAuthorizators();
+
+        $this->processFactory = new ProcessFactory(
+            $this->documentManager,
+            $this->groupStandardOperationsAuthorizator,
+            $this->documentBulkActionAuthorizator,
+            $this->app->userManager,
+            $this->groupManager,
+            $this->app->currentUser,
+            $this->containerId,
+            $this->processManager
+        );
+    }
+
+    private function initManagers() {
+        $managers = [
+            'processManager' => [
+                $this->processRepository,
+                $this->groupManager
+            ]
+        ];
+
+        $notFound = [];
+        foreach($managers as $varName => $args) {
+            if(!empty($this->_reflectionParamsCache) && array_key_exists($varName, $this->_reflectionParamsCache)) {
+                $class = $this->_reflectionParamsCache[$varName];
+
+                $className = (string)$class;
+
+                /**
+                 * @var \App\Managers\AManager $obj
+                 */
+                $obj = new $className(...$args);
+                $obj->inject($this->logger, $this->entityManager);
+                $this->{$varName} = $obj;
+            } else {
+                $notFound[] = $varName;
+            }
+        }
+
+        if(!empty($notFound)) {
+            $rc = new ReflectionClass($this);
+            $rpa = $rc->getProperties();
+            foreach($rpa as $rp) {
+                $class = $rp->getType();
+                $name = $rp->getName();
+                
+                if(in_array($name, $notFound)) {
+                    $className = (string)$class;
+
+                    /**
+                     * @var \App\Managers\AManager $obj
+                     */
+                    $obj = new $className(...$args);
+                    $obj->inject($this->logger, $this->entityManager);
+                    $this->{$varName} = $obj;
+                    $this->_reflectionParamsCache[$varName] = $class;
+                }
+            }
+        }
     }
 
     private function initRepositories(DatabaseConnection $db) {
@@ -92,6 +163,8 @@ abstract class AContainerPresenter extends APresenter {
         foreach($rpa as $rp) {
             $rt = $rp->getType();
             $name = $rp->getName();
+
+            $this->_reflectionParamsCache[$name] = $rt;
 
             if(str_contains($rt, 'Repository')) {
                 $className = (string)$rt;

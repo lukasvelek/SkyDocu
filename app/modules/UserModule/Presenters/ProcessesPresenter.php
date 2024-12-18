@@ -59,12 +59,18 @@ class ProcessesPresenter extends AUserPresenter {
 
     public function handleProfile() {
         $processId = $this->httpGet('processId', true);
+        $backView = $this->httpGet('backView');
 
         try {
             $process = $this->processManager->getProcessById($processId);
         } catch(AException $e) {
             $this->flashMessage('Process not found. Reason: ' . $e->getMessage(), 'error', 10);
-            $this->redirect($this->createURL('list'));
+
+            $params = [];
+            if($backView !== null) {
+                $params['view'] = $backView;
+            }
+            $this->redirect($this->createURL('list', $params));
         }
 
         // BASIC INFORMATION
@@ -92,14 +98,17 @@ class ProcessesPresenter extends AUserPresenter {
 
         $createRow('Author', $author);
 
-        try {
-            $currentOfficer = $this->app->userManager->getUserById($process->currentOfficerUserId)->getFullname();
-        } catch(AException $e) {
+        if($process->currentOfficerUserId !== null) {
+            try {
+                $currentOfficer = $this->app->userManager->getUserById($process->currentOfficerUserId)->getFullname();
+            } catch(AException $e) {
+                $currentOfficer = '-';
+            }
+        } else {
             $currentOfficer = '-';
         }
-
         $createRow('Current officer', $currentOfficer);
-
+        
         $workflowUsers = ProcessHelper::convertWorkflowFromDb($process);
 
         $i = 1;
@@ -140,34 +149,66 @@ class ProcessesPresenter extends AUserPresenter {
         }
 
         $processActionsCode = '';
-        $tmp = [];
-        foreach($actions as $title => $action) {
-            $tmp[] = LinkBuilder::createSimpleLink($title, $this->createURL('process', ['processId' => $processId, 'actionName' => $action]), 'link');
+        if(!empty($actions)) {
+            $tmp = [];
+            foreach($actions as $title => $action) {
+                $params = [
+                    'processId' => $processId,
+                    'actionName' => $action
+                ];
+
+                if($backView !== null) {
+                    $params['backView'] = $backView;
+                }
+
+                $tmp[] = LinkBuilder::createSimpleLink($title, $this->createURL('process', $params), 'link');
+            }
+
+            $processActionsCode = implode('<br>', $tmp);
+        } else {
+            if($process->status == ProcessStatus::FINISHED) {
+                $processActionsCode = 'Process has been finished.';
+            } else if($process->status == ProcessStatus::CANCELED) {
+                $processActionsCode = 'Process has been canceled.';
+            }
         }
 
-        $processActionsCode = implode('<br>', $tmp);
-
         $this->saveToPresenterCache('process_actions', $processActionsCode);
+
+        $backLinkParams = [];
+        if($backView !== null) {
+            $backLinkParams['view'] = $backView;
+        }
+        
+        $links = [
+            $this->createBackUrl('list', $backLinkParams)
+        ];
+
+        $this->saveToPresenterCache('links', implode('&nbsp;&nbsp;', $links));
     }
 
     public function renderProfile() {
         $this->template->process_basic_information = $this->loadFromPresenterCache('process_basic_information');
         $this->template->process_actions = $this->loadFromPresenterCache('process_actions');
-
-        $this->template->links = $this->createBackUrl('list');
+        $this->template->links = $this->loadFromPresenterCache('links');
     }
 
     public function handleProcess() {
         $processId = $this->httpGet('processId', true);
         $action = $this->httpGet('actionName', true);
-
-        $processId = $this->httpGet('processId', true);
+        $backView = $this->httpGet('backView');
 
         try {
             $process = $this->processManager->getProcessById($processId);
         } catch(AException $e) {
             $this->flashMessage('Process not found. Reason: ' . $e->getMessage(), 'error', 10);
-            $this->redirect($this->createURL('list'));
+
+            $params = [];
+            if($backView !== null) {
+                $params['view'] = $backView;
+            }
+
+            $this->redirect($this->createURL('list', $params));
         }
 
         try {
@@ -196,7 +237,14 @@ class ProcessesPresenter extends AUserPresenter {
             $this->flashMessage('Could not process the process. Reason: ' . $e->getMessage(), 'error', 10);
         }
 
-        $this->redirect($this->createURL('profile', ['processId' => $processId]));
+        $params = [
+            'processId' => $processId
+        ];
+        if($backView !== null) {
+            $params['backView'] = $backView;
+        }
+
+        $this->redirect($this->createURL('profile', $params));
     }
 }
 

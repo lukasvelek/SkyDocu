@@ -328,9 +328,16 @@ abstract class APresenter extends AGUICore {
      * @param array $url URL params
      */
     public function redirect(array $url = []) {
-        if(!empty($url)) {
+        if(!empty($url)) {    
             if(!array_key_exists('page', $url)) {
                 $url['page'] = $this->httpGet('page');
+            }
+
+            if(!array_key_exists('_fm', $this->specialRedirectUrlParams)) {
+                $_fm = $this->httpGet('_fm');
+                if($_fm !== null) {
+                    $this->specialRedirectUrlParams['_fm'] = $_fm;
+                }
             }
 
             if(!empty($this->specialRedirectUrlParams)) {
@@ -378,6 +385,12 @@ abstract class APresenter extends AGUICore {
                 $this->logger->stopwatch(function() use ($renderAction) {
                     return $this->$renderAction();
                 }, 'App\\Modules\\' . $moduleName . '\\' . $this->title . '::' . $renderAction);
+
+                /**
+                 * Flash messages are loaded from cache and displayed only if the presenter is really rendered.
+                 * Originally the flash messages were loaded automatically. Because of that flash messages couldn't be displayed after several redirections.
+                 */
+                $this->module->loadFlashMessagesFromCache();
             }
             
             if($this->template !== null) {

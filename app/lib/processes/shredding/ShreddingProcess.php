@@ -3,6 +3,7 @@
 namespace App\Lib\Processes\Shredding;
 
 use App\Constants\Container\DocumentStatus;
+use App\Constants\Container\SystemProcessTypes;
 use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
 use App\Lib\Processes\ADocumentBulkProcess;
@@ -18,6 +19,14 @@ class ShreddingProcess extends ADocumentBulkProcess {
         foreach($documentIds as $documentId) {
             try {
                 $this->documentBulkActionAuthorizator->throwExceptionIfCannotExecuteShredding($userId ?? $this->currentUser->getId(), $documentId);
+
+                if($userId === null) {
+                    $userId = $this->currentUser->getId();
+                }
+
+                if(!$this->processManager->saveProcess($documentId, SystemProcessTypes::SHREDDING, $userId, $userId, [$userId])) {
+                    throw new GeneralException('Database error.');
+                }
 
                 if(!$this->finalExecute($documentId, $userId)) {
                     $text = 'Could not shred document.';

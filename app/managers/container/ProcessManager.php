@@ -7,6 +7,7 @@ use App\Constants\Container\SystemProcessTypes;
 use App\Core\Caching\Cache;
 use App\Core\Caching\CacheNames;
 use App\Core\DB\DatabaseRow;
+use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
 use App\Exceptions\NonExistingEntityException;
 use App\Helpers\ProcessHelper;
@@ -51,6 +52,8 @@ class ProcessManager extends AManager {
         if(!$this->pr->insertNewProcess($processId, $data)) {
             throw new GeneralException('Database error.');
         }
+
+        return $processId;
     }
 
     public function nextWorkflowProcess(string $processId, string $userId) {
@@ -90,7 +93,8 @@ class ProcessManager extends AManager {
 
     public function finishProcess(string $processId, string $userId) {
         $data = [
-            'status' => ProcessStatus::FINISHED
+            'status' => ProcessStatus::FINISHED,
+            'currentOfficerUserId' => null
         ];
 
         if(!$this->pr->updateProcess($processId, $data)) {
@@ -126,6 +130,25 @@ class ProcessManager extends AManager {
         }
 
         return $this->mProcessesCache[$processId];
+    }
+
+    public function saveProcess(string $documentId, string $type, string $userId, string $currentOfficerId, array $workflowUserIds) {
+        $result = true;
+
+        try {
+            $this->pr->beginTransaction(__METHOD__);
+        
+            $processId = $this->startProcess($documentId, $type, $userId, $currentOfficerId, $workflowUserIds);
+            $this->finishProcess($processId, $userId);
+
+            $this->pr->commit($userId, __METHOD__);
+        } catch(AException $e) {
+            $this->pr->rollback(__METHOD__);
+
+            $result = false;
+        }
+
+        return $result;
     }
 }
 

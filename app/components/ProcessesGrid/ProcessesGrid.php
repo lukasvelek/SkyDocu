@@ -113,6 +113,7 @@ class ProcessesGrid extends GridBuilder implements IGridExtendingComponent {
                     return true;
 
                 case ProcessGridViews::VIEW_ALL:
+                case ProcessGridViews::VIEW_FINISHED:
                     if($row->authorUserId == $this->currentUserId) {
                         return true;
                     } else {
@@ -124,8 +125,13 @@ class ProcessesGrid extends GridBuilder implements IGridExtendingComponent {
             return false;
         };
         $open->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
+            $params = [
+                'processId' => $primaryKey,
+                'backView' => $this->view
+            ];
+
             $el = HTML::el('a');
-            $el->href($this->createFullURLString('User:Processes', 'profile', ['processId' => $primaryKey]))
+            $el->href($this->createFullURLString('User:Processes', 'profile', $params))
                 ->text('Open')
                 ->class('grid-link');
 

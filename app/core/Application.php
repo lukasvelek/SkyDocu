@@ -202,6 +202,26 @@ class Application {
         header('Location: ' . $url);
         exit;
     }
+
+    /**
+     * Refreshes current page with the same parameters
+     * 
+     * @param array $customParams Additional parameters
+     */
+    private function refreshPage(array $customParams = []) {
+        $request = $this->getRequest()->query;
+
+        $params = [];
+        foreach($request as $key => $value) {
+            $params[$key] = $value;
+        }
+
+        foreach($customParams as $key => $value) {
+            $params[$key] = $value;
+        }
+
+        $this->redirect($params);
+    }
     
     /**
      * Creates a single line URL from a URL params array
@@ -221,12 +241,25 @@ class Application {
      */
     public function flashMessage(string $text, string $type = 'info') {
         $cacheFactory = new CacheFactory();
+
+        if(array_key_exists('container', $_SESSION)) {
+            $containerId = $_SESSION['container'];
+            $cacheFactory->setCustomNamespace($containerId);
+        }
+
         $cache = $cacheFactory->getCache(CacheNames::FLASH_MESSAGES);
 
         $hash = HashManager::createHash(8, false);
 
-        $cache->save($hash, function() use ($type, $text) {
-            return ['type' => $type, 'text' => $text];
+        $cache->save($hash, function() use ($type, $text, $hash) {
+            return [
+                [
+                    'type' => $type,
+                    'text' => $text,
+                    'hash' => $hash,
+                    'autoClose' => '5'
+                ]
+            ];
         });
 
         return $hash;
@@ -245,7 +278,12 @@ class Application {
         }
 
         $this->logger->info('Creating module.', __METHOD__);
-        $moduleObject = $this->moduleManager->createModule($this->currentModule);
+        try {
+            $moduleObject = $this->moduleManager->createModule($this->currentModule);
+        } catch(Exception $e) {
+            $fmHash = $this->flashMessage('Container created successfully.');
+            $this->refreshPage(['_fm' => $fmHash]);
+        }
         $moduleObject->setLogger($this->logger);
         $moduleObject->setHttpRequest($this->getRequest());
 
@@ -292,7 +330,7 @@ class Application {
     /**
      * Returns the current module, presenter and action from URL
      */
-    private function getCurrentModulePresenterAction() {
+    private function getCurrentModulePresenterAction(bool $log = true) {
         $page = htmlspecialchars($_GET['page']);
 
         $pageParts = explode(':', $page);
@@ -312,7 +350,7 @@ class Application {
             $isAjax = htmlspecialchars($_GET['isAjax']);
         }
 
-        $this->logger->info('Current URL: [module => ' . $this->currentModule . ', presenter => ' . $this->currentPresenter . ', action => ' . $this->currentAction . ', isAjax => ' . $isAjax . ']', __METHOD__);
+        if ($log) $this->logger->info('Current URL: [module => ' . $this->currentModule . ', presenter => ' . $this->currentPresenter . ', action => ' . $this->currentAction . ', isAjax => ' . $isAjax . ']', __METHOD__);
     }
 }
 

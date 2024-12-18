@@ -723,7 +723,14 @@ abstract class APresenter extends AGUICore {
      */
     private function saveFlashMessagesToCache() {
         if(!empty($this->flashMessages)) {
-            $cache = $this->cacheFactory->getCache(CacheNames::FLASH_MESSAGES);
+            $containerId = $this->httpSessionGet('container');
+            if($containerId !== null) {
+                $cacheFactory = clone $this->cacheFactory;
+                $cacheFactory->setCustomNamespace($containerId);
+                $cache = $cacheFactory->getCache(CacheNames::FLASH_MESSAGES);
+            } else {
+                $cache = $this->cacheFactory->getCache(CacheNames::FLASH_MESSAGES);
+            }
 
             $hash = $this->flashMessages[0]['hash'];
 

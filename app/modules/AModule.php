@@ -138,6 +138,12 @@ abstract class AModule extends AGUICore {
 
         if(isset($_GET['_fm'])) {
             $cacheFactory = new CacheFactory();
+
+            if(array_key_exists('container', $_SESSION)) {
+                $containerId = $_SESSION['container'];
+                $cacheFactory->setCustomNamespace($containerId);
+            }
+
             $cache = $cacheFactory->getCache(CacheNames::FLASH_MESSAGES);
 
             $flashMessages = $cache->load($_GET['_fm'], function() { return []; });

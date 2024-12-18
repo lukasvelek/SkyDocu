@@ -241,7 +241,7 @@ class Logger implements ILoggerCallable {
         $folder = APP_ABSOLUTE_DIR . LOG_DIR;
 
         if($this->containerId !== null) {
-            $folder .= $this->containerId . '\\';
+            $folder .= 'containers\\' . $this->containerId . '\\';
         }
 
         $date = new DateTime();

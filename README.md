@@ -8,6 +8,11 @@ Current version: ___1.0___ (29th November 2024)
 The web application is written purely in PHP with a few JS scripts. These JS scripts are mostly used for AJAX and other dynamic behavior functions.
 
 ## Changelog
+### 1.1
+- Document processes
+- Bugfixes
+- UI core updates
+
 ### 1.0
 - Container management
 - Container usage statistics

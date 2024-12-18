@@ -19,7 +19,7 @@ class ContainerUsageTotalResponseTimeGraph extends AComponent {
         parent::__construct($request);
 
         $this->containerRepository = $containerRepository;
-        $this->title = 'Container usage total server time';
+        $this->title = 'Container usage total SQL server time';
         $this->containerId = null;
         $this->numberOfColumns = 7;
         $this->canvasWidth = 500;

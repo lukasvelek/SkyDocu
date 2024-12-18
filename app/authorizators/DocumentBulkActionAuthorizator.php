@@ -32,22 +32,22 @@ class DocumentBulkActionAuthorizator extends AAuthorizator {
         $this->pm = $pm;
     }
 
-    public function canExecuteArchivation(string $userId, array $documentIds) {
-        return $this->internalExecute('throwExceptionIfCannotExecuteArchivation', $userId, $documentIds);
+    public function canExecuteArchivation(string $userId, string $documentId) {
+        return $this->internalExecute('throwExceptionIfCannotExecuteArchivation', $userId, $documentId);
     }
 
-    public function throwExceptionIfCannotExecuteArchivation(string $userId, array $documentIds) {
+    public function throwExceptionIfCannotExecuteArchivation(string $userId, string $documentId) {
         if(!in_array($userId, $this->cgm->getUsersForGroupTitle(SystemGroups::ARCHIVISTS))) {
             throw new GeneralException('User is not member of the Archivists group.', null, false);
         }
 
-        foreach($documentIds as $documentId) {
-            $document = $this->dm->getDocumentById($documentId);
+        $document = $this->dm->getDocumentById($documentId);
 
-            if($document->status != DocumentStatus::NEW) {
-                throw new GeneralException('Document\'s status must be \'new\' but it is \'' . DocumentStatus::toString($document->status) . '\'.', null, false);
-            }
+        if($document->status != DocumentStatus::NEW) {
+            throw new GeneralException(sprintf('Document\'s status must be \'%s\' but it is \'%s\'.', DocumentStatus::toString(DocumentStatus::NEW), DocumentStatus::toString($document->status)), null, false);
         }
+
+        $this->checkDocumentIsInProcess($documentId);
     }
 
     public function canExecuteShreddingRequest(string $userId, string $documentId) {

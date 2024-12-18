@@ -47,9 +47,9 @@ class DocumentBulkActionsHelper {
         $bulkActions = [];
         $processBulkActions = [];
 
-        if($this->dbaa->canExecuteArchivation($this->app->currentUser->getId(), $documentIds)) {
+        /*if($this->dbaa->canExecuteArchivation($this->app->currentUser->getId(), $documentIds)) {
             $bulkActions[] = DocumentBulkActions::ARCHIVATION;
-        }
+        }*/
 
         if($this->gsoa->canUserViewDocumentHistory($this->app->currentUser->getId())) {
             $bulkActions[] = DocumentBulkActions::DOCUMENT_HISTORY;
@@ -78,6 +78,12 @@ class DocumentBulkActionsHelper {
      * @param array<string> Bulk actions
      */
     private function appendProcessBulkActions(array $documentIds, array &$bulkActions) {
+        // Archivation
+        $p = $this->pf->createDocumentArchivationProcess();
+        if($p->canExecute($documentIds, null)) {
+            $bulkActions[] = SystemProcessTypes::ARCHIVATION;
+        }
+
         // Shredding request
         $p = $this->pf->createDocumentShreddingRequestProcess();
         if($p->canExecute($documentIds, null)) {

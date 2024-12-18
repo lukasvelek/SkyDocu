@@ -48,6 +48,28 @@ abstract class ADocumentBulkProcess extends AProcess {
             }
         }
     }
+
+    /**
+     * Calls method with given $methodName in DocumentBulkActionAuthorizator for each documentId and evaluates if the operation is overall executable.
+     * 
+     * @param string $methodName Name of the method in DocumentBulkActionAuthorizator
+     * @param array $documentIds Document IDs
+     * @param ?string $userId User ID
+     * @return bool True or false
+     */
+    protected function internalCheckCanExecute(string $methodName, array $documentIds, ?string $userId = null, array &$exceptions) {
+        $execute = true;
+
+        foreach($documentIds as $documentId) {
+            if($execute === false) {
+                break;
+            }
+
+            $execute = $this->documentBulkActionAuthorizator->{$methodName}($userId ?? $this->currentUser->getId(), $documentId);
+        }
+
+        return $execute;
+    }
 }
 
 ?>

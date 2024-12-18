@@ -7,6 +7,7 @@ use App\Authorizators\GroupStandardOperationsAuthorizator;
 use App\Constants\Container\SystemProcessTypes;
 use App\Entities\UserEntity;
 use App\Exceptions\GeneralException;
+use App\Lib\Processes\Shredding\ShreddingProcess;
 use App\Lib\Processes\Shredding\ShreddingRequestProcess;
 use App\Managers\Container\DocumentManager;
 use App\Managers\Container\GroupManager;
@@ -104,6 +105,14 @@ class ProcessFactory {
     }
 
     /**
+     * @return ArchivingProcess
+     */
+    public function createDocumentArchivationProcess() {
+        $obj = $this->commonDocumentCreate(ArchivingProcess::class);
+        return $obj;
+    }
+
+    /**
      * Starts a document process synchronously
      * 
      * @param string $name Process name
@@ -119,6 +128,10 @@ class ProcessFactory {
 
             case SystemProcessTypes::SHREDDING_REQUEST:
                 $obj = $this->createDocumentShreddingRequestProcess();
+                return $obj->execute($documentIds, $this->currentUser->getId(), $exceptions);
+
+            case SystemProcessTypes::ARCHIVATION:
+                $obj = $this->createDocumentArchivationProcess();
                 return $obj->execute($documentIds, $this->currentUser->getId(), $exceptions);
 
             default:

@@ -10,7 +10,7 @@ class SystemProcessTypes extends AConstant {
 
     public static function toString($key): string {
         return match($key) {
-            self::SHREDDING => 'Shredding',
+            self::SHREDDING => 'Shred',
             self::SHREDDING_REQUEST => 'Request shredding'
         };
     }

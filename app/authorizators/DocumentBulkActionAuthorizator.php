@@ -61,9 +61,7 @@ class DocumentBulkActionAuthorizator extends AAuthorizator {
             throw new GeneralException(sprintf('Document\'s status must be \'%s\' or \'%s\' but it is \'%s\'.', DocumentStatus::toString(DocumentStatus::NEW), DocumentStatus::toString(DocumentStatus::ARCHIVED), DocumentStatus::toString($document->status)), null, false);
         }
 
-        if($this->pm->isDocumentInProcess($documentId)) {
-            throw new GeneralException('Document already is in a process.');
-        }
+        $this->checkDocumentIsInProcess($documentId);
     }
 
     public function canExecuteShredding(string $userId, string $documentId) {
@@ -71,7 +69,13 @@ class DocumentBulkActionAuthorizator extends AAuthorizator {
     }
 
     public function throwExceptionIfCannotExecuteShredding(string $userId, string $documentId) {
+        $document = $this->dm->getDocumentById($documentId);
 
+        if($document->status != DocumentStatus::READY_FOR_SHREDDING) {
+            throw new GeneralException(sprintf('Document\'s status must be \'%s\' but it is \'%s\'.', DocumentStatus::toString(DocumentStatus::READY_FOR_SHREDDING), DocumentStatus::toString($document->status)));
+        }
+
+        $this->checkDocumentIsInProcess($documentId);
     }
 
     private function internalExecute(string $name, mixed ...$params) {
@@ -82,6 +86,12 @@ class DocumentBulkActionAuthorizator extends AAuthorizator {
             $result = false;
         }
         return $result;
+    }
+
+    private function checkDocumentIsInProcess(string $documentId) {
+        if($this->pm->isDocumentInProcess($documentId)) {
+            throw new GeneralException('Document already is in a process.', null, false);
+        }
     }
 }
 

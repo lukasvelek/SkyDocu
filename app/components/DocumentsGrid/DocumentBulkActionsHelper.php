@@ -78,16 +78,16 @@ class DocumentBulkActionsHelper {
      * @param array<string> Bulk actions
      */
     private function appendProcessBulkActions(array $documentIds, array &$bulkActions) {
-        // Shredding
-        /*$p = $this->pf->createDocumentShreddingProcess();
-        if($p->canExecute($documentIds, $this->request->currentUser->getId())) {
-            $bulkActions[] = SystemProcessTypes::SHREDDING;
-        }*/
-
         // Shredding request
         $p = $this->pf->createDocumentShreddingRequestProcess();
         if($p->canExecute($documentIds, null)) {
             $bulkActions[] = SystemProcessTypes::SHREDDING_REQUEST;
+        }
+
+        // Shredding
+        $p = $this->pf->createDocumentShreddingProcess();
+        if($p->canExecute($documentIds, null)) {
+            $bulkActions[] = SystemProcessTypes::SHREDDING;
         }
     }
 
@@ -112,12 +112,6 @@ class DocumentBulkActionsHelper {
                 ->class('link')
                 ->text(SystemProcessTypes::toString($bulkAction))
                 ->href($this->createLink('User:DocumentBulkActions', 'startProcess', $urlParams));;
-
-        /*switch($bulkAction) {
-            case SystemProcessTypes::SHREDDING:
-                $el->href($this->createLink('User:DocumentBulkActions', 'startProcess', $urlParams));
-                break;
-        }*/
 
         return $el->toString();
     }

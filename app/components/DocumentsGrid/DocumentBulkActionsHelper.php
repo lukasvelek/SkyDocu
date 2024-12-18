@@ -47,13 +47,9 @@ class DocumentBulkActionsHelper {
         $bulkActions = [];
         $processBulkActions = [];
 
-        /*if($this->dbaa->canExecuteArchivation($this->app->currentUser->getId(), $documentIds)) {
-            $bulkActions[] = DocumentBulkActions::ARCHIVATION;
-        }*/
-
-        if($this->gsoa->canUserViewDocumentHistory($this->app->currentUser->getId())) {
+        /*if($this->gsoa->canUserViewDocumentHistory($this->app->currentUser->getId())) {
             $bulkActions[] = DocumentBulkActions::DOCUMENT_HISTORY;
-        }
+        }*/
 
         // 1b. Create array of allowed processes
         $this->appendProcessBulkActions($documentIds, $processBulkActions);

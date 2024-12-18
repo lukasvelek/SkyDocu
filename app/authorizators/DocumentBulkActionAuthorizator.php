@@ -72,7 +72,7 @@ class DocumentBulkActionAuthorizator extends AAuthorizator {
         $document = $this->dm->getDocumentById($documentId);
 
         if($document->status != DocumentStatus::READY_FOR_SHREDDING) {
-            throw new GeneralException(sprintf('Document\'s status must be \'%s\' but it is \'%s\'.', DocumentStatus::toString(DocumentStatus::READY_FOR_SHREDDING), DocumentStatus::toString($document->status)));
+            throw new GeneralException(sprintf('Document\'s status must be \'%s\' but it is \'%s\'.', DocumentStatus::toString(DocumentStatus::READY_FOR_SHREDDING), DocumentStatus::toString($document->status)), null, false);
         }
 
         $this->checkDocumentIsInProcess($documentId);

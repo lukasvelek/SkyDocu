@@ -917,9 +917,9 @@ class QueryBuilder
      * 
      * @param null|int|float $msTaken Milliseconds the SQL query took
      */
-    private function log(null|int|float $msTaken = null) {
+    private function log(null|int|float $msTaken = null, Exception $e) {
         if($this->logger !== NULL) {
-            $this->logger->sql($this->sql, $this->callingMethod, $msTaken);
+            $this->logger->sql($this->sql, $this->callingMethod, $msTaken, $e);
         }
     }
 
@@ -951,7 +951,9 @@ class QueryBuilder
 
         $diff = DateTimeFormatHelper::convertNsToMs($diff);
 
-        $this->log($diff);
+        $e = new Exception;
+
+        $this->log($diff, $e);
 
         return $result;
     }

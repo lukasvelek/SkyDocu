@@ -19,6 +19,7 @@ define('LOG_LEVEL', 0);
  * 
  * 0 - off
  * 1 - on
+ * 2 - on with stack trace
  */
 define('SQL_LOG_LEVEL', 0);
 /**

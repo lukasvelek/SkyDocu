@@ -36,6 +36,12 @@ class ProcessesPresenter extends AUserPresenter {
 
         $sidebar = $this->componentFactory->getSidebar();
 
+        // START NEW PROCESS
+        $sidebar->addLink('Start new process', $this->createFullURL('User:NewProcess', 'select'));
+
+        $sidebar->addHorizontalLine();
+
+        // VIEWS
         foreach(ProcessGridViews::getAll() as $name => $title) {
             $sidebar->addLink($title, $this->createURL('list', ['view' => $name]), $actives[$name]);
         }

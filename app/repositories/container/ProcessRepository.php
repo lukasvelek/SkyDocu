@@ -120,6 +120,37 @@ class ProcessRepository extends ARepository {
 
         return $result;
     }
+
+    public function insertNewProcessComment(string $commentId, string $processId, string $userId, string $text) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->insert('process_comments', ['commentId', 'processId', 'userId', 'description'])
+            ->values([$commentId, $processId, $userId, $text])
+            ->execute();
+
+        return $qb->fetchBool();
+    }
+
+    public function insertNewProcessHistoryEntry(string $entryId, array $data) {
+        $keys = [];
+        $values = [];
+
+        foreach($data as $k => $v) {
+            $keys[] = $k;
+            $values[] = $v;
+        }
+
+        $keys[] = 'entryId';
+        $values[] = $entryId;
+
+        $qb = $this->qb(__METHOD__);
+
+        $qb->insert('process_metadata_history', $keys)
+            ->values($values)
+            ->execute();
+
+        return $qb->fetchBool();
+    }
 }
 
 ?>

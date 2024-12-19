@@ -137,6 +137,15 @@ class ContainerCreationHelper {
                 'gridName' => 'VARCHAR(256) NOT NULL',
                 'columnConfiguration' => 'TEXT NOT NULL',
                 'dateCreated' => 'DATETIME NOT NULL DEFAULT current_timestamp()'
+            ],
+            'process_metadata_history' => [
+                'entryId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',
+                'processId' => 'VARCHAR(256) NOT NULL',
+                'userId' => 'VARCHAR(256) NOT NULL',
+                'metadataName' => 'VARCHAR(256) NOT NULL',
+                'oldValue' => 'VARCHAR(256) NULL',
+                'newValue' => 'VARCHAR(256) NULL',
+                'dateCreated' => 'DATETIME NOT NULL DEFAULT current_timestamp()'
             ]
         ];
     }

@@ -105,7 +105,7 @@ class ContainerCreationHelper {
             ],
             'processes' => [
                 'processId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',
-                'documentId' => 'VARCHAR(256) NOT NULL',
+                'documentId' => 'VARCHAR(256) NULL',
                 'type' => 'VARCHAR(256) NOT NULL',
                 'authorUserId' => 'VARCHAR(256) NOT NULL',
                 'currentOfficerUserId' => 'VARCHAR(256) NULL',

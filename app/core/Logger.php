@@ -123,7 +123,7 @@ class Logger implements ILoggerCallable {
         $date = new DateTime();
         $newText = '[' . $date . '] [' . strtoupper(self::LOG_SQL) . '] [' . (float)($msTaken) . ' ms] ' . $method . '(): ' . $sql;
 
-        if(SQL_LOG_LEVEL > 1) {
+        if(SQL_LOG_LEVEL > 1 && $e !== null) {
             $newText .= "\r\n" . 'Stack trace: ' . "\r\n" . $e->getTraceAsString();
         }
 

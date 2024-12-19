@@ -5,6 +5,7 @@ namespace App\Core\Caching;
 use App\Core\Caching\Cache;
 use App\Core\Datetypes\DateTime;
 use App\Core\FileManager;
+use App\Core\HashManager;
 
 /**
  * CacheFactory allows to create cache
@@ -71,7 +72,34 @@ class CacheFactory {
      * @return bool True on success or false on failure
      */
     public function invalidateCacheByNamespace(string $namespace) {
-        return $this->deleteCache($namespace);
+        $expire = new DateTime(time() - 60);
+        $cache = $this->getCache($namespace, $expire);
+        $cache->invalidate();
+
+        $this->saveCaches();
+
+        return true;
+    }
+
+    /**
+     * Invalidates all cache namespaces
+     * 
+     * @return bool True on success or false on failure
+     */
+    public function invalidateAllCache() {
+        $this->persistentCaches = [];
+
+        $namespaces = CacheNames::getAll();
+
+        foreach($namespaces as $namespace) {
+            $expire = new DateTime(time() - 60);
+            $cache = $this->getCache($namespace, $expire);
+            $cache->invalidate();
+        }
+
+        $this->saveCaches();
+
+        return true;
     }
 
     /**
@@ -142,7 +170,9 @@ class CacheFactory {
         $date = new DateTime();
         $date->format('Y-m-d');
 
-        $filename = $date . $namespace;
+        $customHash = HashManager::createHash(16, false);
+
+        $filename = $date . $namespace . $customHash;
         $filename = md5($filename);
 
         $content = $this->loadFileContent($path, $filename);
@@ -233,10 +263,14 @@ class CacheFactory {
         if($this->customNamespace !== null) {
             $path .= $this->customNamespace . '\\';
         }
+        
+        $result = FileManager::deleteFolderRecursively($path, false);
+        
+        if($result === true) {
+            $this->cacheLogger->logCacheNamespaceDeleted($namespace, __METHOD__);
+        }
 
-        $this->cacheLogger->logCacheNamespaceDeleted($namespace, __METHOD__);
-
-        return FileManager::deleteFolderRecursively($path, false);
+        return $result;
     }
 }
 

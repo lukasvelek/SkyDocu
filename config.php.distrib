@@ -12,6 +12,7 @@
  * 2 - warnings and errors
  * 3 - everything except for cache
  * 4 - everything with cache
+ * 5 - everything with cache and stack trace
  */
 define('LOG_LEVEL', 0);
 /**

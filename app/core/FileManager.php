@@ -145,7 +145,7 @@ class FileManager {
                     } else {
                         file_put_contents(APP_ABSOLUTE_DIR . LOG_DIR . '__filesDeleted.log', $dirPath . $object . "\r\n", FILE_APPEND);
                         $r = self::deleteFile($dirPath . $object);
-                        if($r !== true && $result !== false) {
+                        if($result !== false) {
                             $result = $r;
                         }
                     }
@@ -157,6 +157,8 @@ class FileManager {
             } else {
                 return $result;
             }
+        } else {
+            return false;
         }
 
         return true;
@@ -169,7 +171,8 @@ class FileManager {
      * @return bool True on success or false on failure
      */
     public static function deleteFile(string $filePath) {
-        return unlink($filePath);
+        $result = unlink($filePath);
+        return $result;
     }
 
     /**

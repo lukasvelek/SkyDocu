@@ -30,7 +30,7 @@ class Cache {
      * @param ?DateTime $expirationDate Cache expiration date
      * @param ?DateTime $lastWriteDate Date of last write
      */
-    public function __construct(array $data,  string $namespace, CacheFactory $cacheFactory, CacheLogger $logger, ?DateTime $expirationDate = null, ?DateTime $lastWriteDate = null) {
+    public function __construct(array $data, string $namespace, CacheFactory $cacheFactory, CacheLogger $logger, ?DateTime $expirationDate = null, ?DateTime $lastWriteDate = null) {
         $this->data = $data;
         $this->expirationDate = $expirationDate;
         $this->invalidated = false;

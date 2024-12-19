@@ -2,7 +2,6 @@
 
 namespace App\Managers;
 
-use App\Constants\Container\GridNames;
 use App\Constants\Container\SystemGroups;
 use App\Core\Caching\CacheNames;
 use App\Core\DB\DatabaseManager;
@@ -273,12 +272,9 @@ class ContainerManager extends AManager {
             throw new GeneralException('Could not change status.');
         }
 
-        if(!$this->cacheFactory->invalidateCacheByNamespace(CacheNames::CONTAINERS) ||
-            !$this->cacheFactory->invalidateCacheByNamespace(CacheNames::GROUPS) ||
-            !$this->cacheFactory->invalidateCacheByNamespace(CacheNames::GROUP_MEMBERSHIPS) ||
-            !$this->cacheFactory->invalidateCacheByNamespace(CacheNames::GROUP_TITLE_TO_ID_MAPPING) ||
-            !$this->cacheFactory->invalidateCacheByNamespace(CacheNames::USER_GROUP_MEMBERSHIPS) ||
-            !$this->cacheFactory->invalidateCacheByNamespace(CacheNames::NAVBAR_CONTAINER_SWITCH_USER_MEMBERSHIPS)) {
+        $result = $this->cacheFactory->invalidateAllCache();
+
+        if(!$result) {
             throw new GeneralException('Could not invalidate cache.');
         }
     }

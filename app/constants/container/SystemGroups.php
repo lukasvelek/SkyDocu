@@ -9,11 +9,12 @@ class SystemGroups extends AConstant {
     public const ADMINISTRATORS = 'administrators';
     public const ARCHIVISTS = 'archivists';
 
-    public static function toString($key): string {
+    public static function toString($key): ?string {
         return match($key) {
             self::ALL_USERS => 'All users',
             self::ADMINISTRATORS => 'Administrators',
-            self::ARCHIVISTS => 'Archivists'
+            self::ARCHIVISTS => 'Archivists',
+            default => null
         };
     }
 }

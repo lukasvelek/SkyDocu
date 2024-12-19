@@ -291,7 +291,7 @@ class GridBuilder extends AComponent {
      * Adds a general column
      * 
      * @param string $name Column name
-     * @param ?string $label column label
+     * @param ?string $label Column label
      * @return Column Column instance
      */
     public function addColumnText(string $name, ?string $label = null) {

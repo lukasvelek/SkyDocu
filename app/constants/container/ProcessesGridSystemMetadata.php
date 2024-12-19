@@ -13,7 +13,7 @@ class ProcessesGridSystemMetadata extends AConstant {
     public const DATE_CREATED = 'dateCreated';
     public const STATUS = 'status';
 
-    public static function toString($key): string {
+    public static function toString($key): ?string {
         return match($key) {
             self::DOCUMENT_ID => 'Document',
             self::TYPE => 'Type',
@@ -21,7 +21,8 @@ class ProcessesGridSystemMetadata extends AConstant {
             self::CURRENT_OFFICER_USER_ID => 'Current officer',
             self::WORKFLOW_USER_IDS => 'Workflow users',
             self::DATE_CREATED => 'Date created',
-            self::STATUS => 'Status'
+            self::STATUS => 'Status',
+            default => null
         };
     }
 }

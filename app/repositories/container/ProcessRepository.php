@@ -151,6 +151,32 @@ class ProcessRepository extends ARepository {
 
         return $qb->fetchBool();
     }
+
+    public function insertNewProcessData(string $entryId, string $processId, string $data) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->insert('process_data', ['entryId', 'processId', 'data'])
+            ->values([$entryId, $processId, $data])
+            ->execute();
+
+        return $qb->fetchBool();
+    }
+
+    public function getProcessDataForProcess(string $processId) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->select(['data'])
+            ->from('process_data')
+            ->where('processId = ?', [$processId])
+            ->execute();
+
+        $data = [];
+        while($row = $qb->fetchAssoc()) {
+            $data = unserialize($row['data']);
+        }
+
+        return $data;
+    }
 }
 
 ?>

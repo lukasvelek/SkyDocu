@@ -41,6 +41,7 @@ class EntityManager extends AManager {
     public const C_PROCESSES = 'processes';
     public const C_PROCESS_COMMENTS = 'process_comments';
     public const C_PROCESS_METADATA_HISTORY = 'process_metadata_history';
+    public const C_PROCESS_DATA = 'process_data';
 
     private const __MAX__ = 100;
 
@@ -147,7 +148,8 @@ class EntityManager extends AManager {
             self::C_GRID_CONFIGURATION => 'configurationId',
             self::C_PROCESSES => 'processId',
             self::C_PROCESS_COMMENTS => 'commentId',
-            self::C_PROCESS_METADATA_HISTORY => 'entryId'
+            self::C_PROCESS_METADATA_HISTORY => 'entryId',
+            self::C_PROCESS_DATA => 'entryId'
         };
     }
 }

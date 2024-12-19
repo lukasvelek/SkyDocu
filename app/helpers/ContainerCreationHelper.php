@@ -146,6 +146,11 @@ class ContainerCreationHelper {
                 'oldValue' => 'VARCHAR(256) NULL',
                 'newValue' => 'VARCHAR(256) NULL',
                 'dateCreated' => 'DATETIME NOT NULL DEFAULT current_timestamp()'
+            ],
+            'process_data' => [
+                'entryId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',
+                'processId' => 'VARCHAR(256) NOT NULL',
+                'data' => 'TEXT NOT NULL'
             ]
         ];
     }

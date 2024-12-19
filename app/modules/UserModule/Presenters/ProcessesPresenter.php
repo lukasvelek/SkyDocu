@@ -3,11 +3,15 @@
 namespace App\Modules\UserModule;
 
 use App\Components\ProcessesGrid\ProcessesGrid;
+use App\Constants\Container\ProcessFormValues\HomeOffice;
 use App\Constants\Container\ProcessGridViews;
 use App\Constants\Container\ProcessStatus;
+use App\Constants\Container\StandaloneProcesses;
 use App\Constants\Container\SystemProcessTypes;
+use App\Core\Datetypes\DateTime;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
+use App\Helpers\DateTimeFormatHelper;
 use App\Helpers\ProcessHelper;
 use App\UI\LinkBuilder;
 
@@ -85,16 +89,23 @@ class ProcessesPresenter extends AUserPresenter {
             $basicInformationCode .= '<p class="changelog-item"><b>' . $title . ': </b>' . $data . '</p>';
         };
 
-        $createRow('Type', SystemProcessTypes::gridToString($process->type));
-        $createRow('Status', ProcessStatus::toString($process->status));
-
-        try {
-            $document = $this->documentManager->getDocumentById($process->documentId)->title;
-        } catch(AException $e) {
-            $document = '-';
+        $type = SystemProcessTypes::gridToString($process->type);
+        if($type === null) {
+            $type = StandaloneProcesses::toString($process->type);
         }
 
-        $createRow('Document', $document);
+        $createRow('Type', $type);
+        $createRow('Status', ProcessStatus::toString($process->status));
+
+        if($process->documentId !== null) {
+            try {
+                $document = $this->documentManager->getDocumentById($process->documentId)->title;
+            } catch(AException $e) {
+                $document = '-';
+            }
+    
+            $createRow('Document', $document);
+        }
         
         try {
             $author = $this->app->userManager->getUserById($process->authorUserId)->getFullname();
@@ -129,6 +140,29 @@ class ProcessesPresenter extends AUserPresenter {
 
             $i++;
         }
+
+        // STANDALONE PROCESSES DATA
+
+        $data = $this->standaloneProcessManager->getProcessData($processId);
+
+        if(!empty($data)) {
+            switch($process->type) {
+                case StandaloneProcesses::HOME_OFFICE:
+                    foreach($data as $key => $value) {
+                        $title = HomeOffice::toString($key);
+
+                        if(str_starts_with($key, 'date')) {
+                            $value = DateTimeFormatHelper::formatDateToUserFriendly($value, 'd.m.Y');
+                        }
+
+                        $createRow($title, $value);
+                    }
+
+                    break;
+            }
+        }
+
+        // END OF STANDALONE PROCESSES DATA
 
         $this->saveToPresenterCache('process_basic_information', $basicInformationCode);
 

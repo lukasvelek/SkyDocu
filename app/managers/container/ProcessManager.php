@@ -27,10 +27,6 @@ class ProcessManager extends AManager {
         $this->mProcessesCache = [];
     }
 
-    public function startup() {
-        parent::startup();
-    }
-
     public function startProcess(?string $documentId, string $type, string $userId, string $currentOfficerId, array $workflowUserIds) {
         $processId = $this->createId(EntityManager::C_PROCESSES);
 

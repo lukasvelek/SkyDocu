@@ -9,7 +9,6 @@ use App\Constants\Container\StandaloneProcesses;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
 use App\UI\FormBuilder\FormResponse;
-use App\UI\LinkBuilder;
 
 class NewProcessPresenter extends AUserPresenter {
     public function __construct() {

@@ -32,7 +32,6 @@ class ContainerUsageAverageResponseTimeGraph extends AGraph {
         $this->title = 'Container usage average response time';
         $this->containerId = null;
         $this->numberOfColumns = 7;
-        $this->canvasWidth = 500;
 
         $this->setCanvasName('containerUsageAverageResponseTime');
     }
@@ -45,7 +44,6 @@ class ContainerUsageAverageResponseTimeGraph extends AGraph {
     public function setContainerId(string $containerId) {
         $this->containerId = $containerId;
     }
-
 
     public static function createFromComponent(AComponent $component) {}
 
@@ -77,11 +75,6 @@ class ContainerUsageAverageResponseTimeGraph extends AGraph {
         return $entries;
     }
 
-    /**
-     * Formats data fetched from the database to JSON format
-     * 
-     * @return string Data from the DB formatted to JSON
-     */
     protected function formatData(): string {
         $entries = $this->getData();
 

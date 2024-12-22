@@ -2,19 +2,28 @@
 
 namespace App\Components\ContainerUsageTotalResponseTimeGraph;
 
+use App\Components\Graph\AGraph;
 use App\Core\Datetypes\DateTime;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\GeneralException;
 use App\Repositories\ContainerRepository;
 use App\UI\AComponent;
 
-class ContainerUsageTotalResponseTimeGraph extends AComponent {
+/**
+ * Graph that displays container total response time
+ * 
+ * @author Lukas Velek
+ */
+class ContainerUsageTotalResponseTimeGraph extends AGraph {
     private ?string $containerId;
-    private string $title;
     private ContainerRepository $containerRepository;
-    private int $numberOfColumns;
-    private int $canvasWidth;
 
+    /**
+     * Class constructor
+     * 
+     * @param HttpRequest $request HttpRequest instance
+     * @param ContainerRepository $containerRepository ContainerRepository instance
+     */
     public function __construct(HttpRequest $request, ContainerRepository $containerRepository) {
         parent::__construct($request);
 
@@ -22,32 +31,24 @@ class ContainerUsageTotalResponseTimeGraph extends AComponent {
         $this->title = 'Container usage total SQL server time';
         $this->containerId = null;
         $this->numberOfColumns = 7;
-        $this->canvasWidth = 500;
     }
 
-    public function setCanvasWidth(int $canvasWidth) {
-        $this->canvasWidth = $canvasWidth;
-    }
-
+    /**
+     * Sets the container ID
+     * 
+     * @param string $containerId Container ID
+     */
     public function setContainerId(string $containerId) {
         $this->containerId = $containerId;
     }
 
-    public function setNumberOfColumns(int $columns) {
-        $this->numberOfColumns = $columns;
-    }
-
-    public function render() {
-        $template = $this->getTemplate(__DIR__ . '/template.html');
-        $template->title = $this->title;
-        $template->scripts = $this->createJSScripts();
-        $template->canvas_width = $this->canvasWidth;
-
-        return $template->render()->getRenderedContent();
-    }
-
     public static function createFromComponent(AComponent $component) {}
 
+    /**
+     * Fetches data from the database and formats it for further processing
+     * 
+     * @return array Data from the database
+     */
     private function getData() {
         if($this->containerId === null) {
             throw new GeneralException('No container ID passed.', null, false);
@@ -71,35 +72,7 @@ class ContainerUsageTotalResponseTimeGraph extends AComponent {
         return $entries;
     }
 
-    private function createJSScripts() {
-        $codes = [];
-
-        $addScript = function(string $code) use (&$codes) {
-            $codes[] = '<script type="text/javascript">' . $code . '</script>';
-        };
-
-        $addScript('
-            (async function() {
-                const _data = [' . $this->getFormattedData() . '];
-
-                new Chart(document.getElementById("canvas_containerUsageTotalResponseTime"), 
-                {
-                    type: "line",
-                    data: {
-                        labels: _data.map(row => row.date),
-                        datasets: [{
-                            label: "[s] Server time",
-                            data: _data.map(row => row.queryCount)
-                        }]
-                    }
-                });
-            })();
-        ');
-
-        return implode('', $codes);
-    }
-
-    private function getFormattedData() {
+    protected function formatData(): string {
         $entries = $this->getData();
 
         $rows = [];

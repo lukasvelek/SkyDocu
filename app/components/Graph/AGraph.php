@@ -102,6 +102,11 @@ abstract class AGraph extends AComponent {
         return implode('', $codes);
     }
 
+    /**
+     * Formats data fetched from the database to JSON format
+     * 
+     * @return string Data from the DB formatted to JSON
+     */
     protected abstract function formatData(): string;
 }
 

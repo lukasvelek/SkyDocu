@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Components\ProcessesSelect;
+namespace App\Components\ProcessReportsSelect;
 
 use App\Constants\Container\StandaloneProcesses;
 use App\Core\Http\HttpRequest;
@@ -8,7 +8,7 @@ use App\Managers\Container\StandaloneProcessManager;
 use App\Modules\TemplateObject;
 use App\UI\AComponent;
 
-class ProcessesSelect extends AComponent {
+class ProcessReportsSelect extends AComponent {
     private TemplateObject $template;
     private array $widgets;
     private StandaloneProcessManager $spm;
@@ -24,7 +24,7 @@ class ProcessesSelect extends AComponent {
 
     public function render() {
         $this->beforeRender();
-
+        
         return $this->template->render()->getRenderedContent();
     }
 
@@ -36,21 +36,26 @@ class ProcessesSelect extends AComponent {
     }
 
     private function loadWidgets() {
-        $enabledWidgets = $this->spm->getEnabledProcessTypes();
+        $enabledProcessTypes = $this->spm->getEnabledProcessTypes();
 
-        foreach($enabledWidgets as $row) {
+        foreach($enabledProcessTypes as $row) {
             $key = $row->typeKey;
-            $title = StandaloneProcesses::toString($key);
+            
+            switch($key) {
+                case StandaloneProcesses::HOME_OFFICE:
+                    $params = [
+                        'name' => $key,
+                        'view' => 'my'
+                    ];
 
-            $params = [
-                'name' => $key
-            ];
+                    $link = $this->createFullURLString($this->httpRequest->query['page'], 'showReport', $params);
 
-            $link = $this->createFullURLString($this->httpRequest->query['page'], 'processForm', $params);
-
-            $widget = new ProcessWidget($this->httpRequest, $key, $title, $link);
-            $widget->startup();
-            $this->widgets[] = $widget;
+                    $widget = new ReportWidget($this->httpRequest, $key, 'My Home office requests', $link);
+                    $widget->startup();
+                    $this->widgets[] = $widget;
+                    
+                    break;
+            }
         }
     }
 

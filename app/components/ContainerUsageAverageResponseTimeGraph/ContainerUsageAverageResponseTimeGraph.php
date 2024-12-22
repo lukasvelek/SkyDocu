@@ -34,6 +34,7 @@ class ContainerUsageAverageResponseTimeGraph extends AGraph {
         $this->numberOfColumns = 7;
 
         $this->setCanvasName('containerUsageAverageResponseTime');
+        $this->setValueDescription('[ms] Response time');
     }
 
     /**

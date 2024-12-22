@@ -12,11 +12,16 @@ use App\UI\AComponent;
  * @author Lukas Velek
  */
 abstract class AGraph extends AComponent {
+    private const GRAPH_TYPE_LINE = 'line';
+    private const GRAPH_TYPE_BAR = 'bar';
+
     protected TemplateObject $template;
     protected int $canvasWidth;
     protected int $numberOfColumns;
     protected string $title;
     private string $canvasName;
+    private string $valueDescription;
+    private string $graphType;
 
     public function __construct(HttpRequest $request) {
         parent::__construct($request);
@@ -26,6 +31,31 @@ abstract class AGraph extends AComponent {
         $this->numberOfColumns = 5;
         $this->canvasWidth = 500;
         $this->canvasName = 'myGraph';
+        $this->graphType = 'line';
+        $this->valueDescription = 'Value';
+    }
+
+    /**
+     * Sets graph value description
+     * 
+     * @param string $valueDescription Value description
+     */
+    protected function setValueDescription(string $valueDescription) {
+        $this->valueDescription = $valueDescription;
+    }
+
+    /**
+     * Sets graph display mode to bars
+     */
+    protected function setBarGraph() {
+        $this->graphType = self::GRAPH_TYPE_BAR;
+    }
+
+    /**
+     * Sets graph display mode to lines
+     */
+    protected function setLineGraph() {
+        $this->graphType = self::GRAPH_TYPE_LINE;
     }
 
     /**
@@ -48,6 +78,8 @@ abstract class AGraph extends AComponent {
 
     /**
      * Sets canvas name
+     * 
+     * @param string $name Canvas name
      */
     protected function setCanvasName(string $name) {
         $this->canvasName = 'canvas_' . $name;
@@ -85,13 +117,13 @@ abstract class AGraph extends AComponent {
             (async function() {
                 const _data = [' . $this->formatData() . '];
 
-                new Chart(document.getElementById("canvas_containerUsageAverageResponseTime"), 
+                new Chart(document.getElementById("' . $this->canvasName . '"), 
                 {
-                    type: "line",
+                    type: "' . $this->graphType . '",
                     data: {
                         labels: _data.map(row => row.date),
                         datasets: [{
-                            label: "[ms] Response time",
+                            label: "' . $this->valueDescription . '",
                             data: _data.map(row => row.queryCount)
                         }]
                     }

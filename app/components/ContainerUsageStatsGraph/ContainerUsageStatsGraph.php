@@ -28,9 +28,14 @@ class ContainerUsageStatsGraph extends AGraph {
         parent::__construct($request);
 
         $this->containerRepository = $containerRepository;
+
         $this->title = 'Container usage statistics';
         $this->containerId = null;
         $this->numberOfColumns = 7;
+
+        $this->setCanvasName('containerUsageStatistics');
+        $this->setBarGraph();
+        $this->setValueDescription('Database queries');
     }
 
     /**

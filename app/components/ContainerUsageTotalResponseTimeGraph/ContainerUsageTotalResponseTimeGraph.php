@@ -28,9 +28,13 @@ class ContainerUsageTotalResponseTimeGraph extends AGraph {
         parent::__construct($request);
 
         $this->containerRepository = $containerRepository;
+
         $this->title = 'Container usage total SQL server time';
         $this->containerId = null;
         $this->numberOfColumns = 7;
+
+        $this->setCanvasName('containerUsageTotalSqlServerTime');
+        $this->setValueDescription('[s] Server time');
     }
 
     /**

@@ -9,6 +9,7 @@ use App\Constants\Container\StandaloneProcesses;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
 use App\UI\FormBuilder\FormResponse;
+use App\UI\LinkBuilder;
 
 class NewProcessPresenter extends AUserPresenter {
     public function __construct() {
@@ -72,10 +73,17 @@ class NewProcessPresenter extends AUserPresenter {
         $name = StandaloneProcesses::toString($process);
 
         $this->saveToPresenterCache('processTitle', $name);
+
+        $links = [
+            $this->createBackUrl('select')
+        ];
+
+        $this->saveToPresenterCache('links', $links);
     }
 
     public function renderProcessForm() {
         $this->template->process_title = $this->loadFromPresenterCache('processTitle');
+        $this->template->links = $this->loadFromPresenterCache('links');
     }
 
     protected function createComponentProcessForm(HttpRequest $request) {

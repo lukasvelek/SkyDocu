@@ -53,6 +53,12 @@ class StandaloneProcessManager extends AManager {
     public function getProcessData(string $processId) {
         return $this->processManager->pr->getProcessDataForProcess($processId);
     }
+
+    public function updateProcessType(string $typeKey, array $data) {
+        if(!$this->processManager->pr->updateProcessType($typeKey, $data)) {
+            throw new GeneralException('Database error.');
+        }
+    }
 }
 
 ?>

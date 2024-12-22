@@ -162,6 +162,26 @@ class ProcessRepository extends ARepository {
 
         return $qb;
     }
+
+    public function composeQueryForProcessTypes() {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->select(['*'])
+            ->from('process_types');
+
+        return $qb;
+    }
+
+    public function updateProcessType(string $typeKey, array $data) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->update('process_types')
+            ->set($data)
+            ->where('typeKey = ?', [$typeKey])
+            ->execute();
+
+        return $qb->fetchBool();
+    }
 }
 
 ?>

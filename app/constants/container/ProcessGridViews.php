@@ -17,7 +17,7 @@ class ProcessGridViews extends AConstant {
             self::VIEW_STARTED_BY_ME => 'Processes started by me',
             self::VIEW_WITH_ME => 'Processes with me',
             self::VIEW_WAITING_FOR_ME => 'Processes waiting for me',
-            self::VIEW_FINISHED => 'Finished',
+            self::VIEW_FINISHED => 'Finished / Canceled',
             default => null
         };
     }

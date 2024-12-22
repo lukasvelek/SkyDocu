@@ -201,6 +201,10 @@ class ProcessesPresenter extends AUserPresenter {
                     $params['backView'] = $backView;
                 }
 
+                if($process->documentId === null) {
+                    $params['isStandalone'] = '1';
+                }
+
                 $tmp[] = LinkBuilder::createSimpleLink($title, $this->createURL('process', $params), 'link');
             }
 
@@ -237,6 +241,7 @@ class ProcessesPresenter extends AUserPresenter {
         $processId = $this->httpGet('processId', true);
         $action = $this->httpGet('actionName', true);
         $backView = $this->httpGet('backView');
+        $isStandalone = $this->httpGet('isStandalone');
 
         try {
             $process = $this->processManager->getProcessById($processId);
@@ -266,7 +271,9 @@ class ProcessesPresenter extends AUserPresenter {
                     break;
     
                 case 'finish':
-                    $this->processFactory->startDocumentProcessFinalExecute($process->type, $process->documentId);
+                    if($isStandalone === null) {
+                        $this->processFactory->startDocumentProcessFinalExecute($process->type, $process->documentId);
+                    }
 
                     $this->processManager->finishProcess($processId, $this->getUserId());
     

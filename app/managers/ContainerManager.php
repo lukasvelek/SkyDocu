@@ -2,7 +2,9 @@
 
 namespace App\Managers;
 
+use App\Constants\Container\StandaloneProcesses;
 use App\Constants\Container\SystemGroups;
+use App\Constants\Container\SystemProcessTypes;
 use App\Core\Caching\CacheNames;
 use App\Core\DB\DatabaseManager;
 use App\Core\DB\DatabaseRow;
@@ -176,17 +178,20 @@ class ContainerManager extends AManager {
                     'canExportDocuments' => 1,
                     'canViewDocumentHistory' => 1
                 ]
-            ],
-            [
+            ]
+        ];
+
+        foreach(StandaloneProcesses::getAll() as $key => $title) {
+            $data[] = [
                 'table' => 'process_types',
                 'data' => [
                     'typeId' => $this->createIdCustomDb(EntityManager::C_PROCESS_TYPES, $conn),
-                    'typeKey' => 'shredding',
-                    'title' => 'Document shredding',
-                    'description' => 'Shred document'
+                    'typeKey' => $key,
+                    'title' => $title,
+                    'description' => StandaloneProcesses::getDescription($key)
                 ]
-            ],
-        ];
+            ];
+        }
 
         foreach($groupIds as $value => $groupId) {
             $data[] = [

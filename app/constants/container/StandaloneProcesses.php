@@ -13,6 +13,13 @@ class StandaloneProcesses extends AConstant {
             default => null
         };
     }
+
+    public static function getDescription($key): ?string {
+        return match($key) {
+            default => null,
+            self::HOME_OFFICE => 'Home office'
+        };
+    }
 }
 
 ?>

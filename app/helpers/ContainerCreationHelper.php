@@ -117,7 +117,8 @@ class ContainerCreationHelper {
                 'typeId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',
                 'typeKey' => 'VARCHAR(256) NOT NULL',
                 'title' => 'VARCHAR(256) NOT NULL',
-                'description' => 'TEXT NOT NULL'
+                'description' => 'TEXT NOT NULL',
+                'isEnabled' => 'INT(2) NOT NULL DEFAULT 1'
             ],
             'process_comments' => [
                 'commentId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',

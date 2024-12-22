@@ -139,16 +139,6 @@ class ProcessManager extends AManager {
         $this->insertProcessMetadataHistory($processId, $userId, ProcessesGridSystemMetadata::CURRENT_OFFICER_USER_ID, $process->currentOfficerUserId, null);
     }
 
-    public function getProcessTypeByKey(string $key) {
-        $cache = $this->cacheFactory->getCache(CacheNames::PROCESS_TYPES);
-
-        return $cache->load($key, function() use ($key) {
-            $row = $this->pr->getProcessTypeByKey($key);
-
-            return DatabaseRow::createFromDbRow($row);
-        });
-    }
-
     public function isDocumentInProcess(string $documentId) {
         $processes = $this->pr->getProcessesForDocument($documentId);
 

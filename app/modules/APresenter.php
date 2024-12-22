@@ -735,6 +735,8 @@ abstract class APresenter extends AGUICore {
             $cache->save($hash, function() {
                 return $this->flashMessages;
             });
+
+            $this->logger->warning('Flash messages saved to cache: ' . var_export($this->flashMessages, true), __METHOD__);
         }
 
         $this->cacheFactory->saveCaches();

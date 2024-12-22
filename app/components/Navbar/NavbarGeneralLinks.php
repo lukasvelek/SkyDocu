@@ -2,6 +2,11 @@
 
 namespace App\Components\Navbar;
 
+/**
+ * NavbarGeneralLinks contains all navbar links for the UserModule
+ * 
+ * @author Lukas Velek
+ */
 class NavbarGeneralLinks {
     public const DASHBOARD = ['page' => 'User:Home', 'action' => 'dashboard'];
     public const DOCUMENTS = ['page' => 'User:Documents', 'action' => 'list'];
@@ -13,6 +18,11 @@ class NavbarGeneralLinks {
     public const USER_PROFILE = ['page' => 'User:User', 'action' => 'profile'];
     public const USER_LOGOUT = ['page' => 'User:Logout', 'action' => 'logout'];
 
+    /**
+     * Returns links array where the key is the title and the value is the URL array
+     * 
+     * @return array<string, array> Links array
+     */
     public static function toArray() {
         return [
             'Dashboard' => self::DASHBOARD,

@@ -170,9 +170,7 @@ class CacheFactory {
         $date = new DateTime();
         $date->format('Y-m-d');
 
-        $customHash = HashManager::createHash(16, false);
-
-        $filename = $date . $namespace . $customHash;
+        $filename = $date . $namespace;
         $filename = md5($filename);
 
         $content = $this->loadFileContent($path, $filename);

@@ -56,7 +56,7 @@ class ProcessRepository extends ARepository {
             ->where('documentId = ?', [$documentId]);
 
         if($activeOnly) {
-            $qb->andWhere('status <> ?', [ProcessStatus::FINISHED]);
+            $qb->andWhere($qb->getColumnNotInValues('status', [ProcessStatus::FINISHED, ProcessStatus::CANCELED]));
         }
 
         $qb->execute();
@@ -83,8 +83,8 @@ class ProcessRepository extends ARepository {
 
         $qb->select(['documentId', 'COUNT(processId) AS cnt'])
             ->from('processes')
-            ->where( $qb->getColumnInValues('documentId', $documentIds))
-            ->andWhere('status <> ?', [ProcessStatus::FINISHED]);
+            ->where($qb->getColumnInValues('documentId', $documentIds))
+            ->andWhere($qb->getColumnNotInValues('status', [ProcessStatus::FINISHED, ProcessStatus::CANCELED]));
 
         $qb->execute();
 

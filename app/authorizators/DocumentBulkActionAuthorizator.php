@@ -90,7 +90,7 @@ class DocumentBulkActionAuthorizator extends AAuthorizator {
 
     private function checkDocumentIsInProcess(string $documentId) {
         if($this->pm->isDocumentInProcess($documentId)) {
-            throw new GeneralException('Document already is in a process.', null, false);
+            throw new GeneralException('Document is already in a process.', null, false);
         }
     }
 }

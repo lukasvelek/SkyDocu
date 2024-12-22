@@ -12,6 +12,11 @@ use App\Managers\Container\GroupManager;
 use App\Modules\TemplateObject;
 use App\UI\AComponent;
 
+/**
+ * Navigation bar or navbar is the top "bar" that contains links to different parts of the application
+ * 
+ * @author Lukas Velek
+ */
 class Navbar extends AComponent {
     private array $links;
     private TemplateObject $template;
@@ -21,6 +26,14 @@ class Navbar extends AComponent {
     private ?GroupManager $groupManager;
     private CacheFactory $cacheFactory;
 
+    /**
+     * Class constructor
+     * 
+     * @param HttpRequest $httpRequest HttpRequest instance
+     * @param int $mode Navbar mode
+     * @param UserEntity $user Current user entity
+     * @param ?GroupManager Container GroupManager instance
+     */
     public function __construct(HttpRequest $httpRequest, int $mode, UserEntity $user, ?GroupManager $groupManager) {
         parent::__construct($httpRequest);
 
@@ -33,18 +46,33 @@ class Navbar extends AComponent {
         $this->cacheFactory = new CacheFactory();
     }
 
+    /**
+     * Injects classes
+     * 
+     * @param GroupManager $groupManager Container GroupManager instance
+     */
     public function inject(GroupManager $groupManager) {
         $this->groupManager = $groupManager;
     }
 
     public function startup() {
+        parent::startup();
+
         $this->getLinks();
     }
 
+    /**
+     * Hides link
+     * 
+     * @param string $title Link title
+     */
     public function hideLink(string $title) {
         $this->hideLinks[] = $title;
     }
 
+    /**
+     * Gets all links to render
+     */
     private function getLinks() {
         switch($this->mode) {
             case NavbarModes::SUPERADMINISTRATION:
@@ -72,6 +100,9 @@ class Navbar extends AComponent {
         }
     }
 
+    /**
+     * Prepares links and fills the template
+     */
     private function beforeRender() {
         $linksCode = '';
 
@@ -103,6 +134,11 @@ class Navbar extends AComponent {
         $this->template->user_info = $userInfo;
     }
 
+    /**
+     * Returns user profile link for different sections of the application
+     * 
+     * @return string User profile link HTML code
+     */
     private function getUserProfileLink() {
         $link = null;
         switch($this->mode) {
@@ -124,6 +160,11 @@ class Navbar extends AComponent {
         return $this->createLink($link, $this->user->getFullname());
     }
 
+    /**
+     * Returns user logout link for different sections of the application
+     * 
+     * @return string User logout link HTML code
+     */
     private function getUserLogoutLink() {
         $link = null;
         switch($this->mode) {
@@ -145,6 +186,13 @@ class Navbar extends AComponent {
         return $this->createLink($link, 'Logout');
     }
 
+    /**
+     * Creates HTML link code for given parameters
+     * 
+     * @param array $url Link URL
+     * @param string $title Link title
+     * @return string HTML code
+     */
     private function createLink(array $url, string $title) {
         return '<a class="navbar-link" href="' . LinkHelper::createUrlFromArray($url) . '">' . $title . '</a>';
     }
@@ -155,6 +203,11 @@ class Navbar extends AComponent {
         return $this->template->render()->getRenderedContent();
     }
 
+    /**
+     * Returns HTML code for the container switch
+     * 
+     * @return string HTML code
+     */
     private function getContainerSwitch() {
         $navbarMemberships = $this->cacheFactory->getCache(CacheNames::NAVBAR_CONTAINER_SWITCH_USER_MEMBERSHIPS);
 

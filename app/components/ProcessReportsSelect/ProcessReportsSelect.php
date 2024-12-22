@@ -40,22 +40,25 @@ class ProcessReportsSelect extends AComponent {
 
         foreach($enabledProcessTypes as $row) {
             $key = $row->typeKey;
-            
-            switch($key) {
-                case StandaloneProcesses::HOME_OFFICE:
-                    $params = [
-                        'name' => $key,
-                        'view' => 'my'
-                    ];
 
-                    $link = $this->createFullURLString($this->httpRequest->query['page'], 'showReport', $params);
+            $params = [
+                'name' => $key,
+                'view' => 'my'
+            ];
 
-                    $widget = new ReportWidget($this->httpRequest, $key, 'My Home office requests', $link);
-                    $widget->startup();
-                    $this->widgets[] = $widget;
-                    
-                    break;
-            }
+            $link = $this->createFullURLString($this->httpRequest->query['page'], 'showReport', $params);
+
+            $widget = new ReportWidget($this->httpRequest, $key, 'My ' . $row->title . ' requests', $link);
+            $widget->startup();
+            $this->widgets[] = $widget;
+
+            $params['view'] = 'all';
+
+            $link = $this->createFullURLString($this->httpRequest->query['page'], 'showReport', $params);
+
+            $widget = new ReportWidget($this->httpRequest, $key, 'All ' . $row->title . ' requests', $link);
+            $widget->startup();
+            $this->widgets[] = $widget;
         }
     }
 

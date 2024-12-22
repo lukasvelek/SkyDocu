@@ -15,9 +15,7 @@ use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
 use App\Exceptions\NoAjaxResponseException;
 use App\Exceptions\TemplateDoesNotExistException;
-use App\Helpers\GridHelper;
 use App\Logger\Logger;
-use App\UI\GridBuilder2\GridBuilder;
 use App\UI\LinkBuilder;
 use Exception;
 

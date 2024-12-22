@@ -336,7 +336,7 @@ class QueryBuilder
             $cond = str_replace($search, $values, $cond);
         }
 
-        $this->queryData['where'] = $cond;
+        $this->queryData['where'] = '(' . $cond . ')';
 
         return $this;
     }
@@ -377,9 +377,9 @@ class QueryBuilder
         }
 
         if(!isset($this->queryData['where']) || ($this->queryData['where'] == '')) {
-            $this->queryData['where'] .= $cond;    
+            $this->queryData['where'] .= '(' . $cond . ')';    
         } else {
-            $this->queryData['where'] .= ' AND ' . $cond;
+            $this->queryData['where'] .= ' AND (' . $cond . ')';
         }
 
         return $this;
@@ -421,9 +421,9 @@ class QueryBuilder
         }
 
         if(!isset($this->queryData['where']) || ($this->queryData['where'] == '')) {
-            $this->queryData['where'] .= $cond;    
+            $this->queryData['where'] .= '(' . $cond . ')';    
         } else {
-            $this->queryData['where'] .= ' OR ' . $cond;
+            $this->queryData['where'] .= ' OR (' . $cond . ')';
         }
 
         return $this;

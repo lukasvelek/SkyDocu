@@ -9,11 +9,12 @@ class ProcessStatus extends AConstant {
     public const FINISHED = 2;
     public const CANCELED = 3;
 
-    public static function toString($key): string {
+    public static function toString($key): ?string {
         return match((int)$key) {
             self::IN_PROGRESS => 'In progress',
             self::FINISHED => 'Finished',
-            self::CANCELED => 'Canceled'
+            self::CANCELED => 'Canceled',
+            default => null
         };
     }
 }

@@ -15,7 +15,7 @@ interface IToStringConstant {
      * @param mixed $key Constant key
      * @return string User-friendly text
      */
-    static function toString($key): string;
+    static function toString($key): ?string;
 }
 
 ?>

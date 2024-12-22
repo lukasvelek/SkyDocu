@@ -3,7 +3,6 @@
 namespace App\Components\Navbar;
 
 use App\Constants\Container\SystemGroups;
-use App\Core\Application;
 use App\Core\Caching\CacheFactory;
 use App\Core\Caching\CacheNames;
 use App\Core\Http\HttpRequest;
@@ -12,7 +11,6 @@ use App\Helpers\LinkHelper;
 use App\Managers\Container\GroupManager;
 use App\Modules\TemplateObject;
 use App\UI\AComponent;
-use App\UI\IRenderable;
 
 class Navbar extends AComponent {
     private array $links;

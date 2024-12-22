@@ -31,7 +31,7 @@ class TransactionLogPresenter extends AAdminPresenter {
             $users[$userId] = $user->getFullname();
         }
 
-        $grid->addFilter('userId', 'User:', $users);
+        $grid->addFilter('userId', null, $users);
 
         return $grid;
     }

@@ -14,6 +14,7 @@ use App\Managers\Container\GridManager;
 use App\Managers\Container\GroupManager;
 use App\Managers\Container\MetadataManager;
 use App\Managers\Container\ProcessManager;
+use App\Managers\Container\StandaloneProcessManager;
 use App\Managers\EntityManager;
 use App\Repositories\Container\DocumentClassRepository;
 use App\Repositories\Container\DocumentRepository;
@@ -45,6 +46,7 @@ abstract class AContainerPresenter extends APresenter {
     protected EnumManager $enumManager;
     protected GridManager $gridManager;
     protected ProcessManager $processManager;
+    protected StandaloneProcessManager $standaloneProcessManager;
 
     protected DocumentBulkActionAuthorizator $documentBulkActionAuthorizator;
     protected GroupStandardOperationsAuthorizator $groupStandardOperationsAuthorizator;
@@ -107,8 +109,13 @@ abstract class AContainerPresenter extends APresenter {
     private function initManagers() {
         $managers = [
             'processManager' => [
-                $this->processRepository,
-                $this->groupManager
+                'processRepository',
+                'groupManager'
+            ],
+            'standaloneProcessManager' => [
+                'processManager',
+                ':currentUser',
+                ':userManager'
             ]
         ];
 
@@ -119,10 +126,20 @@ abstract class AContainerPresenter extends APresenter {
 
                 $className = (string)$class;
 
+                $realArgs = [];
+                foreach($args as $arg) {
+                    if(str_starts_with($arg, ':')) {
+                        $_arg = explode(':', $arg)[1];
+                        $realArgs[] = $this->app->$_arg;
+                    } else {
+                        $realArgs[] = $this->$arg;
+                    }
+                }
+
                 /**
                  * @var \App\Managers\AManager $obj
                  */
-                $obj = new $className(...$args);
+                $obj = new $className(...$realArgs);
                 $obj->inject($this->logger, $this->entityManager);
                 $this->{$varName} = $obj;
             } else {

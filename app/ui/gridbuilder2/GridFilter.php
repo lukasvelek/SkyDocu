@@ -188,7 +188,12 @@ class GridFilter extends AComponent {
                 $options[] = $option;
             }
 
-            $form->addSelect($name, $this->gridColumns[$name], $options);
+            $title = $name;
+            if(array_key_exists($name, $this->gridColumns)) {
+                $title = $this->gridColumns[$name];
+            }
+
+            $form->addSelect($name, $title . ':', $options);
         }
     }
     

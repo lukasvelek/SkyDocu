@@ -6,6 +6,7 @@ use App\Constants\Container\GridNames;
 use App\Constants\Container\ProcessesGridSystemMetadata;
 use App\Constants\Container\ProcessGridViews;
 use App\Constants\Container\ProcessStatus;
+use App\Constants\Container\StandaloneProcesses;
 use App\Constants\Container\SystemProcessTypes;
 use App\Core\Application;
 use App\Core\DB\DatabaseRow;
@@ -93,6 +94,7 @@ class ProcessesGrid extends GridBuilder implements IGridExtendingComponent {
      */
     private function setup() {
         $this->setGridName(GridNames::PROCESS_GRID . '_' . $this->view);
+        $this->addQueryDependency('view', $this->view);
     }
 
     public function createDataSource() {
@@ -165,15 +167,24 @@ class ProcessesGrid extends GridBuilder implements IGridExtendingComponent {
 
                     $documentIds = [];
                     while($row = $dataSource->fetchAssoc()) {
-                        $documentIds[] = $row['documentId'];
+                        $documentId = $row['documentId'];
+                        
+                        if($documentId !== null) {
+                            $documentIds[] = $row['documentId'];
+                        }
                     }
 
                     $documentTitles = $this->getDocumentTitlesByIds($documentIds);
 
                     $col = $this->addColumnText($name, $text);
                     $col->onRenderColumn[] = function(DatabaseRow $row, Row $_row, Cell $cell, HTML $html, mixed $value) use ($documentTitles) {
-                        $el = HTML::el('span')
-                                ->text($documentTitles[$value]);
+                        $el = HTML::el('span');
+
+                        if(in_array($value, $documentTitles)) {
+                            $el->text($documentTitles[$value]);
+                        } else {
+                            $el->text('-');
+                        }
 
                         return $el;
                     };
@@ -213,7 +224,19 @@ class ProcessesGrid extends GridBuilder implements IGridExtendingComponent {
      * @return string Process type's grid title
      */
     private function getTypeByKey(string $key) {
-        return SystemProcessTypes::gridToString($key);
+        $result = SystemProcessTypes::gridToString($key);
+
+        if($result !== null) {
+            return $result;
+        }
+
+        $result = StandaloneProcesses::toString($key);
+
+        if($result !== null) {
+            return $result;
+        }
+
+        return '#ERROR';
     }
 
     /**

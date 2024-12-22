@@ -8,7 +8,7 @@ class GridNames extends AConstant {
     public const DOCUMENTS_GRID = 'documentsGrid';
     public const PROCESS_GRID = 'processGrid';
 
-    public static function toString($key): string {
+    public static function toString($key): ?string {
         $result = match($key) {
             self::DOCUMENTS_GRID => 'Documents grid',
             self::PROCESS_GRID => 'Process grid',

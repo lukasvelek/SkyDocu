@@ -3,7 +3,7 @@
 namespace App\Managers\Container;
 
 use App\Constants\Container\StandaloneProcesses;
-use App\Core\Datatypes\ArrayList;
+use App\Core\DB\DatabaseRow;
 use App\Entities\UserEntity;
 use App\Exceptions\GeneralException;
 use App\Managers\AManager;
@@ -58,6 +58,19 @@ class StandaloneProcessManager extends AManager {
         if(!$this->processManager->pr->updateProcessType($typeKey, $data)) {
             throw new GeneralException('Database error.');
         }
+    }
+
+    public function getEnabledProcessTypes() {
+        $qb = $this->processManager->pr->composeQueryForProcessTypes();
+        $qb->andWhere('isEnabled = 1')
+            ->execute();
+
+        $rows = [];
+        while($row = $qb->fetchAssoc()) {
+            $rows[] = DatabaseRow::createFromDbRow($row);
+        }
+
+        return $rows;
     }
 }
 

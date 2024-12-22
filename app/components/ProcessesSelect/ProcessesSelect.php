@@ -5,18 +5,21 @@ namespace App\Components\ProcessesSelect;
 use App\Constants\Container\StandaloneProcesses;
 use App\Core\Http\HttpRequest;
 use App\Managers\Container\ProcessManager;
+use App\Managers\Container\StandaloneProcessManager;
 use App\Modules\TemplateObject;
 use App\UI\AComponent;
 
 class ProcessesSelect extends AComponent {
     private TemplateObject $template;
     private array $widgets;
+    private StandaloneProcessManager $spm;
 
-    public function __construct(HttpRequest $request, ProcessManager $processManager) {
+    public function __construct(HttpRequest $request, StandaloneProcessManager $spm) {
         parent::__construct($request);
 
-        $this->template = $this->loadTemplateFromPath(__DIR__ . '\\template.html');
+        $this->spm = $spm;
 
+        $this->template = $this->loadTemplateFromPath(__DIR__ . '\\template.html');
         $this->widgets = [];
     }
 
@@ -34,9 +37,12 @@ class ProcessesSelect extends AComponent {
     }
 
     private function loadWidgets() {
-        $widgets = StandaloneProcesses::getAll();
+        $enabledWidgets = $this->spm->getEnabledProcessTypes();
 
-        foreach($widgets as $key => $title) {
+        foreach($enabledWidgets as $row) {
+            $key = $row->typeKey;
+            $title = StandaloneProcesses::toString($key);
+
             $params = [
                 'name' => $key
             ];
@@ -54,36 +60,40 @@ class ProcessesSelect extends AComponent {
 
         $widgetCount = count($this->widgets);
 
-        $rows = ceil($widgetCount / $countInRow);
+        if($widgetCount > 0) {
+            $rows = ceil($widgetCount / $countInRow);
 
-        $code = [];
-        $addRow = function(string $line) use (&$code) {
-            $code[] = $line;
-        };
-        
-        $w = 0;
-        for($i = 0; $i < $rows; $i++) {
-            $addRow('<div class="row">');
+            $code = [];
+            $addRow = function(string $line) use (&$code) {
+                $code[] = $line;
+            };
+            
+            $w = 0;
+            for($i = 0; $i < $rows; $i++) {
+                $addRow('<div class="row">');
 
-            for($j = 0; $j < $countInRow; $j++) {
-                $addRow('<div class="col-md">');
+                for($j = 0; $j < $countInRow; $j++) {
+                    $addRow('<div class="col-md">');
 
-                if($widgetCount > $w) {
-                    $widget = $this->widgets[$w];
+                    if($widgetCount > $w) {
+                        $widget = $this->widgets[$w];
 
-                    $addRow($widget->render());
+                        $addRow($widget->render());
+                    }
+
+                    $addRow('</div>');
+
+                    $w++;
                 }
 
                 $addRow('</div>');
 
-                $w++;
+                if(($i + 1) < $rows) {
+                    $addRow('<br>');
+                }
             }
-
-            $addRow('</div>');
-
-            if(($i + 1) < $rows) {
-                $addRow('<br>');
-            }
+        } else {
+            $code = ['No processes found.'];
         }
 
         $this->template->widgets = implode('', $code);

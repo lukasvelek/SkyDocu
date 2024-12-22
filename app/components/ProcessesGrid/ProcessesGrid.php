@@ -94,6 +94,7 @@ class ProcessesGrid extends GridBuilder implements IGridExtendingComponent {
      */
     private function setup() {
         $this->setGridName(GridNames::PROCESS_GRID . '_' . $this->view);
+        $this->addQueryDependency('view', $this->view);
     }
 
     public function createDataSource() {

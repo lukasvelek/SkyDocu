@@ -3,6 +3,7 @@
 namespace App\Repositories\Container;
 
 use App\Constants\Container\ProcessStatus;
+use App\Constants\Container\StandaloneProcesses;
 use App\Repositories\ARepository;
 
 class ProcessRepository extends ARepository {
@@ -82,8 +83,8 @@ class ProcessRepository extends ARepository {
 
         $qb->select(['documentId', 'COUNT(processId) AS cnt'])
             ->from('processes')
-            ->where('( ' . $qb->getColumnInValues('documentId', $documentIds) . ' )')
-            ->andWhere('( status <> ? )', [ProcessStatus::FINISHED]);
+            ->where( $qb->getColumnInValues('documentId', $documentIds))
+            ->andWhere('status <> ?', [ProcessStatus::FINISHED]);
 
         $qb->execute();
 
@@ -150,6 +151,16 @@ class ProcessRepository extends ARepository {
         }
 
         return $data;
+    }
+
+    public function composeQueryForStandaloneProcesses() {
+        $qb = $this->commonComposeQuery(false);
+        
+        $types = array_keys(StandaloneProcesses::getAll());
+
+        $qb->andWhere($qb->getColumnInValues('type', $types));
+
+        return $qb;
     }
 }
 

@@ -11,7 +11,7 @@ use App\Managers\EntityManager;
 use App\Managers\UserManager;
 
 class StandaloneProcessManager extends AManager {
-    private ProcessManager $processManager;
+    public ProcessManager $processManager;
     private UserEntity $currentUser;
     private UserManager $userManager;
 

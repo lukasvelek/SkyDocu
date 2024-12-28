@@ -97,7 +97,7 @@ function getContainer() {
         $date = time();
         $date -= 60 * 60 * 24;
         if(file_exists(CACHE_DIR . 'Container_' . md5(date('Y-m-d', $date)) . 'tmp')) {
-            return unserialize(file_get_contents(CACHE_DIR . 'Container_' . md5(date('Y-m-d')) . '.tmp'))['files'];
+            return unserialize(file_get_contents(CACHE_DIR . 'Container_' . md5(date('Y-m-d', $date)) . '.tmp'))['files'];
         } else {
             return [];
         }

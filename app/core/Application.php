@@ -141,17 +141,6 @@ class Application {
             }
         }
     }
-
-    /**
-     * Used for old AJAX functions. It has become deprecated when AJAX functionality was implemented into presenters.
-     * 
-     * @param string $currentUserId Current user's ID
-     * 
-     * @deprecated
-     */
-    public function ajaxRun(string $currentUserId) {
-        $this->currentUser = $this->userRepository->getUserById($currentUserId);
-    }
     
     /**
      * The point where all the operations are called from.

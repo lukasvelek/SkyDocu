@@ -260,7 +260,7 @@ class Logger implements ILoggerCallable {
         }
 
         if(!FileManager::folderExists($folder)) {
-            FileManager::createFolder($folder);
+            FileManager::createFolder($folder, true);
         }
 
         if(LOG_LEVEL >= 5 && $addStackTrace) {

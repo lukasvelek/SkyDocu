@@ -3,6 +3,7 @@
 namespace App\Components\Navbar;
 
 use App\Constants\Container\SystemGroups;
+use App\Constants\ContainerStatus;
 use App\Core\Caching\CacheFactory;
 use App\Core\Caching\CacheNames;
 use App\Core\Http\HttpRequest;
@@ -216,7 +217,13 @@ class Navbar extends AComponent {
 
             $count = 0;
             foreach($memberships as $membership) {
-                if(str_contains($membership->title, ' - users') || $membership->title == \App\Constants\SystemGroups::SUPERADMINISTRATORS) {
+                if(str_contains($membership->title, ' - users')) {
+                    $container = $this->app->containerManager->getContainerById($membership->containerId);
+
+                    if($container->status == ContainerStatus::RUNNING) {
+                        $count++;
+                    }
+                } else if($membership->title == \App\Constants\SystemGroups::SUPERADMINISTRATORS) {
                     $count++;
                 }
             }

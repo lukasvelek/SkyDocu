@@ -4,7 +4,6 @@ namespace App\Managers;
 
 use App\Constants\Container\StandaloneProcesses;
 use App\Constants\Container\SystemGroups;
-use App\Constants\Container\SystemProcessTypes;
 use App\Core\Caching\CacheNames;
 use App\Core\DB\DatabaseManager;
 use App\Core\DB\DatabaseRow;
@@ -337,12 +336,9 @@ class ContainerManager extends AManager {
         }
 
         // Invalidate container cache
-        if(!$this->cacheFactory->invalidateCacheByNamespace(CacheNames::CONTAINERS) ||
-            !$this->cacheFactory->invalidateCacheByNamespace(CacheNames::GROUPS) ||
-            !$this->cacheFactory->invalidateCacheByNamespace(CacheNames::GROUP_MEMBERSHIPS) ||
-            !$this->cacheFactory->invalidateCacheByNamespace(CacheNames::GROUP_TITLE_TO_ID_MAPPING) ||
-            !$this->cacheFactory->invalidateCacheByNamespace(CacheNames::USER_GROUP_MEMBERSHIPS) ||
-            !$this->cacheFactory->invalidateCacheByNamespace(CacheNames::NAVBAR_CONTAINER_SWITCH_USER_MEMBERSHIPS)) {
+        $result = $this->cacheFactory->invalidateAllCache();
+
+        if(!$result) {
             throw new GeneralException('Could not invalidate cache.');
         }
     }

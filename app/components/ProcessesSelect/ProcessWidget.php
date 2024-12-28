@@ -2,6 +2,7 @@
 
 namespace App\Components\ProcessesSelect;
 
+use App\Constants\Container\StandaloneProcesses;
 use App\Core\Http\HttpRequest;
 use App\Helpers\ColorHelper;
 use App\Modules\TemplateObject;
@@ -33,10 +34,8 @@ class ProcessWidget extends AComponent {
     }
 
     private function generateColors() {
-        [$fg, $bg] = ColorHelper::createColorCombination();
-
-        $this->fgColor = $fg;
-        $this->bgColor = $bg;
+        $this->fgColor = StandaloneProcesses::getForegroundColor($this->name);
+        $this->bgColor = StandaloneProcesses::getBackgroundColor($this->name);
     }
 
     private function generateWidgetId() {

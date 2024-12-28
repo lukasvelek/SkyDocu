@@ -644,11 +644,14 @@ abstract class APresenter extends AGUICore {
      * Erases presenter cache and calls custom after-render callbacks.
      */
     private function afterRender() {
-        if($this->template !== null) {
-            if($this->sysTemplate !== null) {
+        if($this->sysTemplate !== null) {
+            if($this->template !== null) {
                 $this->sysTemplate->sys_page_content = $this->template->render()->getRenderedContent();
-                $this->template = $this->sysTemplate;
+            } else {
+                $this->sysTemplate->sys_page_content = '';
             }
+
+            $this->template = $this->sysTemplate;
         }
 
         $this->saveFlashMessagesToCache();

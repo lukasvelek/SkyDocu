@@ -240,12 +240,6 @@ abstract class APresenter extends AGUICore {
         $this->logger = $logger;
     }
 
-    private function processHttpRequest() {
-        if(isset($this->httpRequest->query['isComponent']) && $this->httpRequest->query['isComponent'] == 1) {
-            $this->isComponentAjax = true;
-        }
-    }
-
     /**
      * Creates a custom flash message but instead of saving it to cache, it returns its HTML code.
      * 

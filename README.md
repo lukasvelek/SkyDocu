@@ -10,6 +10,7 @@ The web application is written purely in PHP with a few JS scripts. These JS scr
 ## Changelog
 ### 1.1
 - Document processes
+- Standalone processes
 - Bugfixes
 - UI core updates
 

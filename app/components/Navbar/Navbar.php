@@ -240,6 +240,33 @@ class Navbar extends AComponent {
         }
     }
 
+    /**
+     * Revalidates containers available for switching between
+     */
+    public function revalidateContainerSwitch() {
+        $navbarMemberships = $this->cacheFactory->getCache(CacheNames::NAVBAR_CONTAINER_SWITCH_USER_MEMBERSHIPS);
+        $navbarMemberships->invalidate();
+
+        $count = $navbarMemberships->load($this->app->currentUser->getId(), function() {
+            $memberships = $this->app->groupManager->getMembershipsForUser($this->app->currentUser->getId(), true);
+
+            $count = 0;
+            foreach($memberships as $membership) {
+                if(str_contains($membership->title, ' - users')) {
+                    $container = $this->app->containerManager->getContainerById($membership->containerId, true);
+
+                    if($container->status == ContainerStatus::RUNNING) {
+                        $count++;
+                    }
+                } else if($membership->title == \App\Constants\SystemGroups::SUPERADMINISTRATORS) {
+                    $count++;
+                }
+            }
+
+            return $count;
+        });
+    }
+
     public static function createFromComponent(AComponent $component) {}
 }
 

@@ -48,10 +48,11 @@ class Cache {
      * @param mixed $key Data key
      * @param callback $generator Data generator
      * @param array $generatorDependencies Data generator dependencies (arguments)
+     * @param bool $force Force generate result or not
      * @return mixed|null Data or null
      */
-    public function load(mixed $key, callable $generator, array $generatorDependencies = []) {
-        if(array_key_exists($key, $this->data)) {
+    public function load(mixed $key, callable $generator, array $generatorDependencies = [], bool $force = false) {
+        if(array_key_exists($key, $this->data) && !$force) {
             $this->logger->logHitMiss($key, $this->namespace, true, __METHOD__);
             return $this->data[$key];
         } else {

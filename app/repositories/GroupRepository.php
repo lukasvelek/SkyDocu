@@ -111,7 +111,7 @@ class GroupRepository extends ARepository {
         return $qb->fetch();
     }
 
-    public function getGroupsForUser(string $userId) {
+    public function getGroupsForUser(string $userId, bool $force = false) {
         $qb = $this->qb(__METHOD__);
 
         $qb->select(['groupId'])
@@ -127,16 +127,7 @@ class GroupRepository extends ARepository {
             }
 
             return $groups;
-        });
-
-            /*->execute();
-
-        $groups = [];
-        while($row = $qb->fetchAssoc()) {
-            $groups[] = $row['groupId'];
-        }
-
-        return $groups;*/
+        }, [], $force);
     }
 }
 

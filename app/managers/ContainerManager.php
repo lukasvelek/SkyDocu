@@ -294,12 +294,12 @@ class ContainerManager extends AManager {
         }
     }
 
-    public function getContainerById(string $containerId) {
+    public function getContainerById(string $containerId, bool $force = false) {
         $cache = $this->cacheFactory->getCache(CacheNames::CONTAINERS);
 
         $container = $cache->load($containerId, function() use ($containerId) {
             return $this->containerRepository->getContainerById($containerId);
-        });
+        }, [], $force);
 
         if($container === null) {
             throw new NonExistingEntityException('Entity does not exist.');

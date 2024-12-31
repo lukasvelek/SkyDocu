@@ -21,8 +21,6 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
         parent::__construct('ContainerSettingsPresenter', 'Container settings');
     }
 
-    public function handleHome() {}
-
     public function renderHome() {}
 
     public function handleStatus(?FormResponse $fr = null) {
@@ -33,6 +31,12 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
                 $this->app->containerRepository->beginTransaction(__METHOD__);
 
                 $this->app->containerManager->changeContainerStatus($containerId, $fr->status, $this->getUserId(), $fr->description);
+                
+                /**
+                 * @var \App\Modules\SuperAdminModule\SuperAdminModule $module
+                 */
+                $module = &$this->module;
+                $module->navbar?->revalidateContainerSwitch();
 
                 $this->app->containerRepository->commit($this->getUserId(), __METHOD__);
 

@@ -219,14 +219,17 @@ class ProcessesPresenter extends AUserPresenter {
 
         $this->saveToPresenterCache('process_actions', $processActionsCode);
 
-        $backLinkParams = [];
-        if($backView !== null) {
-            $backLinkParams['view'] = $backView;
+        $links = [];
+        if($this->httpGet('disableBackLink') === null) {
+            $backLinkParams = [];
+            if($backView !== null) {
+                $backLinkParams['view'] = $backView;
+            }
+            
+            $links = [
+                $this->createBackUrl('list', $backLinkParams)
+            ];
         }
-        
-        $links = [
-            $this->createBackUrl('list', $backLinkParams)
-        ];
 
         $this->saveToPresenterCache('links', implode('&nbsp;&nbsp;', $links));
     }

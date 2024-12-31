@@ -27,6 +27,11 @@ use App\Repositories\Container\TransactionLogRepository;
 use App\Repositories\ContentRepository;
 use ReflectionClass;
 
+/**
+ * AContainerPresenter is common presenter ancestor for all container presenters. It contains useful variables and methods.
+ * 
+ * @author Lukas Velek
+ */
 abstract class AContainerPresenter extends APresenter {
     protected FolderRepository $folderRepository;
     protected GroupRepository $groupRepository;
@@ -63,6 +68,9 @@ abstract class AContainerPresenter extends APresenter {
         $this->_reflectionParamsCache = [];
     }
 
+    /**
+     * Starts up the container presenter. Here are container repositories and managers and other classes instantiated.
+     */
     public function startup() {
         parent::startup();
 
@@ -106,6 +114,9 @@ abstract class AContainerPresenter extends APresenter {
         );
     }
 
+    /**
+     * Automatically creates instances of managers
+     */
     private function initManagers() {
         $managers = [
             'processManager' => [
@@ -169,6 +180,11 @@ abstract class AContainerPresenter extends APresenter {
         }
     }
 
+    /**
+     * Automatically creates instances of repositories
+     * 
+     * @param DatabaseConnection $db Container DB connection
+     */
     private function initRepositories(DatabaseConnection $db) {
         $rc = new ReflectionClass($this);
 
@@ -192,6 +208,9 @@ abstract class AContainerPresenter extends APresenter {
         }
     }
 
+    /**
+     * Injects container CacheFactory instance to managers
+     */
     private function injectCacheFactoryToManagers() {
         $rc = new ReflectionClass($this);
 
@@ -210,6 +229,9 @@ abstract class AContainerPresenter extends APresenter {
         }
     }
 
+    /**
+     * Injects container CacheFactory instance to repositories
+     */
     private function injectCacheFactoryToAuthorizators() {
         $rc = new ReflectionClass($this);
 

@@ -72,6 +72,12 @@ class StandaloneProcessManager extends AManager {
 
         return $rows;
     }
+
+    public function composeQueryForProcessTypeInstances(string $processType) {
+        $qb = $this->processManager->pr->commonComposeQuery(false);
+        $qb->andWhere('type = ?', [$processType]);
+        return $qb;
+    }
 }
 
 ?>

@@ -1,14 +1,13 @@
 <?php
 
-namespace App\Components\ProcessesSelect;
+namespace App\Components\ProcessReportsSelect;
 
-use App\Constants\Container\StandaloneProcesses;
 use App\Core\Http\HttpRequest;
 use App\Helpers\ColorHelper;
 use App\Modules\TemplateObject;
 use App\UI\AComponent;
 
-class ProcessWidget extends AComponent {
+class ReportWidget extends AComponent {
     private string $title;
     private string $bgColor;
     private string $fgColor;
@@ -29,17 +28,27 @@ class ProcessWidget extends AComponent {
 
     public function startup() {
         parent::startup();
-        
+
         $this->componentName = $this->generateWidgetId();
     }
 
-    private function generateColors() {
-        $this->fgColor = StandaloneProcesses::getForegroundColor($this->name);
-        $this->bgColor = StandaloneProcesses::getBackgroundColor($this->name);
+    public function render() {
+        $this->beforeRender();
+
+        return $this->template->render()->getRenderedContent();
     }
+
+    public static function createFromComponent(AComponent $component) {}
 
     private function generateWidgetId() {
         return 'widget_' . $this->name;
+    }
+
+    private function generateColors() {
+        [$fg, $bg] = ColorHelper::createColorCombination();
+
+        $this->fgColor = $fg;
+        $this->bgColor = $bg;
     }
 
     private function beforeRender() {
@@ -51,14 +60,6 @@ class ProcessWidget extends AComponent {
         $this->template->link = $this->link;
         $this->template->widget_id = $this->componentName;
     }
-
-    public function render() {
-        $this->beforeRender();
-
-        return $this->template->render()->getRenderedContent();
-    }
-
-    public static function createFromComponent(AComponent $component) {}
 }
 
 ?>

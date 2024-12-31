@@ -2,11 +2,9 @@
 
 namespace App\Modules\UserModule;
 
-use App\Constants\Container\DocumentStatus;
 use App\Exceptions\AException;
-use App\Modules\AContainerPresenter;
 
-class DocumentBulkActionsPresenter extends AContainerPresenter {
+class DocumentBulkActionsPresenter extends AUserPresenter {
     public function __construct() {
         parent::__construct('DocumentBulkActionsPresenter', 'Document bulk actions');
     }

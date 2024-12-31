@@ -1,14 +1,13 @@
 <?php
 
-namespace App\Components\ProcessesSelect;
+namespace App\Components\ProcessReportsSelect;
 
-use App\Constants\Container\StandaloneProcesses;
 use App\Core\Http\HttpRequest;
 use App\Managers\Container\StandaloneProcessManager;
 use App\Modules\TemplateObject;
 use App\UI\AComponent;
 
-class ProcessesSelect extends AComponent {
+class ProcessReportsSelect extends AComponent {
     private TemplateObject $template;
     private array $widgets;
     private StandaloneProcessManager $spm;
@@ -24,7 +23,7 @@ class ProcessesSelect extends AComponent {
 
     public function render() {
         $this->beforeRender();
-
+        
         return $this->template->render()->getRenderedContent();
     }
 
@@ -36,19 +35,27 @@ class ProcessesSelect extends AComponent {
     }
 
     private function loadWidgets() {
-        $enabledWidgets = $this->spm->getEnabledProcessTypes();
+        $enabledProcessTypes = $this->spm->getEnabledProcessTypes();
 
-        foreach($enabledWidgets as $row) {
+        foreach($enabledProcessTypes as $row) {
             $key = $row->typeKey;
-            $title = StandaloneProcesses::toString($key);
 
             $params = [
-                'name' => $key
+                'name' => $key,
+                'view' => 'my'
             ];
 
-            $link = $this->createFullURLString($this->httpRequest->query['page'], 'processForm', $params);
+            $link = $this->createFullURLString($this->httpRequest->query['page'], 'showReport', $params);
 
-            $widget = new ProcessWidget($this->httpRequest, $key, $title, $link);
+            $widget = new ReportWidget($this->httpRequest, $key, 'My ' . $row->title . ' requests', $link);
+            $widget->startup();
+            $this->widgets[] = $widget;
+
+            $params['view'] = 'all';
+
+            $link = $this->createFullURLString($this->httpRequest->query['page'], 'showReport', $params);
+
+            $widget = new ReportWidget($this->httpRequest, $key, 'All ' . $row->title . ' requests', $link);
             $widget->startup();
             $this->widgets[] = $widget;
         }

@@ -92,12 +92,8 @@ class CacheFactory {
         $namespaces = CacheNames::getAll();
 
         foreach($namespaces as $namespace) {
-            $expire = new DateTime(time() - 60);
-            $cache = $this->getCache($namespace, $expire);
-            $cache->invalidate();
+            FileManager::deleteFolderRecursively(APP_ABSOLUTE_DIR . CACHE_DIR . $namespace . '\\', false);
         }
-
-        $this->saveCaches();
 
         return true;
     }
@@ -170,9 +166,7 @@ class CacheFactory {
         $date = new DateTime();
         $date->format('Y-m-d');
 
-        $customHash = HashManager::createHash(16, false);
-
-        $filename = $date . $namespace . $customHash;
+        $filename = $date . $namespace;
         $filename = md5($filename);
 
         $content = $this->loadFileContent($path, $filename);
@@ -215,13 +209,18 @@ class CacheFactory {
             if($cache->isInvalidated()) {
                 $this->deleteCache($cache->getNamespace());
             } else {
-                $tmp = [
-                    self::I_NS_DATA => $cache->getData(),
-                    self::I_NS_CACHE_EXPIRATION => $cache->getExpirationDate()?->getResult(),
-                    self::I_NS_CACHE_LAST_WRITE_DATE => $cache->getLastWriteDate()?->getResult()
-                ];
+                $_cache = $this->getCache($cache->getNamespace());
+                $_data = $_cache->getData();
 
-                $this->saveDataToCache($cache->getNamespace(), $tmp);
+                if($_data != $cache->getData()) {
+                    $tmp = [
+                        self::I_NS_DATA => $cache->getData(),
+                        self::I_NS_CACHE_EXPIRATION => $cache->getExpirationDate()?->getResult(),
+                        self::I_NS_CACHE_LAST_WRITE_DATE => $cache->getLastWriteDate()?->getResult()
+                    ];
+    
+                    $this->saveDataToCache($cache->getNamespace(), $tmp);
+                }
             }
         }
     }

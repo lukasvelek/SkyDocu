@@ -7,6 +7,11 @@ use App\Core\DB\DatabaseRow;
 use App\Core\Http\HttpRequest;
 use App\UI\FormBuilder2\FormBuilder2;
 
+/**
+ * DocumentMetadataForm is a form component used for creating and editing document metadata
+ * 
+ * @author Lukas Velek
+ */
 class DocumentMetadataForm extends FormBuilder2 {
     private ?DatabaseRow $metadata;
 
@@ -26,10 +31,18 @@ class DocumentMetadataForm extends FormBuilder2 {
         return parent::render();
     }
 
+    /**
+     * Sets edited metadata
+     * 
+     * @param DatabaseRow $metadata Metadata DatabaseRow instance
+     */
     public function setMetadata(DatabaseRow $metadata) {
         $this->metadata = $metadata;
     }
 
+    /**
+     * Appplies edit to the form
+     */
     private function applyEdit() {
         /**
          * @var \App\UI\FormBuilder2\TextInput $title
@@ -108,6 +121,9 @@ class DocumentMetadataForm extends FormBuilder2 {
         }
     }
 
+    /**
+     * Sets up the form
+     */
     private function setup() {
         $this->addTextInput('title', 'Title:')
             ->setRequired()

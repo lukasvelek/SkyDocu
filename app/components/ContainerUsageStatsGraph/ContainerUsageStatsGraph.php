@@ -2,52 +2,58 @@
 
 namespace App\Components\ContainerUsageStatsGraph;
 
+use App\Components\Graph\AGraph;
 use App\Core\Datetypes\DateTime;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\GeneralException;
 use App\Repositories\ContainerRepository;
 use App\UI\AComponent;
 
-class ContainerUsageStatsGraph extends AComponent {
+/**
+ * Graph that displays container usage statistics
+ * 
+ * @author Lukas Velek
+ */
+class ContainerUsageStatsGraph extends AGraph {
     private ?string $containerId;
-    private string $title;
     private ContainerRepository $containerRepository;
-    private int $numberOfColumns;
-    private int $canvasWidth;
 
+    /**
+     * Class constructor
+     * 
+     * @param HttpRequest $request HttpRequest instance
+     * @param ContainerRepository $containerRepository ContainerRepository instance
+     */
     public function __construct(HttpRequest $request, ContainerRepository $containerRepository) {
         parent::__construct($request);
 
         $this->containerRepository = $containerRepository;
+
         $this->title = 'Container usage statistics';
         $this->containerId = null;
         $this->numberOfColumns = 7;
-        $this->canvasWidth = 500;
+
+        $this->setCanvasName('containerUsageStatistics');
+        $this->setBarGraph();
+        $this->setValueDescription('Database queries');
     }
 
-    public function setCanvasWidth(int $canvasWidth) {
-        $this->canvasWidth = $canvasWidth;
-    }
-
+    /**
+     * Sets the container ID
+     * 
+     * @param string $containerId Container ID
+     */
     public function setContainerId(string $containerId) {
         $this->containerId = $containerId;
     }
 
-    public function setNumberOfColumns(int $columns) {
-        $this->numberOfColumns = $columns;
-    }
-
-    public function render() {
-        $template = $this->getTemplate(__DIR__ . '/template.html');
-        $template->title = $this->title;
-        $template->scripts = $this->createJSScripts();
-        $template->canvas_width = $this->canvasWidth;
-
-        return $template->render()->getRenderedContent();
-    }
-
     public static function createFromComponent(AComponent $component) {}
 
+    /**
+     * Fetches data from the database and formats it for further processing
+     * 
+     * @return array Data from the database
+     */
     private function getData() {
         if($this->containerId === null) {
             throw new GeneralException('No container ID passed.', null, false);
@@ -71,35 +77,7 @@ class ContainerUsageStatsGraph extends AComponent {
         return $entries;
     }
 
-    private function createJSScripts() {
-        $codes = [];
-
-        $addScript = function(string $code) use (&$codes) {
-            $codes[] = '<script type="text/javascript">' . $code . '</script>';
-        };
-
-        $addScript('
-            (async function() {
-                const _data = [' . $this->getFormattedData() . '];
-
-                new Chart(document.getElementById("canvas_containerUsageStats"), 
-                {
-                    type: "bar",
-                    data: {
-                        labels: _data.map(row => row.date),
-                        datasets: [{
-                            label: "Database queries",
-                            data: _data.map(row => row.queryCount)
-                        }]
-                    }
-                });
-            })();
-        ');
-
-        return implode('', $codes);
-    }
-
-    private function getFormattedData() {
+    protected function formatData(): string {
         $entries = $this->getData();
 
         $rows = [];

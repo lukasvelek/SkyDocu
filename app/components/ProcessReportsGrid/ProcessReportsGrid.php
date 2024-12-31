@@ -6,10 +6,13 @@ use App\Constants\Container\GridNames;
 use App\Constants\Container\ProcessesGridSystemMetadata;
 use App\Constants\Container\ProcessStatus;
 use App\Core\Application;
+use App\Core\DB\DatabaseRow;
 use App\Managers\Container\ProcessManager;
 use App\Managers\Container\StandaloneProcessManager;
 use App\UI\GridBuilder2\GridBuilder;
 use App\UI\GridBuilder2\IGridExtendingComponent;
+use App\UI\GridBuilder2\Row;
+use App\UI\HTML\HTML;
 
 class ProcessReportsGrid extends GridBuilder implements IGridExtendingComponent {
     private ProcessManager $processManager;
@@ -59,6 +62,8 @@ class ProcessReportsGrid extends GridBuilder implements IGridExtendingComponent 
 
         $this->appendSystemMetadata();
 
+        $this->appendActions();
+
         $this->setup();
 
         parent::prerender();
@@ -103,6 +108,31 @@ class ProcessReportsGrid extends GridBuilder implements IGridExtendingComponent 
                     break;
             }
         }
+    }
+
+    /**
+     * Appends actions
+     */
+    private function appendActions() {
+        $open = $this->addAction('open');
+        $open->setTitle('Open');
+        $open->onCanRender[] = function() {
+            return true;
+        };
+        $open->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
+            $params = [
+                'processId' => $primaryKey,
+                'disableBackLink' => '1'
+            ];
+
+            $el = HTML::el('a');
+            $el->href($this->createFullURLString('User:Processes', 'profile', $params))
+                ->text('Open')
+                ->class('grid-link')
+                ->target('_blank');
+
+            return $el;
+        };
     }
 }
 

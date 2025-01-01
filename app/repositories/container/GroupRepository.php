@@ -156,6 +156,16 @@ class GroupRepository extends ARepository {
 
         return $qb->fetchBool();
     }
+
+    public function composeQueryForUserMemberships(string $userId) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->select(['*'])
+            ->from('group_users_relation')
+            ->where('userId = ?', [$userId]);
+
+        return $qb;
+    }
 }
 
 ?>

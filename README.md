@@ -14,6 +14,7 @@ The web application is written purely in PHP with a few JS scripts. These JS scr
 - Bugfixes
 - UI core updates
 - Standalone process reports
+- User profile in container section
 
 ### 1.0
 - Container management

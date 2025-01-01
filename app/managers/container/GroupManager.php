@@ -122,6 +122,16 @@ class GroupManager extends AManager {
             throw new GeneralException('Could not invalidate cache.');
         }
     }
+
+    public function composeQueryForGroupsWhereUserIsMember(string $userId) {
+        $membershipsQb = $this->gr->composeQueryForUserMemberships($userId);
+        $membershipsQb->select(['groupId']);
+
+        $qb = $this->gr->composeQueryForGroups();
+        $qb->andWhere('groupId IN (' . $membershipsQb->getSQL() . ')');
+        
+        return $qb;
+    }
 }
 
 ?>

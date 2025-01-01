@@ -6,6 +6,7 @@ use App\Components\ContainerUsageAverageResponseTimeGraph\ContainerUsageAverageR
 use App\Components\ContainerUsageStatsGraph\ContainerUsageStatsGraph;
 use App\Components\ContainerUsageTotalResponseTimeGraph\ContainerUsageTotalResponseTimeGraph;
 use App\Constants\ContainerStatus;
+use App\Core\Datetypes\DateTime;
 use App\Core\DB\DatabaseRow;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
@@ -14,6 +15,7 @@ use App\UI\FormBuilder\FormResponse;
 use App\UI\GridBuilder2\Cell;
 use App\UI\GridBuilder2\Row;
 use App\UI\HTML\HTML;
+use App\UI\IRenderable;
 use App\UI\LinkBuilder;
 
 class ContainerSettingsPresenter extends ASuperAdminPresenter {
@@ -306,6 +308,64 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
         $graph->setCanvasWidth(400);
 
         return $graph;
+    }
+
+    public function handleInvites() {
+        $containerId = $this->httpGet('containerId');
+
+        try {
+            $invite = $this->app->containerInviteManager->getInviteForContainer($containerId);
+        } catch(AException $e) {
+            $this->redirect($this->createURL('invitesWithoutGrid', ['containerId' => $containerId]));
+        }
+
+        $links = [
+            $this->createBackUrl('')
+        ];
+        $this->saveToPresenterCache('links', implode('&nbsp;&nbsp;', $links));
+    }
+
+    public function renderInvites() {
+        $this->template->links = $this->loadFromPresenterCache('links');
+    }
+
+    protected function createComponentContainerInvitesGrid(HttpRequest $request) {
+        
+    }
+
+    public function handleInvitesWithoutGrid() {
+        $containerId = $this->httpGet('containerId', true);
+
+        $inviteLink = LinkBuilder::createSimpleLink('Generate invite link', $this->createURL('generateInviteLink', ['containerId' => $containerId]), 'link');
+        $this->saveToPresenterCache('links', implode('&nbsp;&nbsp;', [$inviteLink]));
+    }
+
+    public function renderInvitesWithoutGrid() {
+        $this->template->links = $this->loadFromPresenterCache('links');
+    }
+
+    public function handleGenerateInviteLink() {
+        $containerId = $this->httpGet('containerId', true);
+
+        $dateValid = new DateTime();
+        $dateValid->modify('+1m');
+        $dateValid = $dateValid->getResult();
+
+        try {
+            $this->app->containerInviteRepository->beginTransaction(__METHOD__);
+
+            $this->app->containerInviteManager->createContainerInvite($containerId, $dateValid);
+
+            $this->app->containerInviteRepository->commit($this->getUserId(), __METHOD__);
+
+            $this->flashMessage('Container\'s invite link has been generated.', 'success');
+            $this->redirect($this->createURL('invites', ['containerId' => $containerId]));
+        } catch(AException $e) {
+            $this->app->containerInviteRepository->rollback(__METHOD__);
+
+            $this->flashMessage('Could not generate invite link. Reason: ' . $e->getMessage(), 'error', 10);
+            $this->redirect($this->createURL('home', ['containerId' => $containerId]));
+        }
     }
 }
 

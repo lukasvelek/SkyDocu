@@ -30,6 +30,7 @@ class ContainerInviteRepository extends ARepository {
         $qb->select(['*'])
             ->from('container_invites')
             ->where('containerId = ?', [$containerId])
+            ->andWhere('dateValid >= current_timestamp()')
             ->execute();
 
         return $qb->fetch('inviteId');

@@ -46,12 +46,14 @@ class DateTime {
      * i - minutes
      * h - hours
      * d - days
+     * m - months
      * 
      * Examples:
      * - to add 1 hour -> use +1h
      * - to remove 1 hour -> use -1h
      * - to add 3 days -> use +3d
      * - to remove 10 days -> use -10d
+     * - to add 2 months -> use +2m
      */
     public function modify(string $code) {
         $func = null;
@@ -110,6 +112,10 @@ class DateTime {
 
             case 'd':
                 $m = 60 * 60 * 24;
+                break;
+
+            case 'm':
+                $m = 60 * 60 * 24 * 30;
                 break;
         }
 

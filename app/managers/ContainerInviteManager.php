@@ -16,7 +16,7 @@ class ContainerInviteManager extends AManager {
     }
 
     public function createContainerInvite(string $containerId, string $dateValid) {
-        $inviteId = $this->entityManager->createId(EntityManager::CONTAINER_INVITES);
+        $inviteId = $this->createId(EntityManager::CONTAINER_INVITES);
 
         if(!$this->cir->createContainerInvite($inviteId, $containerId, $dateValid)) {
             throw new GeneralException('Database error.', null, false);

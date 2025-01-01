@@ -28,6 +28,7 @@ abstract class APresenter extends AGUICore {
     private array $params;
     public string $name;
     private string $title;
+    private ?string $tabTitle;
     private ?string $action;
     private ArrayList $presenterCache;
     private ArrayList $scripts;
@@ -77,6 +78,7 @@ abstract class APresenter extends AGUICore {
         $this->lock = false;
         $this->currentUser = null;
         $this->isComponentAjax = false;
+        $this->tabTitle = null;
 
         $this->presenterCache = new ArrayList();
         $this->presenterCache->setStringKeyType();
@@ -411,7 +413,7 @@ abstract class APresenter extends AGUICore {
         $date = $date->getResult();
 
         if($this->sysTemplate !== null) {
-            $this->sysTemplate->sys_page_title = $this->title;
+            $this->sysTemplate->sys_page_title = $this->getTabTitle();
             $this->sysTemplate->sys_app_name = 'SkyDocu';
             $this->sysTemplate->sys_copyright = (($date > 2024) ? ('2024-' . $date) : ($date));
             $this->sysTemplate->sys_scripts = $this->scripts->getAll();
@@ -422,6 +424,24 @@ abstract class APresenter extends AGUICore {
                 $this->sysTemplate->sys_user_id = '';
             }
         }
+    }
+
+    /**
+     * Returns the tab's title
+     * 
+     * @return string Tab title
+     */
+    private function getTabTitle() {
+        return $this->tabTitle ?? $this->title;
+    }
+
+    /**
+     * Sets the tab's title
+     * 
+     * @param string $title Tab's title
+     */
+    protected function setTitle(string $title) {
+        $this->tabTitle = $title;
     }
 
     /**

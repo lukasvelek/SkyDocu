@@ -40,6 +40,8 @@ class UserPresenter extends AUserPresenter {
 
         $this->saveToPresenterCache('userProfile', $userProfile);
         // END OF USER PROFILE
+
+        $this->setTitle('User profile');
     }
 
     public function renderProfile() {

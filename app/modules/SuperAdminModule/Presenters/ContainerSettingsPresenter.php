@@ -340,7 +340,9 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
 
         $this->addScript('
             async function copyToClipboard(_link, _text) {
-                const copyText = $("#" + _link).html();
+                var copyText = $("#" + _link).html();
+                
+                copyText = copyText.replaceAll("&amp;", "&");
 
                 navigator.clipboard.writeText(copyText);
 

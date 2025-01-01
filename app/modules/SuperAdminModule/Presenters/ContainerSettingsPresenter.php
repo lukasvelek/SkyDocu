@@ -319,10 +319,38 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
             $this->redirect($this->createURL('invitesWithoutGrid', ['containerId' => $containerId]));
         }
 
+        $inviteLink = 'http://' . APP_URL . $this->createFullURLString('Anonym:RegistrationInvite', 'form', ['inviteId' => $invite]);
+
+        $inviteLink = HTML::el('span')
+            ->text($inviteLink)
+            ->addAtribute('hidden', null)
+            ->id('inviteLinkUrl');
+
+        $copyToClipboardLink = HTML::el('a')
+            ->onClick('copyToClipboard(\'inviteLinkUrl\', \'inviteLinkText\')')
+            ->text('Copy to clipboard')
+            ->href('#')
+            ->class('link')
+            ->id('inviteLinkText');
+
         $links = [
-            $this->createBackUrl('')
+            'Invite link: ' . $inviteLink->toString() . $copyToClipboardLink->toString()
         ];
         $this->saveToPresenterCache('links', implode('&nbsp;&nbsp;', $links));
+
+        $this->addScript('
+            async function copyToClipboard(_link, _text) {
+                const copyText = $("#" + _link).html();
+
+                navigator.clipboard.writeText(copyText);
+
+                $("#" + _text).html("Copied to clipboard!");
+
+                await sleep(1000);
+
+                $("#" + _text).html("Copy to clipboard");
+            }
+        ');
     }
 
     public function renderInvites() {
@@ -330,7 +358,17 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
     }
 
     protected function createComponentContainerInvitesGrid(HttpRequest $request) {
+        $grid = $this->componentFactory->getGridBuilder();
+
+        $qb = $this->app->containerInviteManager->composeQueryForContainerInviteUsages($request->query['containerId']);
         
+        $grid->createDataSourceFromQueryBuilder($qb, 'entryId');
+        $grid->addQueryDependency('containerId', $request->query['containerId']);
+
+        $grid->addColumnUser('userId', 'User');
+        $grid->addColumnDatetime('dateCreated', 'Date');
+
+        return $grid;
     }
 
     public function handleInvitesWithoutGrid() {

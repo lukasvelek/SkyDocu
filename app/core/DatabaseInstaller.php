@@ -132,6 +132,7 @@ class DatabaseInstaller {
                 'dateCreated' => 'DATETIME NOT NULL DEFAULT current_timestamp()'
             ],
             'container_invite_usage' => [
+                'entryId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',
                 'inviteId' => 'VARCHAR(256) NOT NULL',
                 'containerId' => 'VARCHAR(256) NOT NULL',
                 'userId' => 'VARCHAR(256) NOT NULL',

@@ -56,7 +56,7 @@ class ContainerInviteManager extends AManager {
     }
 
     public function composeQueryForContainerInviteUsages(string $containerId) {
-        return $this->composeQueryForContainerInviteUsages($containerId);
+        return $this->cir->composeQueryForContainerInviteUsages($containerId);
     }
 }
 

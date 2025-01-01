@@ -2,6 +2,8 @@
 
 namespace App\Managers;
 
+use App\Core\Datetypes\DateTime;
+use App\Core\DB\DatabaseRow;
 use App\Exceptions\GeneralException;
 use App\Logger\Logger;
 use App\Repositories\ContainerInviteRepository;
@@ -36,7 +38,7 @@ class ContainerInviteManager extends AManager {
             throw new GeneralException('No invite for container exists.', null, false);
         }
 
-        return $result;
+        return DatabaseRow::createFromDbRow($result);
     }
 
     public function getContainerForInvite(string $inviteId) {
@@ -46,7 +48,7 @@ class ContainerInviteManager extends AManager {
             throw new GeneralException('No container for invite exists.', null, false);
         }
 
-        return $result;
+        return DatabaseRow::createFromDbRow($result);
     }
 
     public function insertNewContainerInviteUsage(string $inviteId, string $containerId, string $userId) {
@@ -57,6 +59,19 @@ class ContainerInviteManager extends AManager {
 
     public function composeQueryForContainerInviteUsages(string $containerId) {
         return $this->cir->composeQueryForContainerInviteUsages($containerId);
+    }
+
+    public function disableContainerInvite(string $inviteId) {
+        $date = new DateTime();
+        $date->modify('-1d');
+
+        $data = [
+            'dateValid' => $date->getResult()
+        ];
+
+        if(!$this->cir->updateContainerInvite($inviteId, $data)) {
+            throw new GeneralException('Database error.', null, false);
+        }
     }
 }
 

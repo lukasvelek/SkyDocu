@@ -11,6 +11,7 @@ use App\Core\DB\DatabaseRow;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
+use App\Helpers\DateTimeFormatHelper;
 use App\UI\FormBuilder\FormResponse;
 use App\UI\GridBuilder2\Cell;
 use App\UI\GridBuilder2\Row;
@@ -319,7 +320,7 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
             $this->redirect($this->createURL('invitesWithoutGrid', ['containerId' => $containerId]));
         }
 
-        $inviteLink = 'http://' . APP_URL . $this->createFullURLString('Anonym:RegistrationInvite', 'form', ['inviteId' => $invite]);
+        $inviteLink = 'http://' . APP_URL . $this->createFullURLString('Anonym:RegistrationInvite', 'form', ['inviteId' => $invite->inviteId]);
 
         $inviteLink = HTML::el('span')
             ->text($inviteLink)
@@ -334,14 +335,16 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
             ->id('inviteLinkText');
 
         $links = [
-            'Invite link: ' . $inviteLink->toString() . $copyToClipboardLink->toString()
+            'Invite link: ' . $inviteLink->toString() . $copyToClipboardLink->toString(),
+            'Invite link valid until: ' . DateTimeFormatHelper::formatDateToUserFriendly($invite->dateValid),
+            LinkBuilder::createSimpleLink('Regenerate invite link', $this->createURL('generateInviteLink', ['containerId' => $containerId, 'regenerate' => '1', 'oldInviteId' => $invite->inviteId]), 'link')
         ];
-        $this->saveToPresenterCache('links', implode('&nbsp;&nbsp;', $links));
+        $this->saveToPresenterCache('links', implode('&nbsp;|&nbsp;', $links));
 
         $this->addScript('
             async function copyToClipboard(_link, _text) {
                 var copyText = $("#" + _link).html();
-                
+
                 copyText = copyText.replaceAll("&amp;", "&");
 
                 navigator.clipboard.writeText(copyText);
@@ -386,6 +389,7 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
 
     public function handleGenerateInviteLink() {
         $containerId = $this->httpGet('containerId', true);
+        $regenerate = $this->httpGet('regenerate') !== null;
 
         $dateValid = new DateTime();
         $dateValid->modify('+1m');
@@ -394,16 +398,30 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
         try {
             $this->app->containerInviteRepository->beginTransaction(__METHOD__);
 
+            if($regenerate) {
+                $inviteId = $this->httpGet('oldInviteId');
+
+                $this->app->containerInviteManager->disableContainerInvite($inviteId);
+            }
+
             $this->app->containerInviteManager->createContainerInvite($containerId, $dateValid);
 
             $this->app->containerInviteRepository->commit($this->getUserId(), __METHOD__);
 
-            $this->flashMessage('Container\'s invite link has been generated.', 'success');
+            if($regenerate) {
+                $this->flashMessage('Container\'s invite link has been regenerated.', 'success');
+            } else {
+                $this->flashMessage('Container\'s invite link has been generated.', 'success');
+            }
             $this->redirect($this->createURL('invites', ['containerId' => $containerId]));
         } catch(AException $e) {
             $this->app->containerInviteRepository->rollback(__METHOD__);
 
-            $this->flashMessage('Could not generate invite link. Reason: ' . $e->getMessage(), 'error', 10);
+            if($regenerate) {
+                $this->flashMessage('Could not regenerate invite link. Reason: ' . $e->getMessage(), 'error', 10);
+            } else {
+                $this->flashMessage('Could not generate invite link. Reason: ' . $e->getMessage(), 'error', 10);
+            }
             $this->redirect($this->createURL('home', ['containerId' => $containerId]));
         }
     }

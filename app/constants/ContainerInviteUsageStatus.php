@@ -2,7 +2,7 @@
 
 namespace App\Constants;
 
-class ContainerInviteUsageStatus extends AConstant {
+class ContainerInviteUsageStatus extends AConstant implements IColorable {
     public const NEW = 1;
     public const ACCEPTED = 2;
     public const REJECTED = 3;
@@ -15,11 +15,12 @@ class ContainerInviteUsageStatus extends AConstant {
         };
     }
 
-    public static function getColor($key): string {
+    public static function getColor($key): ?string {
         return match((int)$key) {
             self::NEW => 'blue',
             self::ACCEPTED => 'green',
-            self::REJECTED => 'red'
+            self::REJECTED => 'red',
+            default => 'black'
         };
     }
 }

@@ -2,7 +2,7 @@
 
 namespace App\Constants;
 
-class ContainerStatus extends AConstant {
+class ContainerStatus extends AConstant implements IColorable {
     public const NEW = 1;
     public const IS_BEING_CREATED = 2;
     public const RUNNING = 3;
@@ -19,13 +19,14 @@ class ContainerStatus extends AConstant {
         };
     }
 
-    public static function getColor(mixed $key): string {
+    public static function getColor($key): ?string {
         return match((int)$key) {
             self::NEW => 'black',
             self::IS_BEING_CREATED => 'orange',
             self::RUNNING => 'green',
             self::NOT_RUNNING => 'red',
-            self::ERROR_DURING_CREATION => 'red'
+            self::ERROR_DURING_CREATION => 'red',
+            default => 'black'
         };
     }
 }

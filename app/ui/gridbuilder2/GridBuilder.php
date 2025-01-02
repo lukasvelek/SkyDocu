@@ -513,6 +513,7 @@ class GridBuilder extends AComponent {
             $_row = new Row();
             $_row->setPrimaryKey($rowId);
             $_row->index = $rowIndex;
+            $_row->rowData = $row;
 
             foreach($this->columns as $name => $col) {
                 $_cell = new Cell();
@@ -563,68 +564,6 @@ class GridBuilder extends AComponent {
                 }
             }
 
-            if(!empty($this->actions)) {
-                $isAtLeastOneDisplayed = false;
-                
-                $canRender = [];
-                foreach($this->actions as $actionName => $action) {
-                    $cAction = clone $action;
-
-                    foreach($cAction->onCanRender as $render) {
-                        try {
-                            $result = $render($row, $_row, $cAction);
-
-                            if($result === true) {
-                                $canRender[$actionName] = $cAction;
-                            } else {
-                                //$canRender[$actionName] = null;
-                            }
-                        } catch(Exception $e) {
-                            $canRender[$actionName] = null;
-                        }
-                    }
-                }
-
-                $isAtLeastOneDisplayed = !empty($canRender);
-
-                $canRender = ArrayHelper::reverseArray($canRender);
-
-                $cells = [];
-                foreach($canRender as $name => $action) {
-                    if($action instanceof Action) {
-                        $cAction = clone $action;
-                        $cAction->inject($row, $_row, $rowId);
-                        $_cell = new Cell();
-                        $_cell->setName($name);
-                        $_cell->setContent($cAction->output()->toString());
-                        $_cell->setClass('grid-cell-action');
-                    } else {
-                        $_cell = new Cell();
-                        $_cell->setName($name);
-                        $_cell->setContent('');
-                        $_cell->setClass('grid-cell-action');
-                    }
-
-                    $cells[] = $_cell;
-                }
-
-                if($isAtLeastOneDisplayed && !$hasActionsCol) {
-                    $_headerCell = new Cell();
-                    $_headerCell->setName('actions');
-                    $_headerCell->setContent('Actions');
-                    $_headerCell->setHeader();
-                    $_headerCell->setSpan(count($canRender));
-                    $_tableRows['header']->addCell($_headerCell, true);
-                    $hasActionsCol = true;
-                }
-
-                if($isAtLeastOneDisplayed) {
-                    foreach($cells as $cell) {
-                        $_row->addCell($cell, true);
-                    }
-                }
-            }
-
             if($this->hasCheckboxes) {
                 $rowCheckbox = new RowCheckbox($rowId, $this->componentName . '_onCheckboxCheck(\'' . $rowId . '\')');
                 $_row->addCell($rowCheckbox, true);
@@ -640,6 +579,129 @@ class GridBuilder extends AComponent {
             $_headerCell->setHeader();
             $_headerCell->setContent('');
             $_tableRows['header']->addCell($_headerCell, true);
+        }
+
+        if(!empty($this->actions)) {
+            $maxCountToRender = 0;
+            $canRender = [];
+            
+            foreach($_tableRows as $k => $_row) {
+                if($k == 'header') continue;
+
+                $i = 0;
+                foreach($this->actions as $actionName => $action) {
+                    $cAction = clone $action;
+
+                    foreach($cAction->onCanRender as $render) {
+                        try {
+                            $result = $render($_row->rowData, $_row, $cAction);
+
+                            if($result == true) {
+                                $canRender[$k][$actionName] = $cAction;
+                                $i++;
+                            } else {
+                                $canRender[$k][$actionName] = null;
+                            }
+                        } catch(Exception $e) {
+                            $canRender[$k][$actionName] = null;
+                        }
+                    }
+
+                    if($i > $maxCountToRender) {
+                        $maxCountToRender = $i;
+                    }
+                }
+            }
+
+            $cells = [];
+            if(count($this->actions) == $maxCountToRender) {
+                foreach($canRender as $k => $actionData) {
+                    $_row = &$_tableRows[$k];
+
+                    $actionData = ArrayHelper::reverseArray($actionData);
+                    
+                    foreach($actionData as $actionName => $action) {
+                        if($action instanceof Action) {
+                            $cAction = clone $action;
+                            $cAction->inject($_row->rowData, $_row, $_row->primaryKey);
+                            $_cell = new Cell();
+                            $_cell->setName($actionName);
+                            $_cell->setContent($cAction->output()->toString());
+                            $_cell->setClass('grid-cell-action');
+                        } else {
+                            $_cell = new Cell();
+                            $_cell->setName($actionName);
+                            $_cell->setContent('');
+                            $_cell->setClass('grid-cell-action');
+                        }
+
+                        $cells[$k][$actionName] = $_cell;
+                    }
+                }
+            } else {
+                foreach($canRender as $k => $actionData) {
+                    $_row = &$_tableRows[$k];
+
+                    $actionData = ArrayHelper::reverseArray($actionData);
+                    
+                    foreach($actionData as $actionName => $action) {
+                        if($action instanceof Action) {
+                            $cAction = clone $action;
+                            $cAction->inject($_row->rowData, $_row, $_row->primaryKey);
+                            $_cell = new Cell();
+                            $_cell->setName($actionName);
+                            $_cell->setContent($cAction->output()->toString());
+                            $_cell->setClass('grid-cell-action');
+                            $cells[$k][$actionName] = $_cell;
+                        }
+                    }
+                }
+            }
+
+            /**
+             * All action names that should be displayed
+             */
+            $tmp = [];
+            foreach($cells as $k => $c) {
+                foreach($c as $cell) {
+                    if(!in_array($cell->getName(), $tmp)) {
+                        $tmp[] = $cell->getName();
+                    }
+                }
+            }
+
+            if(count($tmp) > 0) {
+                $_headerCell = new Cell();
+                $_headerCell->setName('actions');
+                $_headerCell->setContent('Actions');
+                $_headerCell->setHeader();
+                $_headerCell->setSpan(count($tmp));
+                $_tableRows['header']->addCell($_headerCell, true);
+            }
+
+            foreach(array_keys($_tableRows) as $k) {
+                if($k == 'header') continue;
+                $_cells = $cells[$k];
+
+                foreach($tmp as $name) {
+                    if(array_key_exists($name, $_cells)) {
+                        /**
+                         * Action with this name on this row should exist
+                         */
+                        $_tableRows[$k]->addCell($_cells[$name], true);
+                    } else {
+                        /**
+                         * Action with this name on this row should not exist
+                         */
+                        $_cell = new Cell();
+                        $_cell->setName($name);
+                        $_cell->setContent('');
+                        $_cell->setClass('grid-cell-action');
+
+                        $_tableRows[$k]->addCell($_cell, true);
+                    }
+                }
+            }
         }
 
         if(count($_tableRows) == 1) {

@@ -82,6 +82,39 @@ class ContainerInviteRepository extends ARepository {
 
         return $qb->fetchBool();
     }
+
+    public function updateContainerInviteUsage(string $entryId, array $data) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->update('container_invite_usage')
+            ->set($data)
+            ->where('entryId = ?', [$entryId])
+            ->execute();
+
+        return $qb->fetchBool();
+    }
+
+    public function deleteContainerInviteUsage(string $entryId) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->delete()
+            ->from('container_invite_usage')
+            ->where('entryId = ?', [$entryId])
+            ->execute();
+
+        return $qb->fetchBool();
+    }
+
+    public function getInviteUsageById(string $entryId) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->select(['*'])
+            ->from('container_invite_usage')
+            ->where('entryId = ?', [$entryId])
+            ->execute();
+
+        return $qb->fetch();
+    }
 }
 
 ?>

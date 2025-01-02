@@ -368,6 +368,7 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
         $grid = $this->componentFactory->getGridBuilder();
 
         $qb = $this->app->containerInviteManager->composeQueryForContainerInviteUsages($request->query['containerId']);
+        $qb->orderBy('status');
         
         $grid->createDataSourceFromQueryBuilder($qb, 'entryId');
         $grid->addQueryDependency('containerId', $request->query['containerId']);
@@ -388,7 +389,7 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
             return $data['username'];
         };
 
-        $col = $grid->addColumnText('fullname', 'Fullname');
+        $col = $grid->addColumnText('fullname', 'Full name');
         $col->onRenderColumn[] = function(DatabaseRow $row, Row $_row, Cell $cell, HTML $html, mixed $value) {
             $data = unserialize($row->data);
 
@@ -404,7 +405,7 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
         };
         $accept->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
             $el = HTML::el('a');
-            $el->href($this->createURLString('acceptInvite', ['entryId' => $primaryKey]))
+            $el->href($this->createURLString('acceptInvite', ['entryId' => $primaryKey, 'containerId' => $row->containerId]))
                 ->text('Accept')
                 ->class('grid-link')
                 ->style('color', 'green');
@@ -419,7 +420,7 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
         };
         $reject->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
             $el = HTML::el('a');
-            $el->href($this->createURLString('rejectInvite', ['entryId' => $primaryKey]))
+            $el->href($this->createURLString('rejectInvite', ['entryId' => $primaryKey, 'containerId' => $row->containerId]))
                 ->text('Reject')
                 ->class('grid-link')
                 ->style('color', 'red');
@@ -430,11 +431,11 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
         $delete = $grid->addAction('delete');
         $delete->setTitle('Delete');
         $delete->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) {
-            return $row->status == ContainerInviteUsageStatus::REJECTED;
+            return $row->status <> ContainerInviteUsageStatus::NEW;
         };
         $delete->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
             $el = HTML::el('a');
-            $el->href($this->createURLString('deleteInvite', ['entryId' => $primaryKey]))
+            $el->href($this->createURLString('deleteInvite', ['entryId' => $primaryKey, 'containerId' => $row->containerId]))
                 ->text('Delete')
                 ->class('grid-link');
 
@@ -492,6 +493,83 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
             }
             $this->redirect($this->createURL('home', ['containerId' => $containerId]));
         }
+    }
+
+    public function handleAcceptInvite() {
+        $entryId = $this->httpGet('entryId', true);
+        $containerId = $this->httpGet('containerId', true);
+
+        try {
+            $entry = $this->app->containerInviteManager->getInviteUsageById($entryId);
+
+            $this->app->containerInviteRepository->beginTransaction(__METHOD__);
+
+            $data = [
+                'status' => ContainerInviteUsageStatus::ACCEPTED
+            ];
+
+            $this->app->containerInviteManager->updateContainerInviteUsage($entryId, $data);
+
+            $tmp = unserialize($entry->data);
+
+            $this->app->userManager->createNewUser($tmp['username'], $tmp['fullname'], $tmp['password'], (array_key_exists('email', $tmp) ? $tmp['email'] : null));
+
+            $this->app->containerInviteRepository->commit($this->getUserId(), __METHOD__);
+
+            $this->flashMessage('Account request for invited user has been accepted and their account has been created. The request can now be deleted.', 'success');
+        } catch(AException $e) {
+            $this->app->containerInviteRepository->rollback(__METHOD__);
+            
+            $this->flashMessage('Could not accept account request. Reason: ' . $e->getMessage(), 'error', 10);
+        }
+
+        $this->redirect($this->createURL('invites', ['containerId' => $containerId]));
+    }
+
+    public function handleRejectInvite() {
+        $entryId = $this->httpGet('entryId', true);
+        $containerId = $this->httpGet('containerId', true);
+
+        try {
+            $this->app->containerInviteRepository->beginTransaction(__METHOD__);
+
+            $data = [
+                'status' => ContainerInviteUsageStatus::REJECTED
+            ];
+
+            $this->app->containerInviteManager->updateContainerInviteUsage($entryId, $data);
+
+            $this->app->containerInviteRepository->commit($this->getUserId(), __METHOD__);
+
+            $this->flashMessage('Account request for invited user has been rejected. The request can now be deleted.', 'success');
+        } catch(AException $e) {
+            $this->app->containerInviteRepository->rollback(__METHOD__);
+            
+            $this->flashMessage('Could not reject account request. Reason: ' . $e->getMessage(), 'error', 10);
+        }
+
+        $this->redirect($this->createURL('invites', ['containerId' => $containerId]));
+    }
+
+    public function handleDeleteInvite() {
+        $entryId = $this->httpGet('entryId', true);
+        $containerId = $this->httpGet('containerId', true);
+
+        try {
+            $this->app->containerInviteRepository->beginTransaction(__METHOD__);
+
+            $this->app->containerInviteManager->deleteContainerInviteUsage($entryId);
+
+            $this->app->containerInviteRepository->commit($this->getUserId(), __METHOD__);
+
+            $this->flashMessage('Account request for invited user has been deleted.', 'success');
+        } catch(AException $e) {
+            $this->app->containerInviteRepository->rollback(__METHOD__);
+            
+            $this->flashMessage('Could not delete account request. Reason: ' . $e->getMessage(), 'error', 10);
+        }
+
+        $this->redirect($this->createURL('invites', ['containerId' => $containerId]));
     }
 }
 

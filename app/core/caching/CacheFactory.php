@@ -76,7 +76,9 @@ class CacheFactory {
         $cache = $this->getCache($namespace, $expire);
         $cache->invalidate();
 
-        return $this->saveCaches();
+        $this->saveCaches();
+
+        return true;
     }
 
     /**

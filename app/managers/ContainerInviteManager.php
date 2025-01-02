@@ -76,6 +76,28 @@ class ContainerInviteManager extends AManager {
             throw new GeneralException('Database error.', null, false);
         }
     }
+
+    public function updateContainerInviteUsage(string $entryId, array $data) {
+        if(!$this->cir->updateContainerInviteUsage($entryId, $data)) {
+            throw new GeneralException('Database error.', null, false);
+        }
+    }
+
+    public function deleteContainerInviteUsage(string $entryId) {
+        if(!$this->cir->deleteContainerInviteUsage($entryId)) {
+            throw new GeneralException('Database error.', null, false);
+        }
+    }
+
+    public function getInviteUsageById(string $entryId) {
+        $result = $this->cir->getInviteUsageById($entryId);
+
+        if($result === null) {
+            throw new NonExistingEntityException('No entry exists.', null, false);
+        }
+
+        return DatabaseRow::createFromDbRow($result);
+    }
 }
 
 ?>

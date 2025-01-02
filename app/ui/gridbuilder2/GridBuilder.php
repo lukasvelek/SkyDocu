@@ -577,7 +577,7 @@ class GridBuilder extends AComponent {
                             if($result === true) {
                                 $canRender[$actionName] = $cAction;
                             } else {
-                                $canRender[$actionName] = null;
+                                //$canRender[$actionName] = null;
                             }
                         } catch(Exception $e) {
                             $canRender[$actionName] = null;

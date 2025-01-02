@@ -5,6 +5,7 @@ namespace App\Modules\SuperAdminModule;
 use App\Components\ContainerUsageAverageResponseTimeGraph\ContainerUsageAverageResponseTimeGraph;
 use App\Components\ContainerUsageStatsGraph\ContainerUsageStatsGraph;
 use App\Components\ContainerUsageTotalResponseTimeGraph\ContainerUsageTotalResponseTimeGraph;
+use App\Constants\ContainerInviteUsageStatus;
 use App\Constants\ContainerStatus;
 use App\Core\Datetypes\DateTime;
 use App\Core\DB\DatabaseRow;
@@ -13,6 +14,7 @@ use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
 use App\Helpers\DateTimeFormatHelper;
 use App\UI\FormBuilder\FormResponse;
+use App\UI\GridBuilder2\Action;
 use App\UI\GridBuilder2\Cell;
 use App\UI\GridBuilder2\Row;
 use App\UI\HTML\HTML;
@@ -370,8 +372,74 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
         $grid->createDataSourceFromQueryBuilder($qb, 'entryId');
         $grid->addQueryDependency('containerId', $request->query['containerId']);
 
-        $grid->addColumnUser('userId', 'User');
+        $col = $grid->addColumnConst('status', 'Status', ContainerInviteUsageStatus::class);
+        $col->onRenderColumn[] = function(DatabaseRow $row, Row $_row, Cell $cell, HTML $html, mixed $value) {
+            $el = HTML::el('span');
+            $el->style('color', ContainerInviteUsageStatus::getColor($row->status))
+                ->text($value);
+
+            return $el;
+        };
+
+        $col = $grid->addColumnText('username', 'Username');
+        $col->onRenderColumn[] = function(DatabaseRow $row, Row $_row, Cell $cell, HTML $html, mixed $value) {
+            $data = unserialize($row->data);
+
+            return $data['username'];
+        };
+
+        $col = $grid->addColumnText('fullname', 'Fullname');
+        $col->onRenderColumn[] = function(DatabaseRow $row, Row $_row, Cell $cell, HTML $html, mixed $value) {
+            $data = unserialize($row->data);
+
+            return $data['fullname'];
+        };
+        
         $grid->addColumnDatetime('dateCreated', 'Date');
+
+        $accept = $grid->addAction('accept');
+        $accept->setTitle('Accept');
+        $accept->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) {
+            return $row->status == ContainerInviteUsageStatus::NEW;
+        };
+        $accept->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
+            $el = HTML::el('a');
+            $el->href($this->createURLString('acceptInvite', ['entryId' => $primaryKey]))
+                ->text('Accept')
+                ->class('grid-link')
+                ->style('color', 'green');
+
+            return $el;
+        };
+
+        $reject = $grid->addAction('reject');
+        $reject->setTitle('Reject');
+        $reject->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) {
+            return $row->status == ContainerInviteUsageStatus::NEW;
+        };
+        $reject->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
+            $el = HTML::el('a');
+            $el->href($this->createURLString('rejectInvite', ['entryId' => $primaryKey]))
+                ->text('Reject')
+                ->class('grid-link')
+                ->style('color', 'red');
+
+            return $el;
+        };
+
+        $delete = $grid->addAction('delete');
+        $delete->setTitle('Delete');
+        $delete->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) {
+            return $row->status == ContainerInviteUsageStatus::REJECTED;
+        };
+        $delete->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
+            $el = HTML::el('a');
+            $el->href($this->createURLString('deleteInvite', ['entryId' => $primaryKey]))
+                ->text('Delete')
+                ->class('grid-link');
+
+            return $el;
+        };
 
         return $grid;
     }

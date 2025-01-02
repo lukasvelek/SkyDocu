@@ -136,6 +136,7 @@ class DatabaseInstaller {
                 'inviteId' => 'VARCHAR(256) NOT NULL',
                 'containerId' => 'VARCHAR(256) NOT NULL',
                 'data' => 'TEXT NOT NULL',
+                'status' => 'INT(4) NOT NULL DEFAULT 1',
                 'dateCreated' => 'DATETIME NOT NULL DEFAULT current_timestamp()'
             ],
         ];

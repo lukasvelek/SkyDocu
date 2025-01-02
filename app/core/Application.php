@@ -159,7 +159,7 @@ class Application {
             // login
             $this->currentUser = $this->userRepository->getUserById($_SESSION['userId']);
         } else {
-            if((!isset($_GET['page']) || (isset($_GET['page']) && $_GET['page'] != 'Anonym:Logout')) && !isset($_SESSION['is_logging_in'])) {
+            if((!isset($_GET['page']) || (isset($_GET['page']) && $_GET['page'] != 'Anonym:Logout')) && !isset($_SESSION['is_logging_in']) && !isset($_SESSION['is_registering'])) {
                 //$this->redirect(['page' => 'Anonym:Logout', 'action' => 'logout']); // had to be commented because it caused a overflow because of infinite redirects
 
                 if($message != '') {

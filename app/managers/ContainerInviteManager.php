@@ -5,6 +5,7 @@ namespace App\Managers;
 use App\Core\Datetypes\DateTime;
 use App\Core\DB\DatabaseRow;
 use App\Exceptions\GeneralException;
+use App\Exceptions\NonExistingEntityException;
 use App\Logger\Logger;
 use App\Repositories\ContainerInviteRepository;
 
@@ -41,18 +42,20 @@ class ContainerInviteManager extends AManager {
         return DatabaseRow::createFromDbRow($result);
     }
 
-    public function getContainerForInvite(string $inviteId) {
-        $result = $this->cir->getContainerByInvite($inviteId);
+    public function getInviteById(string $inviteId, bool $checkDate = true) {
+        $result = $this->cir->getInviteById($inviteId, $checkDate);
 
         if($result === null) {
-            throw new GeneralException('No container for invite exists.', null, false);
+            throw new NonExistingEntityException('No invite exists.', null, false);
         }
 
         return DatabaseRow::createFromDbRow($result);
     }
 
-    public function insertNewContainerInviteUsage(string $inviteId, string $containerId, string $userId) {
-        if(!$this->cir->insertContainerInviteUsage($inviteId, $containerId, $userId)) {
+    public function insertNewContainerInviteUsage(string $inviteId, string $containerId, array $data) {
+        $entryId = $this->createId(EntityManager::CONTAINER_INVITE_USAGE);
+
+        if(!$this->cir->insertContainerInviteUsage($entryId, $inviteId, $containerId, serialize($data))) {
             throw new GeneralException('Database error.', null, false);
         }
     }

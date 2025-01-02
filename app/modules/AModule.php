@@ -112,7 +112,7 @@ abstract class AModule extends AGUICore {
      * Renders custom module page content. Currently not in use.
      */
     public function renderModule() {
-        $this->loadFlashMessagesFromCache();
+        // $this->loadFlashMessagesFromCache(); // probably not needed
     }
 
     /**
@@ -134,7 +134,7 @@ abstract class AModule extends AGUICore {
      * Loads flash messages from cache to the local module cache and prepares it for rendering.
      */
     public function loadFlashMessagesFromCache() {
-        if(isset($_GET['page']) && $_GET['page'] == 'Anonym:Login' && isset($_GET['action']) && $_GET['action'] == 'checkLogin') {
+        if(isset($_GET['page']) && ($_GET['page'] == 'Anonym:Login') && isset($_GET['action']) && ($_GET['action'] == 'checkLogin')) {
             return;
         }
 

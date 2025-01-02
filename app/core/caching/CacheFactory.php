@@ -76,9 +76,7 @@ class CacheFactory {
         $cache = $this->getCache($namespace, $expire);
         $cache->invalidate();
 
-        $this->saveCaches();
-
-        return true;
+        return $this->saveCaches();
     }
 
     /**
@@ -203,11 +201,13 @@ class CacheFactory {
 
     /**
      * Saves persistent caches
+     * 
+     * @return bool True on success or false on failure
      */
     public function saveCaches() {
         foreach($this->persistentCaches as $cache) {
             if($cache->isInvalidated()) {
-                $this->deleteCache($cache->getNamespace());
+                return $this->deleteCache($cache->getNamespace());
             } else {
                 $_cache = $this->getCache($cache->getNamespace());
                 $_data = $_cache->getData();
@@ -219,7 +219,7 @@ class CacheFactory {
                         self::I_NS_CACHE_LAST_WRITE_DATE => $cache->getLastWriteDate()?->getResult()
                     ];
     
-                    $this->saveDataToCache($cache->getNamespace(), $tmp);
+                    return $this->saveDataToCache($cache->getNamespace(), $tmp);
                 }
             }
         }

@@ -135,9 +135,9 @@ class DatabaseInstaller {
                 'entryId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',
                 'inviteId' => 'VARCHAR(256) NOT NULL',
                 'containerId' => 'VARCHAR(256) NOT NULL',
-                'userId' => 'VARCHAR(256) NOT NULL',
+                'data' => 'TEXT NOT NULL',
                 'dateCreated' => 'DATETIME NOT NULL DEFAULT current_timestamp()'
-            ]
+            ],
         ];
 
         $i = 0;

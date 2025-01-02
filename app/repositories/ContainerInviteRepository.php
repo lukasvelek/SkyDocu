@@ -36,22 +36,27 @@ class ContainerInviteRepository extends ARepository {
         return $qb->fetch();
     }
 
-    public function getContainerByInvite(string $inviteId) {
+    public function getInviteById(string $inviteId, bool $checkDate = true) {
         $qb = $this->qb(__METHOD__);
 
         $qb->select(['*'])
             ->from('container_invites')
-            ->where('inviteId = ?', [$inviteId])
-            ->execute();
+            ->where('inviteId = ?', [$inviteId]);
+
+        if($checkDate) {
+            $qb->andWhere('dateValid >= current_timestamp()');
+        }
+
+        $qb->execute();
 
         return $qb->fetch();
     }
 
-    public function insertContainerInviteUsage(string $inviteId, string $containerId, string $userId) {
+    public function insertContainerInviteUsage(string $entryId, string $inviteId, string $containerId, string $serializedData) {
         $qb = $this->qb(__METHOD__);
         
-        $qb->insert('container_invites', ['inviteId', 'containerId', 'userId'])
-            ->values([$inviteId, $containerId, $userId])
+        $qb->insert('container_invite_usage', ['entryId', 'inviteId', 'containerId', 'data'])
+            ->values([$entryId, $inviteId, $containerId, $serializedData])
             ->execute();
 
         return $qb->fetchBool();

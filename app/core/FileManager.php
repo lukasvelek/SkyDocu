@@ -2,9 +2,7 @@
 
 namespace App\Core;
 
-use App\Exceptions\AException;
 use App\Exceptions\FileDoesNotExistException;
-use App\Exceptions\FileWriteException;
 
 /**
  * FileManager allows manipulating with files.

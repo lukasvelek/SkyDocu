@@ -10,23 +10,31 @@ use Exception;
 use Throwable;
 
 abstract class AException extends Exception {
+    private string $name;
     private string $hash;
     private string $html;
 
     protected function __construct(string $name, string $message, ?Throwable $previous = null, bool $createFile = true) {
+        $this->name = $name;
         $this->hash = HashManager::createHash(8, false);
         
         parent::__construct($message /*. ' [' . $this->hash . ']'*/, 9999, $previous);
 
-        $this->html = $this->createHTML($name, $message);
-
-        if($createFile && FileManager::folderExists(LOG_DIR) && $previous === null) {
-            $this->createExceptionFile($name, $message);
+        if($createFile) {
+            $this->saveToFile();
         }
     }
 
     public function getHash() {
         return $this->hash;
+    }
+
+    public function saveToFile(bool $explicit = false) {
+        $this->html = $this->createHTML($this->name, $this->getMessage());
+
+        if(FileManager::folderExists(LOG_DIR) && ($this->getPrevious() === null || $explicit === true)) {
+            $this->createExceptionFile($this->name, $this->getMessage());
+        }
     }
 
     private function createHTML(string $name, string $message) {

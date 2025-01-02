@@ -13,11 +13,13 @@ use App\Exceptions\GeneralException;
 use App\Exceptions\ModuleDoesNotExistException;
 use App\Helpers\LinkHelper;
 use App\Logger\Logger;
+use App\Managers\ContainerInviteManager;
 use App\Managers\ContainerManager;
 use App\Managers\EntityManager;
 use App\Managers\GroupManager;
 use App\Managers\UserManager;
 use App\Modules\ModuleManager;
+use App\Repositories\ContainerInviteRepository;
 use App\Repositories\ContainerRepository;
 use App\Repositories\ContentRepository;
 use App\Repositories\GridExportRepository;
@@ -60,12 +62,14 @@ class Application {
     public GroupRepository $groupRepository;
     public GroupMembershipRepository $groupMembershipRepository;
     public ContainerRepository $containerRepository;
+    public ContainerInviteRepository $containerInviteRepository;
 
     public ServiceManager $serviceManager;
     public UserManager $userManager;
     public EntityManager $entityManager;
     public GroupManager $groupManager;
     public ContainerManager $containerManager;
+    public ContainerInviteManager $containerInviteManager;
 
     public array $repositories;
 
@@ -102,6 +106,7 @@ class Application {
         $this->userManager = new UserManager($this->logger, $this->userRepository, $this->entityManager);
         $this->groupManager = new GroupManager($this->logger, $this->entityManager, $this->groupRepository, $this->groupMembershipRepository);
         $this->containerManager = new ContainerManager($this->logger, $this->entityManager, $this->containerRepository, $this->dbManager, $this->groupManager);
+        $this->containerInviteManager = new ContainerInviteManager($this->logger, $this->entityManager, $this->containerInviteRepository);
 
         $this->isAjaxRequest = false;
 
@@ -154,7 +159,7 @@ class Application {
             // login
             $this->currentUser = $this->userRepository->getUserById($_SESSION['userId']);
         } else {
-            if((!isset($_GET['page']) || (isset($_GET['page']) && $_GET['page'] != 'Anonym:Logout')) && !isset($_SESSION['is_logging_in'])) {
+            if((!isset($_GET['page']) || (isset($_GET['page']) && $_GET['page'] != 'Anonym:Logout')) && !isset($_SESSION['is_logging_in']) && !isset($_SESSION['is_registering'])) {
                 //$this->redirect(['page' => 'Anonym:Logout', 'action' => 'logout']); // had to be commented because it caused a overflow because of infinite redirects
 
                 if($message != '') {

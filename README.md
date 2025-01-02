@@ -15,6 +15,10 @@ The web application is written purely in PHP with a few JS scripts. These JS scr
 - UI core updates
 - Standalone process reports
 - User profile in container section
+- Container invites
+    - Link generation
+    - User registration
+    - User registration management - accept, reject, delete
 
 ### 1.0
 - Container management

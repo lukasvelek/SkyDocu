@@ -2,6 +2,7 @@
 
 namespace App\UI\GridBuilder2;
 
+use App\Core\DB\DatabaseRow;
 use App\UI\HTML\HTML;
 
 /**
@@ -10,7 +11,7 @@ use App\UI\HTML\HTML;
  * @author Lukas Velek
  */
 class Row extends AElement {
-    private string|int|null $primaryKey;
+    public string|int|null $primaryKey;
     public HTML $html;
     /**
      * @var array<Cell> $cells
@@ -18,6 +19,8 @@ class Row extends AElement {
     private array $cells;
 
     public int $index;
+
+    public DatabaseRow $rowData;
 
     /**
      * Class constructor

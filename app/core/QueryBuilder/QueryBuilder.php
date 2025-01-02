@@ -39,7 +39,6 @@ class QueryBuilder
      * @param IDbQueriable $conn Database connection that can be used to process query
      * @param ILoggerCallable $logger Logger instance
      * @param string $callingMethod Name of the calling method
-     * @return self
      */
     public function __construct(IDbQueriable $conn, ILoggerCallable $logger, string $callingMethod = '') {
         $this->conn = $conn;
@@ -54,7 +53,6 @@ class QueryBuilder
      * Sets the name of the calling method
      * 
      * @param string $callingMethod Name of the calling method
-     * @return self
      */
     public function setCallingMethod(string $callingMethod) {
         $this->callingMethod = $callingMethod;
@@ -131,7 +129,6 @@ class QueryBuilder
      * Appends OFFSET
      * 
      * @param int $offset Offset
-     * @return self
      */
     public function offset(int $offset) {
         $this->queryData['offset'] = $offset;
@@ -141,8 +138,6 @@ class QueryBuilder
 
     /**
      * Resets OFFSET
-     * 
-     * @return self
      */
     public function resetOffset() {
         if(isset($this->queryData['offset'])) {
@@ -154,8 +149,6 @@ class QueryBuilder
 
     /**
      * Appends DELETE
-     * 
-     * @return self
      */
     public function delete() {
         $this->queryType = 'delete';
@@ -168,7 +161,6 @@ class QueryBuilder
      * Appends UPDATE
      * 
      * @param string $tableName Table name
-     * @return self
      */
     public function update(string $tableName) {
         $this->queryType = 'update';
@@ -182,7 +174,6 @@ class QueryBuilder
      * Appends SET
      * 
      * @param array $values Values to be set
-     * @return self
      */
     public function set(array $values) {
         if(!isset($this->queryData['values'])) {
@@ -198,7 +189,6 @@ class QueryBuilder
      * Appends SET to NULL
      * 
      * @param array $values Values to be set to null
-     * @return self
      */
     public function setNull(array $values) {
         $temp = [];
@@ -221,7 +211,6 @@ class QueryBuilder
      * 
      * @param string $tableName Table name
      * @param array $keys Table columns
-     * @return self
      */
     public function insert(string $tableName, array $keys) {
         $this->queryType = 'insert';
@@ -236,7 +225,6 @@ class QueryBuilder
      * Appends VALUES
      * 
      * @param array $values Values
-     * @return self
      */
     public function values(array $values) {
         $this->queryData['values'] = $values;
@@ -250,7 +238,6 @@ class QueryBuilder
      * @param string $tableName Name of the table being joined
      * @param ?string $alias Alias of the table being joined
      * @param string $joinOn On section of JOIN
-     * @return self
      */
     public function join(string $tableName, string $joinOn, ?string $alias = null) {
         $this->queryData['join'] = 'JOIN ' . $tableName . ($alias !== null ? ' ' . $alias : '') . ' ON ' . $joinOn;
@@ -262,7 +249,6 @@ class QueryBuilder
      * Appends SELECT
      * 
      * @param array $keys Table columns
-     * @return self
      */
     public function select(array $keys) {
         $this->queryType = 'select';
@@ -277,7 +263,6 @@ class QueryBuilder
      * 
      * @param string $tableName Table name
      * @param ?string $tableNameAlias Table name alias
-     * @return self
      */
     public function from(string $tableName, ?string $tableNameAlias = null) {
         $this->queryData['table'] = $tableName;
@@ -293,7 +278,6 @@ class QueryBuilder
      * Appends explicit WHERE condition
      * 
      * @param string $where Explicit WHERE condition
-     * @return self
      */
     public function whereEx(string $where) {
         $this->queryData['where'] = $where;
@@ -306,7 +290,6 @@ class QueryBuilder
      * 
      * @param string $cond Condition
      * @param array $values Condition parameter values
-     * @return self
      */
     public function where(string $cond, array $values = [], bool $useQuotationMarks = true) {
         if(str_contains($cond, '?') && !empty($values)) {
@@ -346,7 +329,6 @@ class QueryBuilder
      * 
      * @param string $cond Condition
      * @param array $values Condition parameter values
-     * @return self
      */
     public function andWhere(string $cond, array $values = [], bool $useQuotationMarks = true) {
         if(!array_key_exists('where', $this->queryData)) {
@@ -390,7 +372,6 @@ class QueryBuilder
      * 
      * @param string $cond Condition
      * @param array $values Condition parameter values
-     * @return self
      */
     public function orWhere(string $cond, array $values = [], bool $useQuotationMarks = true) {
         if(!array_key_exists('where', $this->queryData)) {
@@ -429,6 +410,11 @@ class QueryBuilder
         return $this;
     }
 
+    /**
+     * Appends GROUP BY
+     * 
+     * @param string $key Grouping column
+     */
     public function groupBy(string $key) {
         $this->queryData['group'] = ' GROUP BY ' . $key;
 
@@ -440,7 +426,6 @@ class QueryBuilder
      * 
      * @param string $key Ordering column
      * @param string $order Ascending (ASC) or descending (DESC)
-     * @return self
      */
     public function orderBy(string $key, string $order = 'ASC') {
         if(array_key_exists('order', $this->queryData)) {
@@ -456,7 +441,6 @@ class QueryBuilder
      * Appends LIMIT
      * 
      * @param int $limit Limit
-     * @return self
      */
     public function limit(int $limit) {
         $this->queryData['limit'] = $limit;
@@ -466,8 +450,6 @@ class QueryBuilder
 
     /**
      * Resets LIMIT
-     * 
-     * @return self
      */
     public function resetLimit() {
         if(isset($this->queryData['limit'])) {
@@ -481,7 +463,6 @@ class QueryBuilder
      * Sets parameters
      * 
      * @param array $params Parameters
-     * @return self
      */
     public function setParams(array $params) {
         foreach($params as $k => $v) {
@@ -501,7 +482,6 @@ class QueryBuilder
      * Appends left bracket(s)
      * 
      * @param int $count Bracket count
-     * @return self
      */
     public function leftBracket(int $count = 1) {
         $this->openBrackets += $count;
@@ -521,7 +501,6 @@ class QueryBuilder
      * Appends right bracket(s)
      * 
      * @param int $count Bracket count
-     * @return self
      */
     public function rightBracket(int $count = 1) {
         $this->openBrackets -= $count;
@@ -567,7 +546,6 @@ class QueryBuilder
      * Sets the SQL explicitly
      * 
      * @param string $sql SQL string
-     * @return self
      */
     public function setSQL(string $sql) {
         $this->sql = $sql;
@@ -578,8 +556,6 @@ class QueryBuilder
 
     /**
      * Executes the SQL string
-     * 
-     * @return self
      */
     public function execute() {
         $useSafe = false;
@@ -961,6 +937,11 @@ class QueryBuilder
         }
     }
 
+    /**
+     * Exports the query data
+     * 
+     * @return array<string, mixed> Query data
+     */
     public function export() {
         return [
             'params' => $this->params,
@@ -969,6 +950,11 @@ class QueryBuilder
         ];
     }
 
+    /**
+     * Imports the query data
+     * 
+     * @param array<string, mixed> Query data
+     */
     public function import(array $data) {
         $this->queryData = $data['queryData'];
         $this->queryData = $data['params'];

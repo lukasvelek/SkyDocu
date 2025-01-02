@@ -39,7 +39,6 @@ class FormResponse {
      * 
      * @param array $postData $_POST data
      * @param HttpRequest $httpRequest instance
-     * @return self
      */
     public static function createFormResponseFromPostData(array $postData, HttpRequest $httpRequest) {
         $fr = new self($httpRequest);

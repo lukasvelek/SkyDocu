@@ -154,7 +154,6 @@ class TimeTaken {
      * Creates a TimeTaken instance from seconds
      * 
      * @param int $seconds Seconds
-     * @return self
      */
     public static function createFromSeconds(int $seconds) {
         $obj = new self();

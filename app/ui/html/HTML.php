@@ -81,7 +81,6 @@ class HTML {
      * Sets the content - it can be string or another instance of HTML
      * 
      * @param HTML|string $text
-     * @return self
      */
     public function text(HTML|string $text) {
         $this->text = $text;

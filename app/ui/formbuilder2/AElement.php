@@ -28,7 +28,6 @@ abstract class AElement implements IRenderable {
      * 
      * @param string $name Attribute name
      * @param mixed $value Value or null if it is a modifier
-     * @return self
      */
     public function addAttribute(string $name, mixed $value = null) {
         $this->attributes[$name] = $value;

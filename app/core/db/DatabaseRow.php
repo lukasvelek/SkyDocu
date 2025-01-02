@@ -54,7 +54,6 @@ class DatabaseRow {
      * Creates a DatabaseRow instance from mysqli_result $row
      * 
      * @param mixed $row mysqli_result row
-     * @return self
      */
     public static function createFromDbRow($row) {
         $obj = new self();

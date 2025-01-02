@@ -40,7 +40,6 @@ class LinkBuilder implements IRenderable {
      * Sets the link class attribute
      * 
      * @param string $class Class name
-     * @return self
      */
     public function setClass(string $class) {
         $this->elements['class'] = $class;
@@ -52,7 +51,6 @@ class LinkBuilder implements IRenderable {
      * Sets the link href attribute
      * 
      * @param string $href Href
-     * @return self
      */
     public function setHref(string $href) {
         $this->elements['href'] = $href;
@@ -64,7 +62,6 @@ class LinkBuilder implements IRenderable {
      * Sets the link href attribute from URL
      * 
      * @param array $url URL array
-     * @return self
      */
     public function setUrl(array $url) {
         $this->urlParts = array_merge($this->urlParts, $url);
@@ -76,7 +73,6 @@ class LinkBuilder implements IRenderable {
      * Sets the link text
      * 
      * @param string $text Text
-     * @return self
      */
     public function setText(string $text) {
         $this->text = $text;
@@ -88,7 +84,6 @@ class LinkBuilder implements IRenderable {
      * Sets the link style attribute
      * 
      * @param string $style Style
-     * @return self
      */
     public function setStyle(string $style) {
         $this->elements['style'] = $style;
@@ -100,7 +95,6 @@ class LinkBuilder implements IRenderable {
      * Sets the link onclick attribute
      * 
      * @param string JS onclick method name
-     * @return self
      */
     public function setOnclick(string $onclickMethod) {
         $this->elements['onclick'] = $onclickMethod;
@@ -112,7 +106,6 @@ class LinkBuilder implements IRenderable {
      * Sets the link title attribute
      * 
      * @param string Title attribute
-     * @return self
      */
     public function setTitle(string $title) {
         $this->elements['title'] = $title;
@@ -175,7 +168,6 @@ class LinkBuilder implements IRenderable {
      * @param string $text Link text
      * @param array $URL Link URL
      * @param string $class Link class
-     * @return self
      */
     public static function createSimpleLinkObject(string $text, array $url, string $class) {
         $lb = new self();

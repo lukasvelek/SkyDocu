@@ -72,8 +72,6 @@ class TemplateObject {
 
     /**
      * Fills the template macros, renders and builds all components and finally renders the template HTML code
-     * 
-     * @return self
      */
     public function render() {
         foreach($this->__values as $__value) {

@@ -33,7 +33,6 @@ class Action implements IHTMLOutput {
      * Class constructor
      * 
      * @param string $name Action name
-     * @return self
      */
     public function __construct(string $name) {
         $this->name = $name;

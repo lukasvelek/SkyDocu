@@ -3,6 +3,7 @@
 namespace App\UI\GridBuilder2;
 
 use App\Constants\AConstant;
+use App\Constants\IColorable;
 use App\Core\AjaxRequestBuilder;
 use App\Core\DB\DatabaseRow;
 use App\Core\Http\HttpRequest;
@@ -232,6 +233,17 @@ class GridBuilder extends AComponent {
                 if(class_exists($constClass)) {
                     if(in_array(AConstant::class, class_parents($constClass))) {
                         $result = $constClass::toString($value);
+
+                        if(in_array(IColorable::class, class_implements($constClass))) {
+                            $color = $constClass::getColor($value);
+
+                            $el = HTML::el('span');
+
+                            $el->text($result)
+                                ->style('color', $color);
+
+                            $result = $el->toString();
+                        }
                     }
                 }
             } catch(Exception $e) {}

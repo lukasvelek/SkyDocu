@@ -39,14 +39,7 @@ class ContainersPresenter extends ASuperAdminPresenter {
         $grid->setGridName(GridHelper::GRID_CONTAINERS);
 
         $grid->addColumnText('title', 'Title');
-        $col = $grid->addColumnConst('status', 'Status', ContainerStatus::class);
-        $col->onRenderColumn[] = function(DatabaseRow $row, Row $_row, Cell $cell, HTML $html, mixed $value) {
-            $el = HTML::el('span')
-                ->text($value)
-                ->style('color', ContainerStatus::getColor($row->status));
-
-            return $el;
-        };
+        $grid->addColumnConst('status', 'Status', ContainerStatus::class);
         $grid->addColumnConst('environment', 'Environment', ContainerEnvironments::class);
 
         $settings = $grid->addAction('settings');

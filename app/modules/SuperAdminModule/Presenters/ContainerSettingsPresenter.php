@@ -181,7 +181,7 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
 
     public function renderListStatusHistory() {
         $this->template->links = [
-            LinkBuilder::createSimpleLink('&larr; Back', $this->createURL('status', ['containerId' => $this->httpGet('containerId')]), 'link')
+            $this->createBackUrl('status', ['containerId' => $this->httpGet('containerId')])
         ];
     }
 
@@ -373,14 +373,7 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
         $grid->createDataSourceFromQueryBuilder($qb, 'entryId');
         $grid->addQueryDependency('containerId', $request->query['containerId']);
 
-        $col = $grid->addColumnConst('status', 'Status', ContainerInviteUsageStatus::class);
-        $col->onRenderColumn[] = function(DatabaseRow $row, Row $_row, Cell $cell, HTML $html, mixed $value) {
-            $el = HTML::el('span');
-            $el->style('color', ContainerInviteUsageStatus::getColor($row->status))
-                ->text($value);
-
-            return $el;
-        };
+        $grid->addColumnConst('status', 'Status', ContainerInviteUsageStatus::class);
 
         $col = $grid->addColumnText('username', 'Username');
         $col->onRenderColumn[] = function(DatabaseRow $row, Row $_row, Cell $cell, HTML $html, mixed $value) {

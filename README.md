@@ -19,6 +19,7 @@ The web application is written purely in PHP with a few JS scripts. These JS scr
     - Link generation
     - User registration
     - User registration management - accept, reject, delete
+- Grid constant automatic color support
 
 ### 1.0
 - Container management

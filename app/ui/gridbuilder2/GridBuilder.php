@@ -91,6 +91,7 @@ class GridBuilder extends AComponent {
     private array $checkboxHandler;
 
     protected CacheFactory $cacheFactory;
+    private int $resultLimit;
 
     /**
      * Class constructor
@@ -117,6 +118,7 @@ class GridBuilder extends AComponent {
         $this->filledDataSource = null;
         $this->hasCheckboxes = false;
         $this->checkboxHandler = [];
+        $this->resultLimit = GRID_SIZE;
     }
 
     /**
@@ -161,6 +163,15 @@ class GridBuilder extends AComponent {
         });
 
         $this->activeFilters = [];
+    }
+
+    /**
+     * Sets the result limit
+     * 
+     * @param int $limit Result limit
+     */
+    public function setLimit(int $limit) {
+        $this->resultLimit = $limit;
     }
 
     /**
@@ -459,10 +470,8 @@ class GridBuilder extends AComponent {
      * @return QueryBuilder QueryBuilder instance
      */
     protected function processQueryBuilderDataSource(QueryBuilder $qb) {
-        $gridSize = GRID_SIZE;
-
-        $qb->limit($gridSize)
-            ->offset(($this->gridPage * $gridSize));
+        $qb->limit($this->resultLimit)
+            ->offset(($this->gridPage * $this->resultLimit));
 
         if(!empty($this->activeFilters)) {
             foreach($this->activeFilters as $name => $value) {
@@ -1140,14 +1149,14 @@ class GridBuilder extends AComponent {
      */
     private function createGridPageInfo() {
         $totalCount = $this->getTotalCount();
-        $lastPage = (int)ceil($totalCount / GRID_SIZE);
+        $lastPage = (int)ceil($totalCount / $this->resultLimit);
 
-        $lastPageCount = GRID_SIZE * ($this->gridPage + 1);
+        $lastPageCount = $this->resultLimit * ($this->gridPage + 1);
         if($lastPageCount > $totalCount) {
             $lastPageCount = $totalCount;
         }
 
-        return 'Page ' . ($this->gridPage + 1) . ' of ' . $lastPage . ' (' . (GRID_SIZE * $this->gridPage) . ' - ' . $lastPageCount . ')';
+        return 'Page ' . ($this->gridPage + 1) . ' of ' . $lastPage . ' (' . ($this->resultLimit * $this->gridPage) . ' - ' . $lastPageCount . ')';
     }
 
     /**
@@ -1180,7 +1189,7 @@ class GridBuilder extends AComponent {
      */
     private function createGridPagingControl() {
         $totalCount = $this->getTotalCount();
-        $lastPage = (int)ceil($totalCount / GRID_SIZE) - 1;
+        $lastPage = (int)ceil($totalCount / $this->resultLimit) - 1;
 
         $firstPageBtn = $this->createPagingButtonCode(0, '&lt;&lt;', ($this->gridPage == 0));
         $previousPageBtn = $this->createPagingButtonCode(($this->gridPage - 1), '&lt;', ($this->gridPage == 0));
@@ -1524,10 +1533,8 @@ class GridBuilder extends AComponent {
 
         $qb = clone $this->dataSource;
 
-        $gridSize = GRID_SIZE;
-
-        $qb->limit($gridSize)
-            ->offset(($this->gridPage * $gridSize));
+        $qb->limit($this->resultLimit)
+            ->offset(($this->gridPage * $this->resultLimit));
 
         return $qb;
     }

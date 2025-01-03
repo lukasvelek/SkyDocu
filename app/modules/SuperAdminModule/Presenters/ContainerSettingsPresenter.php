@@ -65,6 +65,37 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
 
         return $form;
     }
+    
+    protected function createComponentContainerPendingInvitesGrid(HttpRequest $request) {
+        $container = $this->app->containerManager->getContainerById($request->query['containerId']);
+
+        $grid = $this->componentFactory->getGridBuilder($container->containerId);
+
+        $qb = $this->app->containerInviteManager->composeQueryForContainerInviteUsages($container->containerId);
+
+        $qb->andWhere('status = ?', [ContainerInviteUsageStatus::NEW])
+            ->orderBy('dateCreated', 'DESC');
+
+        $grid->createDataSourceFromQueryBuilder($qb, 'entryId');
+        $grid->addQueryDependency('containerId', $container->containerId);
+        $grid->setLimit(5);
+
+        $col = $grid->addColumnText('userUsername', 'Username');
+        $col->onRenderColumn[] = function(DatabaseRow $row, Row $_row, Cell $cell, HTML $html, mixed $value) {
+            $data = unserialize($row->data);
+
+            return $data['username'];
+        };
+
+        $col = $grid->addColumnText('userFullname', 'Fullname');
+        $col->onRenderColumn[] = function(DatabaseRow $row, Row $_row, Cell $cell, HTML $html, mixed $value) {
+            $data = unserialize($row->data);
+
+            return $data['fullname'];
+        };
+
+        return $grid;
+    }
 
     public function handleStatus(?FormResponse $fr = null) {
         $containerId = $this->httpGet('containerId', true);

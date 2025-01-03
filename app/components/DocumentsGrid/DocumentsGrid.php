@@ -585,6 +585,14 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
 
         return parent::actionFilter();
     }
+
+    public function actionFilterClear() {
+        $this->clearActiveFilters();
+        
+        $this->prerender();
+
+        return parent::actionFilterClear();
+    }
 }
 
 ?>

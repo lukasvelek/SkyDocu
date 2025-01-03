@@ -5,6 +5,8 @@ namespace App\UI\GridBuilder2;
 use App\Constants\AConstant;
 use App\Constants\IColorable;
 use App\Core\AjaxRequestBuilder;
+use App\Core\Caching\CacheFactory;
+use App\Core\Caching\CacheNames;
 use App\Core\DB\DatabaseRow;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
@@ -88,6 +90,8 @@ class GridBuilder extends AComponent {
     private bool $hasCheckboxes;
     private array $checkboxHandler;
 
+    protected CacheFactory $cacheFactory;
+
     /**
      * Class constructor
      * 
@@ -125,6 +129,41 @@ class GridBuilder extends AComponent {
     }
 
     /**
+     * Retrieves active filters from cache
+     */
+    private function getActiveFiltersFromCache() {
+        $cache = $this->cacheFactory->getCache(CacheNames::GRID_FILTER_DATA);
+
+        $this->activeFilters = $cache->load($this->gridName . $this->app->currentUser?->getId(), function() {
+            return $this->activeFilters;
+        });
+    }
+
+    /**
+     * Saves active filters to cache
+     */
+    private function saveActiveFilters() {
+        $cache = $this->cacheFactory->getCache(CacheNames::GRID_FILTER_DATA);
+
+        $cache->save($this->gridName . $this->app->currentUser?->getId(), function() {
+            return $this->activeFilters;
+        });
+    }
+
+    /**
+     * Clears active filters (in cache)
+     */
+    protected function clearActiveFilters() {
+        $cache = $this->cacheFactory->getCache(CacheNames::GRID_FILTER_DATA);
+
+        $cache->save($this->gridName . $this->app->currentUser?->getId(), function() {
+            return [];
+        });
+
+        $this->activeFilters = [];
+    }
+
+    /**
      * Sets the GridHelper instance
      * 
      * @param GridHelper $helper GridHelper instance
@@ -140,6 +179,15 @@ class GridBuilder extends AComponent {
      */
     public function getHelper() {
         return $this->helper;
+    }
+
+    /**
+     * Sets the CacheFactory instance
+     * 
+     * @param CacheFactory $cacheFactory CacheFactory instance
+     */
+    public function setCacheFactory(CacheFactory $cacheFactory) {
+        $this->cacheFactory = $cacheFactory;
     }
 
     /**
@@ -400,8 +448,8 @@ class GridBuilder extends AComponent {
      * @param string $primaryKeyColName Name of the column with primary key
      */
     public function createDataSourceFromQueryBuilder(QueryBuilder $qb, string $primaryKeyColName) {
-        $this->primaryKeyColName = $primaryKeyColName;
         $this->dataSource = $qb;
+        $this->primaryKeyColName = $primaryKeyColName;
     }
 
     /**
@@ -464,6 +512,7 @@ class GridBuilder extends AComponent {
      * Prerenders the grid
      */
     protected function prerender() {
+        $this->getActiveFiltersFromCache();
         $this->fetchDataFromDb(true);
         $this->build();
     }
@@ -908,13 +957,29 @@ class GridBuilder extends AComponent {
                 </script>
             ';
 
-            $scripts[] = '
-                <script type="text/javascript">
-                    function ' . $this->componentName . '_processFilterClear() {
-                        location.href = "' . $this->presenter->createURLString($this->presenter->getAction(), $this->queryDependencies) . '";
-                    }
-                </script>
-            ';
+            $arb = new AjaxRequestBuilder();
+
+            $fArgs = [];
+            $headerArgs = [];
+            if(!empty($this->queryDependencies)) {
+                foreach($this->queryDependencies as $k => $v) {
+                    $pK = '_' . $k;
+
+                    $fArgs[] = $pK;
+                    $headerArgs[$k] = $pK;
+                }
+            }
+
+            $arb->setMethod()
+                ->setComponentAction($this->presenter, $this->componentName . '-filterClear')
+                ->setHeader($headerArgs)
+                ->setFunctionName($this->componentName . '_filterClear')
+                ->setFunctionArguments($fArgs)
+                ->setComponent()
+                ->updateHTMLElement('grid', 'grid')
+            ;
+
+            $addScript($arb);
         }
 
         // EXPORT MODAL
@@ -1208,10 +1273,16 @@ class GridBuilder extends AComponent {
             $btn->toString()
         ];
 
+        if(!empty($this->queryDependencies)) {
+            foreach($this->queryDependencies as $k => $v) {
+                $args[] = '\'' . $v . '\'';
+            }
+        }
+
         if(!empty($this->activeFilters)) {
             $btn = HTML::el('button')
                     ->addAtribute('type', 'button')
-                    ->onClick($this->componentName . '_processFilterClear()')
+                    ->onClick($this->componentName . '_filterClear(' . implode(', ', $args) . ')')
                     ->id('formSubmit')
                     ->text('Clear filter')
             ;
@@ -1274,6 +1345,8 @@ class GridBuilder extends AComponent {
             }
         }
 
+        $this->saveActiveFilters();
+
         /**
          * When filter is added to a class that extends this class, then it has to call its prerender() method first.
          * After that parent::actionFilter() [this method in this class] can be called.
@@ -1281,6 +1354,17 @@ class GridBuilder extends AComponent {
          * Before this line was available only for non extending classes but it didn't make sense because it didn't work at all.
          * Build recreates the grid and thus it must be called because otherwise none filters can be applied.
          */
+        $this->build();
+
+        return ['grid' => $this->render()];
+    }
+
+    /**
+     * Cleans the grid data filter
+     * 
+     * @return array<string, string> Response
+     */
+    public function actionFilterClear() {
         $this->build();
 
         return ['grid' => $this->render()];

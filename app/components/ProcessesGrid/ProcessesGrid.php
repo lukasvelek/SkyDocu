@@ -55,6 +55,7 @@ class ProcessesGrid extends GridBuilder implements IGridExtendingComponent {
     ) {
         parent::__construct($grid->httpRequest);
         $this->setHelper($grid->getHelper());
+        $this->setCacheFactory($grid->cacheFactory);
 
         $this->app = $app;
         $this->gridManager = $gridManager;
@@ -396,6 +397,14 @@ class ProcessesGrid extends GridBuilder implements IGridExtendingComponent {
         $this->prerender();
 
         return parent::actionFilter();
+    }
+
+    public function actionFilterClear() {
+        $this->clearActiveFilters();
+
+        $this->prerender();
+
+        return parent::actionFilterClear();
     }
 }
 

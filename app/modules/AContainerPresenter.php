@@ -61,11 +61,13 @@ abstract class AContainerPresenter extends APresenter {
     protected string $containerId;
 
     private array $_reflectionParamsCache;
+    private ?CacheFactory $containerCacheFactory;
 
     protected function __construct(string $name, string $title) {
         parent::__construct($name, $title);
 
         $this->_reflectionParamsCache = [];
+        $this->containerCacheFactory = null;
     }
 
     /**
@@ -112,6 +114,8 @@ abstract class AContainerPresenter extends APresenter {
             $this->containerId,
             $this->processManager
         );
+
+        $this->componentFactory->setCacheFactory($this->getContainerCacheFactory());
     }
 
     /**
@@ -190,8 +194,7 @@ abstract class AContainerPresenter extends APresenter {
 
         $rpa = $rc->getProperties();
 
-        $cache = new CacheFactory();
-        $cache->setCustomNamespace($this->containerId);
+        $cache = $this->getContainerCacheFactory();
 
         foreach($rpa as $rp) {
             $rt = $rp->getType();
@@ -216,8 +219,7 @@ abstract class AContainerPresenter extends APresenter {
 
         $rpa = $rc->getProperties();
 
-        $cache = new CacheFactory();
-        $cache->setCustomNamespace($this->containerId);
+        $cache = $this->getContainerCacheFactory();
 
         foreach($rpa as $rp) {
             $rt = $rp->getType();
@@ -237,8 +239,7 @@ abstract class AContainerPresenter extends APresenter {
 
         $rpa = $rc->getProperties();
 
-        $cache = new CacheFactory();
-        $cache->setCustomNamespace($this->containerId);
+        $cache = $this->getContainerCacheFactory();
 
         foreach($rpa as $rp) {
             $rt = $rp->getType();
@@ -248,6 +249,23 @@ abstract class AContainerPresenter extends APresenter {
                 $this->$name->injectCacheFactory($cache);
             }
         }
+    }
+
+    /**
+     * Gets container CacheFactory instance
+     * 
+     * @return CacheFactory Container CacheFactory instance
+     */
+    private function getContainerCacheFactory() {
+        if($this->containerCacheFactory === null) {
+            $cache = new CacheFactory();
+            $cache->setCustomNamespace($this->containerId);
+
+            $this->containerCacheFactory = $cache;
+        }
+
+        $tmp = &$this->containerCacheFactory;
+        return $tmp;
     }
 }
 

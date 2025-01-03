@@ -3,6 +3,7 @@
 namespace App\Modules;
 
 use App\Components\Sidebar\Sidebar2;
+use App\Core\Caching\CacheFactory;
 use App\Core\Http\HttpRequest;
 use App\Helpers\GridHelper;
 use App\UI\FormBuilder2\FormBuilder2;
@@ -17,6 +18,8 @@ class ComponentFactory {
     protected HttpRequest $request;
     protected APresenter $presenter;
 
+    private ?CacheFactory $cacheFactory;
+
     /**
      * Class constructor
      * 
@@ -26,6 +29,8 @@ class ComponentFactory {
     public function __construct(HttpRequest $request, APresenter $presenter) {
         $this->request = $request;
         $this->presenter = $presenter;
+
+        $this->cacheFactory = null;
     }
 
     /**
@@ -37,6 +42,7 @@ class ComponentFactory {
         $grid = new GridBuilder($this->request);
         $helper = new GridHelper($this->presenter->logger, $this->presenter->getUserId(), $containerId);
         $grid->setHelper($helper);
+        $grid->setCacheFactory($this->getCacheFactory());
         return $grid;
     }
     
@@ -58,6 +64,24 @@ class ComponentFactory {
     public function getSidebar() {
         $sidebar = new Sidebar2($this->request);
         return $sidebar;
+    }
+
+    /**
+     * Sets custom CacheFactory instance
+     * 
+     * @param CacheFactory $cacheFactory CacheFactory instance
+     */
+    public function setCacheFactory(CacheFactory $cacheFactory) {
+        $this->cacheFactory = $cacheFactory;
+    }
+
+    /**
+     * Returns CacheFactory instance
+     * 
+     * @return CacheFactory CacheFactory instance
+     */
+    private function getCacheFactory() {
+        return ($this->cacheFactory !== null) ? $this->cacheFactory : $this->presenter->cacheFactory;
     }
 }
 

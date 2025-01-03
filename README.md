@@ -20,6 +20,8 @@ The web application is written purely in PHP with a few JS scripts. These JS scr
     - User registration
     - User registration management - accept, reject, delete
 - Grid constant automatic color support
+- Documents grid filtering
+- Processes grid filtering
 
 ### 1.0 (November 29th, 2024)
 - Container management

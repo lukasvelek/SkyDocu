@@ -10,16 +10,19 @@ use App\Constants\Container\StandaloneProcesses;
 use App\Constants\Container\SystemProcessTypes;
 use App\Core\Application;
 use App\Core\DB\DatabaseRow;
+use App\Exceptions\AException;
 use App\Helpers\ProcessHelper;
 use App\Managers\Container\DocumentManager;
 use App\Managers\Container\GridManager;
 use App\Managers\Container\ProcessManager;
 use App\UI\GridBuilder2\Action;
 use App\UI\GridBuilder2\Cell;
+use App\UI\GridBuilder2\Filter;
 use App\UI\GridBuilder2\GridBuilder;
 use App\UI\GridBuilder2\IGridExtendingComponent;
 use App\UI\GridBuilder2\Row;
 use App\UI\HTML\HTML;
+use QueryBuilder\QueryBuilder;
 
 /**
  * ProcessesGrid is an extension to GridBuilder and it is used for displaying processes
@@ -81,6 +84,8 @@ class ProcessesGrid extends GridBuilder implements IGridExtendingComponent {
         $this->appendSystemMetadata();
 
         $this->appendActions();
+
+        $this->appendFilters();
 
         $this->setup();
 
@@ -257,6 +262,140 @@ class ProcessesGrid extends GridBuilder implements IGridExtendingComponent {
         }
 
         return $data;
+    }
+
+    /**
+     * Appends filters to the grid
+     */
+    private function appendFilters() {
+        // Common
+        $this->addFilter(ProcessesGridSystemMetadata::TYPE, null, StandaloneProcesses::getAll());
+        $this->addFilter(ProcessesGridSystemMetadata::STATUS, null, ProcessStatus::getAll());
+        
+        $documentFilter = $this->addFilter(ProcessesGridSystemMetadata::DOCUMENT_ID, null, $this->getDocumentsInGrid());
+        $documentFilter->onSqlExecute[] = function(QueryBuilder &$qb, Filter $filter) {
+            if($filter->currentValue == 'empty') {
+                $qb->andWhere(ProcessesGridSystemMetadata::DOCUMENT_ID . ' IS NULL');
+            }
+        };
+        
+        // Current officer
+        if($this->view != ProcessGridViews::VIEW_WAITING_FOR_ME) {
+            $this->addFilter(ProcessesGridSystemMetadata::CURRENT_OFFICER_USER_ID, null, $this->getCurrentOfficersInGrid());
+        }
+
+        // Author
+        if($this->view != ProcessGridViews::VIEW_STARTED_BY_ME) {
+            $this->addFilter(ProcessesGridSystemMetadata::AUTHOR_USER_ID, null, $this->getAuthorsInGrid());
+        }
+    }
+
+    /**
+     * Retirms all documents in grid
+     * 
+     * @return array Documents
+     */
+    private function getDocumentsInGrid() {
+        $qb = $this->getPagedDataSource();
+
+        $qb->execute();
+
+        $documents = [];
+        while($row = $qb->fetchAssoc()) {
+            $documentId = $row[ProcessesGridSystemMetadata::DOCUMENT_ID];
+
+            if($documentId === null) {
+                continue;
+            } else if(array_key_exists($documentId, $documents)) {
+                continue;
+            }
+
+            try {
+                $document = $this->documentManager->getDocumentById($documentId, false);
+            } catch(AException $e) {
+                continue;
+            }
+
+            $documents[$documentId] = $document->title;
+        }
+
+        $documents['empty'] = 'None';
+
+        return $documents;
+    }
+
+    /**
+     * Returns all current officers in grid
+     * 
+     * @return array Current officers
+     */
+    private function getCurrentOfficersInGrid() {
+        $qb = $this->getPagedDataSource();
+
+        $qb->execute();
+
+        $currentOfficers = [];
+        while($row = $qb->fetchAssoc()) {
+            $officerId = $row[ProcessesGridSystemMetadata::CURRENT_OFFICER_USER_ID];
+
+            if($officerId === null) {
+                continue;
+            }
+
+            if(array_key_exists($officerId, $currentOfficers)) {
+                continue;
+            }
+
+            try {
+                $officer = $this->app->userManager->getUserById($officerId);
+            } catch(AException $e) {
+                continue;
+            }
+
+            $currentOfficers[$officerId] = $officer->getFullname();
+        }
+
+        return $currentOfficers;
+    }
+
+    /**
+     * Returns all authors in grid
+     * 
+     * @return array Authors
+     */
+    private function getAuthorsInGrid() {
+        $qb = $this->getPagedDataSource();
+
+        $qb->execute();
+
+        $authors = [];
+        while($row = $qb->fetchAssoc()) {
+            $authorId = $row[ProcessesGridSystemMetadata::AUTHOR_USER_ID];
+
+            if($authorId === null) {
+                continue;
+            }
+
+            if(array_key_exists($authorId, $authors)) {
+                continue;
+            }
+
+            try {
+                $author = $this->app->userManager->getUserById($authorId);
+            } catch(AException $e) {
+                continue;
+            }
+
+            $authors[$authorId] = $author->getFullname();
+        }
+
+        return $authors;
+    }
+
+    public function actionFilter() {
+        $this->prerender();
+
+        return parent::actionFilter();
     }
 }
 

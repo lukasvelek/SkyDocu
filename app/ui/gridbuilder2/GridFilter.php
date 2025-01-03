@@ -4,7 +4,7 @@ namespace App\UI\GridBuilder2;
 
 use App\Core\Http\HttpRequest;
 use App\UI\AComponent;
-use App\UI\FormBuilder\FormBuilder;
+use App\UI\FormBuilder2\FormBuilder2;
 
 /**
  * GridFilter class represents a filter modal
@@ -145,13 +145,12 @@ class GridFilter extends AComponent {
      * @return FormBuilder FormBuilder instance
      */
     private function createForm() {
-        $form = new FormBuilder();
-
-        $form->setMethod();
+        $form = new FormBuilder2($this->httpRequest);
 
         $this->processFilters($form);
 
-        $form->addButton('Submit', $this->componentName . '_submit()', 'formSubmit');
+        $form->addButton('Apply filter')
+            ->setOnClick($this->componentName . '_submit()');
 
         return $form;
     }
@@ -159,9 +158,9 @@ class GridFilter extends AComponent {
     /**
      * Processes filters
      * 
-     * @param FormBuilder $form FormBuilder instance
+     * @param FormBuilder2 $form FormBuilder2 instance
      */
-    private function processFilters(FormBuilder &$form) {
+    private function processFilters(FormBuilder2 &$form) {
         foreach($this->filters as $name => $filter) {
             $filterOptions = $filter->getOptions();
 
@@ -188,12 +187,13 @@ class GridFilter extends AComponent {
                 $options[] = $option;
             }
 
-            $title = $name;
+            $title = ucfirst($name);
             if(array_key_exists($name, $this->gridColumns)) {
                 $title = $this->gridColumns[$name];
             }
 
-            $form->addSelect($name, $title . ':', $options);
+            $form->addSelect($name, $title . ':')
+                ->addRawOptions($options);
         }
     }
     

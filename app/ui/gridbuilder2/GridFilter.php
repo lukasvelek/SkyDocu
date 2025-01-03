@@ -188,7 +188,7 @@ class GridFilter extends AComponent {
                 $options[] = $option;
             }
 
-            $title = $name;
+            $title = ucfirst($name);
             if(array_key_exists($name, $this->gridColumns)) {
                 $title = $this->gridColumns[$name];
             }

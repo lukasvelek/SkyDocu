@@ -4,6 +4,7 @@ namespace App\Components\ProcessesGrid;
 
 use App\Constants\Container\ProcessesGridSystemMetadata;
 use App\Constants\Container\ProcessGridViews;
+use App\Constants\Container\ProcessStatus;
 use App\Repositories\Container\ProcessRepository;
 
 /**
@@ -97,6 +98,7 @@ class ProcessGridDataSourceHelper {
         $qb = $this->processRepository->commonComposeQuery(false);
         $qb->andWhere('authorUserId = :author OR currentOfficerUserId = :currentOfficer OR workflowUserIds LIKE :workflow');
         $qb->setParams([':author' => $currentUserId, ':currentOfficer' => $currentUserId, ':workflow' => '%' . $currentUserId . '%']);
+        $qb->andWhere('status = ?', [ProcessStatus::FINISHED]);
         return $qb;
     }
 

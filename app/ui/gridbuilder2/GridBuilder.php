@@ -1272,9 +1272,15 @@ class GridBuilder extends AComponent {
             }
         }
 
-        if(!($this instanceof IGridExtendingComponent)) {
-            $this->build();
-        }
+        /**
+         * When filter is added to a class that extends this class, then it has to call its prerender method() first.
+         * After that parent::actionFilter() [this method in this class] can be called.
+         * 
+         * Before this line was available only for non extending classes but it didn't make sense because it didn't work at all.
+         * Build recreates the grid and thus it must be called because otherwise none filters can be applied.
+         */
+        $this->build();
+
         return ['grid' => $this->render()];
     }
 
@@ -1418,6 +1424,26 @@ class GridBuilder extends AComponent {
         if(!empty($params)) {
             $this->checkboxHandler['params'] = $params;
         }
+    }
+
+    /**
+     * Returns data source with applied pagination
+     * 
+     * @return ?QueryBuilder QueryBuilder or null
+     */
+    protected function getPagedDataSource() {
+        if($this->dataSource === null) {
+            return null;
+        }
+
+        $qb = clone $this->dataSource;
+
+        $gridSize = GRID_SIZE;
+
+        $qb->limit($gridSize)
+            ->offset(($this->gridPage * $gridSize));
+
+        return $qb;
     }
 }
 

@@ -479,7 +479,7 @@ div [id*="my-message-id-"] {
     border: 1px solid rgb(50, 50, 50);
 }
 
-#formSubmit {
+button #formSubmit {
     padding: 3px 10px 3px 10px;
 }
 

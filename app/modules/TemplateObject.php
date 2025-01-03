@@ -2,7 +2,6 @@
 
 namespace App\Modules;
 
-use App\UI\FormBuilder\FormBuilder;
 use App\UI\HTML\HTML;
 use App\UI\IRenderable;
 
@@ -84,11 +83,6 @@ class TemplateObject {
             if($this->$__value instanceof TemplateObject) {
                 $this->$__value->render();
                 $this->$__value = $this->$__value->getRenderedContent();
-            } else if($this->$__value instanceof FormBuilder) {
-                $action = $this->$__value->getAction();
-                $action['isFormSubmit'] = '1';
-                $this->$__value->setAction($action);
-                $this->$__value = $this->$__value->render();
             } else if($this->$__value instanceof IRenderable) {
                 $this->$__value = $this->$__value->render();
             } else if($this->$__value instanceof HTML) {

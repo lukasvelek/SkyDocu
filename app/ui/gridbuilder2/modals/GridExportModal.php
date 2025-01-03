@@ -4,7 +4,7 @@ namespace App\UI\GridBuilder2;
 
 use App\Exceptions\AException;
 use App\UI\AComponent;
-use App\UI\FormBuilder\FormBuilder;
+use App\UI\FormBuilder2\FormBuilder2;
 use App\UI\ModalBuilder\ModalBuilder;
 use Exception;
 use QueryBuilder\QueryBuilder;
@@ -74,7 +74,7 @@ class GridExportModal extends ModalBuilder {
     /**
      * Creates the modal form
      * 
-     * @return FormBuilder FormBuilder instance
+     * @return FormBuilder2 FormBuilder2 instance
      */
     private function createForm() {
         $args = [];
@@ -82,18 +82,20 @@ class GridExportModal extends ModalBuilder {
             $args[] = '\'' . $gqd . '\'';
         }
 
-        $fb = new FormBuilder();
-
-        $fb->setMethod();
+        $form = new FormBuilder2($this->httpRequest);
 
         if($this->isOverLimit()) {
-            $fb->addButton('Export to the limit', $this->gridComponentName . '_exportLimited(' . implode(', ', $args) . ')', 'grid-control-button2');
-            $fb->addButton('Export all', $this->gridComponentName . '_exportUnlimited(' . implode(', ', $args) . ')', 'grid-control-button2');
+            $form->addButton('Export to the limit')
+                ->setOnClick($this->gridComponentName . '_exportLimited(' . implode(', ', $args) . ')');
+
+            $form->addButton('Export all')
+                ->setOnClick($this->gridComponentName . '_exportUnlimited(' . implode(', ', $args) . ')');
         } else {
-            $fb->addButton('Export', $this->gridComponentName . '_exportLimited(' . implode(', ', $args) . ')', 'grid-control-button2');
+            $form->addButton('Export')
+                ->setOnClick($this->gridComponentName . '_exportLimited(' . implode(', ', $args) . ')');
         }
 
-        return $fb;
+        return $form;
     }
 
     /**

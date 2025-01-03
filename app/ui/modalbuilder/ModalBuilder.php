@@ -5,7 +5,7 @@ namespace App\UI\ModalBuilder;
 use App\Core\Http\HttpRequest;
 use App\Modules\TemplateObject;
 use App\UI\AComponent;
-use App\UI\FormBuilder\FormBuilder;
+use App\UI\FormBuilder2\FormBuilder2;
 
 /**
  * ModalBuilder allows creating modals
@@ -57,10 +57,10 @@ class ModalBuilder extends AComponent {
     /**
      * Sets content from FormBuilder
      * 
-     * @param FormBuilder $fb FormBuilder instance
+     * @param FormBuilder2 $fb FormBuilder instance
      */
-    public function setContentFromFormBuilder(FormBuilder $fb) {
-        $this->content = $fb->render();
+    public function setContentFromFormBuilder(FormBuilder2 $form) {
+        $this->content = $form->render();
     }
 
     public function startup() {

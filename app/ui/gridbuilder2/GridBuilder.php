@@ -1275,7 +1275,7 @@ class GridBuilder extends AComponent {
         }
 
         /**
-         * When filter is added to a class that extends this class, then it has to call its prerender method() first.
+         * When filter is added to a class that extends this class, then it has to call its prerender() method first.
          * After that parent::actionFilter() [this method in this class] can be called.
          * 
          * Before this line was available only for non extending classes but it didn't make sense because it didn't work at all.

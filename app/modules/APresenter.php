@@ -46,7 +46,7 @@ abstract class APresenter extends AGUICore {
     private ArrayList $beforeRenderCallbacks;
     private ArrayList $afterRenderCallbacks;
 
-    protected ?CacheFactory $cacheFactory;
+    public ?CacheFactory $cacheFactory;
 
     private array $flashMessages;
     private array $specialRedirectUrlParams;

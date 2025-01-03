@@ -27,6 +27,7 @@ class CacheNames {
     public const NAVBAR_CONTAINER_SWITCH_USER_MEMBERSHIPS = 'navbarContainerSwitchUserMemberships';
     public const PROCESS_TYPES = 'processTypes';
     public const FOLDER_SUBFOLDERS_MAPPING = 'folderSubfoldersMapping';
+    public const GRID_FILTER_DATA = 'gridFilterData';
 
     /**
      * Returns an array with all cache namespaces

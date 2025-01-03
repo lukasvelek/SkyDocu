@@ -5,6 +5,7 @@ namespace App\Modules\SuperAdminModule;
 use App\Components\ContainerUsageAverageResponseTimeGraph\ContainerUsageAverageResponseTimeGraph;
 use App\Components\ContainerUsageStatsGraph\ContainerUsageStatsGraph;
 use App\Components\ContainerUsageTotalResponseTimeGraph\ContainerUsageTotalResponseTimeGraph;
+use App\Constants\ContainerEnvironments;
 use App\Constants\ContainerInviteUsageStatus;
 use App\Constants\ContainerStatus;
 use App\Core\Datetypes\DateTime;
@@ -18,7 +19,6 @@ use App\UI\GridBuilder2\Action;
 use App\UI\GridBuilder2\Cell;
 use App\UI\GridBuilder2\Row;
 use App\UI\HTML\HTML;
-use App\UI\IRenderable;
 use App\UI\LinkBuilder;
 
 class ContainerSettingsPresenter extends ASuperAdminPresenter {
@@ -27,6 +27,75 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
     }
 
     public function renderHome() {}
+
+    protected function createComponentContainerInfoForm(HttpRequest $request) {
+        $container = $this->app->containerManager->getContainerById($request->query['containerId']);
+
+        $groupUsers = $this->app->groupManager->getGroupUsersForGroupTitle($container->title . ' - users');
+
+        $form = $this->componentFactory->getFormBuilder();
+
+        $form->addTextInput('containerId', 'Container ID:')
+            ->setDisabled()
+            ->setValue($container->containerId);
+
+        $form->addTextInput('containerTitle', 'Container title:')
+            ->setDisabled()
+            ->setValue($container->title);
+
+        $form->addNumberInput('containerUserCount', 'Container users:')
+            ->setDisabled()
+            ->setValue(count($groupUsers));
+
+        $user = $this->app->userManager->getUserById($container->userId);
+
+        $form->addTextInput('containerReferent', 'Container referent:')
+            ->setDisabled()
+            ->setValue($user->getFullname());
+
+        $dateCreated = new DateTime(strtotime($container->dateCreated));
+
+        $form->addDateTimeInput('containerDateCreated', 'Date created:')
+            ->setDisabled()
+            ->setValue($dateCreated);
+
+        $form->addTextInput('containerEnvironment', 'Container environment:')
+            ->setDisabled()
+            ->setValue(ContainerEnvironments::toString($container->environment));
+
+        return $form;
+    }
+    
+    protected function createComponentContainerPendingInvitesGrid(HttpRequest $request) {
+        $container = $this->app->containerManager->getContainerById($request->query['containerId']);
+
+        $grid = $this->componentFactory->getGridBuilder($container->containerId);
+
+        $qb = $this->app->containerInviteManager->composeQueryForContainerInviteUsages($container->containerId);
+
+        $qb->andWhere('status = ?', [ContainerInviteUsageStatus::NEW])
+            ->orderBy('dateCreated', 'DESC');
+
+        $grid->createDataSourceFromQueryBuilder($qb, 'entryId');
+        $grid->addQueryDependency('containerId', $container->containerId);
+        $grid->setLimit(5);
+
+        $col = $grid->addColumnText('userUsername', 'Username');
+        $col->onRenderColumn[] = function(DatabaseRow $row, Row $_row, Cell $cell, HTML $html, mixed $value) {
+            $data = unserialize($row->data);
+
+            return $data['username'];
+        };
+
+        $col = $grid->addColumnText('userFullname', 'Fullname');
+        $col->onRenderColumn[] = function(DatabaseRow $row, Row $_row, Cell $cell, HTML $html, mixed $value) {
+            $data = unserialize($row->data);
+
+            return $data['fullname'];
+        };
+
+        return $grid;
+    }
 
     public function handleStatus(?FormResponse $fr = null) {
         $containerId = $this->httpGet('containerId', true);

@@ -5,6 +5,7 @@ namespace App\Modules\SuperAdminModule;
 use App\Components\ContainerUsageAverageResponseTimeGraph\ContainerUsageAverageResponseTimeGraph;
 use App\Components\ContainerUsageStatsGraph\ContainerUsageStatsGraph;
 use App\Components\ContainerUsageTotalResponseTimeGraph\ContainerUsageTotalResponseTimeGraph;
+use App\Constants\ContainerEnvironments;
 use App\Constants\ContainerInviteUsageStatus;
 use App\Constants\ContainerStatus;
 use App\Core\Datetypes\DateTime;
@@ -18,7 +19,6 @@ use App\UI\GridBuilder2\Action;
 use App\UI\GridBuilder2\Cell;
 use App\UI\GridBuilder2\Row;
 use App\UI\HTML\HTML;
-use App\UI\IRenderable;
 use App\UI\LinkBuilder;
 
 class ContainerSettingsPresenter extends ASuperAdminPresenter {
@@ -27,6 +27,44 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
     }
 
     public function renderHome() {}
+
+    protected function createComponentContainerInfoForm(HttpRequest $request) {
+        $container = $this->app->containerManager->getContainerById($request->query['containerId']);
+
+        $groupUsers = $this->app->groupManager->getGroupUsersForGroupTitle($container->title . ' - users');
+
+        $form = $this->componentFactory->getFormBuilder();
+
+        $form->addTextInput('containerId', 'Container ID:')
+            ->setDisabled()
+            ->setValue($container->containerId);
+
+        $form->addTextInput('containerTitle', 'Container title:')
+            ->setDisabled()
+            ->setValue($container->title);
+
+        $form->addNumberInput('containerUserCount', 'Container users:')
+            ->setDisabled()
+            ->setValue(count($groupUsers));
+
+        $user = $this->app->userManager->getUserById($container->userId);
+
+        $form->addTextInput('containerReferent', 'Container referent:')
+            ->setDisabled()
+            ->setValue($user->getFullname());
+
+        $dateCreated = new DateTime(strtotime($container->dateCreated));
+
+        $form->addDateTimeInput('containerDateCreated', 'Date created:')
+            ->setDisabled()
+            ->setValue($dateCreated);
+
+        $form->addTextInput('containerEnvironment', 'Container environment:')
+            ->setDisabled()
+            ->setValue(ContainerEnvironments::toString($container->environment));
+
+        return $form;
+    }
 
     public function handleStatus(?FormResponse $fr = null) {
         $containerId = $this->httpGet('containerId', true);

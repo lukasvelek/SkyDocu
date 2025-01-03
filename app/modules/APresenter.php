@@ -9,6 +9,7 @@ use App\Core\Caching\CacheNames;
 use App\Core\Datatypes\ArrayList;
 use App\Core\Datetypes\DateTime;
 use App\Core\HashManager;
+use App\Core\Http\AResponse;
 use App\Entities\UserEntity;
 use App\Exceptions\ActionDoesNotExistException;
 use App\Exceptions\AException;
@@ -32,7 +33,6 @@ abstract class APresenter extends AGUICore {
     private ?string $action;
     private ArrayList $presenterCache;
     private ArrayList $scripts;
-    private ?string $ajaxResponse;
     private ?string $defaultAction;
     public ?string $moduleName;
     private bool $isAjax;
@@ -70,7 +70,6 @@ abstract class APresenter extends AGUICore {
         $this->action = null;
         $this->template = null;
         $this->sysTemplate = null;
-        $this->ajaxResponse = null;
         $this->logger = null;
         $this->defaultAction = null;
         $this->moduleName = null;
@@ -605,10 +604,12 @@ abstract class APresenter extends AGUICore {
                     return $result;
                 }, $componentName . '::' . $methodName);
     
-                if($this->ajaxResponse !== null) {
-                    return new TemplateObject($this->ajaxResponse);
-                } else if($result !== null) {
-                    return new TemplateObject(json_encode($result));
+                if($result !== null) {
+                    if($result instanceof AResponse) {
+                        return TemplateObject::createFromAResponse($result);
+                    } else {
+                        return new TemplateObject(json_encode($result));
+                    }
                 } else {
                     throw new NoAjaxResponseException();
                 }
@@ -701,10 +702,12 @@ abstract class APresenter extends AGUICore {
                 return $result;
             }, 'App\\Modules\\' . $moduleName . '\\' . $this->title . '::' . $actionAction);
 
-            if($this->ajaxResponse !== null) {
-                return new TemplateObject($this->ajaxResponse);
-            } else if($result !== null) {
-                return new TemplateObject(json_encode($result));
+            if($result !== null) {
+                if($result instanceof AResponse) {
+                    return TemplateObject::createFromAResponse($result);
+                } else {
+                    return new TemplateObject(json_encode($result));
+                }
             } else {
                 throw new NoAjaxResponseException();
             }

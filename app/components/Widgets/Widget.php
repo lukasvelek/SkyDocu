@@ -4,6 +4,7 @@ namespace App\Components\Widgets;
 
 use App\Core\AjaxRequestBuilder;
 use App\Core\Http\HttpRequest;
+use App\Core\Http\JsonResponse;
 use App\UI\AComponent;
 use App\UI\GridBuilder2\Cell;
 use App\UI\GridBuilder2\Row;
@@ -220,10 +221,10 @@ class Widget extends AComponent {
     /**
      * Handles widget refresh control
      * 
-     * @return array<string, string> Array of data for conversion to JSON
+     * @return JsonResponse Return value
      */
     public function actionRefresh() {
-        return ['widget' => $this->build()];
+        return new JsonResponse(['widget' => $this->build()]);
     }
 
     public static function createFromComponent(AComponent $component) {}

@@ -6,6 +6,7 @@ use App\Constants\Container\DocumentsGridSystemMetadata;
 use App\Constants\Container\GridNames;
 use App\Core\AjaxRequestBuilder;
 use App\Core\Http\HttpRequest;
+use App\Core\Http\JsonResponse;
 use App\Managers\Container\GridManager;
 use App\UI\FormBuilder2\FormBuilder2;
 
@@ -108,7 +109,7 @@ class GridConfigurationForm extends FormBuilder2 {
                 break;
         }
 
-        return ['content' => $code];
+        return new JsonResponse(['content' => $code]);
     }
 }
 

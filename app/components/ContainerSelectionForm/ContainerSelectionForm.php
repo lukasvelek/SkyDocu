@@ -6,6 +6,7 @@ use App\Constants\ContainerEnvironments;
 use App\Constants\ContainerStatus;
 use App\Core\AjaxRequestBuilder;
 use App\Core\Http\HttpRequest;
+use App\Core\Http\JsonResponse;
 use App\UI\FormBuilder2\FormBuilder2;
 
 /**
@@ -135,7 +136,7 @@ class ContainerSelectionForm extends FormBuilder2 {
     /**
      * Handles container searching
      * 
-     * @return array<string, string> Return value
+     * @return JsonResponse Return value
      */
     protected function actionSearchContainers() {
         $query = $this->httpRequest->query['query'];
@@ -152,7 +153,7 @@ class ContainerSelectionForm extends FormBuilder2 {
             $code[] = '<option value="' . $c['value'] . '"' . $selected . '>' . $c['text'] . '</option>';
         }
 
-        return ['containers' => implode('', $code)];
+        return new JsonResponse(['containers' => implode('', $code)]);
     }
 
     /**

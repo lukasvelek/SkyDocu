@@ -10,6 +10,7 @@ use App\Constants\Container\DocumentStatus;
 use App\Constants\Container\GridNames;
 use App\Core\Application;
 use App\Core\DB\DatabaseRow;
+use App\Core\Http\JsonResponse;
 use App\Enums\AEnumForMetadata;
 use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
@@ -565,7 +566,7 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
     /**
      * Handles bulk actions
      * 
-     * @return array<string, string> Rendered modal content
+     * @return JsonResponse Rendered modal content
      */
     public function actionBulkAction() {
         $modal = new BulkActionsModal($this);
@@ -577,7 +578,7 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
         $modal->setBulkActions($bulkActions);
         $modal->startup();
 
-        return ['modal' => $modal->render()];
+        return new JsonResponse(['modal' => $modal->render()]);
     }
 
     public function actionFilter() {

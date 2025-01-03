@@ -9,6 +9,7 @@ use App\Core\Caching\CacheFactory;
 use App\Core\Caching\CacheNames;
 use App\Core\DB\DatabaseRow;
 use App\Core\Http\HttpRequest;
+use App\Core\Http\JsonResponse;
 use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
 use App\Exceptions\GridExportException;
@@ -1309,7 +1310,7 @@ class GridBuilder extends AComponent {
     /**
      * Refreshes the grid
      * 
-     * @return array<string, string> Response
+     * @return JsonResponse Response
      */
     public function actionRefresh() {
         foreach($this->filters as $name => $filter) {
@@ -1317,17 +1318,16 @@ class GridBuilder extends AComponent {
                 $this->activeFilters[$name] = $this->httpRequest->query[$name];
             }
         }
-
         if(!($this instanceof IGridExtendingComponent)) {
             $this->build();
         }
-        return ['grid' => $this->render()];
+        return new JsonResponse(['grid' => $this->render()]);
     }
 
     /**
      * Changes the grid page
      * 
-     * @return array<string, string> Response
+     * @return JsonResponse Response
      */
     public function actionPage() {
         foreach($this->filters as $name => $filter) {
@@ -1335,17 +1335,16 @@ class GridBuilder extends AComponent {
                 $this->activeFilters[$name] = $this->httpRequest->query[$name];
             }
         }
-
         if(!($this instanceof IGridExtendingComponent)) {
             $this->build();
         }
-        return ['grid' => $this->render()];
+        return new JsonResponse(['grid' => $this->render()]);
     }
 
     /**
      * Filters the grid data
      * 
-     * @return array<string, string> Response
+     * @return JsonResponse Response
      */
     public function actionFilter() {
         foreach($this->filters as $name => $filter) {
@@ -1365,24 +1364,24 @@ class GridBuilder extends AComponent {
          */
         $this->build();
 
-        return ['grid' => $this->render()];
+        return new JsonResponse(['grid' => $this->render()]);
     }
 
     /**
      * Cleans the grid data filter
      * 
-     * @return array<string, string> Response
+     * @return JsonResponse Response
      */
     public function actionFilterClear() {
         $this->build();
 
-        return ['grid' => $this->render()];
+        return new JsonResponse(['grid' => $this->render()]);
     }
 
     /**
      * Exports the limited entries
      * 
-     * @return array<string, string> Response
+     * @return JsonResponse Response
      */
     public function actionExportLimited() {
         $ds = clone $this->dataSource;
@@ -1392,7 +1391,7 @@ class GridBuilder extends AComponent {
         try {
             $geh = $this->createGridExportHandler($ds);
             [$file, $hash] = $geh->exportNow();
-            $result = ['file' => $file, 'hash' => $hash];
+            $result = new JsonResponse(['file' => $file, 'hash' => $hash]);
         } catch(AException $e) {
             throw new GridExportException('Could not process limited export.', $e);
         }
@@ -1403,7 +1402,7 @@ class GridBuilder extends AComponent {
     /**
      * Queues asynchronous unlimited export
      * 
-     * @return array<string, string|int> Response
+     * @return JsonResponse Response
      */
     public function actionExportUnlimited() {
         $ds = clone $this->dataSource;
@@ -1413,7 +1412,7 @@ class GridBuilder extends AComponent {
         try {
             $geh = $this->createGridExportHandler($ds);
             $hash = $geh->exportAsync();
-            $result = ['hash' => $hash, 'success' => 1];
+            $result = new JsonResponse(['hash' => $hash, 'success' => 1]);
         } catch(AException|Exception $e) {
             throw new GridExportException('Could not process unlimited export.', $e);
         }

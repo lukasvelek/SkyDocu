@@ -2,6 +2,7 @@
 
 namespace App\Modules;
 
+use App\Core\Http\AResponse;
 use App\UI\HTML\HTML;
 use App\UI\IRenderable;
 
@@ -176,6 +177,15 @@ class TemplateObject {
      */
     public function getTemplateContent() {
         return $this->__templateContent;
+    }
+
+    /**
+     * Creates instance of TemplateObject based on AResponse instance
+     * 
+     * @param AResponse $response Response instance
+     */
+    public static function createFromAResponse(AResponse $response) {
+        return new self($response->getResult());
     }
 }
 

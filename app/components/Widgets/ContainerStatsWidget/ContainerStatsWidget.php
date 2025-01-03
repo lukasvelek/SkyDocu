@@ -5,6 +5,7 @@ namespace App\Components\Widgets\ContainerStatsWidget;
 use App\Components\Widgets\Widget;
 use App\Constants\ContainerStatus;
 use App\Core\Http\HttpRequest;
+use App\Core\Http\JsonResponse;
 use App\Managers\ContainerManager;
 
 /**
@@ -127,9 +128,11 @@ class ContainerStatsWidget extends Widget {
 
         $widget = $this->build();
 
-        return [
+        /*return [
             'widget' => $widget
-        ];
+        ];*/
+
+        return new JsonResponse(['widget' => $widget]);
     }
 }
 

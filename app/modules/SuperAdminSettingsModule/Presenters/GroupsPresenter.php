@@ -5,6 +5,7 @@ namespace App\Modules\SuperAdminSettingsModule;
 use App\Core\AjaxRequestBuilder;
 use App\Core\DB\DatabaseRow;
 use App\Core\Http\HttpRequest;
+use App\Core\Http\JsonResponse;
 use App\Exceptions\AException;
 use App\UI\FormBuilder\FormResponse;
 use App\UI\GridBuilder2\Cell;
@@ -244,7 +245,7 @@ class GroupsPresenter extends ASuperAdminSettingsPresenter {
             $users[] = '<option value="' . $row['userId'] . '">' . $row['fullname'] . '</option>';
         }
 
-        return ['users' => $users];
+        return new JsonResponse(['users' => $users]);
     }
 
     public function handleRemoveUser() {

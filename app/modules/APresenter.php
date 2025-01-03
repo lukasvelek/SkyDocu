@@ -586,7 +586,7 @@ abstract class APresenter extends AGUICore {
                 $result = $this->logger->stopwatch(function() use ($component, $methodName) {
                     try {
                         if(isset($this->httpRequest->query['isFormSubmit']) && $this->httpRequest->query['isFormSubmit'] == '1') { // it is a form
-                            $fr = $this->createFormResponse();
+                            $fr = $this->createFormRequest();
                             $result = $component->processMethod($methodName, [$this->httpRequest, $fr]);
                         } else {
                             $result = $component->processMethod($methodName, [$this->httpRequest]);
@@ -634,7 +634,7 @@ abstract class APresenter extends AGUICore {
         $params = $this->getQueryParams();
         $this->logger->stopwatch(function() use ($handleAction, $params) {
             if(isset($params['isFormSubmit']) == '1') {
-                $fr = $this->createFormResponse();
+                $fr = $this->createFormRequest();
                 return $this->$handleAction($fr);
             } else {
                 return $this->$handleAction();

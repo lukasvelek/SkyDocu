@@ -5,12 +5,11 @@ namespace App\Modules\SuperAdminModule;
 use App\Constants\ContainerEnvironments;
 use App\Constants\ContainerStatus;
 use App\Core\DB\DatabaseRow;
+use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
 use App\Helpers\GridHelper;
-use App\UI\FormBuilder\FormResponse;
-use App\UI\GridBuilder2\Cell;
 use App\UI\GridBuilder2\Row;
 use App\UI\HTML\HTML;
 use App\UI\LinkBuilder;
@@ -59,7 +58,7 @@ class ContainersPresenter extends ASuperAdminPresenter {
         return $grid;
     }
 
-    public function handleNewContainerForm(?FormResponse $fr = null) {
+    public function handleNewContainerForm(?FormRequest $fr = null) {
         if($fr !== null) {
             try {
                 if($this->app->containerManager->checkContainerTitleExists($fr->title)) {

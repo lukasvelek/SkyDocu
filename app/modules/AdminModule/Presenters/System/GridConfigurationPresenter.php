@@ -5,9 +5,9 @@ namespace App\Modules\AdminModule;
 use App\Components\GridConfigurationForm\GridConfigurationForm;
 use App\Constants\Container\GridNames;
 use App\Core\DB\DatabaseRow;
+use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
-use App\UI\FormBuilder\FormResponse;
 use App\UI\GridBuilder2\Cell;
 use App\UI\GridBuilder2\Row;
 use App\UI\HTML\HTML;
@@ -46,12 +46,12 @@ class GridConfigurationPresenter extends AAdminPresenter {
         return $grid;
     }
 
-    public function handleNewConfigurationForm(?FormResponse $fr = null) {
+    public function handleNewConfigurationForm(?FormRequest $fr = null) {
         if($fr !== null) {
             try {
                 $columns = [];
 
-                foreach($fr->getAllValues() as $key => $value) {
+                foreach($fr->getData() as $key => $value) {
                     if(in_array($key, ['btn_submit', 'gridName'])) {
                         continue;
                     }

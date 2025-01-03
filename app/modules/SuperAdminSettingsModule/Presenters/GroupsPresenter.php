@@ -4,10 +4,10 @@ namespace App\Modules\SuperAdminSettingsModule;
 
 use App\Core\AjaxRequestBuilder;
 use App\Core\DB\DatabaseRow;
+use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
 use App\Core\Http\JsonResponse;
 use App\Exceptions\AException;
-use App\UI\FormBuilder\FormResponse;
 use App\UI\GridBuilder2\Cell;
 use App\UI\GridBuilder2\Row;
 use App\UI\HTML\HTML;
@@ -133,7 +133,7 @@ class GroupsPresenter extends ASuperAdminSettingsPresenter {
         return $grid;
     }
 
-    public function handleAddUserForm(?FormResponse $fr = null) {
+    public function handleAddUserForm(?FormRequest $fr = null) {
         $groupId = $this->httpGet('groupId', true);
 
         if($fr !== null) {

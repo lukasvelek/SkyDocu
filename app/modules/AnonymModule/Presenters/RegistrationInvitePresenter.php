@@ -3,10 +3,10 @@
 namespace App\Modules\AnonymModule;
 
 use App\Core\HashManager;
+use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
-use App\UI\FormBuilder\FormResponse;
 
 class RegistrationInvitePresenter extends AAnonymPresenter {
     private string $containerId;
@@ -15,7 +15,7 @@ class RegistrationInvitePresenter extends AAnonymPresenter {
         parent::__construct('RegistrationInvitePresenter', 'Registration');
     }
 
-    public function handleForm(?FormResponse $fr = null) {
+    public function handleForm(?FormRequest $fr = null) {
         if($fr !== null) {
             $containerId = $this->httpGet('containerId');
             $inviteId = $this->httpGet('inviteId');

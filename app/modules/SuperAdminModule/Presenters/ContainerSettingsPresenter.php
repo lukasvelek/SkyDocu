@@ -10,11 +10,11 @@ use App\Constants\ContainerInviteUsageStatus;
 use App\Constants\ContainerStatus;
 use App\Core\Datetypes\DateTime;
 use App\Core\DB\DatabaseRow;
+use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
 use App\Helpers\DateTimeFormatHelper;
-use App\UI\FormBuilder\FormResponse;
 use App\UI\GridBuilder2\Action;
 use App\UI\GridBuilder2\Cell;
 use App\UI\GridBuilder2\Row;
@@ -97,7 +97,7 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
         return $grid;
     }
 
-    public function handleStatus(?FormResponse $fr = null) {
+    public function handleStatus(?FormRequest $fr = null) {
         $containerId = $this->httpGet('containerId', true);
 
         if($fr !== null) {
@@ -202,7 +202,7 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
         return $form;
     }
 
-    public function handleStatusPermanentFlashMessage(?FormResponse $fr = null) {
+    public function handleStatusPermanentFlashMessage(?FormRequest $fr = null) {
         $containerId = $this->httpGet('containerId', true);
         
         if($fr !== null) {
@@ -295,7 +295,7 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
         $this->template->container_delete_link = $this->loadFromPresenterCache('containerDeleteLink');
     }
 
-    public function handleContainerDeleteForm(?FormResponse $fr = null) {
+    public function handleContainerDeleteForm(?FormRequest $fr = null) {
         $containerId = $this->httpGet('containerId');
 
         if($fr !== null) {

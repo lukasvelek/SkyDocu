@@ -6,9 +6,9 @@ use App\Components\ProcessesSelect\ProcessesSelect;
 use App\Components\ProcessForm\CommonProcessForm;
 use App\Constants\Container\ProcessGridViews;
 use App\Constants\Container\StandaloneProcesses;
+use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
-use App\UI\FormBuilder\FormResponse;
 
 class NewProcessPresenter extends AUserPresenter {
     public function __construct() {
@@ -39,7 +39,7 @@ class NewProcessPresenter extends AUserPresenter {
         return $select;
     }
 
-    public function handleStartProcess(?FormResponse $fr = null) {
+    public function handleStartProcess(?FormRequest $fr = null) {
         if($fr !== null) {
             $name = $this->httpGet('name', true);
 
@@ -49,7 +49,7 @@ class NewProcessPresenter extends AUserPresenter {
                 try {
                     $this->processRepository->beginTransaction(__METHOD__);
 
-                    $this->standaloneProcessManager->$methodName($fr->getAllValues());
+                    $this->standaloneProcessManager->$methodName($fr->getData());
 
                     $this->processRepository->commit($this->getUserId(), __METHOD__);
 

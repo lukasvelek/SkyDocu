@@ -5,9 +5,9 @@ namespace App\Modules\AdminModule;
 use App\Components\DocumentMetadataForm\DocumentMetadataForm;
 use App\Constants\Container\CustomMetadataTypes;
 use App\Core\DB\DatabaseRow;
+use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
-use App\UI\FormBuilder\FormResponse;
 use App\UI\GridBuilder2\Action;
 use App\UI\GridBuilder2\Cell;
 use App\UI\GridBuilder2\Row;
@@ -102,7 +102,7 @@ class DocumentMetadataPresenter extends AAdminPresenter {
         return $grid;
     }
 
-    public function handleEditMetadataForm(?FormResponse $fr = null) {
+    public function handleEditMetadataForm(?FormRequest $fr = null) {
         if($fr !== null) {
             $metadataId = $this->httpGet('metadataId', true);
 
@@ -181,7 +181,7 @@ class DocumentMetadataPresenter extends AAdminPresenter {
         return $form;
     }
 
-    public function handleNewMetadataForm(?FormResponse $fr = null) {
+    public function handleNewMetadataForm(?FormRequest $fr = null) {
         if($fr !== null) {
             $defaultValue = null;
 
@@ -320,7 +320,7 @@ class DocumentMetadataPresenter extends AAdminPresenter {
         $this->redirect($this->createURL('listFolderRights', ['metadataId' => $metadataId]));
     }
 
-    public function handleNewFolderRightForm(?FormResponse $fr = null) {
+    public function handleNewFolderRightForm(?FormRequest $fr = null) {
         if($fr !== null) {
             $metadataId = $this->httpGet('metadataId', true);
 
@@ -442,7 +442,7 @@ class DocumentMetadataPresenter extends AAdminPresenter {
         return $grid;
     }
 
-    public function handleNewEnumValueForm(?FormResponse $fr = null) {
+    public function handleNewEnumValueForm(?FormRequest $fr = null) {
         $metadataId = $this->httpGet('metadataId', true);
 
         if($fr !== null) {
@@ -481,7 +481,7 @@ class DocumentMetadataPresenter extends AAdminPresenter {
         return $form;
     }
 
-    public function handleEditEnumValueForm(?FormResponse $fr = null) {
+    public function handleEditEnumValueForm(?FormRequest $fr = null) {
         $metadataId = $this->httpGet('metadataId', true);
         $valueId = $this->httpGet('valueId', true);
 

@@ -5,9 +5,9 @@ namespace App\Modules\AdminModule;
 use App\Constants\Container\CustomMetadataTypes;
 use App\Constants\Container\SystemGroups;
 use App\Core\DB\DatabaseRow;
+use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
-use App\UI\FormBuilder\FormResponse;
 use App\UI\GridBuilder2\Action;
 use App\UI\GridBuilder2\Cell;
 use App\UI\GridBuilder2\Row;
@@ -173,7 +173,7 @@ class DocumentFoldersPresenter extends AAdminPresenter {
         return $grid;
     }
 
-    public function handleNewFolderForm(?FormResponse $fr = null) {
+    public function handleNewFolderForm(?FormRequest $fr = null) {
         $folderId = $this->httpGet('folderId');
 
         if($fr !== null) {
@@ -352,7 +352,7 @@ class DocumentFoldersPresenter extends AAdminPresenter {
         $this->redirect($this->createURL('listGroupRights', $params));
     }
 
-    public function handleNewFolderGroupRightsForm(?FormResponse $fr = null) {
+    public function handleNewFolderGroupRightsForm(?FormRequest $fr = null) {
         if($fr !== null) {
             $folderId = $this->httpGet('folderId', true);
             $parentFolderId = $this->httpGet('parentFolderId') ?? $folderId;
@@ -472,7 +472,7 @@ class DocumentFoldersPresenter extends AAdminPresenter {
         return $form;
     }
 
-    public function handleEditFolderGroupRightsForm(?FormResponse $fr = null) {
+    public function handleEditFolderGroupRightsForm(?FormRequest $fr = null) {
         if($fr !== null) {
             $folderId = $this->httpGet('folderId', true);
             $parentFolderId = $this->httpGet('parentFolderId') ?? $folderId;
@@ -621,7 +621,7 @@ class DocumentFoldersPresenter extends AAdminPresenter {
         return $grid;
     }
 
-    public function handleAddMetadataToFolderForm(?FormResponse $fr = null) {
+    public function handleAddMetadataToFolderForm(?FormRequest $fr = null) {
         $folderId = $this->httpGet('folderId', true);
         $parentFolderId = $this->httpGet('parentFolderId') ?? $folderId;
 

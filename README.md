@@ -22,6 +22,7 @@ The web application is written purely in PHP with a few JS scripts. These JS scr
 - Grid constant automatic color support
 - Documents grid filtering
 - Processes grid filtering
+- Grid filter saving
 
 ### 1.0 (November 29th, 2024)
 - Container management

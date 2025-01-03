@@ -11,6 +11,7 @@ use App\Constants\Container\GridNames;
 use App\Core\Application;
 use App\Core\DB\DatabaseRow;
 use App\Enums\AEnumForMetadata;
+use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
 use App\Helpers\GridHelper;
 use App\Lib\Processes\ProcessFactory;
@@ -137,6 +138,8 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
         }
 
         $this->appendActions();
+
+        $this->appendFilters();
 
         $this->setup();
 
@@ -520,6 +523,44 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
         $this->addCheckboxes2($presenter, 'bulkAction', $params);
     }
 
+    /**
+     * Appends filters to the grid
+     */
+    private function appendFilters() {
+        $this->addFilter(DocumentsGridSystemMetadata::STATUS, null, DocumentStatus::getAll());
+        $this->addFilter(DocumentsGridSystemMetadata::AUTHOR_USER_ID, null, $this->getAuthorsInGrid());
+    }
+
+    /**
+     * Returns all authors in grid
+     * 
+     * @return array Authors
+     */
+    private function getAuthorsInGrid() {
+        $qb = $this->getPagedDataSource();
+
+        $qb->execute();
+
+        $authors = [];
+        while($row = $qb->fetchAssoc()) {
+            $authorId = $row[DocumentsGridSystemMetadata::AUTHOR_USER_ID];
+
+            if(array_key_exists($authorId, $authors)) {
+                continue;
+            }
+
+            try {
+                $author = $this->app->userManager->getUserById($authorId);
+            } catch(AException $e) {
+                continue;
+            }
+
+            $authors[$authorId] = $author->getFullname();
+        }
+
+        return $authors;
+    }
+
     // HANDLERS
     /**
      * Handles bulk actions
@@ -537,6 +578,12 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
         $modal->startup();
 
         return ['modal' => $modal->render()];
+    }
+
+    public function actionFilter() {
+        $this->prerender();
+
+        return parent::actionFilter();
     }
 }
 

@@ -57,7 +57,7 @@ class ModalBuilder extends AComponent {
     /**
      * Sets content from FormBuilder
      * 
-     * @param FormBuilder2 $fb FormBuilder instance
+     * @param FormBuilder2 $form FormBuilder instance
      */
     public function setContentFromFormBuilder(FormBuilder2 $form) {
         $this->content = $form->render();

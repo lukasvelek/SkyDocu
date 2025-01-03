@@ -1200,6 +1200,7 @@ class GridBuilder extends AComponent {
         $btn = HTML::el('button')
                 ->addAtribute('type', 'button')
                 ->onClick($this->componentName . '_processFilterModalOpen()')
+                ->id('formSubmit')
                 ->text('Filter')
         ;
 
@@ -1211,13 +1212,14 @@ class GridBuilder extends AComponent {
             $btn = HTML::el('button')
                     ->addAtribute('type', 'button')
                     ->onClick($this->componentName . '_processFilterClear()')
+                    ->id('formSubmit')
                     ->text('Clear filter')
             ;
 
             $btns[] = $btn->toString();
         }
 
-        $el->text(implode('', $btns));
+        $el->text(implode('&nbsp;', $btns));
 
         return $el->toString();
     }

@@ -2,7 +2,12 @@
 
 namespace App\UI\FormBuilder2;
 
-class Input extends AInteractableElement {
+/**
+ * Common class for all inputs in a form
+ * 
+ * @author Lukas Velek
+ */
+abstract class AInput extends AInteractableElement {
     private string $type;
     private string $name;
 
@@ -13,6 +18,11 @@ class Input extends AInteractableElement {
         $this->name = $name;
     }
 
+    /**
+     * Sets value
+     * 
+     * @param mixed $value Value
+     */
     public function setValue(mixed $value) {
         $this->addAttribute('value', $value);
         return $this;

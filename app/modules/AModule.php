@@ -111,9 +111,7 @@ abstract class AModule extends AGUICore {
     /**
      * Renders custom module page content. Currently not in use.
      */
-    public function renderModule() {
-        // $this->loadFlashMessagesFromCache(); // probably not needed
-    }
+    public function renderModule() {}
 
     /**
      * Renders the presenter and fetches the TemplateObject instance. It also renders flash messages.

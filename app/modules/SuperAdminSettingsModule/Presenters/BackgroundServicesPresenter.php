@@ -16,8 +16,6 @@ class BackgroundServicesPresenter extends ASuperAdminSettingsPresenter {
         parent::__construct('BackgroundServicesPresenter', 'Background services');
     }
 
-    public function handleList() {}
-
     public function renderList() {
         $this->template->links = [];
     }

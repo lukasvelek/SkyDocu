@@ -17,18 +17,25 @@ use App\Repositories\Container\GroupRepository;
 
 class DocumentManager extends AManager {
     public DocumentRepository $documentRepository;
-    private DocumentClassRepository $dcr;
-    private GroupRepository $gr;
-    private FolderRepository $fr;
+    private DocumentClassRepository $documentClassRepository;
+    private GroupRepository $groupRepository;
+    private FolderRepository $folderRepository;
     public EnumManager $enumManager;
 
-    public function __construct(Logger $logger, EntityManager $entityManager, DocumentRepository $documentRepository, DocumentClassRepository $dcr, GroupRepository $gr, FolderRepository $fr) {
+    public function __construct(
+        Logger $logger,
+        EntityManager $entityManager,
+        DocumentRepository $documentRepository,
+        DocumentClassRepository $documentClassRepository,
+        GroupRepository $groupRepository,
+        FolderRepository $folderRepository
+    ) {
         parent::__construct($logger, $entityManager);
 
         $this->documentRepository = $documentRepository;
-        $this->dcr = $dcr;
-        $this->gr = $gr;
-        $this->fr = $fr;
+        $this->documentClassRepository = $documentClassRepository;
+        $this->groupRepository = $groupRepository;
+        $this->folderRepository = $folderRepository;
     }
 
     public function composeQueryForDocuments(string $userId, string $folderId, bool $allMetadata) {
@@ -36,9 +43,9 @@ class DocumentManager extends AManager {
 
         $qb->andWhere('folderId = ?', [$folderId]);
 
-        $groupIds = $this->gr->getGroupsForUser($userId);
+        $groupIds = $this->groupRepository->getGroupsForUser($userId);
 
-        $classes = $this->dcr->getVisibleClassesForGroups($groupIds);
+        $classes = $this->documentClassRepository->getVisibleClassesForGroups($groupIds);
 
         if(empty($classes)) {
             $qb->andWhere('1=0');
@@ -53,11 +60,11 @@ class DocumentManager extends AManager {
         }
 
         if($allMetadata) {
-            $visibleCustomMetadataIds = $this->fr->getVisibleCustomMetadataIdForFolder($folderId);
+            $visibleCustomMetadataIds = $this->folderRepository->getVisibleCustomMetadataIdForFolder($folderId);
 
             $visibleCustomMetadata = [];
             foreach($visibleCustomMetadataIds as $metadataId) {
-                $visibleCustomMetadata[] = $this->fr->getCustomMetadataById($metadataId);
+                $visibleCustomMetadata[] = $this->folderRepository->getCustomMetadataById($metadataId);
             }
         }
 
@@ -65,11 +72,11 @@ class DocumentManager extends AManager {
     }
 
     public function getCustomMetadataForFolder(string $folderId) {
-        $metadataIds = $this->fr->getVisibleCustomMetadataIdForFolder($folderId);
+        $metadataIds = $this->folderRepository->getVisibleCustomMetadataIdForFolder($folderId);
 
         $metadatas = [];
         foreach($metadataIds as $metadataId) {
-            $row = $this->fr->getCustomMetadataById($metadataId);
+            $row = $this->folderRepository->getCustomMetadataById($metadataId);
             $row = DatabaseRow::createFromDbRow($row);
             $metadatas[$metadataId] = $row;
         }
@@ -90,11 +97,11 @@ class DocumentManager extends AManager {
     }
 
     public function getDocumentClassesForDocumentCreateForUser(string $userId) {
-        $groups = $this->gr->getGroupsForUser($userId);
+        $groups = $this->groupRepository->getGroupsForUser($userId);
 
         $classes = [];
         foreach($groups as $groupId) {
-            $qb = $this->dcr->composeQueryForClassesForGroup($groupId)
+            $qb = $this->documentClassRepository->composeQueryForClassesForGroup($groupId)
                 ->andWhere('canView = 1')
                 ->andWhere('canCreate = 1')
                 ->execute();
@@ -102,7 +109,7 @@ class DocumentManager extends AManager {
             while($row = $qb->fetchAssoc()) {
                 $row = DatabaseRow::createFromDbRow($row);
 
-                $class = $this->dcr->getDocumentClassById($row->classId);
+                $class = $this->documentClassRepository->getDocumentClassById($row->classId);
 
                 $classes[$row->classId] = $class['title'];
             }
@@ -112,11 +119,11 @@ class DocumentManager extends AManager {
     }
 
     public function getAllDocumentClassesForUser(string $userId) {
-        $groups = $this->gr->getGroupsForUser($userId);
+        $groups = $this->groupRepository->getGroupsForUser($userId);
 
         $classes = [];
         foreach($groups as $groupId) {
-            $qb = $this->dcr->composeQueryForClassesForGroup($groupId)
+            $qb = $this->documentClassRepository->composeQueryForClassesForGroup($groupId)
                 ->execute();
 
             while($row = $qb->fetchAssoc()) {

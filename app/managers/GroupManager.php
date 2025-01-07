@@ -13,20 +13,20 @@ use App\Repositories\GroupMembershipRepository;
 use App\Repositories\GroupRepository;
 
 class GroupManager extends AManager {
-    private GroupRepository $gr;
-    private GroupMembershipRepository $gmr;
+    private GroupRepository $groupRepository;
+    private GroupMembershipRepository $groupMembershipRepository;
 
-    public function __construct(Logger $logger, EntityManager $em, GroupRepository $gr, GroupMembershipRepository $gmr) {
-        parent::__construct($logger, $em);
+    public function __construct(Logger $logger, EntityManager $entityManager, GroupRepository $groupRepository, GroupMembershipRepository $groupMembershipRepository) {
+        parent::__construct($logger, $entityManager);
 
-        $this->gr = $gr;
-        $this->gmr = $gmr;
+        $this->groupRepository = $groupRepository;
+        $this->groupMembershipRepository = $groupMembershipRepository;
     }
 
     public function isUserMemberOfSuperadministrators(string $userId) {
         $group = $this->getGroupByTitle(SystemGroups::SUPERADMINISTRATORS);
 
-        $members = $this->gmr->getMemberUserIdsForGroupId($group->groupId);
+        $members = $this->groupMembershipRepository->getMemberUserIdsForGroupId($group->groupId);
 
         return in_array($userId, $members);
     }
@@ -34,7 +34,7 @@ class GroupManager extends AManager {
     public function createNewGroup(string $title, array $userIdsToAdd = [], ?string $containerId = null) {
         $groupId = $this->createId(EntityManager::GROUPS);
 
-        if(!$this->gr->createNewGroup($groupId, $title, $containerId)) {
+        if(!$this->groupRepository->createNewGroup($groupId, $title, $containerId)) {
             throw new GeneralException('Could not create group.');
         }
 
@@ -43,7 +43,7 @@ class GroupManager extends AManager {
                 try {
                     $groupUserId = $this->createId(EntityManager::GROUP_USERS);
 
-                    if(!$this->gmr->addUserToGroup($groupUserId, $groupId, $userId)) {
+                    if(!$this->groupMembershipRepository->addUserToGroup($groupUserId, $groupId, $userId)) {
                         throw new GeneralException('Could not add user to group.');
                     }
                 } catch(AException $e) {
@@ -58,7 +58,7 @@ class GroupManager extends AManager {
     }
 
     public function getGroupById(string $groupId) {
-        $group = $this->gr->getGroupById($groupId);
+        $group = $this->groupRepository->getGroupById($groupId);
 
         if($group === null) {
             throw new NonExistingEntityException('Group does not exist.');
@@ -68,13 +68,13 @@ class GroupManager extends AManager {
     }
 
     public function getGroupUsersForGroupId(string $groupId) {
-        return $this->gmr->getGroupUsersForGroupId($groupId);
+        return $this->groupMembershipRepository->getGroupUsersForGroupId($groupId);
     }
 
     public function addUserToGroup(string $userId, string $groupId) {
         $groupUserId = $this->createId(EntityManager::GROUP_USERS);
 
-        if(!$this->gmr->addUserToGroup($groupUserId, $groupId, $userId)) {
+        if(!$this->groupMembershipRepository->addUserToGroup($groupUserId, $groupId, $userId)) {
             throw new GeneralException('User is probably member of the group.');
         }
 
@@ -86,7 +86,7 @@ class GroupManager extends AManager {
     }
 
     public function removeUserFromGroup(string $userId, string $groupId) {
-        if(!$this->gmr->removeUserFromGroup($groupId, $userId)) {
+        if(!$this->groupMembershipRepository->removeUserFromGroup($groupId, $userId)) {
             throw new GeneralException('User is not member of the group.');
         }
 
@@ -98,7 +98,7 @@ class GroupManager extends AManager {
     }
 
     public function getGroupByTitle(string $title) {
-        $group = $this->gr->getGroupByTitle($title);
+        $group = $this->groupRepository->getGroupByTitle($title);
 
         if($group === null) {
             throw new NonExistingEntityException('Group does not exist.');
@@ -114,7 +114,7 @@ class GroupManager extends AManager {
     }
 
     public function getMembershipsForUser(string $userId, bool $force = false) {
-        $groupIds = $this->gr->getGroupsForUser($userId, $force);
+        $groupIds = $this->groupRepository->getGroupsForUser($userId, $force);
 
         $groups = [];
         foreach($groupIds as $id) {
@@ -147,7 +147,7 @@ class GroupManager extends AManager {
     }
 
     public function removeGroup(string $groupId) {
-        if(!$this->gr->removeGroup($groupId)) {
+        if(!$this->groupRepository->removeGroup($groupId)) {
             throw new GeneralException('Could not remove group.');
         }
     }

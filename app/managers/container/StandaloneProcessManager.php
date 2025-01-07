@@ -45,23 +45,23 @@ class StandaloneProcessManager extends AManager {
             unset($data['btn_submit']);
         }
 
-        if(!$this->processManager->pr->insertNewProcessData($entryId, $processId, serialize($data))) {
+        if(!$this->processManager->processRepository->insertNewProcessData($entryId, $processId, serialize($data))) {
             throw new GeneralException('Database error.');
         }
     }
 
     public function getProcessData(string $processId) {
-        return $this->processManager->pr->getProcessDataForProcess($processId);
+        return $this->processManager->processRepository->getProcessDataForProcess($processId);
     }
 
     public function updateProcessType(string $typeKey, array $data) {
-        if(!$this->processManager->pr->updateProcessType($typeKey, $data)) {
+        if(!$this->processManager->processRepository->updateProcessType($typeKey, $data)) {
             throw new GeneralException('Database error.');
         }
     }
 
     public function getEnabledProcessTypes() {
-        $qb = $this->processManager->pr->composeQueryForProcessTypes();
+        $qb = $this->processManager->processRepository->composeQueryForProcessTypes();
         $qb->andWhere('isEnabled = 1')
             ->execute();
 
@@ -74,7 +74,7 @@ class StandaloneProcessManager extends AManager {
     }
 
     public function composeQueryForProcessTypeInstances(string $processType) {
-        $qb = $this->processManager->pr->commonComposeQuery(false);
+        $qb = $this->processManager->processRepository->commonComposeQuery(false);
         $qb->andWhere('type = ?', [$processType]);
         return $qb;
     }

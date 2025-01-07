@@ -63,7 +63,7 @@ class ProcessesGrid extends GridBuilder implements IGridExtendingComponent {
         $this->processManager = $processManager;
         $this->documentManager = $documentManager;
 
-        $this->dataSourceHelper = new ProcessGridDataSourceHelper($this->processManager->pr);
+        $this->dataSourceHelper = new ProcessGridDataSourceHelper($this->processManager->processRepository);
 
         $this->view = ProcessGridViews::VIEW_ALL;
     }

@@ -58,8 +58,16 @@ class DocumentsPresenter extends AUserPresenter {
     }
 
     protected function createComponentDocumentsGrid(HttpRequest $request) {
-        $documentsGrid = new DocumentsGrid($this->componentFactory->getGridBuilder(), $this->app, $this->documentManager, $this->documentBulkActionAuthorizator, $this->groupStandardOperationsAuthorizator, $this->enumManager);
-        $documentsGrid->setGridName('documentsGrid');
+        $documentsGrid = new DocumentsGrid(
+            $this->componentFactory->getGridBuilder($this->containerId),
+            $this->app,
+            $this->documentManager,
+            $this->documentBulkActionAuthorizator,
+            $this->groupStandardOperationsAuthorizator,
+            $this->enumManager,
+            $this->gridManager,
+            $this->processFactory
+        );
 
         $documentsGrid->setCurrentFolder($this->currentFolderId);
         $documentsGrid->showCustomMetadata();

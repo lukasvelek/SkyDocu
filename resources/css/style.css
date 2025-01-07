@@ -463,7 +463,7 @@ div [id*="my-message-id-"] {
     height: 36px;
 }
 
-#post-comment-form #formSubmit, #poll-choice-form #formSubmit, #post-comments-load-more-link button, #notification-links button, #followers-list-load-more-link button, #follows-list-load-more-link button, #posts-load-more-link button, #form #formSubmit, #form .formSubmit, #form #formButton {
+#formSubmit, #post-comment-form #formSubmit, #poll-choice-form #formSubmit, #post-comments-load-more-link button, #notification-links button, #followers-list-load-more-link button, #follows-list-load-more-link button, #posts-load-more-link button, #form #formSubmit, #form .formSubmit, #form #formButton {
     background-color: rgba(0, 0, 0, 0.75);
 
     color: white;
@@ -474,9 +474,13 @@ div [id*="my-message-id-"] {
     border-radius: 10px;
 }
 
-#post-comment-form #formSubmit:hover, #poll-choice-form #formSubmit:hover, #post-comments-load-more-link button:hover, #notification-links button:hover, #followers-list-load-more-link button:hover, #follows-list-load-more-link button:hover, #posts-load-more-link button:hover, #form #formSubmit:hover, #form .formSubmit:hover, #form #formButton:hover {
+#formSubmit:hover, #post-comment-form #formSubmit:hover, #poll-choice-form #formSubmit:hover, #post-comments-load-more-link button:hover, #notification-links button:hover, #followers-list-load-more-link button:hover, #follows-list-load-more-link button:hover, #posts-load-more-link button:hover, #form #formSubmit:hover, #form .formSubmit:hover, #form #formButton:hover {
     background-color: rgb(50, 50, 50);
     border: 1px solid rgb(50, 50, 50);
+}
+
+button #formSubmit {
+    padding: 3px 10px 3px 10px;
 }
 
 #followers-list-load-more-link button, #follows-list-load-more-link button {
@@ -682,6 +686,16 @@ div [id*="user-action-history-"] {
 
 .widget-title {
     font-size: 24px;
+}
+
+.widget-title a {
+    text-decoration: none;
+
+    color: black;
+}
+
+.widget-title a:hover {
+    text-decoration: underline;
 }
 
 #widget table {

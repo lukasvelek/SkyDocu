@@ -4,9 +4,9 @@ namespace App\Modules\AdminModule;
 
 use App\Constants\Container\SystemGroups;
 use App\Core\Caching\CacheNames;
+use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
-use App\UI\FormBuilder\FormResponse;
 use App\UI\LinkBuilder;
 
 class UsersPresenter extends AAdminPresenter {
@@ -23,7 +23,7 @@ class UsersPresenter extends AAdminPresenter {
     }
 
     protected function createComponentUsersGrid(HttpRequest $request) {
-        $grid = $this->componentFactory->getGridBuilder();
+        $grid = $this->componentFactory->getGridBuilder($this->containerId);
 
         $userIds = $this->groupRepository->getMembersForGroup($this->groupRepository->getGroupByTitle(SystemGroups::ALL_USERS)['groupId']);
 
@@ -39,7 +39,7 @@ class UsersPresenter extends AAdminPresenter {
         return $grid;
     }
 
-    public function handleNewUserForm(?FormResponse $fr = null) {
+    public function handleNewUserForm(?FormRequest $fr = null) {
         if($fr !== null) {
             // Add user to master users
             // Add user to container All users group

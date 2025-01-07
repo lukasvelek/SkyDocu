@@ -76,7 +76,7 @@ class ContainerUsageStatisticsService extends AService {
         foreach($containers as $containerId) {
             $this->logInfo('Starting to search for log files for container \'' . $containerId . '\'.');
 
-            $containerFiles = FileManager::getFilesInFolder(APP_ABSOLUTE_DIR . LOG_DIR . $containerId);
+            $containerFiles = FileManager::getFilesInFolder(APP_ABSOLUTE_DIR . LOG_DIR . 'containers\\' . $containerId);
 
             $this->logInfo('Found ' . count($containerFiles) . 'log files for container \'' . $containerId . '\'.');
 
@@ -134,14 +134,22 @@ class ContainerUsageStatisticsService extends AService {
 
             $totalTimeTaken = 0.0;
             foreach($lines as $line) {
+                // we only want lines with real data not with stack trace
+                if(!str_starts_with($line, '[')) {
+                    continue;
+                }
+
                 $lineParts = explode(' ', $line);
                 $timeTaken = substr($lineParts[3], 1);
                 $totalTimeTaken = $totalTimeTaken + (float)$timeTaken;
             }
 
+            $averageTimeTaken = ceil($totalTimeTaken / count($lines));
+
             return [
                 'count' => (count($lines) - 1),
-                'averageTimeTaken' => $totalTimeTaken
+                'averageTimeTaken' => $averageTimeTaken,
+                'totalTimeTaken' => $totalTimeTaken
             ];
         } catch(AException|Exception $e) {
             return 0;
@@ -154,6 +162,7 @@ class ContainerUsageStatisticsService extends AService {
             foreach($data as $date => $measuredData) {
                 $totalSqlQueries = $measuredData['count'];
                 $averageTimeTaken = (float)$measuredData['averageTimeTaken'];
+                $totalTimeTaken = (float)$measuredData['totalTimeTaken'];
 
                 $count = $this->containerRepository->getContainerUsageStatisticsForDate($containerId, $date);
                 if($count > 0) {
@@ -169,7 +178,7 @@ class ContainerUsageStatisticsService extends AService {
                     
                     $entryId = $this->containerManager->entityManager->generateEntityId(EntityManager::CONTAINER_USAGE_STATISTICS);
 
-                    $this->containerRepository->insertNewContainerUsageStatisticsEntry($entryId, $containerId, $totalSqlQueries, $averageTimeTaken, $date);
+                    $this->containerRepository->insertNewContainerUsageStatisticsEntry($entryId, $containerId, $totalSqlQueries, $averageTimeTaken, $date, $totalTimeTaken);
 
                     $this->containerRepository->commit($this->serviceManager->getServiceUserId(), __METHOD__);
 

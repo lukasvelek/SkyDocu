@@ -2,6 +2,8 @@
 
 namespace App\Core\Http;
 
+use App\Entities\UserEntity;
+
 /**
  * HttpRequest represents a single HTTP request. It contains query parameters and a boolean that indicates whether it is a AJAX call or not.
  * 
@@ -30,12 +32,20 @@ class HttpRequest {
     public array $params;
 
     /**
+     * Current user or null
+     * 
+     * @var ?UserEntity $currentUser
+     */
+    public ?UserEntity $currentUser;
+
+    /**
      * Class constructor
      */
     public function __construct() {
         $this->query = [];
         $this->isAjax = false;
         $this->params = [];
+        $this->currentUser = null;
     }
 }
 

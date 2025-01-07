@@ -3,9 +3,13 @@
 namespace App\UI\GridBuilder2;
 
 use App\Constants\AConstant;
+use App\Constants\IColorable;
 use App\Core\AjaxRequestBuilder;
+use App\Core\Caching\CacheFactory;
+use App\Core\Caching\CacheNames;
 use App\Core\DB\DatabaseRow;
 use App\Core\Http\HttpRequest;
+use App\Core\Http\JsonResponse;
 use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
 use App\Exceptions\GridExportException;
@@ -87,6 +91,9 @@ class GridBuilder extends AComponent {
     private bool $hasCheckboxes;
     private array $checkboxHandler;
 
+    protected CacheFactory $cacheFactory;
+    private int $resultLimit;
+
     /**
      * Class constructor
      * 
@@ -112,6 +119,7 @@ class GridBuilder extends AComponent {
         $this->filledDataSource = null;
         $this->hasCheckboxes = false;
         $this->checkboxHandler = [];
+        $this->resultLimit = GRID_SIZE;
     }
 
     /**
@@ -124,12 +132,74 @@ class GridBuilder extends AComponent {
     }
 
     /**
+     * Retrieves active filters from cache
+     */
+    private function getActiveFiltersFromCache() {
+        $cache = $this->cacheFactory->getCache(CacheNames::GRID_FILTER_DATA);
+
+        $this->activeFilters = $cache->load($this->gridName . $this->app->currentUser?->getId(), function() {
+            return $this->activeFilters;
+        });
+    }
+
+    /**
+     * Saves active filters to cache
+     */
+    private function saveActiveFilters() {
+        $cache = $this->cacheFactory->getCache(CacheNames::GRID_FILTER_DATA);
+
+        $cache->save($this->gridName . $this->app->currentUser?->getId(), function() {
+            return $this->activeFilters;
+        });
+    }
+
+    /**
+     * Clears active filters (in cache)
+     */
+    protected function clearActiveFilters() {
+        $cache = $this->cacheFactory->getCache(CacheNames::GRID_FILTER_DATA);
+
+        $cache->save($this->gridName . $this->app->currentUser?->getId(), function() {
+            return [];
+        });
+
+        $this->activeFilters = [];
+    }
+
+    /**
+     * Sets the result limit
+     * 
+     * @param int $limit Result limit
+     */
+    public function setLimit(int $limit) {
+        $this->resultLimit = $limit;
+    }
+
+    /**
      * Sets the GridHelper instance
      * 
      * @param GridHelper $helper GridHelper instance
      */
     public function setHelper(GridHelper $helper) {
         $this->helper = $helper;
+    }
+
+    /**
+     * Returns the GridHelper instance
+     * 
+     * @return GridHelper GridHelper instance
+     */
+    public function getHelper() {
+        return $this->helper;
+    }
+
+    /**
+     * Sets the CacheFactory instance
+     * 
+     * @param CacheFactory $cacheFactory CacheFactory instance
+     */
+    public function setCacheFactory(CacheFactory $cacheFactory) {
+        $this->cacheFactory = $cacheFactory;
     }
 
     /**
@@ -223,6 +293,17 @@ class GridBuilder extends AComponent {
                 if(class_exists($constClass)) {
                     if(in_array(AConstant::class, class_parents($constClass))) {
                         $result = $constClass::toString($value);
+
+                        if(in_array(IColorable::class, class_implements($constClass))) {
+                            $color = $constClass::getColor($value);
+
+                            $el = HTML::el('span');
+
+                            $el->text($result)
+                                ->style('color', $color);
+
+                            $result = $el->toString();
+                        }
                     }
                 }
             } catch(Exception $e) {}
@@ -282,7 +363,7 @@ class GridBuilder extends AComponent {
      * Adds a general column
      * 
      * @param string $name Column name
-     * @param ?string $label column label
+     * @param ?string $label Column label
      * @return Column Column instance
      */
     public function addColumnText(string $name, ?string $label = null) {
@@ -379,8 +460,8 @@ class GridBuilder extends AComponent {
      * @param string $primaryKeyColName Name of the column with primary key
      */
     public function createDataSourceFromQueryBuilder(QueryBuilder $qb, string $primaryKeyColName) {
-        $this->primaryKeyColName = $primaryKeyColName;
         $this->dataSource = $qb;
+        $this->primaryKeyColName = $primaryKeyColName;
     }
 
     /**
@@ -390,10 +471,8 @@ class GridBuilder extends AComponent {
      * @return QueryBuilder QueryBuilder instance
      */
     protected function processQueryBuilderDataSource(QueryBuilder $qb) {
-        $gridSize = GRID_SIZE;
-
-        $qb->limit($gridSize)
-            ->offset(($this->gridPage * $gridSize));
+        $qb->limit($this->resultLimit)
+            ->offset(($this->gridPage * $this->resultLimit));
 
         if(!empty($this->activeFilters)) {
             foreach($this->activeFilters as $name => $value) {
@@ -425,9 +504,7 @@ class GridBuilder extends AComponent {
      * @return string HTML code
      */
     public function render() {
-        $this->fetchDataFromDb(true);
-
-        $this->build();
+        $this->prerender();
 
         $template = $this->getTemplate(__DIR__ . '/grid.html');
 
@@ -436,8 +513,18 @@ class GridBuilder extends AComponent {
         $template->controls = $this->createGridControls();
         $template->filter_modal = '';
         $template->filters = $this->createGridFilterControls();
+        $template->grid_name = $this->gridName;
 
         return $template->render()->getRenderedContent();
+    }
+
+    /**
+     * Prerenders the grid
+     */
+    protected function prerender() {
+        $this->getActiveFiltersFromCache();
+        $this->fetchDataFromDb(true);
+        $this->build();
     }
 
     /**
@@ -497,6 +584,7 @@ class GridBuilder extends AComponent {
             $_row = new Row();
             $_row->setPrimaryKey($rowId);
             $_row->index = $rowIndex;
+            $_row->rowData = $row;
 
             foreach($this->columns as $name => $col) {
                 $_cell = new Cell();
@@ -547,68 +635,6 @@ class GridBuilder extends AComponent {
                 }
             }
 
-            if(!empty($this->actions)) {
-                $isAtLeastOneDisplayed = false;
-                
-                $canRender = [];
-                foreach($this->actions as $actionName => $action) {
-                    $cAction = clone $action;
-
-                    foreach($cAction->onCanRender as $render) {
-                        try {
-                            $result = $render($row, $_row, $cAction);
-
-                            if($result === true) {
-                                $canRender[$actionName] = $cAction;
-                            } else {
-                                $canRender[$actionName] = null;
-                            }
-                        } catch(Exception $e) {
-                            $canRender[$actionName] = null;
-                        }
-                    }
-                }
-
-                $isAtLeastOneDisplayed = !empty($canRender);
-
-                $canRender = ArrayHelper::reverseArray($canRender);
-
-                $cells = [];
-                foreach($canRender as $name => $action) {
-                    if($action instanceof Action) {
-                        $cAction = clone $action;
-                        $cAction->inject($row, $_row, $rowId);
-                        $_cell = new Cell();
-                        $_cell->setName($name);
-                        $_cell->setContent($cAction->output()->toString());
-                        $_cell->setClass('grid-cell-action');
-                    } else {
-                        $_cell = new Cell();
-                        $_cell->setName($name);
-                        $_cell->setContent('');
-                        $_cell->setClass('grid-cell-action');
-                    }
-
-                    $cells[] = $_cell;
-                }
-
-                if($isAtLeastOneDisplayed && !$hasActionsCol) {
-                    $_headerCell = new Cell();
-                    $_headerCell->setName('actions');
-                    $_headerCell->setContent('Actions');
-                    $_headerCell->setHeader();
-                    $_headerCell->setSpan(count($canRender));
-                    $_tableRows['header']->addCell($_headerCell, true);
-                    $hasActionsCol = true;
-                }
-
-                if($isAtLeastOneDisplayed) {
-                    foreach($cells as $cell) {
-                        $_row->addCell($cell, true);
-                    }
-                }
-            }
-
             if($this->hasCheckboxes) {
                 $rowCheckbox = new RowCheckbox($rowId, $this->componentName . '_onCheckboxCheck(\'' . $rowId . '\')');
                 $_row->addCell($rowCheckbox, true);
@@ -624,6 +650,129 @@ class GridBuilder extends AComponent {
             $_headerCell->setHeader();
             $_headerCell->setContent('');
             $_tableRows['header']->addCell($_headerCell, true);
+        }
+
+        if(!empty($this->actions)) {
+            $maxCountToRender = 0;
+            $canRender = [];
+            
+            foreach($_tableRows as $k => $_row) {
+                if($k == 'header') continue;
+
+                $i = 0;
+                foreach($this->actions as $actionName => $action) {
+                    $cAction = clone $action;
+
+                    foreach($cAction->onCanRender as $render) {
+                        try {
+                            $result = $render($_row->rowData, $_row, $cAction);
+
+                            if($result == true) {
+                                $canRender[$k][$actionName] = $cAction;
+                                $i++;
+                            } else {
+                                $canRender[$k][$actionName] = null;
+                            }
+                        } catch(Exception $e) {
+                            $canRender[$k][$actionName] = null;
+                        }
+                    }
+
+                    if($i > $maxCountToRender) {
+                        $maxCountToRender = $i;
+                    }
+                }
+            }
+
+            $cells = [];
+            if(count($this->actions) == $maxCountToRender) {
+                foreach($canRender as $k => $actionData) {
+                    $_row = &$_tableRows[$k];
+
+                    $actionData = ArrayHelper::reverseArray($actionData);
+                    
+                    foreach($actionData as $actionName => $action) {
+                        if($action instanceof Action) {
+                            $cAction = clone $action;
+                            $cAction->inject($_row->rowData, $_row, $_row->primaryKey);
+                            $_cell = new Cell();
+                            $_cell->setName($actionName);
+                            $_cell->setContent($cAction->output()->toString());
+                            $_cell->setClass('grid-cell-action');
+                        } else {
+                            $_cell = new Cell();
+                            $_cell->setName($actionName);
+                            $_cell->setContent('');
+                            $_cell->setClass('grid-cell-action');
+                        }
+
+                        $cells[$k][$actionName] = $_cell;
+                    }
+                }
+            } else {
+                foreach($canRender as $k => $actionData) {
+                    $_row = &$_tableRows[$k];
+
+                    $actionData = ArrayHelper::reverseArray($actionData);
+                    
+                    foreach($actionData as $actionName => $action) {
+                        if($action instanceof Action) {
+                            $cAction = clone $action;
+                            $cAction->inject($_row->rowData, $_row, $_row->primaryKey);
+                            $_cell = new Cell();
+                            $_cell->setName($actionName);
+                            $_cell->setContent($cAction->output()->toString());
+                            $_cell->setClass('grid-cell-action');
+                            $cells[$k][$actionName] = $_cell;
+                        }
+                    }
+                }
+            }
+
+            /**
+             * All action names that should be displayed
+             */
+            $tmp = [];
+            foreach($cells as $k => $c) {
+                foreach($c as $cell) {
+                    if(!in_array($cell->getName(), $tmp)) {
+                        $tmp[] = $cell->getName();
+                    }
+                }
+            }
+
+            if(count($tmp) > 0) {
+                $_headerCell = new Cell();
+                $_headerCell->setName('actions');
+                $_headerCell->setContent('Actions');
+                $_headerCell->setHeader();
+                $_headerCell->setSpan(count($tmp));
+                $_tableRows['header']->addCell($_headerCell, true);
+            }
+
+            foreach(array_keys($_tableRows) as $k) {
+                if($k == 'header') continue;
+                $_cells = $cells[$k];
+
+                foreach($tmp as $name) {
+                    if(array_key_exists($name, $_cells)) {
+                        /**
+                         * Action with this name on this row should exist
+                         */
+                        $_tableRows[$k]->addCell($_cells[$name], true);
+                    } else {
+                        /**
+                         * Action with this name on this row should not exist
+                         */
+                        $_cell = new Cell();
+                        $_cell->setName($name);
+                        $_cell->setContent('');
+                        $_cell->setClass('grid-cell-action');
+
+                        $_tableRows[$k]->addCell($_cell, true);
+                    }
+                }
+            }
         }
 
         if(count($_tableRows) == 1) {
@@ -818,13 +967,29 @@ class GridBuilder extends AComponent {
                 </script>
             ';
 
-            $scripts[] = '
-                <script type="text/javascript">
-                    function ' . $this->componentName . '_processFilterClear() {
-                        location.href = "' . $this->presenter->createURLString($this->presenter->getAction(), $this->queryDependencies) . '";
-                    }
-                </script>
-            ';
+            $arb = new AjaxRequestBuilder();
+
+            $fArgs = [];
+            $headerArgs = [];
+            if(!empty($this->queryDependencies)) {
+                foreach($this->queryDependencies as $k => $v) {
+                    $pK = '_' . $k;
+
+                    $fArgs[] = $pK;
+                    $headerArgs[$k] = $pK;
+                }
+            }
+
+            $arb->setMethod()
+                ->setComponentAction($this->presenter, $this->componentName . '-filterClear')
+                ->setHeader($headerArgs)
+                ->setFunctionName($this->componentName . '_filterClear')
+                ->setFunctionArguments($fArgs)
+                ->setComponent()
+                ->updateHTMLElement('grid', 'grid')
+            ;
+
+            $addScript($arb);
         }
 
         // EXPORT MODAL
@@ -892,6 +1057,12 @@ class GridBuilder extends AComponent {
             $headerParams = [
                 'ids[]' => '_ids'
             ];
+
+            if(array_key_exists('params', $this->checkboxHandler)) {
+                foreach($this->checkboxHandler['params'] as $paramName => $paramKey) {
+                    $headerParams[$paramName] = $paramKey;
+                }
+            }
 
             if(!array_key_exists('isComponent', $this->checkboxHandler)) {
                 $arb->setAction($this->checkboxHandler['presenter'], $this->checkboxHandler['action']);
@@ -979,14 +1150,14 @@ class GridBuilder extends AComponent {
      */
     private function createGridPageInfo() {
         $totalCount = $this->getTotalCount();
-        $lastPage = (int)ceil($totalCount / GRID_SIZE);
+        $lastPage = (int)ceil($totalCount / $this->resultLimit);
 
-        $lastPageCount = GRID_SIZE * ($this->gridPage + 1);
+        $lastPageCount = $this->resultLimit * ($this->gridPage + 1);
         if($lastPageCount > $totalCount) {
             $lastPageCount = $totalCount;
         }
 
-        return 'Page ' . ($this->gridPage + 1) . ' of ' . $lastPage . ' (' . (GRID_SIZE * $this->gridPage) . ' - ' . $lastPageCount . ')';
+        return 'Page ' . ($this->gridPage + 1) . ' of ' . $lastPage . ' (' . ($this->resultLimit * $this->gridPage) . ' - ' . $lastPageCount . ')';
     }
 
     /**
@@ -1019,7 +1190,7 @@ class GridBuilder extends AComponent {
      */
     private function createGridPagingControl() {
         $totalCount = $this->getTotalCount();
-        $lastPage = (int)ceil($totalCount / GRID_SIZE) - 1;
+        $lastPage = (int)ceil($totalCount / $this->resultLimit) - 1;
 
         $firstPageBtn = $this->createPagingButtonCode(0, '&lt;&lt;', ($this->gridPage == 0));
         $previousPageBtn = $this->createPagingButtonCode(($this->gridPage - 1), '&lt;', ($this->gridPage == 0));
@@ -1104,6 +1275,7 @@ class GridBuilder extends AComponent {
         $btn = HTML::el('button')
                 ->addAtribute('type', 'button')
                 ->onClick($this->componentName . '_processFilterModalOpen()')
+                ->id('formSubmit')
                 ->text('Filter')
         ;
 
@@ -1111,17 +1283,24 @@ class GridBuilder extends AComponent {
             $btn->toString()
         ];
 
+        if(!empty($this->queryDependencies)) {
+            foreach($this->queryDependencies as $k => $v) {
+                $args[] = '\'' . $v . '\'';
+            }
+        }
+
         if(!empty($this->activeFilters)) {
             $btn = HTML::el('button')
                     ->addAtribute('type', 'button')
-                    ->onClick($this->componentName . '_processFilterClear()')
+                    ->onClick($this->componentName . '_filterClear(' . implode(', ', $args) . ')')
+                    ->id('formSubmit')
                     ->text('Clear filter')
             ;
 
             $btns[] = $btn->toString();
         }
 
-        $el->text(implode('', $btns));
+        $el->text(implode('&nbsp;', $btns));
 
         return $el->toString();
     }
@@ -1131,7 +1310,7 @@ class GridBuilder extends AComponent {
     /**
      * Refreshes the grid
      * 
-     * @return array<string, string> Response
+     * @return JsonResponse Response
      */
     public function actionRefresh() {
         foreach($this->filters as $name => $filter) {
@@ -1139,17 +1318,16 @@ class GridBuilder extends AComponent {
                 $this->activeFilters[$name] = $this->httpRequest->query[$name];
             }
         }
-
         if(!($this instanceof IGridExtendingComponent)) {
             $this->build();
         }
-        return ['grid' => $this->render()];
+        return new JsonResponse(['grid' => $this->render()]);
     }
 
     /**
      * Changes the grid page
      * 
-     * @return array<string, string> Response
+     * @return JsonResponse Response
      */
     public function actionPage() {
         foreach($this->filters as $name => $filter) {
@@ -1157,17 +1335,16 @@ class GridBuilder extends AComponent {
                 $this->activeFilters[$name] = $this->httpRequest->query[$name];
             }
         }
-
         if(!($this instanceof IGridExtendingComponent)) {
             $this->build();
         }
-        return ['grid' => $this->render()];
+        return new JsonResponse(['grid' => $this->render()]);
     }
 
     /**
      * Filters the grid data
      * 
-     * @return array<string, string> Response
+     * @return JsonResponse Response
      */
     public function actionFilter() {
         foreach($this->filters as $name => $filter) {
@@ -1176,16 +1353,35 @@ class GridBuilder extends AComponent {
             }
         }
 
-        if(!($this instanceof IGridExtendingComponent)) {
-            $this->build();
-        }
-        return ['grid' => $this->render()];
+        $this->saveActiveFilters();
+
+        /**
+         * When filter is added to a class that extends this class, then it has to call its prerender() method first.
+         * After that parent::actionFilter() [this method in this class] can be called.
+         * 
+         * Before this line was available only for non extending classes but it didn't make sense because it didn't work at all.
+         * Build recreates the grid and thus it must be called because otherwise none filters can be applied.
+         */
+        $this->build();
+
+        return new JsonResponse(['grid' => $this->render()]);
+    }
+
+    /**
+     * Cleans the grid data filter
+     * 
+     * @return JsonResponse Response
+     */
+    public function actionFilterClear() {
+        $this->build();
+
+        return new JsonResponse(['grid' => $this->render()]);
     }
 
     /**
      * Exports the limited entries
      * 
-     * @return array<string, string> Response
+     * @return JsonResponse Response
      */
     public function actionExportLimited() {
         $ds = clone $this->dataSource;
@@ -1195,7 +1391,7 @@ class GridBuilder extends AComponent {
         try {
             $geh = $this->createGridExportHandler($ds);
             [$file, $hash] = $geh->exportNow();
-            $result = ['file' => $file, 'hash' => $hash];
+            $result = new JsonResponse(['file' => $file, 'hash' => $hash]);
         } catch(AException $e) {
             throw new GridExportException('Could not process limited export.', $e);
         }
@@ -1206,7 +1402,7 @@ class GridBuilder extends AComponent {
     /**
      * Queues asynchronous unlimited export
      * 
-     * @return array<string, string|int> Response
+     * @return JsonResponse Response
      */
     public function actionExportUnlimited() {
         $ds = clone $this->dataSource;
@@ -1216,7 +1412,7 @@ class GridBuilder extends AComponent {
         try {
             $geh = $this->createGridExportHandler($ds);
             $hash = $geh->exportAsync();
-            $result = ['hash' => $hash, 'success' => 1];
+            $result = new JsonResponse(['hash' => $hash, 'success' => 1]);
         } catch(AException|Exception $e) {
             throw new GridExportException('Could not process unlimited export.', $e);
         }
@@ -1305,13 +1501,41 @@ class GridBuilder extends AComponent {
         ];
     }
 
-    public function addCheckboxes2(APresenter $presenter, string $componentAction) {
+    /**
+     * Adds checkboxes to the grid
+     * 
+     * @param APresenter $presenter Handler presenter
+     * @param string $action Handler action
+     */
+    public function addCheckboxes2(APresenter $presenter, string $componentAction, array $params = []) {
         $this->hasCheckboxes = true;
         $this->checkboxHandler = [
             'presenter' => $presenter,
             'action' => $componentAction,
             'isComponent' => true
         ];
+
+        if(!empty($params)) {
+            $this->checkboxHandler['params'] = $params;
+        }
+    }
+
+    /**
+     * Returns data source with applied pagination
+     * 
+     * @return ?QueryBuilder QueryBuilder or null
+     */
+    protected function getPagedDataSource() {
+        if($this->dataSource === null) {
+            return null;
+        }
+
+        $qb = clone $this->dataSource;
+
+        $qb->limit($this->resultLimit)
+            ->offset(($this->gridPage * $this->resultLimit));
+
+        return $qb;
     }
 }
 

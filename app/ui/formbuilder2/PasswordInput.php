@@ -7,7 +7,7 @@ namespace App\UI\FormBuilder2;
  * 
  * @author Lukas Velek
  */
-class PasswordInput extends Input {
+class PasswordInput extends AInput {
     /**
      * Class constructor
      * 

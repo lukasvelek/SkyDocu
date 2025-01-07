@@ -19,8 +19,6 @@ class ExpressionBuilder {
 
     /**
      * Appends AND
-     * 
-     * @return self
      */
     public function and() {
         $this->queryData[] = 'AND';
@@ -30,8 +28,6 @@ class ExpressionBuilder {
 
     /**
      * Appends OR
-     * 
-     * @return self
      */
     public function or() {
         $this->queryData[] = 'OR';
@@ -41,8 +37,6 @@ class ExpressionBuilder {
 
     /**
      * Appends left bracket
-     * 
-     * @return self
      */
     public function lb() {
         $this->queryData[] = '(';
@@ -52,8 +46,6 @@ class ExpressionBuilder {
 
     /**
      * Appends right bracket
-     * 
-     * @return self
      */
     public function rb() {
         $this->queryData[] = ')';
@@ -66,7 +58,6 @@ class ExpressionBuilder {
      * 
      * @param string $cond Condition
      * @param array $values Condition parameter values
-     * @return self
      */
     public function where(string $cond, array $values = []) {
         if(str_contains($cond, '?') && !empty($values)) {
@@ -102,7 +93,6 @@ class ExpressionBuilder {
      * 
      * @param string $cond Condition
      * @param array $values Condition parameter values
-     * @return self
      */
     public function andWhere(string $cond, array $values = []) {
         $this->and();
@@ -116,7 +106,6 @@ class ExpressionBuilder {
      * 
      * @param string $cond Condition
      * @param array $values Condition parameter values
-     * @return self
      */
     public function orWhere(string $cond, array $values = []) {
         $this->or();

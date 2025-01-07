@@ -2,7 +2,7 @@
 
 namespace App\Constants;
 
-class SystemServiceStatus extends AConstant {
+class SystemServiceStatus extends AConstant implements IColorable {
     public const NOT_RUNNING = 1;
     public const RUNNING = 2;
 
@@ -10,6 +10,14 @@ class SystemServiceStatus extends AConstant {
         return match((int)$key) {
             self::NOT_RUNNING => 'Not running',
             self::RUNNING => 'Running'
+        };
+    }
+
+    public static function getColor($key): ?string {
+        return match((int)$key) {
+            self::NOT_RUNNING => 'red',
+            self::RUNNING => 'green',
+            default => 'black'
         };
     }
 }

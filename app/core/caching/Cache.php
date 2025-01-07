@@ -30,7 +30,7 @@ class Cache {
      * @param ?DateTime $expirationDate Cache expiration date
      * @param ?DateTime $lastWriteDate Date of last write
      */
-    public function __construct(array $data,  string $namespace, CacheFactory $cacheFactory, CacheLogger $logger, ?DateTime $expirationDate = null, ?DateTime $lastWriteDate = null) {
+    public function __construct(array $data, string $namespace, CacheFactory $cacheFactory, CacheLogger $logger, ?DateTime $expirationDate = null, ?DateTime $lastWriteDate = null) {
         $this->data = $data;
         $this->expirationDate = $expirationDate;
         $this->invalidated = false;
@@ -48,10 +48,11 @@ class Cache {
      * @param mixed $key Data key
      * @param callback $generator Data generator
      * @param array $generatorDependencies Data generator dependencies (arguments)
+     * @param bool $force Force generate result or not
      * @return mixed|null Data or null
      */
-    public function load(mixed $key, callable $generator, array $generatorDependencies = []) {
-        if(array_key_exists($key, $this->data)) {
+    public function load(mixed $key, callable $generator, array $generatorDependencies = [], bool $force = false) {
+        if(array_key_exists($key, $this->data) && !$force) {
             $this->logger->logHitMiss($key, $this->namespace, true, __METHOD__);
             return $this->data[$key];
         } else {
@@ -76,7 +77,6 @@ class Cache {
      * @param mixed $key Data key
      * @param callback $generator Data generator
      * @param array $generatorDependencies Data generator dependencies (arguments)
-     * @return void
      */
     public function save(mixed $key, callable $generator, array $generatorDependencies = []) {
         try {
@@ -162,6 +162,15 @@ class Cache {
      */
     public function getNamespace() {
         return $this->namespace;
+    }
+
+    /**
+     * Is cache filled?
+     * 
+     * @return bool True if data is cache or false if the cache is empty
+     */
+    public function isCached() {
+        return !empty($this->cache);
     }
 }
 

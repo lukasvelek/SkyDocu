@@ -13,11 +13,13 @@ use App\Exceptions\GeneralException;
 use App\Exceptions\ModuleDoesNotExistException;
 use App\Helpers\LinkHelper;
 use App\Logger\Logger;
+use App\Managers\ContainerInviteManager;
 use App\Managers\ContainerManager;
 use App\Managers\EntityManager;
 use App\Managers\GroupManager;
 use App\Managers\UserManager;
 use App\Modules\ModuleManager;
+use App\Repositories\ContainerInviteRepository;
 use App\Repositories\ContainerRepository;
 use App\Repositories\ContentRepository;
 use App\Repositories\GridExportRepository;
@@ -60,12 +62,14 @@ class Application {
     public GroupRepository $groupRepository;
     public GroupMembershipRepository $groupMembershipRepository;
     public ContainerRepository $containerRepository;
+    public ContainerInviteRepository $containerInviteRepository;
 
     public ServiceManager $serviceManager;
     public UserManager $userManager;
     public EntityManager $entityManager;
     public GroupManager $groupManager;
     public ContainerManager $containerManager;
+    public ContainerInviteManager $containerInviteManager;
 
     public array $repositories;
 
@@ -102,6 +106,7 @@ class Application {
         $this->userManager = new UserManager($this->logger, $this->userRepository, $this->entityManager);
         $this->groupManager = new GroupManager($this->logger, $this->entityManager, $this->groupRepository, $this->groupMembershipRepository);
         $this->containerManager = new ContainerManager($this->logger, $this->entityManager, $this->containerRepository, $this->dbManager, $this->groupManager);
+        $this->containerInviteManager = new ContainerInviteManager($this->logger, $this->entityManager, $this->containerInviteRepository);
 
         $this->isAjaxRequest = false;
 
@@ -141,17 +146,6 @@ class Application {
             }
         }
     }
-
-    /**
-     * Used for old AJAX functions. It has become deprecated when AJAX functionality was implemented into presenters.
-     * 
-     * @param string $currentUserId Current user's ID
-     * 
-     * @deprecated
-     */
-    public function ajaxRun(string $currentUserId) {
-        $this->currentUser = $this->userRepository->getUserById($currentUserId);
-    }
     
     /**
      * The point where all the operations are called from.
@@ -165,7 +159,7 @@ class Application {
             // login
             $this->currentUser = $this->userRepository->getUserById($_SESSION['userId']);
         } else {
-            if((!isset($_GET['page']) || (isset($_GET['page']) && $_GET['page'] != 'Anonym:Logout')) && !isset($_SESSION['is_logging_in'])) {
+            if((!isset($_GET['page']) || (isset($_GET['page']) && $_GET['page'] != 'Anonym:Logout')) && !isset($_SESSION['is_logging_in']) && !isset($_SESSION['is_registering'])) {
                 //$this->redirect(['page' => 'Anonym:Logout', 'action' => 'logout']); // had to be commented because it caused a overflow because of infinite redirects
 
                 if($message != '') {
@@ -202,6 +196,26 @@ class Application {
         header('Location: ' . $url);
         exit;
     }
+
+    /**
+     * Refreshes current page with the same parameters
+     * 
+     * @param array $customParams Additional parameters
+     */
+    private function refreshPage(array $customParams = []) {
+        $request = $this->getRequest()->query;
+
+        $params = [];
+        foreach($request as $key => $value) {
+            $params[$key] = $value;
+        }
+
+        foreach($customParams as $key => $value) {
+            $params[$key] = $value;
+        }
+
+        $this->redirect($params);
+    }
     
     /**
      * Creates a single line URL from a URL params array
@@ -221,12 +235,25 @@ class Application {
      */
     public function flashMessage(string $text, string $type = 'info') {
         $cacheFactory = new CacheFactory();
+
+        if(array_key_exists('container', $_SESSION)) {
+            $containerId = $_SESSION['container'];
+            $cacheFactory->setCustomNamespace($containerId);
+        }
+
         $cache = $cacheFactory->getCache(CacheNames::FLASH_MESSAGES);
 
         $hash = HashManager::createHash(8, false);
 
-        $cache->save($hash, function() use ($type, $text) {
-            return ['type' => $type, 'text' => $text];
+        $cache->save($hash, function() use ($type, $text, $hash) {
+            return [
+                [
+                    'type' => $type,
+                    'text' => $text,
+                    'hash' => $hash,
+                    'autoClose' => '5'
+                ]
+            ];
         });
 
         return $hash;
@@ -245,7 +272,12 @@ class Application {
         }
 
         $this->logger->info('Creating module.', __METHOD__);
-        $moduleObject = $this->moduleManager->createModule($this->currentModule);
+        try {
+            $moduleObject = $this->moduleManager->createModule($this->currentModule);
+        } catch(Exception $e) {
+            $fmHash = $this->flashMessage('Container created successfully.');
+            $this->refreshPage(['_fm' => $fmHash]);
+        }
         $moduleObject->setLogger($this->logger);
         $moduleObject->setHttpRequest($this->getRequest());
 
@@ -276,6 +308,8 @@ class Application {
             }
         }
 
+        $request->currentUser = $this->currentUser;
+
         return $request;
     }
 
@@ -290,7 +324,7 @@ class Application {
     /**
      * Returns the current module, presenter and action from URL
      */
-    private function getCurrentModulePresenterAction() {
+    private function getCurrentModulePresenterAction(bool $log = true) {
         $page = htmlspecialchars($_GET['page']);
 
         $pageParts = explode(':', $page);
@@ -310,7 +344,7 @@ class Application {
             $isAjax = htmlspecialchars($_GET['isAjax']);
         }
 
-        $this->logger->info('Current URL: [module => ' . $this->currentModule . ', presenter => ' . $this->currentPresenter . ', action => ' . $this->currentAction . ', isAjax => ' . $isAjax . ']', __METHOD__);
+        if ($log) $this->logger->info('Current URL: [module => ' . $this->currentModule . ', presenter => ' . $this->currentPresenter . ', action => ' . $this->currentAction . ', isAjax => ' . $isAjax . ']', __METHOD__);
     }
 }
 

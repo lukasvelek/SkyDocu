@@ -28,7 +28,6 @@ class Installer {
      * Installs the application
      * 
      * 1. Installs the database
-     * 2. Encrypts the config file (only sensitive information)
      * 3. Creates "install" file
      */
     public function install() {
@@ -36,9 +35,6 @@ class Installer {
             $this->db->beginTransaction();
 
             $this->installDb();
-            /*if(!$this->encryptConfigFile()) {
-                throw new InstallationException('Could not encrypt the configuration file.');
-            }*/
             if(!$this->createInstallFile()) {
                 throw new InstallationException('Could not create the installation file.');
             }
@@ -68,7 +64,7 @@ class Installer {
     }
 
     /**
-     * Install the database
+     * Installs the database
      */
     private function installDb() {
         $this->db->installDb();

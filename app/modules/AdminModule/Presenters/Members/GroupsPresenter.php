@@ -4,9 +4,9 @@ namespace App\Modules\AdminModule;
 
 use App\Constants\Container\SystemGroups;
 use App\Core\DB\DatabaseRow;
+use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
-use App\UI\FormBuilder\FormResponse;
 use App\UI\GridBuilder2\Cell;
 use App\UI\GridBuilder2\Row;
 use App\UI\HTML\HTML;
@@ -26,7 +26,7 @@ class GroupsPresenter extends AAdminPresenter {
     }
 
     protected function createComponentGroupsGrid(HttpRequest $request) {
-        $grid = $this->componentFactory->getGridBuilder();
+        $grid = $this->componentFactory->getGridBuilder($this->containerId);
 
         $grid->createDataSourceFromQueryBuilder($this->groupRepository->composeQueryForGroups(), 'groupId');
 
@@ -84,7 +84,7 @@ class GroupsPresenter extends AAdminPresenter {
     }
 
     protected function createComponentGroupMembersGrid(HttpRequest $request) {
-        $grid = $this->componentFactory->getGridBuilder();
+        $grid = $this->componentFactory->getGridBuilder($this->containerId);
 
         $group = $this->groupRepository->getGroupById($request->query['groupId']);
 
@@ -117,7 +117,7 @@ class GroupsPresenter extends AAdminPresenter {
         return $grid;
     }
 
-    public function handleAddMemberForm(?FormResponse $fr = null) {
+    public function handleAddMemberForm(?FormRequest $fr = null) {
         if($fr !== null) {
             $groupId = $this->httpGet('groupId', true);
 
@@ -200,7 +200,7 @@ class GroupsPresenter extends AAdminPresenter {
         $this->redirect($this->createURL('listMembers', ['groupId' => $groupId]));
     }
 
-    public function handleNewForm(?FormResponse $fr = null) {
+    public function handleNewForm(?FormRequest $fr = null) {
         if($fr !== null) {
             try {
                 $this->groupRepository->beginTransaction(__METHOD__);

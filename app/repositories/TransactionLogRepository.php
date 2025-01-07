@@ -19,7 +19,7 @@ class TransactionLogRepository {
         return new QueryBuilder($this->db, $this->logger, $method);
     }
 
-    public function createNewEntry(string $id, string $userId, string $methodName, string &$sql) {
+    public function createNewEntry(string $id, ?string $userId, string $methodName, string &$sql) {
         $qb = $this->qb(__METHOD__);
 
         $methodName = str_replace('\\', '\\\\', $methodName);

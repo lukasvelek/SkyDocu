@@ -4,6 +4,7 @@ namespace App\Components\Widgets;
 
 use App\Core\AjaxRequestBuilder;
 use App\Core\Http\HttpRequest;
+use App\Core\Http\JsonResponse;
 use App\UI\AComponent;
 use App\UI\GridBuilder2\Cell;
 use App\UI\GridBuilder2\Row;
@@ -19,6 +20,7 @@ class Widget extends AComponent {
     private array $data;
     private string $title;
     private bool $hasRefresh;
+    private ?array $titleLink;
 
     /**
      * Class constructor
@@ -32,6 +34,16 @@ class Widget extends AComponent {
         $this->title = 'Widget';
         $this->hasRefresh = false;
         $this->componentName = 'widget';
+        $this->titleLink = null;
+    }
+
+    /**
+     * Sets the title link - the address redirected when user clicks on the widget's title
+     * 
+     * @param array $url Title link
+     */
+    public function setTitleLink(array $url) {
+        $this->titleLink = $url;
     }
 
     /**
@@ -75,12 +87,31 @@ class Widget extends AComponent {
 
     public function render() {
         $template = $this->getTemplate(__DIR__ . '/widget.html');
-        $template->widget_title = $this->title;
+        $template->widget_title = $this->buildTitle();
         $template->data = $this->build();
         $template->controls = $this->buildControls();
         $template->scripts = $this->buildJSScripts();
+        $template->component_name = $this->componentName;
 
         return $template->render()->getRenderedContent();
+    }
+
+    /**
+     * Creates HTML code for widget title
+     * 
+     * @return string HTML code
+     */
+    private function buildTitle() {
+        if($this->titleLink === null) {
+            return $this->title;
+        }
+
+        $el = HTML::el('a')
+            ->href($this->convertArrayUrlToStringUrl($this->titleLink))
+            ->text($this->title)
+            ->class('widget-title');
+
+        return $el->toString();
     }
 
     /**
@@ -134,8 +165,8 @@ class Widget extends AComponent {
         $arb->setMethod()
             ->setComponentAction($this->presenter, $this->componentName . '-refresh')
             ->setFunctionName($this->componentName . '_refresh')
-            ->updateHTMLElement('widget', 'widget')
-            ->enableLoadingAnimation('widget')
+            ->updateHTMLElement('widget-' . $this->componentName, 'widget')
+            ->enableLoadingAnimation('widget-' . $this->componentName)
         ;
 
         $addScript($arb);
@@ -220,10 +251,10 @@ class Widget extends AComponent {
     /**
      * Handles widget refresh control
      * 
-     * @return array<string, string> Array of data for conversion to JSON
+     * @return JsonResponse Return value
      */
     public function actionRefresh() {
-        return ['widget' => $this->build()];
+        return new JsonResponse(['widget' => $this->build()]);
     }
 
     public static function createFromComponent(AComponent $component) {}

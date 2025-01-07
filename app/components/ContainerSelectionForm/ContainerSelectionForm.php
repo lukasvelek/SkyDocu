@@ -6,8 +6,14 @@ use App\Constants\ContainerEnvironments;
 use App\Constants\ContainerStatus;
 use App\Core\AjaxRequestBuilder;
 use App\Core\Http\HttpRequest;
+use App\Core\Http\JsonResponse;
 use App\UI\FormBuilder2\FormBuilder2;
 
+/**
+ * ContainerSelectionForm is a component that allows users to switch between containers and superadministration.
+ * 
+ * @author Lukas Velek
+ */
 class ContainerSelectionForm extends FormBuilder2 {
     private const MAX_CONTAINER_COUNT_FOR_SEARCH_FORM = 5;
 
@@ -23,28 +29,41 @@ class ContainerSelectionForm extends FormBuilder2 {
         $this->containers = [];
     }
 
+    /**
+     * Sets containers that will be included in the form
+     * 
+     * @param array $containers Available containers
+     */
     public function setContainers(array $containers) {
         $this->containers = $containers;
 
         $this->setContainerCount(count($containers));
     }
 
-    public function setContainerCount(int $count) {
+    /**
+     * Sets container count and if needed switches the form to search form
+     * 
+     * @param int $count Container count
+     */
+    private function setContainerCount(int $count) {
         if($count >= self::MAX_CONTAINER_COUNT_FOR_SEARCH_FORM) {
             $this->useSearchForm = true;
         }
     }
 
     public function render() {
-        $this->setup();
-        $this->createScripts();
+        $this->beforeRender();
 
         return parent::render();
     }
 
-    private function setup() {
+    /**
+     * Sets up the component
+     */
+    private function beforeRender() {
         if($this->useSearchForm) {
             $this->createSearchForm();
+            $this->createScripts();
         } else {
             $this->createGeneralForm();
         }
@@ -52,6 +71,9 @@ class ContainerSelectionForm extends FormBuilder2 {
         $this->addSubmit('Select');
     }
 
+    /**
+     * Creates the search variant of the form
+     */
     private function createSearchForm() {
         $lastContainer = 'null';
         if(isset($this->httpRequest->query['lastContainer'])) {
@@ -68,6 +90,9 @@ class ContainerSelectionForm extends FormBuilder2 {
             ->setDisabled();
     }
 
+    /**
+     * Creates the general variant of the form
+     */
     private function createGeneralForm() {
         $containers = $this->getContainers();
         $disabled = empty($containers);
@@ -78,6 +103,9 @@ class ContainerSelectionForm extends FormBuilder2 {
             ->setDisabled($disabled);
     }
 
+    /**
+     * Generates scripts for the search form
+     */
     private function createScripts() {
         $arb = new AjaxRequestBuilder();
         
@@ -105,6 +133,11 @@ class ContainerSelectionForm extends FormBuilder2 {
         $this->addScript($code);
     }
 
+    /**
+     * Handles container searching
+     * 
+     * @return JsonResponse Return value
+     */
     protected function actionSearchContainers() {
         $query = $this->httpRequest->query['query'];
 
@@ -120,9 +153,15 @@ class ContainerSelectionForm extends FormBuilder2 {
             $code[] = '<option value="' . $c['value'] . '"' . $selected . '>' . $c['text'] . '</option>';
         }
 
-        return ['containers' => implode('', $code)];
+        return new JsonResponse(['containers' => implode('', $code)]);
     }
 
+    /**
+     * Returns available containers
+     * 
+     * @param ?string $query Additional query
+     * @return array Available containers
+     */
     private function getContainers(?string $query = null) {
         if(!empty($this->containers)) {
             return $this->containers;

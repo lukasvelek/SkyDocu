@@ -25,8 +25,6 @@ class AjaxRequestBuilder {
 
     /**
      * Class constructor
-     * 
-     * @return self
      */
     public function __construct() {
         $this->url = null;
@@ -48,7 +46,6 @@ class AjaxRequestBuilder {
      * Sets whether the call is coming from a component
      * 
      * @param bool $component True if the call is coming from a component or false if not
-     * @return self
      */
     public function setComponent(bool $component = true) {
         $this->isComponent = $component;
@@ -58,8 +55,6 @@ class AjaxRequestBuilder {
     
     /**
      * Disables loading animation when ajax request is being processed
-     * 
-     * @return self
      */
     public function disableLoadingAnimation() {
         $this->useLoadingAnimation = false;
@@ -71,7 +66,6 @@ class AjaxRequestBuilder {
      * Adds an operation that is executed before ajax request is processed
      * 
      * @param string $code JS code
-     * @return self
      */
     public function addBeforeAjaxOperation(string $code) {
         $this->beforeAjaxOperations[] = $code;
@@ -83,7 +77,6 @@ class AjaxRequestBuilder {
      * Adds custom argument to the header section of ajax request
      * 
      * @param string $argName Argument name
-     * @return self
      */
     public function addCustomArg(string $argName) {
         $this->customArgs[] = $argName;
@@ -96,7 +89,6 @@ class AjaxRequestBuilder {
      * 
      * @param APresenter $presenter Presenter
      * @param string $actionName Handler action
-     * @return self
      */
     public function setAction(APresenter $presenter, string $actionName) {
         $module = $presenter->moduleName;
@@ -107,6 +99,12 @@ class AjaxRequestBuilder {
         return $this;
     }
 
+    /**
+     * Sets the ajax request handler that is located in the component class
+     * 
+     * @param APresenter $presenter Presenter
+     * @param string $componentActionName Component handler action
+     */
     public function setComponentAction(APresenter $presenter, string $componentActionName) {
         $module = $presenter->moduleName;
         $action = $presenter->getAction();
@@ -122,7 +120,6 @@ class AjaxRequestBuilder {
      * Sets custom ajax request handler URL
      * 
      * @param array $url Handler URL params
-     * @return self
      */
     public function setURL(array $url) {
         $this->url = $this->composeURLFromArray($url);
@@ -144,7 +141,6 @@ class AjaxRequestBuilder {
      * Sets the header arguments. Array keys are keys of the arguments and array values are the values of the arguments.
      * 
      * @param array $params Header arguments
-     * @return self
      */
     public function setHeader(array $params) {
         $this->headerParams = $params;
@@ -156,7 +152,6 @@ class AjaxRequestBuilder {
      * Adds operation that is executed after the ajax request is processed and response is received
      * 
      * @param string $code JS code
-     * @return self
      */
     public function addWhenDoneOperation(string $code) {
         $this->whenDoneOperations[] = $code;
@@ -170,7 +165,6 @@ class AjaxRequestBuilder {
      * @param string $htmlElementId ID of the HTML element
      * @param string $jsonResultName JSON object parameter name
      * @param null|bool $append True if the JSON result should be appended or false if it should overwrite the currrent content or null if the JSON result should be prepended
-     * @return self
      */
     public function updateHTMLElement(string $htmlElementId, string $jsonResultName, null|bool $append = false) {
         if(!$append) {
@@ -195,7 +189,6 @@ class AjaxRequestBuilder {
      * @param string $htmlElement HTML element
      * @param string $jsonResultName JSON object parameter name
      * @param bool $append True if the JSON result should be appended or false if it should overwrite the current content
-     * @return self
      */
     public function updateHTMLElementRaw(string $htmlElement, string $jsonResultName, bool $append = false) {
         if(!$append) {
@@ -210,7 +203,6 @@ class AjaxRequestBuilder {
      * Hides given HTML element
      * 
      * @param string $htmlElement HTML element
-     * @return self
      */
     public function hideHTMLElementRaw(string $htmlElement) {
         $this->addWhenDoneOperation('$(' . $htmlElement . ').hide();');
@@ -222,7 +214,6 @@ class AjaxRequestBuilder {
      * Hides given HTML element that is found by given element ID
      * 
      * @param string $htmlElementId ID of the HTML element
-     * @return self
      */
     public function hideHTMLElement(string $htmlElementId) {
         $this->hideHTMLElementRaw('"#' . $htmlElementId . '"');
@@ -234,7 +225,6 @@ class AjaxRequestBuilder {
      * Sets the JS function name
      * 
      * @param string $name JS function name
-     * @return self
      */
     public function setFunctionName(string $name) {
         $this->functionName = $name;
@@ -246,7 +236,6 @@ class AjaxRequestBuilder {
      * Sets the JS function arguments
      * 
      * @param array $args JS function arguments
-     * @return self
      */
     public function setFunctionArguments(array $args) {
         $this->functionArgs = $args;
@@ -258,7 +247,6 @@ class AjaxRequestBuilder {
      * Sets the AJAX request method (POST/GET)
      * 
      * @param string $method Method
-     * @return self
      */
     public function setMethod(string $method = 'GET') {
         $this->method = $method;
@@ -399,7 +387,6 @@ class AjaxRequestBuilder {
      * 
      * @param string $element Element name
      * @param bool $isRaw True if the element name is raw or false if not
-     * @return self
      */
     public function enableLoadingAnimation(string $element, bool $isRaw = false) {
         $code = '

@@ -4,10 +4,10 @@ namespace App\Modules\UserModule;
 
 use App\Constants\Container\CustomMetadataTypes;
 use App\Constants\Container\DocumentStatus;
+use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
 use App\UI\FormBuilder2\FormBuilder2;
-use App\UI\FormBuilder\FormResponse;
 
 class CreateDocumentPresenter extends AUserPresenter {
     public function __construct() {
@@ -80,7 +80,7 @@ class CreateDocumentPresenter extends AUserPresenter {
         return $form;
     }
 
-    public function handleForm(?FormResponse $fr = null) {
+    public function handleForm(?FormRequest $fr = null) {
         if($fr !== null) {
             $folderId = $this->httpGet('folderId', true);
 

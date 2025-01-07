@@ -9,6 +9,7 @@ abstract class AAdminPresenter extends AContainerPresenter {
     private bool $isMembers;
     private bool $isDocuments;
     private bool $isSystem;
+    private bool $isProcesses;
 
     private array $sidebarLinks;
 
@@ -19,6 +20,7 @@ abstract class AAdminPresenter extends AContainerPresenter {
         $this->isMembers = false;
         $this->isDocuments = false;
         $this->isSystem = false;
+        $this->isProcesses = false;
 
         $this->sidebarLinks = [];
     }
@@ -33,6 +35,10 @@ abstract class AAdminPresenter extends AContainerPresenter {
 
     protected function setSystem() {
         $this->isSystem = true;
+    }
+
+    protected function setProcesses() {
+        $this->isProcesses = true;
     }
 
     public function startup() {
@@ -69,9 +75,19 @@ abstract class AAdminPresenter extends AContainerPresenter {
         if($this->isSystem) {
             $system = $this->checkActivePage('System');
             $transactionLog = $this->checkActivePage('TransactionLog');
+            $gridConfiguration = $this->checkActivePage('GridConfiguration');
 
             $addLink('Dashboard', $this->createFullURL('Admin:System', 'dashboard'), $system);
             $addLink('Transaction log', $this->createFullURL('Admin:TransactionLog', 'list'), $transactionLog);
+            $addLink('Grid configuration', $this->createFullURL('Admin:GridConfiguration', 'list'), $gridConfiguration);
+        }
+
+        if($this->isProcesses) {
+            $processes = $this->checkActivePage('Processes');
+            $processList = $this->checkActivePage('ProcessList');
+
+            $addLink('Dashboard', $this->createFullURL('Admin:Processes', 'dashboard'), $processes);
+            $addLink('Process list', $this->createFullURL('Admin:ProcessList', 'list'), $processList);
         }
     }
 

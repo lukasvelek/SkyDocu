@@ -23,6 +23,8 @@ class EntityManager extends AManager {
     public const CONTAINER_STATUS_HISTORY = 'container_status_history';
     public const SERVICE_HISTORY = 'system_services_history';
     public const CONTAINER_USAGE_STATISTICS = 'container_usage_statistics';
+    public const CONTAINER_INVITES = 'container_invites';
+    public const CONTAINER_INVITE_USAGE = 'container_invite_usage';
 
     public const C_GROUPS = 'groups';
     public const C_DOCUMENT_CLASSES = 'document_classes';
@@ -37,6 +39,11 @@ class EntityManager extends AManager {
     public const C_CUSTOM_METADATA = 'custom_metadata';
     public const C_CUSTOM_METADATA_FOLDER_RELATION = 'document_folder_custom_metadata_relation';
     public const C_CUSTOM_METADATA_LIST_VALUES = 'custom_metadata_list_values';
+    public const C_GRID_CONFIGURATION = 'grid_configuration';
+    public const C_PROCESSES = 'processes';
+    public const C_PROCESS_COMMENTS = 'process_comments';
+    public const C_PROCESS_METADATA_HISTORY = 'process_metadata_history';
+    public const C_PROCESS_DATA = 'process_data';
 
     private const __MAX__ = 100;
 
@@ -65,7 +72,6 @@ class EntityManager extends AManager {
 
             $primaryKeyName = $this->getPrimaryKeyNameByCategory($category);
 
-            //$unique = $this->cr->checkIdIsUnique($category, $primaryKeyName, $entityId);
             $cr = new ContentRepository($customConn, $this->logger);
             $unique = $cr->checkIdIsUnique($category, $primaryKeyName, $entityId);
 
@@ -127,6 +133,8 @@ class EntityManager extends AManager {
             self::CONTAINER_STATUS_HISTORY => 'historyId',
             self::SERVICE_HISTORY => 'historyId',
             self::CONTAINER_USAGE_STATISTICS => 'entryId',
+            self::CONTAINER_INVITES => 'inviteId',
+            self::CONTAINER_INVITE_USAGE => 'entryId',
 
             self::C_GROUPS => 'groupId',
             self::C_DOCUMENT_CLASSES => 'classId',
@@ -140,7 +148,12 @@ class EntityManager extends AManager {
             self::C_GROUP_USERS_RELATION => 'relationId',
             self::C_CUSTOM_METADATA => 'metadataId',
             self::C_CUSTOM_METADATA_FOLDER_RELATION => 'relationId',
-            self::C_CUSTOM_METADATA_LIST_VALUES => 'valueId'
+            self::C_CUSTOM_METADATA_LIST_VALUES => 'valueId',
+            self::C_GRID_CONFIGURATION => 'configurationId',
+            self::C_PROCESSES => 'processId',
+            self::C_PROCESS_COMMENTS => 'commentId',
+            self::C_PROCESS_METADATA_HISTORY => 'entryId',
+            self::C_PROCESS_DATA => 'entryId'
         };
     }
 }

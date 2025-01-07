@@ -105,9 +105,10 @@ class Logger implements ILoggerCallable {
      * @param string $sqlQuery SQL string
      * @param string $method Calling method
      * @param null|int|float $msTaken Milliseconds taken
+     * @param ?Exception $e Exception for call trace
      */
-    public function sql(string $sql, string $method, null|int|float $msTaken) {
-        $this->logSQL($method, $sql, ($msTaken ?? 0.0));
+    public function sql(string $sql, string $method, null|int|float $msTaken, ?Exception $e = null) {
+        $this->logSQL($method, $sql, ($msTaken ?? 0.0), $e);
     }
 
     /**
@@ -116,15 +117,20 @@ class Logger implements ILoggerCallable {
      * @param string $method Calling method
      * @param string $sql SQL string
      * @param null|int|float $msTaken Milliseconds taken
+     * @param ?Exception $e Exception for call trace
      */
-    private function logSQL(string $method, string $sql, null|int|float $msTaken) {
+    private function logSQL(string $method, string $sql, null|int|float $msTaken, ?Exception $e = null) {
         $date = new DateTime();
         $newText = '[' . $date . '] [' . strtoupper(self::LOG_SQL) . '] [' . (float)($msTaken) . ' ms] ' . $method . '(): ' . $sql;
+
+        if(SQL_LOG_LEVEL > 1 && $e !== null) {
+            $newText .= "\r\n" . 'Stack trace: ' . "\r\n" . $e->getTraceAsString();
+        }
 
         if($this->sqlLogLevel >= 1) {
             $oldSpecialFilename = $this->specialFilename;
             $this->specialFilename = 'sql-log';
-            $this->writeLog($newText);
+            $this->writeLog($newText, false);
             $this->specialFilename = $oldSpecialFilename;
         }
     }
@@ -237,11 +243,11 @@ class Logger implements ILoggerCallable {
      * @param string $text Log message
      * @return bool True on success or false on failure
      */
-    private function writeLog(string $text) {
+    private function writeLog(string $text, bool $addStackTrace = true) {
         $folder = APP_ABSOLUTE_DIR . LOG_DIR;
 
         if($this->containerId !== null) {
-            $folder .= $this->containerId . '\\';
+            $folder .= 'containers\\' . $this->containerId . '\\';
         }
 
         $date = new DateTime();
@@ -254,7 +260,13 @@ class Logger implements ILoggerCallable {
         }
 
         if(!FileManager::folderExists($folder)) {
-            FileManager::createFolder($folder);
+            FileManager::createFolder($folder, true);
+        }
+
+        if(LOG_LEVEL >= 5 && $addStackTrace) {
+            $e = new Exception;
+
+            $text .= "\r\n Stack trace: \r\n" . $e->getTraceAsString();
         }
 
         $result = FileManager::saveFile($folder, $file, $text . "\r\n", false, true);

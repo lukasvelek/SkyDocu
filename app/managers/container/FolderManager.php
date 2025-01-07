@@ -3,6 +3,7 @@
 namespace App\Managers\Container;
 
 use App\Constants\Container\SystemGroups;
+use App\Core\Caching\Cache;
 use App\Core\Caching\CacheNames;
 use App\Core\DB\DatabaseRow;
 use App\Exceptions\GeneralException;
@@ -100,6 +101,8 @@ class FolderManager extends AManager {
                 }
             }
         }
+
+        $this->cacheFactory->invalidateCacheByNamespace(CacheNames::FOLDER_SUBFOLDERS_MAPPING);
     }
 
     public function updateGroupFolderRight(string $folderId, string $groupId, bool $canView = true, bool $canCreate = false, bool $canEdit = false, bool $canDelete = false) {
@@ -172,17 +175,21 @@ class FolderManager extends AManager {
     }
 
     public function getSubfoldersForFolder(string $folderId, bool $recursive = false) {
-        $qb = $this->composeQueryForSubfoldersForFolder($folderId);
-        $qb->execute();
+        $cache = $this->cacheFactory->getCache(CacheNames::FOLDER_SUBFOLDERS_MAPPING);
+        
+        return $cache->load($folderId, function() use ($folderId) {
+            $qb = $this->composeQueryForSubfoldersForFolder($folderId);
+            $qb->execute();
 
-        $subfolders = [];
-        while($row = $qb->fetchAssoc()) {
-            $row = DatabaseRow::createFromDbRow($row);
+            $subfolders = [];
+            while($row = $qb->fetchAssoc()) {
+                $row = DatabaseRow::createFromDbRow($row);
 
-            $subfolders[] = $row;
-        }
+                $subfolders[] = $row;
+            }
 
-        return $subfolders;
+            return $subfolders;
+        });
     }
 
     public function composeQueryForSubfoldersForFolder(string $folderId) {
@@ -194,7 +201,7 @@ class FolderManager extends AManager {
     }
 
     /**
-     * Returns all folders that the given folder is subfolder on
+     * Returns all folders that the given folder is subfolder in
      */
     public function getFolderPathToRoot(string $folderId) {
         $folders = [];

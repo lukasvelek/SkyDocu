@@ -2,7 +2,7 @@
 
 namespace App\Modules;
 
-use App\UI\FormBuilder\FormBuilder;
+use App\Core\Http\AResponse;
 use App\UI\HTML\HTML;
 use App\UI\IRenderable;
 
@@ -72,8 +72,6 @@ class TemplateObject {
 
     /**
      * Fills the template macros, renders and builds all components and finally renders the template HTML code
-     * 
-     * @return self
      */
     public function render() {
         foreach($this->__values as $__value) {
@@ -86,11 +84,6 @@ class TemplateObject {
             if($this->$__value instanceof TemplateObject) {
                 $this->$__value->render();
                 $this->$__value = $this->$__value->getRenderedContent();
-            } else if($this->$__value instanceof FormBuilder) {
-                $action = $this->$__value->getAction();
-                $action['isFormSubmit'] = '1';
-                $this->$__value->setAction($action);
-                $this->$__value = $this->$__value->render();
             } else if($this->$__value instanceof IRenderable) {
                 $this->$__value = $this->$__value->render();
             } else if($this->$__value instanceof HTML) {
@@ -184,6 +177,15 @@ class TemplateObject {
      */
     public function getTemplateContent() {
         return $this->__templateContent;
+    }
+
+    /**
+     * Creates instance of TemplateObject based on AResponse instance
+     * 
+     * @param AResponse $response Response instance
+     */
+    public static function createFromAResponse(AResponse $response) {
+        return new self($response->getResult());
     }
 }
 

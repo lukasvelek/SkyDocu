@@ -113,8 +113,8 @@ class GroupManager extends AManager {
         return $this->getGroupUsersForGroupId($group->groupId);
     }
 
-    public function getMembershipsForUser(string $userId) {
-        $groupIds = $this->gr->getGroupsForUser($userId);
+    public function getMembershipsForUser(string $userId, bool $force = false) {
+        $groupIds = $this->gr->getGroupsForUser($userId, $force);
 
         $groups = [];
         foreach($groupIds as $id) {

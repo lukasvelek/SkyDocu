@@ -5,6 +5,7 @@ namespace App\Core\Caching;
 use App\Core\Caching\Cache;
 use App\Core\Datetypes\DateTime;
 use App\Core\FileManager;
+use App\Core\HashManager;
 
 /**
  * CacheFactory allows to create cache
@@ -71,7 +72,30 @@ class CacheFactory {
      * @return bool True on success or false on failure
      */
     public function invalidateCacheByNamespace(string $namespace) {
-        return $this->deleteCache($namespace);
+        $expire = new DateTime(time() - 60);
+        $cache = $this->getCache($namespace, $expire);
+        $cache->invalidate();
+
+        $this->saveCaches();
+
+        return true;
+    }
+
+    /**
+     * Invalidates all cache namespaces
+     * 
+     * @return bool True on success or false on failure
+     */
+    public function invalidateAllCache() {
+        $this->persistentCaches = [];
+
+        $namespaces = CacheNames::getAll();
+
+        foreach($namespaces as $namespace) {
+            FileManager::deleteFolderRecursively(APP_ABSOLUTE_DIR . CACHE_DIR . $namespace . '\\', false);
+        }
+
+        return true;
     }
 
     /**
@@ -179,26 +203,26 @@ class CacheFactory {
 
     /**
      * Saves persistent caches
+     * 
+     * @return bool True on success or false on failure
      */
     public function saveCaches() {
         foreach($this->persistentCaches as $cache) {
             if($cache->isInvalidated()) {
-                $this->deleteCache($cache->getNamespace());
-                /*$tmp = [
-                    self::I_NS_DATA => [],
-                    self::I_NS_CACHE_EXPIRATION => $cache->getExpirationDate()?->getResult(),
-                    self::I_NS_CACHE_LAST_WRITE_DATE => $cache->getLastWriteDate()?->getResult()
-                ];
-
-                $this->saveDataToCache($cache->getNamespace(), $tmp);*/
+                return $this->deleteCache($cache->getNamespace());
             } else {
-                $tmp = [
-                    self::I_NS_DATA => $cache->getData(),
-                    self::I_NS_CACHE_EXPIRATION => $cache->getExpirationDate()?->getResult(),
-                    self::I_NS_CACHE_LAST_WRITE_DATE => $cache->getLastWriteDate()?->getResult()
-                ];
+                $_cache = $this->getCache($cache->getNamespace());
+                $_data = $_cache->getData();
 
-                $this->saveDataToCache($cache->getNamespace(), $tmp);
+                if($_data != $cache->getData()) {
+                    $tmp = [
+                        self::I_NS_DATA => $cache->getData(),
+                        self::I_NS_CACHE_EXPIRATION => $cache->getExpirationDate()?->getResult(),
+                        self::I_NS_CACHE_LAST_WRITE_DATE => $cache->getLastWriteDate()?->getResult()
+                    ];
+    
+                    return $this->saveDataToCache($cache->getNamespace(), $tmp);
+                }
             }
         }
     }
@@ -240,10 +264,14 @@ class CacheFactory {
         if($this->customNamespace !== null) {
             $path .= $this->customNamespace . '\\';
         }
+        
+        $result = FileManager::deleteFolderRecursively($path, false);
+        
+        if($result === true) {
+            $this->cacheLogger->logCacheNamespaceDeleted($namespace, __METHOD__);
+        }
 
-        $this->cacheLogger->logCacheNamespaceDeleted($namespace, __METHOD__);
-
-        return FileManager::deleteFolderRecursively($path, false);
+        return $result;
     }
 }
 

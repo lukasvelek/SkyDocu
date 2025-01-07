@@ -9,15 +9,14 @@ use App\Core\Caching\CacheNames;
 use App\Core\Datatypes\ArrayList;
 use App\Core\Datetypes\DateTime;
 use App\Core\HashManager;
+use App\Core\Http\AResponse;
 use App\Entities\UserEntity;
 use App\Exceptions\ActionDoesNotExistException;
 use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
 use App\Exceptions\NoAjaxResponseException;
 use App\Exceptions\TemplateDoesNotExistException;
-use App\Helpers\GridHelper;
 use App\Logger\Logger;
-use App\UI\GridBuilder2\GridBuilder;
 use App\UI\LinkBuilder;
 use Exception;
 
@@ -30,10 +29,10 @@ abstract class APresenter extends AGUICore {
     private array $params;
     public string $name;
     private string $title;
+    private ?string $tabTitle;
     private ?string $action;
     private ArrayList $presenterCache;
     private ArrayList $scripts;
-    private ?string $ajaxResponse;
     private ?string $defaultAction;
     public ?string $moduleName;
     private bool $isAjax;
@@ -41,12 +40,13 @@ abstract class APresenter extends AGUICore {
     private ?UserEntity $currentUser;
 
     public ?TemplateObject $template;
+    public ?TemplateObject $sysTemplate;
     public ?Logger $logger;
 
     private ArrayList $beforeRenderCallbacks;
     private ArrayList $afterRenderCallbacks;
 
-    protected ?CacheFactory $cacheFactory;
+    public ?CacheFactory $cacheFactory;
 
     private array $flashMessages;
     private array $specialRedirectUrlParams;
@@ -69,7 +69,7 @@ abstract class APresenter extends AGUICore {
         $this->params = [];
         $this->action = null;
         $this->template = null;
-        $this->ajaxResponse = null;
+        $this->sysTemplate = null;
         $this->logger = null;
         $this->defaultAction = null;
         $this->moduleName = null;
@@ -77,6 +77,7 @@ abstract class APresenter extends AGUICore {
         $this->lock = false;
         $this->currentUser = null;
         $this->isComponentAjax = false;
+        $this->tabTitle = null;
 
         $this->presenterCache = new ArrayList();
         $this->presenterCache->setStringKeyType();
@@ -242,12 +243,6 @@ abstract class APresenter extends AGUICore {
         $this->logger = $logger;
     }
 
-    private function processHttpRequest() {
-        if(isset($this->httpRequest->query['isComponent']) && $this->httpRequest->query['isComponent'] == 1) {
-            $this->isComponentAjax = true;
-        }
-    }
-
     /**
      * Creates a custom flash message but instead of saving it to cache, it returns its HTML code.
      * 
@@ -328,9 +323,16 @@ abstract class APresenter extends AGUICore {
      * @param array $url URL params
      */
     public function redirect(array $url = []) {
-        if(!empty($url)) {
+        if(!empty($url)) {    
             if(!array_key_exists('page', $url)) {
                 $url['page'] = $this->httpGet('page');
+            }
+
+            if(!array_key_exists('_fm', $this->specialRedirectUrlParams)) {
+                $_fm = $this->httpGet('_fm');
+                if($_fm !== null) {
+                    $this->specialRedirectUrlParams['_fm'] = $_fm;
+                }
             }
 
             if(!empty($this->specialRedirectUrlParams)) {
@@ -353,6 +355,35 @@ abstract class APresenter extends AGUICore {
     }
 
     /**
+     * Creates content template and calls the render<View>() action to fill the template attributes
+     * 
+     * @param string $moduleName Module name
+     */
+    protected function createContentTemplate(string $moduleName) {
+        try {
+            $this->template = $this->beforeRender($moduleName);
+        } catch(AException|Exception $e) {
+            throw $e;
+        }
+
+        if(!$this->isAjax) {
+            $renderAction = 'render' . ucfirst($this->action);
+
+            if(method_exists($this, $renderAction)) {
+                $this->logger->stopwatch(function() use ($renderAction) {
+                    return $this->$renderAction();
+                }, 'App\\Modules\\' . $moduleName . '\\' . $this->title . '::' . $renderAction);
+
+                /**
+                 * Flash messages are loaded from cache and displayed only if the presenter is really rendered.
+                 * Originally the flash messages were loaded automatically. Because of that flash messages couldn't be displayed after several redirections.
+                 */
+                $this->module->loadFlashMessagesFromCache();
+            }
+        }
+    }
+
+    /**
      * Renders the presenter. It runs operations before the rendering itself, then renders the template and finally performs operations after the rendering.
      * 
      * Here are also the macros of the common template filled.
@@ -361,36 +392,10 @@ abstract class APresenter extends AGUICore {
      * @return string Presenter template content
      */
     public function render(string $moduleName) {
-        try {
-            $contentTemplate = $this->beforeRender($moduleName);
-        } catch(AException|Exception $e) {
-            throw $e;
-        }
-        
+        $this->createContentTemplate($moduleName);
+
         if(!$this->isAjax) {
-            if($contentTemplate !== null && $this->template !== null) {
-                $this->template->join($contentTemplate);
-            }
-            
-            $renderAction = 'render' . ucfirst($this->action);
-            
-            if(method_exists($this, $renderAction)) {
-                $this->logger->stopwatch(function() use ($renderAction) {
-                    return $this->$renderAction();
-                }, 'App\\Modules\\' . $moduleName . '\\' . $this->title . '::' . $renderAction);
-            }
-            
-            if($this->template !== null) {
-                if($contentTemplate !== null) {
-                    $this->template->sys_page_content = $contentTemplate->render()->getRenderedContent();
-                } else {
-                    $this->template->sys_page_content = '';
-                }
-            }
-    
             $this->fillSystemAttributesToTemplate();
-        } else {
-            $this->template = $contentTemplate;
         }
         
         $this->afterRender();
@@ -406,18 +411,36 @@ abstract class APresenter extends AGUICore {
         $date->format('Y');
         $date = $date->getResult();
 
-        if($this->template !== null) {
-            $this->template->sys_page_title = $this->title;
-            $this->template->sys_app_name = 'SkyDocu';
-            $this->template->sys_copyright = (($date > 2024) ? ('2024-' . $date) : ($date));
-            $this->template->sys_scripts = $this->scripts->getAll();
+        if($this->sysTemplate !== null) {
+            $this->sysTemplate->sys_page_title = $this->getTabTitle();
+            $this->sysTemplate->sys_app_name = 'SkyDocu';
+            $this->sysTemplate->sys_copyright = (($date > 2024) ? ('2024-' . $date) : ($date));
+            $this->sysTemplate->sys_scripts = $this->scripts->getAll();
         
             if($this->currentUser !== null) {
-                $this->template->sys_user_id = $this->currentUser->getId();
+                $this->sysTemplate->sys_user_id = $this->currentUser->getId();
             } else {
-                $this->template->sys_user_id = '';
+                $this->sysTemplate->sys_user_id = '';
             }
         }
+    }
+
+    /**
+     * Returns the tab's title
+     * 
+     * @return string Tab title
+     */
+    private function getTabTitle() {
+        return $this->tabTitle ?? $this->title;
+    }
+
+    /**
+     * Sets the tab's title
+     * 
+     * @param string $title Tab's title
+     */
+    protected function setTitle(string $title) {
+        $this->tabTitle = $title;
     }
 
     /**
@@ -462,7 +485,7 @@ abstract class APresenter extends AGUICore {
      * @param null|TemplateObject $template Template or null
      */
     public function setTemplate(?TemplateObject $template) {
-        $this->template = $template;
+        $this->sysTemplate = $template;
     }
 
     /**
@@ -563,7 +586,7 @@ abstract class APresenter extends AGUICore {
                 $result = $this->logger->stopwatch(function() use ($component, $methodName) {
                     try {
                         if(isset($this->httpRequest->query['isFormSubmit']) && $this->httpRequest->query['isFormSubmit'] == '1') { // it is a form
-                            $fr = $this->createFormResponse();
+                            $fr = $this->createFormRequest();
                             $result = $component->processMethod($methodName, [$this->httpRequest, $fr]);
                         } else {
                             $result = $component->processMethod($methodName, [$this->httpRequest]);
@@ -581,10 +604,12 @@ abstract class APresenter extends AGUICore {
                     return $result;
                 }, $componentName . '::' . $methodName);
     
-                if($this->ajaxResponse !== null) {
-                    return new TemplateObject($this->ajaxResponse);
-                } else if($result !== null) {
-                    return new TemplateObject(json_encode($result));
+                if($result !== null) {
+                    if($result instanceof AResponse) {
+                        return TemplateObject::createFromAResponse($result);
+                    } else {
+                        return new TemplateObject(json_encode($result));
+                    }
                 } else {
                     throw new NoAjaxResponseException();
                 }
@@ -609,7 +634,7 @@ abstract class APresenter extends AGUICore {
         $params = $this->getQueryParams();
         $this->logger->stopwatch(function() use ($handleAction, $params) {
             if(isset($params['isFormSubmit']) == '1') {
-                $fr = $this->createFormResponse();
+                $fr = $this->createFormRequest();
                 return $this->$handleAction($fr);
             } else {
                 return $this->$handleAction();
@@ -636,11 +661,18 @@ abstract class APresenter extends AGUICore {
     }
 
     /**
-     * Performs all after render operations. The template is rendered here. The presenter cache is erased and custom after render callbacks are called.
+     * Renders the content template and fills the system template with the rendered content template.
+     * Erases presenter cache and calls custom after-render callbacks.
      */
     private function afterRender() {
-        if($this->template !== null) {
-            $this->template->render();
+        if($this->sysTemplate !== null) {
+            if($this->template !== null) {
+                $this->sysTemplate->sys_page_content = $this->template->render()->getRenderedContent();
+            } else {
+                $this->sysTemplate->sys_page_content = '';
+            }
+
+            $this->template = $this->sysTemplate;
         }
 
         $this->saveFlashMessagesToCache();
@@ -670,10 +702,12 @@ abstract class APresenter extends AGUICore {
                 return $result;
             }, 'App\\Modules\\' . $moduleName . '\\' . $this->title . '::' . $actionAction);
 
-            if($this->ajaxResponse !== null) {
-                return new TemplateObject($this->ajaxResponse);
-            } else if($result !== null) {
-                return new TemplateObject(json_encode($result));
+            if($result !== null) {
+                if($result instanceof AResponse) {
+                    return TemplateObject::createFromAResponse($result);
+                } else {
+                    return new TemplateObject(json_encode($result));
+                }
             } else {
                 throw new NoAjaxResponseException();
             }
@@ -710,29 +744,29 @@ abstract class APresenter extends AGUICore {
      */
     private function saveFlashMessagesToCache() {
         if(!empty($this->flashMessages)) {
-            $cache = $this->cacheFactory->getCache(CacheNames::FLASH_MESSAGES);
+            $containerId = $this->httpSessionGet('container');
+            if($containerId !== null) {
+                $cacheFactory = clone $this->cacheFactory;
+                $cacheFactory->setCustomNamespace($containerId);
+                $cache = $cacheFactory->getCache(CacheNames::FLASH_MESSAGES);
+            } else {
+                $cache = $this->cacheFactory->getCache(CacheNames::FLASH_MESSAGES);
+            }
 
             $hash = $this->flashMessages[0]['hash'];
 
             $cache->save($hash, function() {
                 return $this->flashMessages;
             });
+
+            $this->logger->warning('Flash messages saved to cache: ' . var_export($this->flashMessages, true), __METHOD__);
         }
 
-        $this->cacheFactory->saveCaches();
-    }
+        $result = $this->cacheFactory->saveCaches();
 
-    /**
-     * Returns a GridBuilder instance
-     * 
-     * @return GridBuilder GridBuilder instance
-     * @deprecated
-     */
-    public function getGridBuilder() {
-        $grid = new GridBuilder($this->httpRequest);
-        $helper = new GridHelper($this->logger, $this->getUserId());
-        $grid->setHelper($helper);
-        return $grid;
+        if($result === false) {
+            throw new GeneralException('Could not save flash messages.');
+        }
     }
 
     /**

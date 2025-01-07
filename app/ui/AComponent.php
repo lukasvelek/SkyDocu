@@ -2,10 +2,12 @@
 
 namespace App\UI;
 
+use App\Core\FileManager;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
 use App\Exceptions\CallbackExecutionException;
 use App\Modules\AGUICore;
+use App\Modules\TemplateObject;
 use Exception;
 
 /**
@@ -62,6 +64,18 @@ abstract class AComponent extends AGUICore implements IRenderable {
         } catch(AException|Exception $e) {
             throw new CallbackExecutionException($e, [$methodName], $e);
         }
+    }
+
+    /**
+     * Loads content of file in given path and creates a new TemplateObject instance.
+     * 
+     * @param string $path Template content path
+     * @return TemplateObject TemplateObject instance
+     */
+    protected function loadTemplateFromPath(string $path) {
+        $content = FileManager::loadFile($path);
+
+        return new TemplateObject($content);
     }
 }
 

@@ -3,6 +3,7 @@
 namespace App\Core\Caching;
 
 use App\Logger\Logger;
+use Exception;
 
 /**
  * CacheLogger is used for logging cache
@@ -29,7 +30,7 @@ class CacheLogger extends Logger {
     public function logHitMiss(string $key, string $namespace, bool $hit, string $method) {
         $text = 'Key \'' . $key . '\' ' . ($hit ? 'found' : 'not found') . ' in namespace \'' . $namespace . '\'.';
 
-        return $this->log($method, $text, parent::LOG_CACHE);
+        return $this->internalLog($method, $text);
     }
 
     /**
@@ -43,7 +44,7 @@ class CacheLogger extends Logger {
     public function logCacheCreateOrGet(string $namespace, bool $created, string $method) {
         $text = 'Cache namespace \'' . $namespace . '\' ' . ($created ? 'created' : 'found') . '.';
         
-        return $this->log($method, $text, parent::LOG_CACHE);
+        return $this->internalLog($method, $text);
     }
     
     /**
@@ -56,7 +57,7 @@ class CacheLogger extends Logger {
     public function logCacheInvalidated(string $namespace, string $method) {
         $text = 'Cache namespace \'' . $namespace . '\' invalidated.';
 
-        return $this->log($method, $text, parent::LOG_CACHE);
+        return $this->internalLog($method, $text);
     }
 
     /**
@@ -69,6 +70,17 @@ class CacheLogger extends Logger {
     public function logCacheNamespaceDeleted(string $namespace, string $method) {
         $text = 'Cache namespace \'' . $namespace . '\' deleted.';
 
+        return $this->internalLog($method, $text);
+    }
+
+    /**
+     * Logs given information
+     * 
+     * @param string $method Calling method name
+     * @param string $text Text
+     * @return bool True on success or false on failure
+     */
+    private function internalLog(string $method, string $text) {
         return $this->log($method, $text, parent::LOG_CACHE);
     }
 }

@@ -105,18 +105,20 @@ class ContainerCreationHelper {
             ],
             'processes' => [
                 'processId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',
-                'documentId' => 'VARCHAR(256) NOT NULL',
+                'documentId' => 'VARCHAR(256) NULL',
                 'type' => 'VARCHAR(256) NOT NULL',
                 'authorUserId' => 'VARCHAR(256) NOT NULL',
                 'currentOfficerUserId' => 'VARCHAR(256) NULL',
                 'workflowUserIds' => 'VARCHAR(256) NULL',
-                'dateCreated' => 'DATETIME NOT NULL DEFAULT current_timestamp()'
+                'dateCreated' => 'DATETIME NOT NULL DEFAULT current_timestamp()',
+                'status' => 'INT(4) NOT NULL DEFAULT 1'
             ],
             'process_types' => [
                 'typeId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',
                 'typeKey' => 'VARCHAR(256) NOT NULL',
                 'title' => 'VARCHAR(256) NOT NULL',
-                'description' => 'TEXT NOT NULL'
+                'description' => 'TEXT NOT NULL',
+                'isEnabled' => 'INT(2) NOT NULL DEFAULT 1'
             ],
             'process_comments' => [
                 'commentId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',
@@ -131,6 +133,26 @@ class ContainerCreationHelper {
                 'callingMethod' => 'TEXT NOT NULL',
                 'dateCreated' => 'DATETIME NOT NULL DEFAULT current_timestamp()'
             ],
+            'grid_configuration' => [
+                'configurationId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',
+                'gridName' => 'VARCHAR(256) NOT NULL',
+                'columnConfiguration' => 'TEXT NOT NULL',
+                'dateCreated' => 'DATETIME NOT NULL DEFAULT current_timestamp()'
+            ],
+            'process_metadata_history' => [
+                'entryId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',
+                'processId' => 'VARCHAR(256) NOT NULL',
+                'userId' => 'VARCHAR(256) NOT NULL',
+                'metadataName' => 'VARCHAR(256) NOT NULL',
+                'oldValue' => 'VARCHAR(256) NULL',
+                'newValue' => 'VARCHAR(256) NULL',
+                'dateCreated' => 'DATETIME NOT NULL DEFAULT current_timestamp()'
+            ],
+            'process_data' => [
+                'entryId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',
+                'processId' => 'VARCHAR(256) NOT NULL',
+                'data' => 'TEXT NOT NULL'
+            ]
         ];
     }
 
@@ -168,6 +190,9 @@ class ContainerCreationHelper {
                 'groupId',
                 'classId',
                 'canView'
+            ],
+            'grid_configuration' => [
+                'gridName'
             ]
         ];
     }

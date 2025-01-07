@@ -7,7 +7,7 @@ namespace App\UI\FormBuilder2;
  * 
  * @author Lukas Velek
  */
-class DateInput extends Input {
+class DateInput extends AInput {
     /**
      * Class constructor
      * 

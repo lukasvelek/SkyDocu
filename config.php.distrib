@@ -12,6 +12,7 @@
  * 2 - warnings and errors
  * 3 - everything except for cache
  * 4 - everything with cache
+ * 5 - everything with cache and stack trace
  */
 define('LOG_LEVEL', 0);
 /**
@@ -19,6 +20,7 @@ define('LOG_LEVEL', 0);
  * 
  * 0 - off
  * 1 - on
+ * 2 - on with stack trace
  */
 define('SQL_LOG_LEVEL', 0);
 /**
@@ -45,6 +47,7 @@ define('PHP_ABSOLUTE_DIR', '');
 //
 
 define('APP_HOSTNAME', '');
+define('APP_URL', APP_HOSTNAME . '/skydocu/');
 define('GRID_SIZE', 20);
 define('MAX_GRID_EXPORT_SIZE', 100);
 define('MAX_CONTAINER_DOCUMENT_FOLDER_NESTING_LEVEL', 5);

@@ -8,7 +8,6 @@ use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
 use App\Helpers\GridHelper;
-use App\UI\GridBuilder2\Cell;
 use App\UI\GridBuilder2\Row;
 use App\UI\HTML\HTML;
 
@@ -32,19 +31,7 @@ class BackgroundServicesPresenter extends ASuperAdminSettingsPresenter {
         $grid->addColumnText('title', 'Title');
         $grid->addColumnDatetime('dateStarted', 'Service started');
         $grid->addColumnDatetime('dateEnded', 'Service ended');
-        $col = $grid->addColumnConst('status', 'Status', SystemServiceStatus::class);
-        $col->onRenderColumn[] = function(DatabaseRow $row, Row $_row, Cell $cell, HTML $html, mixed $value) {
-            $el = HTML::el('span')
-                ->text($value);
-
-            if($row->status == SystemServiceStatus::NOT_RUNNING) {
-                $el->style('color', 'red');
-            } else if($row->status == SystemServiceStatus::RUNNING) {
-                $el->style('color', 'green');
-            }
-
-            return $el;
-        };
+        $grid->addColumnConst('status', 'Status', SystemServiceStatus::class);
 
         $run = $grid->addAction('run');
         $run->setTitle('Run');

@@ -2,15 +2,9 @@
 
 namespace App\Repositories\Container;
 
-use App\Core\DatabaseConnection;
-use App\Logger\Logger;
 use App\Repositories\ARepository;
 
 class DocumentRepository extends ARepository {
-    public function __construct(DatabaseConnection $db, Logger $logger) {
-        parent::__construct($db, $logger);
-    }
-
     public function composeQueryForDocuments() {
         $qb = $this->qb(__METHOD__);
 
@@ -129,6 +123,17 @@ class DocumentRepository extends ARepository {
             ->execute();
 
         return $qb->fetch();
+    }
+
+    public function getDocumentsByIds(array $documentIds) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->select(['*'])
+            ->from('documents')
+            ->where($qb->getColumnInValues('documentId', $documentIds))
+            ->execute();
+
+        return $qb->fetchAll();
     }
 
     public function updateDocument(string $documentId, array $data) {

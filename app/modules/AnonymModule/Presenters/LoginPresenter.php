@@ -6,16 +6,16 @@ use App\Components\ContainerSelectionForm\ContainerSelectionForm;
 use App\Constants\ContainerEnvironments;
 use App\Constants\ContainerStatus;
 use App\Constants\SystemGroups;
+use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
-use App\UI\FormBuilder\FormResponse;
 
 class LoginPresenter extends AAnonymPresenter {
     public function __construct() {
         parent::__construct('LoginPresenter', 'Login');
     }
 
-    public function handleLoginForm(?FormResponse $fr = null) {
+    public function handleLoginForm(?FormRequest $fr = null) {
         if($fr !== null) {
             try {
                 $this->app->userAuth->loginUser($fr->username, $fr->password);
@@ -101,7 +101,7 @@ class LoginPresenter extends AAnonymPresenter {
         }
     }
 
-    public function handleContainerForm(?FormResponse $fr = null) {
+    public function handleContainerForm(?FormRequest $fr = null) {
         if($fr !== null) {
             $this->httpSessionSet('container', $fr->container);
             

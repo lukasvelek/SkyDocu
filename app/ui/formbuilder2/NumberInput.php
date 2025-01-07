@@ -7,7 +7,7 @@ namespace App\UI\FormBuilder2;
  * 
  * @author Lukas Velek
  */
-class NumberInput extends Input {
+class NumberInput extends AInput {
     /**
      * Class constructor
      * 

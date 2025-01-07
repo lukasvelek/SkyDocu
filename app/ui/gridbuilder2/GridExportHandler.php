@@ -389,7 +389,6 @@ class GridExportHandler {
      * @param array $data Data for export
      * @param Application $app Application instance
      * @param ?string $userId Current user ID
-     * @return self
      */
     public static function createForAsync(array $data, Application $app, ?string $userId) {
         $dataSource = $data['dataSource'];

@@ -7,7 +7,7 @@ namespace App\UI\FormBuilder2;
  * 
  * @author Lukas Velek
  */
-class CheckboxInput extends Input {
+class CheckboxInput extends AInput {
     /**
      * Class constructor
      * 

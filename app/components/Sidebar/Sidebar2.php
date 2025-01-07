@@ -109,7 +109,13 @@ class Sidebar2 extends AComponent {
         return $this->template->render()->getRenderedContent();
     }
 
-    public static function createFromComponent(AComponent $component) {}
+    public static function createFromComponent(AComponent $component) {
+        $obj = new self($component->httpRequest);
+        $obj->setApplication($component->app);
+        $obj->setPresenter($component->presenter);
+
+        return $obj;
+    }
 }
 
 ?>

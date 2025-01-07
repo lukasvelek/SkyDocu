@@ -28,7 +28,6 @@ class HTML {
      * Sets the tag (a, span, div, ...)
      * 
      * @param string $name Tag
-     * @return self
      */
     public static function el(string $name) {
         $x = new self();
@@ -40,7 +39,6 @@ class HTML {
      * Changes the tag
      * 
      * @param string $name Tag
-     * @return self
      */
     public function changeTag(string $name) {
         $this->el = $name;
@@ -52,7 +50,6 @@ class HTML {
      * 
      * @param string $key Attribute key
      * @param mixed $value Attribute value
-     * @return self
      */
     public function addAtribute(string $key, mixed $value) {
         $this->attributes[$key] = $value;
@@ -63,7 +60,6 @@ class HTML {
      * Sets the class attribute
      * 
      * @param string $class
-     * @return self
      */
     public function class(string $class) {
         $this->attributes['class'] = $class;
@@ -75,7 +71,6 @@ class HTML {
      * 
      * @param string $key Style key (color, background-color)
      * @param mixed $value Style value (green, 10px)
-     * @return self
      */
     public function style(string $key, mixed $value) {
         $this->styles[] = $key . ': ' . $value;
@@ -86,7 +81,6 @@ class HTML {
      * Sets the content - it can be string or another instance of HTML
      * 
      * @param HTML|string $text
-     * @return self
      */
     public function text(HTML|string $text) {
         $this->text = $text;
@@ -106,7 +100,6 @@ class HTML {
      * Sets the title attribute
      * 
      * @param string $title
-     * @return self
      */
     public function title(string $title) {
         $this->attributes['title'] = $title;
@@ -117,7 +110,6 @@ class HTML {
      * Sets the href attribute
      * 
      * @param string $href Href
-     * @return self
      */
     public function href(string $href) {
         $this->attributes['href'] = $href;
@@ -128,7 +120,6 @@ class HTML {
      * Sets the onclick attribute
      * 
      * @param string $onClick Onclick
-     * @return self
      */
     public function onClick(string $onClick) {
         $this->attributes['onclick'] = $onClick;
@@ -139,7 +130,6 @@ class HTML {
      * Sets the value attribute
      * 
      * @param mixed $value Value
-     * @return self
      */
     public function value(mixed $value, bool $isArray = false) {
         $key = 'value';
@@ -154,7 +144,6 @@ class HTML {
      * Sets the name attribute
      * 
      * @param string $name Name
-     * @return self
      */
     public function name(string $name) {
         $this->attributes['name'] = $name;
@@ -165,10 +154,19 @@ class HTML {
      * Sets the id attribute
      * 
      * @param string $id ID
-     * @return self
      */
     public function id(string $id) {
         $this->attributes['id'] = $id;
+        return $this;
+    }
+
+    /**
+     * Sets the target
+     * 
+     * @param string $target
+     */
+    public function target(string $target) {
+        $this->attributes['target'] = $target;
         return $this;
     }
 

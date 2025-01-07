@@ -3,6 +3,8 @@
 namespace App\Modules;
 
 use App\Exceptions\ModuleDoesNotExistException;
+use Error;
+use RuntimeException;
 
 /**
  * Class that manages modules. It loads all available modules.
@@ -48,8 +50,12 @@ class ModuleManager {
         if(is_dir(__DIR__ . '\\' . $name) && is_file(__DIR__ . '\\' . $name . '\\' . $name . '.php')) {
             $className = '\\App\\Modules\\' . $name . '\\' . $name;
 
-            /** @var AModule */
-            $module = new $className();
+            try {
+                /** @var AModule */
+                $module = new $className();
+            } catch(Error $e) {
+                throw new RuntimeException('An error occurred while processing request. Please try again later.', 9999, $e);
+            }
             
             return $module;
         } else {

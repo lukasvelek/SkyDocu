@@ -48,7 +48,8 @@ class DocumentStatsWidget extends Widget {
         $rows = [
             'All documents' => $data['totalRows'],
             'New documents' => $data['newRows'],
-            'Archived documents' => $data['archivedRows']
+            'Archived documents' => $data['archivedRows'],
+            'Shredded documents' => $data['shreddedRows']
         ];
 
         return $rows;
@@ -63,11 +64,13 @@ class DocumentStatsWidget extends Widget {
         $totalRows = $this->fetchTotalDocumentCountFromDb();
         $newRows = $this->fetchNewDocumentCountFromDb();
         $archivedRows = $this->fetchArchivedDocumentCountFromDb();
+        $shreddedRows = $this->fetchShreddedDocumentCountFromDb();
 
         return [
             'totalRows' => $totalRows,
             'newRows' => $newRows,
-            'archivedRows' => $archivedRows
+            'archivedRows' => $archivedRows,
+            'shreddedRows' => $shreddedRows
         ];
     }
 
@@ -106,15 +109,23 @@ class DocumentStatsWidget extends Widget {
         return $qb->execute()->fetch('cnt');
     }
 
+    /**
+     * Fetches shredded document count from the database
+     * 
+     * @return mixed Data from the database
+     */
+    private function fetchShreddedDocumentCountFromDb() {
+        $qb = $this->dm->dr->composeQueryForDocuments();
+        $qb->select(['COUNT(*) AS cnt'])
+            ->where('status = ?', [DocumentStatus::SHREDDED]);
+        return $qb->execute()->fetch('cnt');
+    }
+
     public function actionRefresh() {
         $data = $this->processData();
         $this->setData($data);
 
-        $widget = $this->build();
-
-        return [
-            'widget' => $widget
-        ];
+        return parent::actionRefresh();
     }
 }
 

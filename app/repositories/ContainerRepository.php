@@ -2,14 +2,7 @@
 
 namespace App\Repositories;
 
-use App\Core\DatabaseConnection;
-use App\Logger\Logger;
-
 class ContainerRepository extends ARepository {
-    public function __construct(DatabaseConnection $db, Logger $logger) {
-        parent::__construct($db, $logger);
-    }
-
     public function composeQueryForContainers() {
         $qb = $this->qb(__METHOD__);
 
@@ -180,11 +173,11 @@ class ContainerRepository extends ARepository {
         return $qb->fetchBool();
     }
 
-    public function insertNewContainerUsageStatisticsEntry(string $entryId, string $containerId, int $totalSqlQueries, float $averageTimeTaken, string $date) {
+    public function insertNewContainerUsageStatisticsEntry(string $entryId, string $containerId, int $totalSqlQueries, float $averageTimeTaken, string $date, float $totalTimeTaken) {
         $qb = $this->qb(__METHOD__);
 
-        $qb->insert('container_usage_statistics', ['entryId', 'containerId', 'totalSqlQueries', 'averageTimeTaken', 'date'])
-            ->values([$entryId, $containerId, $totalSqlQueries, $averageTimeTaken, $date])
+        $qb->insert('container_usage_statistics', ['entryId', 'containerId', 'totalSqlQueries', 'averageTimeTaken', 'date', 'totalTimeTaken'])
+            ->values([$entryId, $containerId, $totalSqlQueries, $averageTimeTaken, $date, $totalTimeTaken])
             ->execute();
 
         return $qb->fetchBool();

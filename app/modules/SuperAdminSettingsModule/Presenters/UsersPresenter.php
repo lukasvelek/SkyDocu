@@ -2,13 +2,12 @@
 
 namespace App\Modules\SuperAdminSettingsModule;
 
-use App\Core\Caching\CacheNames;
 use App\Core\DB\DatabaseRow;
+use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
 use App\Helpers\GridHelper;
-use App\UI\FormBuilder\FormResponse;
 use App\UI\GridBuilder2\Row;
 use App\UI\HTML\HTML;
 use App\UI\LinkBuilder;
@@ -90,7 +89,7 @@ class UsersPresenter extends ASuperAdminSettingsPresenter {
         return $grid;
     }
 
-    public function handleNewUserForm(?FormResponse $fr = null) {
+    public function handleNewUserForm(?FormRequest $fr = null) {
         if($fr !== null) {
             try {
                 if($fr->password != $fr->password2) {
@@ -190,7 +189,7 @@ class UsersPresenter extends ASuperAdminSettingsPresenter {
         ];
     }
 
-    public function handleEditUserForm(?FormResponse $fr = null) {
+    public function handleEditUserForm(?FormRequest $fr = null) {
         if($fr !== null) {
             $userId = $this->httpGet('userId', true);
 
@@ -248,7 +247,7 @@ class UsersPresenter extends ASuperAdminSettingsPresenter {
         return $form;
     }
 
-    public function handleDeleteUserForm(?FormResponse $fr = null) {
+    public function handleDeleteUserForm(?FormRequest $fr = null) {
         if($fr !== null) {
             try {
                 $user = $this->app->userManager->getUserById($this->httpGet('userId'));

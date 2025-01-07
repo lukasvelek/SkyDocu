@@ -4,13 +4,13 @@ namespace App\Modules;
 
 use App\Core\Application;
 use App\Core\FileManager;
+use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
 use App\Exceptions\RequiredAttributeIsNotSetException;
 use App\Helpers\TemplateHelper;
 use App\UI\AComponent;
-use App\UI\FormBuilder\FormResponse;
 
 /**
  * AGUICore is the lowest level UI element. It is implemented by Modules, Presenters and Components - all UI elements
@@ -116,7 +116,7 @@ abstract class AGUICore {
         foreach($components as $componentName => $componentAction) {
             if(method_exists($this, $componentAction)) {
                 if(isset($_GET['isFormSubmit']) && $_GET['isFormSubmit'] == '1') {
-                    $fr = $this->createFormResponse();
+                    $fr = $this->createFormRequest();
                     $component = $this->$componentAction($this->httpRequest, $fr);
                 } else {
                     $component = $this->$componentAction($this->httpRequest);
@@ -141,15 +141,15 @@ abstract class AGUICore {
     }
 
     /**
-     * Creates a form response object
+     * Creates a FormRequest instance
      * 
-     * @return null|FormResponse FormResponse or null
+     * @return ?FormRequest FormRequest or null
      */
-    protected function createFormResponse() {
+    protected function createFormRequest() {
         if(!empty($_POST)) {
             $values = $this->getPostParams();
 
-            return FormResponse::createFormResponseFromPostData($values, $this->httpRequest);
+            return FormRequest::createFromPostData($values);
         } else {
             return null;
         }
@@ -296,6 +296,21 @@ abstract class AGUICore {
         $url = ['page' => $modulePresenter, 'action' => $action];
 
         return array_merge($url, $params);
+    }
+
+    /**
+     * Converts URL defined in an array to string format
+     * 
+     * @param array $url Array URL
+     * @return string URL as string
+     */
+    public function convertArrayUrlToStringUrl(array $url) {
+        $tmp = [];
+        foreach($url as $k => $v) {
+            $tmp[] = $k . '=' . $v;
+        }
+
+        return '?' . implode('&', $tmp);
     }
 }
 

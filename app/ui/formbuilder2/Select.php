@@ -66,7 +66,6 @@ class Select extends AInteractableElement {
      * ]
      * 
      * @param array $options
-     * @return self
      */
     public function addRawOptions(array $options) {
         foreach($options as $option) {
@@ -85,8 +84,7 @@ class Select extends AInteractableElement {
      * 
      * @param string $value Option value
      * @param string $text Option text
-     * @param bool $isSelected Is the option selected?
-     * @return self
+     * @param bool $isSelected Is the option selected
      */
     public function addRawOption(string $value, string $text, bool $isSelected = false) {
         $option = new SelectOption($value, $text);
@@ -102,7 +100,6 @@ class Select extends AInteractableElement {
      * Adds option
      * 
      * @param SelectOption $option SelectOption instance
-     * @return self
      */
     public function addOption(SelectOption $option) {
         $this->options[$option->getValue()] = $option;
@@ -113,7 +110,6 @@ class Select extends AInteractableElement {
      * Adds multiple options
      * 
      * @param array<SelectOption> $options Array of SelectOption instances
-     * @return self
      */
     public function addOptions(array $options) {
         $this->options = array_merge($this->options, $options);

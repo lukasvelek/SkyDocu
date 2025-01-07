@@ -28,7 +28,7 @@ abstract class ARepository extends AMultipleDatabaseConnectionHandler {
      * @param DatabaseConnection $conn Database connection instance
      * @param Logger $logger Logger instance
      */
-    protected function __construct(DatabaseConnection $conn, Logger $logger) {
+    public function __construct(DatabaseConnection $conn, Logger $logger) {
         parent::__construct($conn);
         $this->logger = $logger;
         $this->cacheFactory = new CacheFactory();

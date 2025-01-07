@@ -2,7 +2,6 @@
 
 namespace App\Managers\Container;
 
-use App\Constants\Container\CustomMetadataTypes;
 use App\Core\Caching\CacheNames;
 use App\Core\Datetypes\DateTime;
 use App\Core\DB\DatabaseRow;
@@ -21,7 +20,7 @@ class DocumentManager extends AManager {
     private DocumentClassRepository $dcr;
     private GroupRepository $gr;
     private FolderRepository $fr;
-    private EnumManager $em;
+    public EnumManager $enumManager;
 
     public function __construct(Logger $logger, EntityManager $entityManager, DocumentRepository $dr, DocumentClassRepository $dcr, GroupRepository $gr, FolderRepository $fr) {
         parent::__construct($logger, $entityManager);
@@ -32,10 +31,6 @@ class DocumentManager extends AManager {
         $this->fr = $fr;
     }
 
-    public function inject(EnumManager $em) {
-        $this->em = $em;
-    }
-
     public function composeQueryForDocuments(string $userId, string $folderId, bool $allMetadata) {
         $qb = $this->dr->composeQueryForDocuments();
 
@@ -43,16 +38,7 @@ class DocumentManager extends AManager {
 
         $groupIds = $this->gr->getGroupsForUser($userId);
 
-        $classes = [];
-        foreach($groupIds as $groupId) {
-            $classesTmp = $this->dcr->getVisibleClassesForGroup($groupId);
-
-            foreach($classesTmp as $classId) {
-                if(!in_array($classId, $classes)) {
-                    $classes[] = $classId;
-                }
-            }
-        }
+        $classes = $this->dcr->getVisibleClassesForGroups($groupIds);
 
         if(empty($classes)) {
             $qb->andWhere('1=0');
@@ -177,8 +163,31 @@ class DocumentManager extends AManager {
 
         return $qb->fetch('cnt');
     }
+
+    /**
+     * Gets multiple documents by their IDs. This method does not obtain custom metadata for each document.
+     * 
+     * @param array $documentIds Document IDs
+     * @return array<string, DatabaseRow> Array of documents where index is the document ID and the value is the DatabaseRow
+     */
+    public function getDocumentsByIds(array $documentIds) {
+        $docuRows = $this->dr->getDocumentsByIds($documentIds);
+
+        $tmp = [];
+        foreach($docuRows as $docuRow) {
+            if($docuRow === null) {
+                continue;
+            }
     
-    public function getDocumentById(string $documentId) {
+            $docuRow = DatabaseRow::createFromDbRow($docuRow);
+
+            $tmp[$docuRow->documentId] = $docuRow;
+        }
+
+        return $tmp;
+    }
+    
+    public function getDocumentById(string $documentId, bool $allMetadata = true) {
         $docuRow = $this->dr->getDocumentById($documentId);
 
         if($docuRow === null) {
@@ -187,28 +196,30 @@ class DocumentManager extends AManager {
 
         $docuRow = DatabaseRow::createFromDbRow($docuRow);
 
-        /**
-         * @var array<string, \App\Core\DB\DatabaseRow> $customMetadatas
-         */
-        $customMetadatas = $this->getCustomMetadataForFolder($docuRow->folderId);
+        if($allMetadata) {
+            /**
+             * @var array<string, \App\Core\DB\DatabaseRow> $customMetadatas
+             */
+            $customMetadatas = $this->getCustomMetadataForFolder($docuRow->folderId);
 
-        $documentCustomMetadataValues = [];
-        foreach($customMetadatas as $metadataId => $metadata) {
-            $qb = $this->composeQueryForDocumentCustomMetadataValues();
-            $qb->andWhere('metadataId = ?', [$metadataId])
-                ->andWhere('documentId = ?', [$documentId])
-                ->execute();
+            $documentCustomMetadataValues = [];
+            foreach($customMetadatas as $metadataId => $metadata) {
+                $qb = $this->composeQueryForDocumentCustomMetadataValues();
+                $qb->andWhere('metadataId = ?', [$metadataId])
+                    ->andWhere('documentId = ?', [$documentId])
+                    ->execute();
 
-            while($metaValueRow = $qb->fetchAssoc()) {
-                $metaValueRow = DatabaseRow::createFromDbRow($metaValueRow);
+                while($metaValueRow = $qb->fetchAssoc()) {
+                    $metaValueRow = DatabaseRow::createFromDbRow($metaValueRow);
 
-                $documentCustomMetadataValues[$metadata->title] = $metaValueRow->value;
-            }
+                    $documentCustomMetadataValues[$metadata->title] = $metaValueRow->value;
+                }
 
-            if(array_key_exists($metadata->title, $documentCustomMetadataValues)) {
-                $docuRow->{$metadata->title} = $documentCustomMetadataValues[$metadata->title];
-            } else {
-                $docuRow->{$metadata->title} = null;
+                if(array_key_exists($metadata->title, $documentCustomMetadataValues)) {
+                    $docuRow->{$metadata->title} = $documentCustomMetadataValues[$metadata->title];
+                } else {
+                    $docuRow->{$metadata->title} = null;
+                }
             }
         }
 

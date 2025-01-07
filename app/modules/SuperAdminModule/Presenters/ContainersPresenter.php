@@ -5,12 +5,11 @@ namespace App\Modules\SuperAdminModule;
 use App\Constants\ContainerEnvironments;
 use App\Constants\ContainerStatus;
 use App\Core\DB\DatabaseRow;
+use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
 use App\Helpers\GridHelper;
-use App\UI\FormBuilder\FormResponse;
-use App\UI\GridBuilder2\Cell;
 use App\UI\GridBuilder2\Row;
 use App\UI\HTML\HTML;
 use App\UI\LinkBuilder;
@@ -39,14 +38,7 @@ class ContainersPresenter extends ASuperAdminPresenter {
         $grid->setGridName(GridHelper::GRID_CONTAINERS);
 
         $grid->addColumnText('title', 'Title');
-        $col = $grid->addColumnConst('status', 'Status', ContainerStatus::class);
-        $col->onRenderColumn[] = function(DatabaseRow $row, Row $_row, Cell $cell, HTML $html, mixed $value) {
-            $el = HTML::el('span')
-                ->text($value)
-                ->style('color', ContainerStatus::getColor($row->status));
-
-            return $el;
-        };
+        $grid->addColumnConst('status', 'Status', ContainerStatus::class);
         $grid->addColumnConst('environment', 'Environment', ContainerEnvironments::class);
 
         $settings = $grid->addAction('settings');
@@ -66,7 +58,7 @@ class ContainersPresenter extends ASuperAdminPresenter {
         return $grid;
     }
 
-    public function handleNewContainerForm(?FormResponse $fr = null) {
+    public function handleNewContainerForm(?FormRequest $fr = null) {
         if($fr !== null) {
             try {
                 if($this->app->containerManager->checkContainerTitleExists($fr->title)) {

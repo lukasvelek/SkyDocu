@@ -14,7 +14,7 @@ class TransactionLogPresenter extends AAdminPresenter {
     }
 
     public function createComponentTransactionLogGrid() {
-        $grid = $this->componentFactory->getGridBuilder();
+        $grid = $this->componentFactory->getGridBuilder($this->containerId);
 
         $grid->createDataSourceFromQueryBuilder($this->transactionLogRepository->composeQueryForTransactionLog(), 'transactionId');
 
@@ -31,7 +31,7 @@ class TransactionLogPresenter extends AAdminPresenter {
             $users[$userId] = $user->getFullname();
         }
 
-        $grid->addFilter('userId', 'User:', $users);
+        $grid->addFilter('userId', null, $users);
 
         return $grid;
     }

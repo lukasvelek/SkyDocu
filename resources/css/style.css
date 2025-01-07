@@ -684,7 +684,11 @@ div [id*="user-action-history-"] {
     height: 100px;
 }
 
-.widget-title {
+p.widget-title {
+    font-size: 24px;
+}
+
+a.widget-title {
     font-size: 24px;
 
     text-decoration: none;
@@ -692,7 +696,7 @@ div [id*="user-action-history-"] {
     color: black;
 }
 
-.widget-title:hover {
+a.widget-title:hover {
     text-decoration: underline;
 }
 

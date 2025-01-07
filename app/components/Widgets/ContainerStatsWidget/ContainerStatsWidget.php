@@ -26,6 +26,8 @@ class ContainerStatsWidget extends Widget {
         parent::__construct($request);
 
         $this->cm = $cm;
+
+        $this->componentName = 'ContainerStatsWidget';
     }
 
     public function startup() {

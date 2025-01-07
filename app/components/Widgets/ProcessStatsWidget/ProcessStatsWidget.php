@@ -13,18 +13,18 @@ use App\Repositories\Container\ProcessRepository;
  * @author Lukas Velek
  */
 class ProcessStatsWidget extends Widget {
-    private ProcessRepository $pr;
+    private ProcessRepository $processRepository;
 
     /**
      * Class constructor
      * 
      * @param HttpRequest $request HttpRequest instance
-     * @param ProcessRepository $pr ProcessRepository instance
+     * @param ProcessRepository $processRepository ProcessRepository instance
      */
-    public function __construct(HttpRequest $request, ProcessRepository $pr) {
+    public function __construct(HttpRequest $request, ProcessRepository $processRepository) {
         parent::__construct($request);
 
-        $this->pr = $pr;
+        $this->processRepository = $processRepository;
     }
 
     public function startup() {
@@ -82,7 +82,7 @@ class ProcessStatsWidget extends Widget {
      * @return mixed Data from the database
      */
     private function fetchTotalProcessCountFromDb() {
-        $qb = $this->pr->composeQueryForStandaloneProcesses();
+        $qb = $this->processRepository->composeQueryForStandaloneProcesses();
         $qb->select(['COUNT(*) AS cnt']);
 
         return $qb->execute()->fetch('cnt');
@@ -94,7 +94,7 @@ class ProcessStatsWidget extends Widget {
      * @return mixed Data from the database
      */
     private function fetchInProgressProcessCountFromDb() {
-        $qb = $this->pr->composeQueryForStandaloneProcesses();
+        $qb = $this->processRepository->composeQueryForStandaloneProcesses();
         $qb->select(['COUNT(*) AS cnt'])
             ->andWhere('status = ?', [ProcessStatus::IN_PROGRESS]);
 
@@ -107,7 +107,7 @@ class ProcessStatsWidget extends Widget {
      * @return mixed Data from the database
      */
     private function fetchFinishedProcessCountFromDb() {
-        $qb = $this->pr->composeQueryForStandaloneProcesses();
+        $qb = $this->processRepository->composeQueryForStandaloneProcesses();
         $qb->select(['COUNT(*) AS cnt'])
             ->andWhere('status = ?', [ProcessStatus::FINISHED]);
 
@@ -120,7 +120,7 @@ class ProcessStatsWidget extends Widget {
      * @return mixed Data from the database
      */
     private function fetchCanceledProcessCountFromDb() {
-        $qb = $this->pr->composeQueryForStandaloneProcesses();
+        $qb = $this->processRepository->composeQueryForStandaloneProcesses();
         $qb->select(['COUNT(*) AS cnt'])
             ->andWhere('status = ?', [ProcessStatus::CANCELED]);
 

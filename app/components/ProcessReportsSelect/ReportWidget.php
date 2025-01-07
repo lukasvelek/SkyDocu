@@ -7,6 +7,11 @@ use App\Helpers\ColorHelper;
 use App\Modules\TemplateObject;
 use App\UI\AComponent;
 
+/**
+ * Single process report widget
+ * 
+ * @author Lukas Velek
+ */
 class ReportWidget extends AComponent {
     private string $title;
     private string $bgColor;
@@ -40,10 +45,18 @@ class ReportWidget extends AComponent {
 
     public static function createFromComponent(AComponent $component) {}
 
+    /**
+     * Generates widget ID
+     * 
+     * @return string Widget ID
+     */
     private function generateWidgetId() {
         return 'widget_' . $this->name;
     }
 
+    /**
+     * Generates colors
+     */
     private function generateColors() {
         [$fg, $bg] = ColorHelper::createColorCombination();
 
@@ -51,6 +64,9 @@ class ReportWidget extends AComponent {
         $this->bgColor = $bg;
     }
 
+    /**
+     * Fills the template
+     */
     private function beforeRender() {
         $this->generateColors();
 

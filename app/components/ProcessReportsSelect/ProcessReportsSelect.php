@@ -7,15 +7,20 @@ use App\Managers\Container\StandaloneProcessManager;
 use App\Modules\TemplateObject;
 use App\UI\AComponent;
 
+/**
+ * ProcessReportsSelect is a component that displays enabled process reports to the user
+ * 
+ * @author Lukas Velek
+ */
 class ProcessReportsSelect extends AComponent {
     private TemplateObject $template;
     private array $widgets;
-    private StandaloneProcessManager $spm;
+    private StandaloneProcessManager $standaloneProcessManager;
 
-    public function __construct(HttpRequest $request, StandaloneProcessManager $spm) {
+    public function __construct(HttpRequest $request, StandaloneProcessManager $standaloneProcessManager) {
         parent::__construct($request);
 
-        $this->spm = $spm;
+        $this->standaloneProcessManager = $standaloneProcessManager;
 
         $this->template = $this->loadTemplateFromPath(__DIR__ . '\\template.html');
         $this->widgets = [];
@@ -29,13 +34,19 @@ class ProcessReportsSelect extends AComponent {
 
     public static function createFromComponent(AComponent $component) {}
 
+    /**
+     * Fills the template
+     */
     private function beforeRender() {
         $this->loadWidgets();
         $this->fillTemplate();
     }
 
+    /**
+     * Loads widgets
+     */
     private function loadWidgets() {
-        $enabledProcessTypes = $this->spm->getEnabledProcessTypes();
+        $enabledProcessTypes = $this->standaloneProcessManager->getEnabledProcessTypes();
 
         foreach($enabledProcessTypes as $row) {
             $key = $row->typeKey;
@@ -61,6 +72,9 @@ class ProcessReportsSelect extends AComponent {
         }
     }
 
+    /**
+     * Fills the template
+     */
     private function fillTemplate() {
         $countInRow = 3;
 

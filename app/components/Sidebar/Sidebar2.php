@@ -6,6 +6,11 @@ use App\Core\Http\HttpRequest;
 use App\Modules\TemplateObject;
 use App\UI\AComponent;
 
+/**
+ * Sidebar is a component used for displaying links to the user on the side of the page
+ * 
+ * @author Lukas Velek
+ */
 class Sidebar2 extends AComponent {
     protected array $links;
     private TemplateObject $template;

@@ -14,12 +14,17 @@ use App\UI\GridBuilder2\IGridExtendingComponent;
 use App\UI\GridBuilder2\Row;
 use App\UI\HTML\HTML;
 
+/**
+ * ProcessReportsGrid displays available process reports to the user
+ * 
+ * @author Lukas Velek
+ */
 class ProcessReportsGrid extends GridBuilder implements IGridExtendingComponent {
     private ProcessManager $processManager;
     private StandaloneProcessManager $standaloneProcessManager;
     private string $view;
     private string $currentUserId;
-    private ProcessReportsGridDataSourceHelper $dsHelper;
+    private ProcessReportsGridDataSourceHelper $dataSourceHelper;
     private string $processType;
 
     public function __construct(
@@ -36,7 +41,7 @@ class ProcessReportsGrid extends GridBuilder implements IGridExtendingComponent 
         $this->standaloneProcessManager = $standaloneProcessManager;
         $this->currentUserId = $this->app->currentUser->getId();
 
-        $this->dsHelper = new ProcessReportsGridDataSourceHelper($this->standaloneProcessManager);
+        $this->dataSourceHelper = new ProcessReportsGridDataSourceHelper($this->standaloneProcessManager);
     }
 
     /**
@@ -79,7 +84,7 @@ class ProcessReportsGrid extends GridBuilder implements IGridExtendingComponent 
     }
 
     public function createDataSource() {
-        $qb = $this->dsHelper->composeQuery($this->view, $this->currentUserId, $this->processType);
+        $qb = $this->dataSourceHelper->composeQuery($this->view, $this->currentUserId, $this->processType);
 
         $this->createDataSourceFromQueryBuilder($qb, 'processId');
     }
@@ -88,7 +93,7 @@ class ProcessReportsGrid extends GridBuilder implements IGridExtendingComponent 
      * Appends system metadata to grid
      */
     private function appendSystemMetadata() {
-        $metadata = $this->dsHelper->getMetadataToAppendForView($this->view);
+        $metadata = $this->dataSourceHelper->getMetadataToAppendForView($this->view);
 
         foreach($metadata as $name) {
             $text = ProcessesGridSystemMetadata::toString($name);

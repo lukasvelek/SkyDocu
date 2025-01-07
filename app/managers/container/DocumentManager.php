@@ -16,23 +16,23 @@ use App\Repositories\Container\FolderRepository;
 use App\Repositories\Container\GroupRepository;
 
 class DocumentManager extends AManager {
-    public DocumentRepository $dr;
+    public DocumentRepository $documentRepository;
     private DocumentClassRepository $dcr;
     private GroupRepository $gr;
     private FolderRepository $fr;
     public EnumManager $enumManager;
 
-    public function __construct(Logger $logger, EntityManager $entityManager, DocumentRepository $dr, DocumentClassRepository $dcr, GroupRepository $gr, FolderRepository $fr) {
+    public function __construct(Logger $logger, EntityManager $entityManager, DocumentRepository $documentRepository, DocumentClassRepository $dcr, GroupRepository $gr, FolderRepository $fr) {
         parent::__construct($logger, $entityManager);
 
-        $this->dr = $dr;
+        $this->documentRepository = $documentRepository;
         $this->dcr = $dcr;
         $this->gr = $gr;
         $this->fr = $fr;
     }
 
     public function composeQueryForDocuments(string $userId, string $folderId, bool $allMetadata) {
-        $qb = $this->dr->composeQueryForDocuments();
+        $qb = $this->documentRepository->composeQueryForDocuments();
 
         $qb->andWhere('folderId = ?', [$folderId]);
 
@@ -46,7 +46,7 @@ class DocumentManager extends AManager {
             $qb->andWhere($qb->getColumnInValues('classId', $classes));
         }
 
-        $sharedDocumentIds = $this->dr->getSharedDocumentsForUser($userId);
+        $sharedDocumentIds = $this->documentRepository->getSharedDocumentsForUser($userId);
         
         if(!empty($sharedDocumentIds)) {
             $qb->orWhere($qb->getColumnInValues('documentId', $sharedDocumentIds));
@@ -81,12 +81,12 @@ class DocumentManager extends AManager {
         $cache = $this->cacheFactory->getCache(CacheNames::METADATA_VALUES);
 
         return $cache->load($metadataId, function() use ($metadataId) {
-            return $this->dr->getMetadataValues($metadataId);
+            return $this->documentRepository->getMetadataValues($metadataId);
         });
     }
 
     public function composeQueryForDocumentCustomMetadataValues() {
-        return $this->dr->composeQueryForDocumentCustomMetadataValues();
+        return $this->documentRepository->composeQueryForDocumentCustomMetadataValues();
     }
 
     public function getDocumentClassesForDocumentCreateForUser(string $userId) {
@@ -135,7 +135,7 @@ class DocumentManager extends AManager {
     public function createNewDocument(array $metadataValues, array $customMetadataValues) {
         $documentId = $this->createId(EntityManager::C_DOCUMENTS);
 
-        if(!$this->dr->createNewDocument($documentId, $metadataValues)) {
+        if(!$this->documentRepository->createNewDocument($documentId, $metadataValues)) {
             throw new GeneralException('Database error.');
         }
 
@@ -148,14 +148,14 @@ class DocumentManager extends AManager {
                 'value' => $value
             ];
 
-            if(!$this->dr->createNewCustomMetadataEntry($entryId, $data)) {
+            if(!$this->documentRepository->createNewCustomMetadataEntry($entryId, $data)) {
                 throw new GeneralException('Database error.');
             }
         }
     }
 
     public function getDocumentCountForFolder(string $folderId) {
-        $qb = $this->dr->composeQueryForDocuments();
+        $qb = $this->documentRepository->composeQueryForDocuments();
         $qb->andWhere('folderId = ?', [$folderId])
             ->select(['COUNT(*) AS cnt'])
             ->execute()
@@ -171,7 +171,7 @@ class DocumentManager extends AManager {
      * @return array<string, DatabaseRow> Array of documents where index is the document ID and the value is the DatabaseRow
      */
     public function getDocumentsByIds(array $documentIds) {
-        $docuRows = $this->dr->getDocumentsByIds($documentIds);
+        $docuRows = $this->documentRepository->getDocumentsByIds($documentIds);
 
         $tmp = [];
         foreach($docuRows as $docuRow) {
@@ -188,7 +188,7 @@ class DocumentManager extends AManager {
     }
     
     public function getDocumentById(string $documentId, bool $allMetadata = true) {
-        $docuRow = $this->dr->getDocumentById($documentId);
+        $docuRow = $this->documentRepository->getDocumentById($documentId);
 
         if($docuRow === null) {
             throw new NonExistingEntityException('Document does not exist.');
@@ -229,7 +229,7 @@ class DocumentManager extends AManager {
     public function updateDocument(string $documentId, array $data) {
         $data['dateModified'] = DateTime::now();
         
-        if(!$this->dr->updateDocument($documentId, $data)) {
+        if(!$this->documentRepository->updateDocument($documentId, $data)) {
             throw new GeneralException('Database error.');
         }
     }

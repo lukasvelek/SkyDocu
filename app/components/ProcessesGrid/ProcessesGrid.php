@@ -32,7 +32,7 @@ use QueryBuilder\QueryBuilder;
 class ProcessesGrid extends GridBuilder implements IGridExtendingComponent {
     private string $currentUserId;
     private GridManager $gridManager;
-    private ProcessGridDataSourceHelper $dsHelper;
+    private ProcessGridDataSourceHelper $dataSourceHelper;
     private string $view;
     private ProcessManager $processManager;
     private DocumentManager $documentManager;
@@ -63,7 +63,7 @@ class ProcessesGrid extends GridBuilder implements IGridExtendingComponent {
         $this->processManager = $processManager;
         $this->documentManager = $documentManager;
 
-        $this->dsHelper = new ProcessGridDataSourceHelper($this->processManager->pr);
+        $this->dataSourceHelper = new ProcessGridDataSourceHelper($this->processManager->pr);
 
         $this->view = ProcessGridViews::VIEW_ALL;
     }
@@ -102,7 +102,7 @@ class ProcessesGrid extends GridBuilder implements IGridExtendingComponent {
     }
 
     public function createDataSource() {
-        $qb = $this->dsHelper->composeQuery($this->view, $this->currentUserId);
+        $qb = $this->dataSourceHelper->composeQuery($this->view, $this->currentUserId);
 
         $this->createDataSourceFromQueryBuilder($qb, 'processId');
     }
@@ -151,7 +151,7 @@ class ProcessesGrid extends GridBuilder implements IGridExtendingComponent {
      * Appends system metadata to grid
      */
     private function appendSystemMetadata() {
-        $metadata = $this->dsHelper->getMetadataToAppendForView($this->view);
+        $metadata = $this->dataSourceHelper->getMetadataToAppendForView($this->view);
 
         foreach($metadata as $name) {
             $text = ProcessesGridSystemMetadata::toString($name);

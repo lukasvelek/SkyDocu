@@ -14,7 +14,6 @@ use App\Core\Http\JsonResponse;
 use App\Enums\AEnumForMetadata;
 use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
-use App\Helpers\GridHelper;
 use App\Lib\Processes\ProcessFactory;
 use App\Managers\Container\DocumentManager;
 use App\Managers\Container\EnumManager;
@@ -33,13 +32,13 @@ use App\UI\HTML\HTML;
  */
 class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
     private string $currentUserId;
-    private DocumentManager $dm;
-    private DocumentBulkActionsHelper $dbah;
-    private DocumentBulkActionAuthorizator $dbaa;
-    private GroupStandardOperationsAuthorizator $gsoa;
-    private EnumManager $em;
-    private GridManager $gm;
-    private ProcessFactory $pf;
+    private DocumentManager $documentManager;
+    private DocumentBulkActionsHelper $documentBulkActionsHelper;
+    private DocumentBulkActionAuthorizator $documentBulkActionAuthorizator;
+    private GroupStandardOperationsAuthorizator $groupStandardOperationsAuthorizator;
+    private EnumManager $enumManager;
+    private GridManager $gridManager;
+    private ProcessFactory $processFactory;
 
     private bool $allMetadata;
 
@@ -53,36 +52,36 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
      * @param GridBuilder $grid GridBuilder instance
      * @param Application $app Application instance
      * @param DocumentManager $documentManager DocumentManager instance
-     * @param DocumentBulkActionAuthorizator $dbaa DocumentBulkActionAuthorizator instance
-     * @param GroupStandardOperationsAuthorizator $gsoa
-     * @param EnumManager $em
-     * @param GridManager $gm
-     * @param ProcessFactory $pf
+     * @param DocumentBulkActionAuthorizator $documentBulkActionAuthorizator DocumentBulkActionAuthorizator instance
+     * @param GroupStandardOperationsAuthorizator $groupStandardOperationsAuthorizator
+     * @param EnumManager $enumManager
+     * @param GridManager $gridManager
+     * @param ProcessFactory $processFactory
      * @param string $containerId
      */
     public function __construct(
         GridBuilder $grid,
         Application $app,
         DocumentManager $documentManager,
-        DocumentBulkActionAuthorizator $dbaa,
-        GroupStandardOperationsAuthorizator $gsoa,
-        EnumManager $em,
-        GridManager $gm,
-        ProcessFactory $pf
+        DocumentBulkActionAuthorizator $documentBulkActionAuthorizator,
+        GroupStandardOperationsAuthorizator $groupStandardOperationsAuthorizator,
+        EnumManager $enumManager,
+        GridManager $gridManager,
+        ProcessFactory $processFactory
     ) {
         parent::__construct($grid->httpRequest);
         $this->setHelper($grid->getHelper());
 
         $this->app = $app;
-        $this->dm = $documentManager;
+        $this->documentManager = $documentManager;
         $this->currentUserId = $app->currentUser->getId();
-        $this->dbaa = $dbaa;
-        $this->gsoa = $gsoa;
-        $this->em = $em;
-        $this->gm = $gm;
-        $this->pf = $pf;
+        $this->documentBulkActionAuthorizator = $documentBulkActionAuthorizator;
+        $this->groupStandardOperationsAuthorizator = $groupStandardOperationsAuthorizator;
+        $this->enumManager = $enumManager;
+        $this->gridManager = $gridManager;
+        $this->processFactory = $processFactory;
 
-        $this->dbah = new DocumentBulkActionsHelper($this->app, $this->dm, $this->httpRequest, $this->dbaa, $this->gsoa, $pf);
+        $this->documentBulkActionsHelper = new DocumentBulkActionsHelper($this->app, $this->documentManager, $this->httpRequest, $this->documentBulkActionAuthorizator, $this->groupStandardOperationsAuthorizator, $this->processFactory);
 
         $this->allMetadata = false;
         $this->currentFolderId = null;
@@ -179,7 +178,7 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
     public function createDataSource() {
         $folderId = $this->getFolderId();
 
-        $qb = $this->dm->composeQueryForDocuments($this->currentUserId, $folderId, $this->allMetadata);
+        $qb = $this->documentManager->composeQueryForDocuments($this->currentUserId, $folderId, $this->allMetadata);
 
         $this->createDataSourceFromQueryBuilder($qb, 'documentId');
     }
@@ -233,7 +232,7 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
                         $documentIds[] = $row['documentId'];
                     }
 
-                    $documentsInProcess = $this->pf->processManager->areDocumentsInProcesses($documentIds);
+                    $documentsInProcess = $this->processFactory->processManager->areDocumentsInProcesses($documentIds);
 
                     $col = $this->addColumnBoolean(DocumentsGridSystemMetadata::IS_IN_PROCESS, DocumentsGridSystemMetadata::toString(DocumentsGridSystemMetadata::IS_IN_PROCESS));
                     array_unshift($col->onRenderColumn, function(DatabaseRow $row, Row $_row, Cell $cell, HTML $html, mixed $value) use ($documentsInProcess) {
@@ -250,7 +249,7 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
      * @return ?array Array of visible system metadata or null if no configuration exists
      */
     private function getGridConfiguration() {
-        $row = $this->gm->getGridConfigurationForGridName(GridNames::DOCUMENTS_GRID);
+        $row = $this->gridManager->getGridConfigurationForGridName(GridNames::DOCUMENTS_GRID);
 
         if($row === null) {
             return null;
@@ -274,16 +273,16 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
         /**
          * @var array<string, \App\Core\DB\DatabaseRow> $customMetadatas
          */
-        $customMetadatas = $this->dm->getCustomMetadataForFolder($this->getFolderId());
+        $customMetadatas = $this->documentManager->getCustomMetadataForFolder($this->getFolderId());
 
         $metadataSelectValues = [];
         $documentCustomMetadataValues = [];
         foreach($customMetadatas as $metadataId => $metadata) {
             if($metadata->type == CustomMetadataTypes::ENUM) {
-                $metadataSelectValues[$metadata->title] = $this->dm->getMetadataValues($metadataId);
+                $metadataSelectValues[$metadata->title] = $this->documentManager->getMetadataValues($metadataId);
             }
 
-            $qb = $this->dm->composeQueryForDocumentCustomMetadataValues();
+            $qb = $this->documentManager->composeQueryForDocumentCustomMetadataValues();
             $qb->andWhere('metadataId = ?', [$metadataId])
                 ->andWhere($qb->getColumnInValues('documentId', $this->getEntityIdsInGrid()))
                 ->execute();
@@ -331,7 +330,7 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
      * @param array $documentCustomMetadata Custom metadata values for documents
      */
     private function appendSystemEnumCustomMetadata(DatabaseRow $metadata, array $documentCustomMetadataValues) {
-        $values = $this->em->getMetadataEnumValuesByMetadataType($metadata);
+        $values = $this->enumManager->getMetadataEnumValuesByMetadataType($metadata);
 
         $col = $this->addColumnText($metadata->title, $metadata->guiTitle);
         $col->onRenderColumn[] = function(DatabaseRow $row, Row $_row, Cell $cell, HTML $html, mixed $value) use ($values, $documentCustomMetadataValues, $metadata) {
@@ -573,7 +572,7 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
 
         $ids = $this->httpRequest->query['ids'];
 
-        $bulkActions = $this->dbah->getBulkActions($ids);
+        $bulkActions = $this->documentBulkActionsHelper->getBulkActions($ids);
 
         $modal->setBulkActions($bulkActions);
         $modal->startup();

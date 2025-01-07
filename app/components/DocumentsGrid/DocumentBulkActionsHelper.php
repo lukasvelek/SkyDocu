@@ -18,20 +18,27 @@ use App\UI\HTML\HTML;
  * @author Lukas Velek
  */
 class DocumentBulkActionsHelper {
-    private DocumentManager $dm;
+    private DocumentManager $documentManager;
     private Application $app;
-    private DocumentBulkActionAuthorizator $dbaa;
-    private GroupStandardOperationsAuthorizator $gsoa;
-    private ProcessFactory $pf;
+    private DocumentBulkActionAuthorizator $documentBulkActionAuthorizator;
+    private GroupStandardOperationsAuthorizator $groupStandardOperationsAuthorizator;
+    private ProcessFactory $processFactory;
 
     private HttpRequest $request;
 
-    public function __construct(Application $app, DocumentManager $dm, HttpRequest $request, DocumentBulkActionAuthorizator $dbaa, GroupStandardOperationsAuthorizator $gsoa, ProcessFactory $pf) {
-        $this->dm = $dm;
+    public function __construct(
+        Application $app,
+        DocumentManager $documentManager,
+        HttpRequest $request,
+        DocumentBulkActionAuthorizator $documentBulkActionAuthorizator,
+        GroupStandardOperationsAuthorizator $groupStandardOperationsAuthorizator,
+        ProcessFactory $processFactory
+    ) {
+        $this->documentManager = $documentManager;
         $this->app = $app;
-        $this->dbaa = $dbaa;
-        $this->gsoa = $gsoa;
-        $this->pf = $pf;
+        $this->documentBulkActionAuthorizator = $documentBulkActionAuthorizator;
+        $this->groupStandardOperationsAuthorizator = $groupStandardOperationsAuthorizator;
+        $this->processFactory = $processFactory;
 
         $this->request = $request;
     }
@@ -75,19 +82,19 @@ class DocumentBulkActionsHelper {
      */
     private function appendProcessBulkActions(array $documentIds, array &$bulkActions) {
         // Archivation
-        $p = $this->pf->createDocumentArchivationProcess();
+        $p = $this->processFactory->createDocumentArchivationProcess();
         if($p->canExecute($documentIds, null)) {
             $bulkActions[] = SystemProcessTypes::ARCHIVATION;
         }
 
         // Shredding request
-        $p = $this->pf->createDocumentShreddingRequestProcess();
+        $p = $this->processFactory->createDocumentShreddingRequestProcess();
         if($p->canExecute($documentIds, null)) {
             $bulkActions[] = SystemProcessTypes::SHREDDING_REQUEST;
         }
 
         // Shredding
-        $p = $this->pf->createDocumentShreddingProcess();
+        $p = $this->processFactory->createDocumentShreddingProcess();
         if($p->canExecute($documentIds, null)) {
             $bulkActions[] = SystemProcessTypes::SHREDDING;
         }

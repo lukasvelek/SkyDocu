@@ -5,6 +5,11 @@ namespace App\Components\ProcessForm\Processes;
 use App\Constants\Container\StandaloneProcesses;
 use App\Core\Http\HttpRequest;
 
+/**
+ * HomeOffice represents the HomeOffice standalone process
+ * 
+ * @author Lukas Velek
+ */
 class HomeOffice extends AProcessForm {
     public function __construct(HttpRequest $request, array $baseUrl) {
         parent::__construct($request, $baseUrl);

@@ -8,6 +8,11 @@ use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
 use App\Lib\Processes\ADocumentBulkProcess;
 
+/**
+ * Shredding document bulk process
+ * 
+ * @author Lukas Velek
+ */
 class ShreddingProcess extends ADocumentBulkProcess {
     private ?AException $finalExecuteException = null;
 

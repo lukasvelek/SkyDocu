@@ -7,6 +7,11 @@ use App\Constants\Container\SystemProcessTypes;
 use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
 
+/**
+ * Archiving document bulk process
+ * 
+ * @author Lukas Velek
+ */
 class ArchivingProcess extends ADocumentBulkProcess {
     private ?AException $finalExecuteException = null;
 

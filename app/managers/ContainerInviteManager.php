@@ -10,30 +10,30 @@ use App\Logger\Logger;
 use App\Repositories\ContainerInviteRepository;
 
 class ContainerInviteManager extends AManager {
-    private ContainerInviteRepository $cir;
+    private ContainerInviteRepository $containerInviteRepository;
 
-    public function __construct(Logger $logger, EntityManager $entityManager, ContainerInviteRepository $cir) {
+    public function __construct(Logger $logger, EntityManager $entityManager, ContainerInviteRepository $containerInviteRepository) {
         parent::__construct($logger, $entityManager);
 
-        $this->cir = $cir;
+        $this->containerInviteRepository = $containerInviteRepository;
     }
 
     public function createContainerInvite(string $containerId, string $dateValid) {
         $inviteId = $this->createId(EntityManager::CONTAINER_INVITES);
 
-        if(!$this->cir->createContainerInvite($inviteId, $containerId, $dateValid)) {
+        if(!$this->containerInviteRepository->createContainerInvite($inviteId, $containerId, $dateValid)) {
             throw new GeneralException('Database error.', null, false);
         }
     }
 
     public function removeContainerInvite(string $inviteId) {
-        if(!$this->cir->removeContainerInvite($inviteId)) {
+        if(!$this->containerInviteRepository->removeContainerInvite($inviteId)) {
             throw new GeneralException('Database error.', null, false);
         }
     }
 
     public function getInviteForContainer(string $containerId) {
-        $result = $this->cir->getInviteForContainer($containerId);
+        $result = $this->containerInviteRepository->getInviteForContainer($containerId);
 
         if($result === null) {
             throw new GeneralException('No invite for container exists.', null, false);
@@ -43,7 +43,7 @@ class ContainerInviteManager extends AManager {
     }
 
     public function getInviteById(string $inviteId, bool $checkDate = true) {
-        $result = $this->cir->getInviteById($inviteId, $checkDate);
+        $result = $this->containerInviteRepository->getInviteById($inviteId, $checkDate);
 
         if($result === null) {
             throw new NonExistingEntityException('No invite exists.', null, false);
@@ -55,13 +55,13 @@ class ContainerInviteManager extends AManager {
     public function insertNewContainerInviteUsage(string $inviteId, string $containerId, array $data) {
         $entryId = $this->createId(EntityManager::CONTAINER_INVITE_USAGE);
 
-        if(!$this->cir->insertContainerInviteUsage($entryId, $inviteId, $containerId, serialize($data))) {
+        if(!$this->containerInviteRepository->insertContainerInviteUsage($entryId, $inviteId, $containerId, serialize($data))) {
             throw new GeneralException('Database error.', null, false);
         }
     }
 
     public function composeQueryForContainerInviteUsages(string $containerId) {
-        return $this->cir->composeQueryForContainerInviteUsages($containerId);
+        return $this->containerInviteRepository->composeQueryForContainerInviteUsages($containerId);
     }
 
     public function disableContainerInvite(string $inviteId) {
@@ -72,25 +72,25 @@ class ContainerInviteManager extends AManager {
             'dateValid' => $date->getResult()
         ];
 
-        if(!$this->cir->updateContainerInvite($inviteId, $data)) {
+        if(!$this->containerInviteRepository->updateContainerInvite($inviteId, $data)) {
             throw new GeneralException('Database error.', null, false);
         }
     }
 
     public function updateContainerInviteUsage(string $entryId, array $data) {
-        if(!$this->cir->updateContainerInviteUsage($entryId, $data)) {
+        if(!$this->containerInviteRepository->updateContainerInviteUsage($entryId, $data)) {
             throw new GeneralException('Database error.', null, false);
         }
     }
 
     public function deleteContainerInviteUsage(string $entryId) {
-        if(!$this->cir->deleteContainerInviteUsage($entryId)) {
+        if(!$this->containerInviteRepository->deleteContainerInviteUsage($entryId)) {
             throw new GeneralException('Database error.', null, false);
         }
     }
 
     public function getInviteUsageById(string $entryId) {
-        $result = $this->cir->getInviteUsageById($entryId);
+        $result = $this->containerInviteRepository->getInviteUsageById($entryId);
 
         if($result === null) {
             throw new NonExistingEntityException('No entry exists.', null, false);

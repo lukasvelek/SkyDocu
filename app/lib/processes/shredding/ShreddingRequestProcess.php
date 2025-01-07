@@ -7,6 +7,11 @@ use App\Constants\Container\SystemProcessTypes;
 use App\Exceptions\AException;
 use App\Lib\Processes\ADocumentBulkProcess;
 
+/**
+ * Shredding request document bulk process
+ * 
+ * @author Lukas Velek
+ */
 class ShreddingRequestProcess extends ADocumentBulkProcess {
     public function canExecute(array $documentIds, ?string $userId = null, array &$exceptions = []): bool {
         return $this->internalCheckCanExecute('canExecuteShreddingRequest', $documentIds, $userId, $exceptions);

@@ -16,29 +16,36 @@ use App\Repositories\Container\FolderRepository;
 use App\Repositories\Container\GroupRepository;
 
 class DocumentManager extends AManager {
-    public DocumentRepository $dr;
-    private DocumentClassRepository $dcr;
-    private GroupRepository $gr;
-    private FolderRepository $fr;
+    public DocumentRepository $documentRepository;
+    private DocumentClassRepository $documentClassRepository;
+    private GroupRepository $groupRepository;
+    private FolderRepository $folderRepository;
     public EnumManager $enumManager;
 
-    public function __construct(Logger $logger, EntityManager $entityManager, DocumentRepository $dr, DocumentClassRepository $dcr, GroupRepository $gr, FolderRepository $fr) {
+    public function __construct(
+        Logger $logger,
+        EntityManager $entityManager,
+        DocumentRepository $documentRepository,
+        DocumentClassRepository $documentClassRepository,
+        GroupRepository $groupRepository,
+        FolderRepository $folderRepository
+    ) {
         parent::__construct($logger, $entityManager);
 
-        $this->dr = $dr;
-        $this->dcr = $dcr;
-        $this->gr = $gr;
-        $this->fr = $fr;
+        $this->documentRepository = $documentRepository;
+        $this->documentClassRepository = $documentClassRepository;
+        $this->groupRepository = $groupRepository;
+        $this->folderRepository = $folderRepository;
     }
 
     public function composeQueryForDocuments(string $userId, string $folderId, bool $allMetadata) {
-        $qb = $this->dr->composeQueryForDocuments();
+        $qb = $this->documentRepository->composeQueryForDocuments();
 
         $qb->andWhere('folderId = ?', [$folderId]);
 
-        $groupIds = $this->gr->getGroupsForUser($userId);
+        $groupIds = $this->groupRepository->getGroupsForUser($userId);
 
-        $classes = $this->dcr->getVisibleClassesForGroups($groupIds);
+        $classes = $this->documentClassRepository->getVisibleClassesForGroups($groupIds);
 
         if(empty($classes)) {
             $qb->andWhere('1=0');
@@ -46,18 +53,18 @@ class DocumentManager extends AManager {
             $qb->andWhere($qb->getColumnInValues('classId', $classes));
         }
 
-        $sharedDocumentIds = $this->dr->getSharedDocumentsForUser($userId);
+        $sharedDocumentIds = $this->documentRepository->getSharedDocumentsForUser($userId);
         
         if(!empty($sharedDocumentIds)) {
             $qb->orWhere($qb->getColumnInValues('documentId', $sharedDocumentIds));
         }
 
         if($allMetadata) {
-            $visibleCustomMetadataIds = $this->fr->getVisibleCustomMetadataIdForFolder($folderId);
+            $visibleCustomMetadataIds = $this->folderRepository->getVisibleCustomMetadataIdForFolder($folderId);
 
             $visibleCustomMetadata = [];
             foreach($visibleCustomMetadataIds as $metadataId) {
-                $visibleCustomMetadata[] = $this->fr->getCustomMetadataById($metadataId);
+                $visibleCustomMetadata[] = $this->folderRepository->getCustomMetadataById($metadataId);
             }
         }
 
@@ -65,11 +72,11 @@ class DocumentManager extends AManager {
     }
 
     public function getCustomMetadataForFolder(string $folderId) {
-        $metadataIds = $this->fr->getVisibleCustomMetadataIdForFolder($folderId);
+        $metadataIds = $this->folderRepository->getVisibleCustomMetadataIdForFolder($folderId);
 
         $metadatas = [];
         foreach($metadataIds as $metadataId) {
-            $row = $this->fr->getCustomMetadataById($metadataId);
+            $row = $this->folderRepository->getCustomMetadataById($metadataId);
             $row = DatabaseRow::createFromDbRow($row);
             $metadatas[$metadataId] = $row;
         }
@@ -81,20 +88,20 @@ class DocumentManager extends AManager {
         $cache = $this->cacheFactory->getCache(CacheNames::METADATA_VALUES);
 
         return $cache->load($metadataId, function() use ($metadataId) {
-            return $this->dr->getMetadataValues($metadataId);
+            return $this->documentRepository->getMetadataValues($metadataId);
         });
     }
 
     public function composeQueryForDocumentCustomMetadataValues() {
-        return $this->dr->composeQueryForDocumentCustomMetadataValues();
+        return $this->documentRepository->composeQueryForDocumentCustomMetadataValues();
     }
 
     public function getDocumentClassesForDocumentCreateForUser(string $userId) {
-        $groups = $this->gr->getGroupsForUser($userId);
+        $groups = $this->groupRepository->getGroupsForUser($userId);
 
         $classes = [];
         foreach($groups as $groupId) {
-            $qb = $this->dcr->composeQueryForClassesForGroup($groupId)
+            $qb = $this->documentClassRepository->composeQueryForClassesForGroup($groupId)
                 ->andWhere('canView = 1')
                 ->andWhere('canCreate = 1')
                 ->execute();
@@ -102,7 +109,7 @@ class DocumentManager extends AManager {
             while($row = $qb->fetchAssoc()) {
                 $row = DatabaseRow::createFromDbRow($row);
 
-                $class = $this->dcr->getDocumentClassById($row->classId);
+                $class = $this->documentClassRepository->getDocumentClassById($row->classId);
 
                 $classes[$row->classId] = $class['title'];
             }
@@ -112,11 +119,11 @@ class DocumentManager extends AManager {
     }
 
     public function getAllDocumentClassesForUser(string $userId) {
-        $groups = $this->gr->getGroupsForUser($userId);
+        $groups = $this->groupRepository->getGroupsForUser($userId);
 
         $classes = [];
         foreach($groups as $groupId) {
-            $qb = $this->dcr->composeQueryForClassesForGroup($groupId)
+            $qb = $this->documentClassRepository->composeQueryForClassesForGroup($groupId)
                 ->execute();
 
             while($row = $qb->fetchAssoc()) {
@@ -135,7 +142,7 @@ class DocumentManager extends AManager {
     public function createNewDocument(array $metadataValues, array $customMetadataValues) {
         $documentId = $this->createId(EntityManager::C_DOCUMENTS);
 
-        if(!$this->dr->createNewDocument($documentId, $metadataValues)) {
+        if(!$this->documentRepository->createNewDocument($documentId, $metadataValues)) {
             throw new GeneralException('Database error.');
         }
 
@@ -148,14 +155,14 @@ class DocumentManager extends AManager {
                 'value' => $value
             ];
 
-            if(!$this->dr->createNewCustomMetadataEntry($entryId, $data)) {
+            if(!$this->documentRepository->createNewCustomMetadataEntry($entryId, $data)) {
                 throw new GeneralException('Database error.');
             }
         }
     }
 
     public function getDocumentCountForFolder(string $folderId) {
-        $qb = $this->dr->composeQueryForDocuments();
+        $qb = $this->documentRepository->composeQueryForDocuments();
         $qb->andWhere('folderId = ?', [$folderId])
             ->select(['COUNT(*) AS cnt'])
             ->execute()
@@ -171,7 +178,7 @@ class DocumentManager extends AManager {
      * @return array<string, DatabaseRow> Array of documents where index is the document ID and the value is the DatabaseRow
      */
     public function getDocumentsByIds(array $documentIds) {
-        $docuRows = $this->dr->getDocumentsByIds($documentIds);
+        $docuRows = $this->documentRepository->getDocumentsByIds($documentIds);
 
         $tmp = [];
         foreach($docuRows as $docuRow) {
@@ -188,7 +195,7 @@ class DocumentManager extends AManager {
     }
     
     public function getDocumentById(string $documentId, bool $allMetadata = true) {
-        $docuRow = $this->dr->getDocumentById($documentId);
+        $docuRow = $this->documentRepository->getDocumentById($documentId);
 
         if($docuRow === null) {
             throw new NonExistingEntityException('Document does not exist.');
@@ -229,7 +236,7 @@ class DocumentManager extends AManager {
     public function updateDocument(string $documentId, array $data) {
         $data['dateModified'] = DateTime::now();
         
-        if(!$this->dr->updateDocument($documentId, $data)) {
+        if(!$this->documentRepository->updateDocument($documentId, $data)) {
             throw new GeneralException('Database error.');
         }
     }

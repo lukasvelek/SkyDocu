@@ -14,14 +14,14 @@ use App\Repositories\Container\FolderRepository;
 use App\Repositories\Container\MetadataRepository;
 
 class MetadataManager extends AManager {
-    private MetadataRepository $mr;
-    private FolderRepository $fr;
+    private MetadataRepository $metadataRepository;
+    private FolderRepository $folderRepository;
 
-    public function __construct(Logger $logger, EntityManager $em, MetadataRepository $mr, FolderRepository $fr) {
-        parent::__construct($logger, $em);
+    public function __construct(Logger $logger, EntityManager $entityManager, MetadataRepository $metadataRepository, FolderRepository $folderRepository) {
+        parent::__construct($logger, $entityManager);
 
-        $this->mr = $mr;
-        $this->fr = $fr;
+        $this->metadataRepository = $metadataRepository;
+        $this->folderRepository = $folderRepository;
     }
     
     public function createNewMetadata(string $title, string $guiTitle, int $type, ?string $defaultValue, bool $isRequired) {
@@ -39,7 +39,7 @@ class MetadataManager extends AManager {
             $data['defaultValue'] = $defaultValue;
         }
 
-        if(!$this->mr->createNewMetadata($data)) {
+        if(!$this->metadataRepository->createNewMetadata($data)) {
             throw new GeneralException('Database error.');
         }
 
@@ -47,13 +47,13 @@ class MetadataManager extends AManager {
     }
 
     public function updateMetadata(string $metadataId, array $data) {
-        if(!$this->mr->updateMetadata($metadataId, $data)) {
+        if(!$this->metadataRepository->updateMetadata($metadataId, $data)) {
             throw new GeneralException('Database error.');
         }
     }
 
     public function getFoldersWithoutMetadataRights(string $metadataId) {
-        $qb = $this->mr->composeQueryForMetadataFolderRights();
+        $qb = $this->metadataRepository->composeQueryForMetadataFolderRights();
         $qb->andWhere('customMetadataId = ?', [$metadataId]);
         $qb->execute();
 
@@ -62,13 +62,13 @@ class MetadataManager extends AManager {
             $folders[] = $row['folderId'];
         }
 
-        $qb = $this->fr->composeQueryForFolders();
+        $qb = $this->folderRepository->composeQueryForFolders();
         $qb->andWhere($qb->getColumnNotInValues('folderId', $folders));
         $qb->execute();
 
         $folders = [];
         while($row = $qb->fetchAssoc()) {
-            $folder = $this->fr->getFolderById($row['folderId']);
+            $folder = $this->folderRepository->getFolderById($row['folderId']);
 
             if($folder === null) {
                 continue;
@@ -83,7 +83,7 @@ class MetadataManager extends AManager {
     public function createMetadataFolderRight(string $metadataId, string $folderId) {
         $relationId = $this->createId(EntityManager::C_CUSTOM_METADATA_FOLDER_RELATION);
 
-        if(!$this->mr->createNewMetadataFolderRight($relationId, $metadataId, $folderId)) {
+        if(!$this->metadataRepository->createNewMetadataFolderRight($relationId, $metadataId, $folderId)) {
             throw new GeneralException('Database error.');
         }
 
@@ -91,7 +91,7 @@ class MetadataManager extends AManager {
     }
 
     public function removeMetadataFolderRight(string $metadataId, string $folderId) {
-        if(!$this->mr->removeMetadataFolderRight($metadataId, $folderId)) {
+        if(!$this->metadataRepository->removeMetadataFolderRight($metadataId, $folderId)) {
             throw new GeneralException('Database error.');
         }
     }
@@ -105,12 +105,12 @@ class MetadataManager extends AManager {
             'title' => $title
         ];
         
-        $lastKey = $this->mr->getLastMetadataEnumValueKey($metadataId);
+        $lastKey = $this->metadataRepository->getLastMetadataEnumValueKey($metadataId);
         if($lastKey !== null) {
             $data['metadataKey'] = ((int)$lastKey) + 1;
         }
 
-        if(!$this->mr->createNewMetadataEnumValue($data)) {
+        if(!$this->metadataRepository->createNewMetadataEnumValue($data)) {
             throw new GeneralException('Database error.');
         }
 
@@ -118,7 +118,7 @@ class MetadataManager extends AManager {
     }
 
     public function updateMetadataEnumValue(string $valueId, array $data) {
-        if(!$this->mr->updateMetadataEnumValue($valueId, $data)) {
+        if(!$this->metadataRepository->updateMetadataEnumValue($valueId, $data)) {
             throw new GeneralException('Database error.');
         }
 
@@ -126,7 +126,7 @@ class MetadataManager extends AManager {
     }
     
     public function isMetadataEnumValueUsed(string $valueId, string $metadataId) {
-        $row = $this->mr->getMetadataEnumValueById($valueId);
+        $row = $this->metadataRepository->getMetadataEnumValueById($valueId);
 
         if($row === null) {
             throw new GeneralException('Enum value does not exist.');
@@ -134,7 +134,7 @@ class MetadataManager extends AManager {
 
         $row = DatabaseRow::createFromDbRow($row);
 
-        $usages = $this->mr->getMetadataEnumValueUsage($metadataId, $row->metadataKey);
+        $usages = $this->metadataRepository->getMetadataEnumValueUsage($metadataId, $row->metadataKey);
 
         return $usages->num_rows > 0;
     }
@@ -148,7 +148,7 @@ class MetadataManager extends AManager {
     }
 
     public function getMetadataById(string $metadataId) {
-        $metadata = $this->mr->getMetadataById($metadataId);
+        $metadata = $this->metadataRepository->getMetadataById($metadataId);
 
         if($metadata === null) {
             throw new NonExistingEntityException('Metadata does not exist.');
@@ -158,7 +158,7 @@ class MetadataManager extends AManager {
     }
 
     public function getMetadataForFolder(string $folderId) {
-        $qb = $this->mr->composeQueryForMetadataFolderRights();
+        $qb = $this->metadataRepository->composeQueryForMetadataFolderRights();
         $qb->andWhere('folderId = ?', [$folderId]);
         $qb->execute();
 
@@ -179,18 +179,18 @@ class MetadataManager extends AManager {
     }
     
     public function composeQueryForMetadataForFolder(string $folderId) {
-        $rightsQb = $this->mr->composeQueryForMetadataFolderRights()
+        $rightsQb = $this->metadataRepository->composeQueryForMetadataFolderRights()
             ->andWhere('folderId = ?', [$folderId])
             ->select(['customMetadataId']);
 
-        $qb = $this->mr->composeQueryForMetadata();
+        $qb = $this->metadataRepository->composeQueryForMetadata();
         $qb->andWhere('metadataId IN (' . $rightsQb->getSQL() . ')');
 
         return $qb;
     }
 
     public function getMetadataEnumValues(string $metadataId) {
-        $qb = $this->mr->composeQueryMetadataEnumValues($metadataId);
+        $qb = $this->metadataRepository->composeQueryMetadataEnumValues($metadataId);
         $qb->execute();
 
         $values = [];
@@ -202,11 +202,11 @@ class MetadataManager extends AManager {
     }
 
     public function composeQueryForMetadataNotInFolder(string $folderId) {
-        $rightsQb = $this->mr->composeQueryForMetadataFolderRights()
+        $rightsQb = $this->metadataRepository->composeQueryForMetadataFolderRights()
             ->andWhere('folderId = ?', [$folderId])
             ->select(['customMetadataId']);
 
-        $qb = $this->mr->composeQueryForMetadata();
+        $qb = $this->metadataRepository->composeQueryForMetadata();
         $qb->andWhere('metadataId NOT IN (' . $rightsQb->getSQL() . ')');
 
         return $qb;

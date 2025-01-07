@@ -107,7 +107,6 @@ class GridFilter extends AComponent {
         $scripts = [];
         
         $script = '
-            <script type="text/javascript">
                 async function ' . $this->componentName . '_submit() {
         ';
 
@@ -122,21 +121,18 @@ class GridFilter extends AComponent {
 
         $script .= '
                     await ' . $this->gridComponentName . '_filter(' . implode(', ', $args) . ');
-                }
-            </script>';
+                }';
 
         $scripts[] = $script;
 
         $scripts[] = '
-            <script type="text/javascript">
-                function ' . $this->componentName . '_closeModal() {
+            function ' . $this->componentName . '_closeModal() {
                    $("#grid-filter-modal-inner").css("visibility", "hidden")
                         .css("height", "0px");
-                }
-            </script>
+            }
         ';
 
-        return implode('', $scripts);
+        return '<script type="text/javascript">' . implode("\r\n\r\n", $scripts) . '</script>';
     }
 
     /**

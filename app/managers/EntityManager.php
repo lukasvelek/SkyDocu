@@ -47,18 +47,18 @@ class EntityManager extends AManager {
 
     private const __MAX__ = 100;
 
-    private ContentRepository $cr;
+    private ContentRepository $contentRepository;
 
     /**
      * Class constructor
      * 
      * @param Logger $logger Logger instance
-     * @param ContentRepository $cr ContentRepository instance
+     * @param ContentRepository $contentRepository ContentRepository instance
      */
-    public function __construct(Logger $logger, ContentRepository $cr) {
+    public function __construct(Logger $logger, ContentRepository $contentRepository) {
         parent::__construct($logger, null);
 
-        $this->cr = $cr;
+        $this->contentRepository = $contentRepository;
     }
 
     public function generateEntityIdCustomDb(string $category, DatabaseConnection $customConn) {
@@ -103,7 +103,7 @@ class EntityManager extends AManager {
 
             $primaryKeyName = $this->getPrimaryKeyNameByCategory($category);
 
-            $unique = $this->cr->checkIdIsUnique($category, $primaryKeyName, $entityId);
+            $unique = $this->contentRepository->checkIdIsUnique($category, $primaryKeyName, $entityId);
 
             if($unique || $x >= self::__MAX__) {
                 $run = false;

@@ -5,7 +5,6 @@ namespace App\Core\Caching;
 use App\Core\Caching\Cache;
 use App\Core\Datetypes\DateTime;
 use App\Core\FileManager;
-use App\Core\HashManager;
 
 /**
  * CacheFactory allows to create cache

@@ -56,7 +56,7 @@ class GridBuilder extends AComponent {
     private bool $enableExport;
     private int $gridPage;
     private ?int $totalCount;
-    private GridHelper $helper;
+    private GridHelper $gridHelper;
     private string $gridName;
 
     /**
@@ -178,10 +178,10 @@ class GridBuilder extends AComponent {
     /**
      * Sets the GridHelper instance
      * 
-     * @param GridHelper $helper GridHelper instance
+     * @param GridHelper $gridHelper GridHelper instance
      */
-    public function setHelper(GridHelper $helper) {
-        $this->helper = $helper;
+    public function setHelper(GridHelper $gridHelper) {
+        $this->gridHelper = $gridHelper;
     }
 
     /**
@@ -190,7 +190,7 @@ class GridBuilder extends AComponent {
      * @return GridHelper GridHelper instance
      */
     public function getHelper() {
-        return $this->helper;
+        return $this->gridHelper;
     }
 
     /**
@@ -572,8 +572,6 @@ class GridBuilder extends AComponent {
 
         $_tableRows['header'] = $_headerRow;
 
-        $hasActionsCol = false;
-
         $cursor = clone $this->fetchDataFromDb();
 
         $rowIndex = 0;
@@ -852,7 +850,7 @@ class GridBuilder extends AComponent {
         $scripts = [];
 
         $addScript = function(AjaxRequestBuilder $arb) use (&$scripts) {
-            $scripts[] = '<script type="text/javascript">' . $arb->build() . '</script>';
+            $scripts[] = $arb->build();
         };
 
         // REFRESH
@@ -957,14 +955,12 @@ class GridBuilder extends AComponent {
         // FILTER MODAL
         if(!empty($this->filters)) {
             $scripts[] = '
-                <script type="text/javascript">
                     async function ' . $this->componentName . '_processFilterModalOpen() {
                         $("#grid-filter-modal-inner")
                             .css("height", "90%")
                             .css("visibility", "visible")
                             .css("width", "90%");
                     }
-                </script>
             ';
 
             $arb = new AjaxRequestBuilder();
@@ -995,14 +991,12 @@ class GridBuilder extends AComponent {
         // EXPORT MODAL
         if($this->enableExport) {
             $scripts[] = '
-                <script type="text/javascript">
                     async function ' . $this->componentName . '_processExportModalOpen() {
                         $("#grid-export-modal-inner")
                             .css("height", "90%")
                             .css("visibility", "visible")
                             .css("width", "90%");
                     }
-                </script>
             ';
         }
 
@@ -1110,7 +1104,6 @@ class GridBuilder extends AComponent {
             $addScript($arb);
 
             $scripts[] = '
-                <script type="text/javascript">
                     function ' . $this->componentName . '_processBulkActionsModalOpen(_showLoading) {
                         if(_showLoading) {
                             $("#modal").html(\'<div id="bulk-actions-modal-inner" style="visibility: hidden; height: 0px; position: absolute; top: 5%; left: 5%; background-color: rgba(225, 225, 225, 1); z-index: 9999; border-radius: 5px;"></div>\');
@@ -1127,11 +1120,10 @@ class GridBuilder extends AComponent {
                         $("#modal").html(\'\');
                         $("#modal").hide();
                     }
-                </script>
             ';
         }
 
-        return implode('', $scripts);
+        return '<script type="text/javascript">' . implode("\r\n\r\n", $scripts) . '</script>';
     }
 
     /**
@@ -1238,7 +1230,7 @@ class GridBuilder extends AComponent {
             $page = $this->httpRequest->query['gridPage'];
         }
 
-        $page = $this->helper->getGridPage($this->gridName, $page);
+        $page = $this->gridHelper->getGridPage($this->gridName, $page);
 
         return (int)$page;
     }

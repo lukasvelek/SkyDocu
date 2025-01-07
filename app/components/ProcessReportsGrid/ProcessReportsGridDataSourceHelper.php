@@ -13,15 +13,15 @@ use App\Repositories\Container\ProcessRepository;
  * @author Lukas Velek
  */
 class ProcessReportsGridDataSourceHelper {
-    private StandaloneProcessManager $spm;
+    private StandaloneProcessManager $standaloneProcessManager;
 
     /**
      * Class constructor
      * 
      * @param ProcessRepository $processRepository
      */
-    public function __construct(StandaloneProcessManager $spm) {
-        $this->spm = $spm;
+    public function __construct(StandaloneProcessManager $standaloneProcessManager) {
+        $this->standaloneProcessManager = $standaloneProcessManager;
     }
 
     /**
@@ -47,7 +47,7 @@ class ProcessReportsGridDataSourceHelper {
      * @param string $processType Process type
      */
     private function composeQueryAll(string $processType) {
-        $qb = $this->spm->composeQueryForProcessTypeInstances($processType);
+        $qb = $this->standaloneProcessManager->composeQueryForProcessTypeInstances($processType);
 
         return $qb;
     }
@@ -59,7 +59,7 @@ class ProcessReportsGridDataSourceHelper {
      * @param string $currentUserId Current user ID
      */
     private function composeQueryMy(string $processType, string $currentUserId) {
-        $qb = $this->spm->composeQueryForProcessTypeInstances($processType);
+        $qb = $this->standaloneProcessManager->composeQueryForProcessTypeInstances($processType);
         $qb->andWhere('authorUserId = ?', [$currentUserId]);
 
         return $qb;

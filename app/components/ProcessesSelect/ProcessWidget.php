@@ -4,10 +4,14 @@ namespace App\Components\ProcessesSelect;
 
 use App\Constants\Container\StandaloneProcesses;
 use App\Core\Http\HttpRequest;
-use App\Helpers\ColorHelper;
 use App\Modules\TemplateObject;
 use App\UI\AComponent;
 
+/**
+ * Single process widget
+ * 
+ * @author Lukas Velek
+ */
 class ProcessWidget extends AComponent {
     private string $title;
     private string $bgColor;
@@ -33,15 +37,26 @@ class ProcessWidget extends AComponent {
         $this->componentName = $this->generateWidgetId();
     }
 
+    /**
+     * Generates colors for the widget
+     */
     private function generateColors() {
         $this->fgColor = StandaloneProcesses::getForegroundColor($this->name);
         $this->bgColor = StandaloneProcesses::getBackgroundColor($this->name);
     }
 
+    /**
+     * Generates widget ID
+     * 
+     * @return string Widget ID
+     */
     private function generateWidgetId() {
         return 'widget_' . $this->name;
     }
 
+    /**
+     * Fills the template
+     */
     private function beforeRender() {
         $this->generateColors();
 

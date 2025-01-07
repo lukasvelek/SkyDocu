@@ -27,9 +27,11 @@ class RenderEngine {
     /**
      * Class constructor
      * 
+     * @param Logger $logger Logger instance
      * @param AModule $module Module class instance that extends AModule
      * @param string $presenter Presenter name
      * @param string $action Action name
+     * @param Application $application Application instance
      */
     public function __construct(Logger $logger, AModule $module, string $presenter, string $action, Application $application) {
         $this->logger = $logger;

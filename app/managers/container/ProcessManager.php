@@ -9,19 +9,22 @@ use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
 use App\Exceptions\NonExistingEntityException;
 use App\Helpers\ProcessHelper;
+use App\Logger\Logger;
 use App\Managers\AManager;
 use App\Managers\EntityManager;
 use App\Repositories\Container\ProcessRepository;
 
 class ProcessManager extends AManager {
-    public ProcessRepository $pr;
-    private GroupManager $gm;
+    public ProcessRepository $processRepository;
+    private GroupManager $groupManager;
 
     private array $mProcessesCache;
     
-    public function __construct(ProcessRepository $pr, GroupManager $gm) {
-        $this->pr = $pr;
-        $this->gm = $gm;
+    public function __construct(Logger $logger, EntityManager $entityManager, ProcessRepository $processRepository, GroupManager $groupManager) {
+        parent::__construct($logger, $entityManager);
+        
+        $this->processRepository = $processRepository;
+        $this->groupManager = $groupManager;
 
         $this->mProcessesCache = [];
     }
@@ -46,7 +49,7 @@ class ProcessManager extends AManager {
             $data['documentId'] = $documentId;
         }
 
-        if(!$this->pr->insertNewProcess($processId, $data)) {
+        if(!$this->processRepository->insertNewProcess($processId, $data)) {
             throw new GeneralException('Database error.');
         }
 
@@ -73,7 +76,7 @@ class ProcessManager extends AManager {
             'currentOfficerUserId' => $newOfficer
         ];
 
-        if(!$this->pr->updateProcess($processId, $data)) {
+        if(!$this->processRepository->updateProcess($processId, $data)) {
             throw new GeneralException('Database error.');
         }
 
@@ -100,7 +103,7 @@ class ProcessManager extends AManager {
             'currentOfficerUserId' => $newOfficer
         ];
 
-        if(!$this->pr->updateProcess($processId, $data)) {
+        if(!$this->processRepository->updateProcess($processId, $data)) {
             throw new GeneralException('Database error.');
         }
 
@@ -114,7 +117,7 @@ class ProcessManager extends AManager {
             'status' => ProcessStatus::CANCELED
         ];
 
-        if(!$this->pr->updateProcess($processId, $data)) {
+        if(!$this->processRepository->updateProcess($processId, $data)) {
             throw new GeneralException('Database error.');
         }
 
@@ -130,7 +133,7 @@ class ProcessManager extends AManager {
             'currentOfficerUserId' => null
         ];
 
-        if(!$this->pr->updateProcess($processId, $data)) {
+        if(!$this->processRepository->updateProcess($processId, $data)) {
             throw new GeneralException('Database error.');
         }
 
@@ -139,13 +142,13 @@ class ProcessManager extends AManager {
     }
 
     public function isDocumentInProcess(string $documentId) {
-        $processes = $this->pr->getProcessesForDocument($documentId);
+        $processes = $this->processRepository->getProcessesForDocument($documentId);
 
         return !empty($processes);
     }
 
     public function areDocumentsInProcesses(array $documentIds) {
-        $tmp = $this->pr->getActiveProcessCountForDocuments($documentIds);
+        $tmp = $this->processRepository->getActiveProcessCountForDocuments($documentIds);
 
         $result = [];
         foreach($tmp as $documentId => $count) {
@@ -159,7 +162,7 @@ class ProcessManager extends AManager {
 
     public function getProcessById(string $processId) {
         if(!array_key_exists($processId, $this->mProcessesCache)) {
-            $row = $this->pr->getProcessById($processId);
+            $row = $this->processRepository->getProcessById($processId);
 
             if($row === null) {
                 throw new NonExistingEntityException('Process does not exist.', null, false);
@@ -177,14 +180,14 @@ class ProcessManager extends AManager {
         $result = true;
 
         try {
-            $this->pr->beginTransaction(__METHOD__);
+            $this->processRepository->beginTransaction(__METHOD__);
         
             $processId = $this->startProcess($documentId, $type, $userId, $currentOfficerId, $workflowUserIds);
             $this->finishProcess($processId, $userId);
 
-            $this->pr->commit($userId, __METHOD__);
+            $this->processRepository->commit($userId, __METHOD__);
         } catch(AException $e) {
-            $this->pr->rollback(__METHOD__);
+            $this->processRepository->rollback(__METHOD__);
 
             $result = false;
         }
@@ -199,7 +202,7 @@ class ProcessManager extends AManager {
             throw new GeneralException('Database error.');
         }
 
-        if(!$this->pr->insertNewProcessComment($commentId, $processId, $authorId, $text)) {
+        if(!$this->processRepository->insertNewProcessComment($commentId, $processId, $authorId, $text)) {
             throw new GeneralException('Database error.');
         }
     }
@@ -224,7 +227,7 @@ class ProcessManager extends AManager {
             $data['newValue'] = $newValue;
         }
 
-        if(!$this->pr->insertNewProcessHistoryEntry($entryId, $data)) {
+        if(!$this->processRepository->insertNewProcessHistoryEntry($entryId, $data)) {
             throw new GeneralException('Database error.');
         }
     }

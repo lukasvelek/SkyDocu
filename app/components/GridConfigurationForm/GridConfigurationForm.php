@@ -10,15 +10,20 @@ use App\Core\Http\JsonResponse;
 use App\Managers\Container\GridManager;
 use App\UI\FormBuilder2\FormBuilder2;
 
+/**
+ * GridConfigurationForm is used for configuring grids
+ * 
+ * @author Lukas Velek
+ */
 class GridConfigurationForm extends FormBuilder2 {
-    private GridManager $gm;
+    private GridManager $gridManager;
 
-    public function __construct(HttpRequest $request, GridManager $gm) {
+    public function __construct(HttpRequest $request, GridManager $gridManager) {
         parent::__construct($request);
 
         $this->componentName = 'GridConfigurationForm';
 
-        $this->gm = $gm;
+        $this->gridManager = $gridManager;
     }
 
     public function startup() {
@@ -30,6 +35,9 @@ class GridConfigurationForm extends FormBuilder2 {
         $this->createForm();
     }
 
+    /**
+     * Creates form's layout
+     */
     private function createForm() {
         $this->addSelect('gridName', 'Grid:')
             ->addRawOptions($this->getGridsWithoutConfiguration());
@@ -40,6 +48,9 @@ class GridConfigurationForm extends FormBuilder2 {
         $this->addLayoutSection('dynamicFormContent');
     }
 
+    /**
+     * Creates form's JS scripts
+     */
     private function createScripts() {
         $addScript = function(string|AjaxRequestBuilder $code) {
             if($code instanceof AjaxRequestBuilder) {
@@ -73,10 +84,18 @@ class GridConfigurationForm extends FormBuilder2 {
         ');
     }
 
+    /**
+     * Returns all grids without configuration
+     */
     private function getGridsWithoutConfiguration() {
-        return $this->gm->getGridsWithNoConfiguration(true);
+        return $this->gridManager->getGridsWithNoConfiguration(true);
     }
 
+    /**
+     * Loads columns for selected grid
+     * 
+     * @return JsonResponse
+     */
     protected function actionLoadColumns() {
         $gridName = $this->httpGet('gridName');
 

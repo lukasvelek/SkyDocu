@@ -2,7 +2,17 @@
 
 namespace App\Helpers;
 
+/**
+ * ContainerCreationHelper contains methods useful for container creation
+ * 
+ * @author Lukas Velek
+ */
 class ContainerCreationHelper {
+    /**
+     * Returns the table definitions for a container
+     * 
+     * @return array<string, array<string, string>> Container table definitions
+     */
     public static function getContainerTableDefinitions() {
         return [
             'documents' => [
@@ -156,6 +166,11 @@ class ContainerCreationHelper {
         ];
     }
 
+    /**
+     * Returns container table index definitions
+     * 
+     * @return array<string, array<int, string>> Container table index definitions
+     */
     public static function getContainerTableIndexDefinitions() {
         return [
             'documents' => [

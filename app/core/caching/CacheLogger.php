@@ -3,7 +3,6 @@
 namespace App\Core\Caching;
 
 use App\Logger\Logger;
-use Exception;
 
 /**
  * CacheLogger is used for logging cache

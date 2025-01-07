@@ -6,7 +6,6 @@ use App\Core\Caching\CacheFactory;
 use App\Core\DatabaseConnection;
 use App\Core\DB\AMultipleDatabaseConnectionHandler;
 use App\Exceptions\DatabaseExecutionException;
-use App\Exceptions\GeneralException;
 use App\Logger\Logger;
 use App\Managers\EntityManager;
 use QueryBuilder\ExpressionBuilder;
@@ -19,7 +18,7 @@ use QueryBuilder\QueryBuilder;
  */
 abstract class ARepository extends AMultipleDatabaseConnectionHandler {
     protected Logger $logger;
-    private TransactionLogRepository $tlr;
+    private TransactionLogRepository $transactionLogRepository;
     protected CacheFactory $cacheFactory;
 
     /**
@@ -33,7 +32,7 @@ abstract class ARepository extends AMultipleDatabaseConnectionHandler {
         $this->logger = $logger;
         $this->cacheFactory = new CacheFactory();
 
-        $this->tlr = new TransactionLogRepository($this->conn, $this->logger);
+        $this->transactionLogRepository = new TransactionLogRepository($this->conn, $this->logger);
     }
 
     /**
@@ -112,49 +111,42 @@ abstract class ARepository extends AMultipleDatabaseConnectionHandler {
         return $result;
     }
 
-    public function tryBeginTransaction() {
-        $result = $this->beginTransaction();
-
-        if($result === false) {
-            throw new GeneralException('Could not establish database transaction.');
-        }
-
-        return $result;
-    }
-
-    public function tryRollback() {
-        $result = $this->rollback();
-
-        if($result === false) {
-            throw new GeneralException('Could not rollback database transaction.');
-        }
-
-        return $result;
-    }
-
-    public function tryCommit(string $userId, string $method) {
-        $result = $this->commit($userId, $method);
-
-        if($result === false) {
-            throw new GeneralException('Could not commit database transaction');
-        }
-
-        return $result;
-    }
-
-    public function sql(string $sql) {
+    /**
+     * Executes given SQL query
+     * 
+     * @param string $sql SQL query
+     * @return mixed SQL query result
+     */
+    public function executeSql(string $sql) {
         $this->logger->sql($sql, __METHOD__, null);
         return $this->conn->query($sql);
     }
 
+    /**
+     * Returns instance of QueryBuilder
+     * 
+     * @return QueryBuilder
+     */
     public function getQb() {
         return $this->qb(__METHOD__);
     }
 
+    /**
+     * Returns current instance of Logger
+     * 
+     * @return Logger
+     */
     public function getLogger() {
         return $this->logger;
     }
 
+    /**
+     * Applies limit and offset to the QueryBuilder
+     * 
+     * @param QueryBuilder &$qb
+     * @param int $limit
+     * @param int $offset
+     */
     protected function applyGridValuesToQb(QueryBuilder &$qb, int $limit, int $offset) {
         if($limit > 0) {
             $qb->limit($limit);
@@ -164,18 +156,41 @@ abstract class ARepository extends AMultipleDatabaseConnectionHandler {
         }
     }
 
+    /**
+     * Logs transaction to the database
+     * 
+     * @param ?string $userId
+     * @param string $method Calling method's name
+     * @param string &$sql SQL query
+     * 
+     * @return bool True if successful or false if not
+     */
     private function logTransaction(?string $userId, string $method, string &$sql) {
         $transactionId = $this->createEntityId(EntityManager::TRANSACTIONS);
 
-        return $this->tlr->createNewEntry($transactionId, $userId, $method, $sql);
+        return $this->transactionLogRepository->createNewEntry($transactionId, $userId, $method, $sql);
     }
 
+    /**
+     * Creates unique entity ID
+     * 
+     * @param string $category Entity category (EntityManager constants)
+     * @return ?string Entity ID or null
+     */
     public function createEntityId(string $category) {
         $em = new EntityManager($this->logger, new ContentRepository($this->conn, $this->logger));
 
         return $em->generateEntityId($category);
     }
 
+    /**
+     * Deletes entry in the database by given key value pair
+     * 
+     * @param string $tableName
+     * @param string $keyName
+     * @param string $keyValue
+     * @return bool True if successful or false if not
+     */
     protected function deleteEntryById(string $tableName, string $keyName, string $keyValue) {
         $qb = $this->qb(__METHOD__);
 
@@ -187,6 +202,14 @@ abstract class ARepository extends AMultipleDatabaseConnectionHandler {
         return $qb->fetchBool();
     }
 
+    /**
+     * Returns a single row by given key value pair
+     * 
+     * @param string $tableName
+     * @param string $keyName
+     * @param string $keyValue
+     * @return mixed SQL query result
+     */
     protected function getRow(string $tableName, string $keyName, string $keyValue) {
         $qb = $this->qb(__METHOD__);
 

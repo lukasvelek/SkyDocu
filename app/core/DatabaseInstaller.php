@@ -257,6 +257,9 @@ class DatabaseInstaller {
         $this->logger->info('Created ' . $i . ' users.', __METHOD__);
     }
 
+    /**
+     * Creates system groups and adds the default members to them
+     */
     private function createGroupsAndTheirMembers() {
         $this->logger->info('Creating groups and adding users to them.', __METHOD__);
 

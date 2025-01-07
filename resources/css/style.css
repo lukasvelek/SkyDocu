@@ -686,15 +686,13 @@ div [id*="user-action-history-"] {
 
 .widget-title {
     font-size: 24px;
-}
 
-.widget-title a {
     text-decoration: none;
 
     color: black;
 }
 
-.widget-title a:hover {
+.widget-title:hover {
     text-decoration: underline;
 }
 

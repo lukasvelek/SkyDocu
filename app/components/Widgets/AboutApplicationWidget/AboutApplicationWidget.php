@@ -24,6 +24,8 @@ class AboutApplicationWidget extends Widget {
         $data = $this->processData();
 
         $this->setData($data);
+        $this->setTitle('Application information');
+        $this->hideTitle();
     }
 
     /**

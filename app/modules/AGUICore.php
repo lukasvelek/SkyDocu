@@ -9,6 +9,7 @@ use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
 use App\Exceptions\RequiredAttributeIsNotSetException;
+use App\Helpers\LinkHelper;
 use App\Helpers\TemplateHelper;
 use App\UI\AComponent;
 
@@ -276,12 +277,7 @@ abstract class AGUICore {
     public function createFullURLString(string $modulePresenter, string $action, array $params = []) {
         $urlParts = $this->createFullURL($modulePresenter, $action, $params);
 
-        $tmp = [];
-        foreach($urlParts as $k => $v) {
-            $tmp[] = $k . '=' . $v;
-        }
-
-        return '?' . implode('&', $tmp);
+        return $this->convertArrayUrlToStringUrl($urlParts);
     }
 
     /**
@@ -305,12 +301,7 @@ abstract class AGUICore {
      * @return string URL as string
      */
     public function convertArrayUrlToStringUrl(array $url) {
-        $tmp = [];
-        foreach($url as $k => $v) {
-            $tmp[] = $k . '=' . $v;
-        }
-
-        return '?' . implode('&', $tmp);
+        return LinkHelper::createUrlFromArray($url);
     }
 }
 

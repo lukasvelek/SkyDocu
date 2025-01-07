@@ -25,6 +25,7 @@ The web application is written purely in PHP with a few JS scripts. These JS scr
 - Grid filter saving
 - Deprecated components removed
     - FormBuilder 1.0 (FormBuilder 2.0 is currently being used)
+- UI finished (all parts of UI should be avialable and visible (according to the visibility rights))
 
 ### 1.0 (November 29th, 2024)
 - Container management

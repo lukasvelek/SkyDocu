@@ -14,16 +14,16 @@ use Exception;
 class ContainerCreationService extends AService {
     private const BATCH_SIZE = 10;
 
-    private ContainerManager $cm;
-    private ContainerRepository $cr;
+    private ContainerManager $containerManager;
+    private ContainerRepository $containerRepository;
 
     private array $containerStatus;
 
-    public function __construct(Logger $logger, ServiceManager $serviceManager, ContainerManager $cm, ContainerRepository $cr) {
+    public function __construct(Logger $logger, ServiceManager $serviceManager, ContainerManager $containerManager, ContainerRepository $containerRepository) {
         parent::__construct('ContainerCreation', $logger, $serviceManager);
 
-        $this->cm = $cm;
-        $this->cr = $cr;
+        $this->containerManager = $containerManager;
+        $this->containerRepository = $containerRepository;
 
         $this->containerStatus = [];
     }
@@ -65,28 +65,28 @@ class ContainerCreationService extends AService {
                 $this->logInfo('Starting creation of container ID \'' . $containerId . '\'.');
 
                 try {
-                    $this->cm->changeContainerStatus($containerId, ContainerStatus::IS_BEING_CREATED, $this->serviceManager->getServiceUserId(), 'Status change due to background container creation. Container is being created.');
-                    $this->cm->changeContainerCreationStatus($containerId, 0, null);
+                    $this->containerManager->changeContainerStatus($containerId, ContainerStatus::IS_BEING_CREATED, $this->serviceManager->getServiceUserId(), 'Status change due to background container creation. Container is being created.');
+                    $this->containerManager->changeContainerCreationStatus($containerId, 0, null);
                     $this->logInfo('Changed container status to \'' . ContainerStatus::toString(ContainerStatus::IS_BEING_CREATED) . '\'.');
                     
-                    $this->cr->beginTransaction(__METHOD__);
+                    $this->containerRepository->beginTransaction(__METHOD__);
 
                     $this->logInfo('Creating container');
                     $this->processContainerCreation($containerId);
                     $this->logInfo('Container created.');
 
-                    $this->cr->commit($this->serviceManager->getServiceUserId(), __METHOD__);
+                    $this->containerRepository->commit($this->serviceManager->getServiceUserId(), __METHOD__);
 
-                    $this->cm->changeContainerStatus($containerId, ContainerStatus::NOT_RUNNING, $this->serviceManager->getServiceUserId(), 'Status change due to background container creation. Container is created and not running.');
-                    $this->cm->changeContainerCreationStatus($containerId, 100, null);
+                    $this->containerManager->changeContainerStatus($containerId, ContainerStatus::NOT_RUNNING, $this->serviceManager->getServiceUserId(), 'Status change due to background container creation. Container is created and not running.');
+                    $this->containerManager->changeContainerCreationStatus($containerId, 100, null);
                     $this->logInfo('Changed container status to \'' . ContainerStatus::toString(ContainerStatus::NOT_RUNNING) . '\'.');
                 } catch(AException|Exception|Error $e) {
-                    $this->cr->rollback(__METHOD__);
+                    $this->containerRepository->rollback(__METHOD__);
 
                     $this->logError($e->getMessage());
 
-                    $this->cm->changeContainerStatus($containerId, ContainerStatus::ERROR_DURING_CREATION, $this->serviceManager->getServiceUserId(), 'Status change due to background container creation. An error occured during container creation.');
-                    $this->cm->changeContainerCreationStatus($containerId, 0, null);
+                    $this->containerManager->changeContainerStatus($containerId, ContainerStatus::ERROR_DURING_CREATION, $this->serviceManager->getServiceUserId(), 'Status change due to background container creation. An error occured during container creation.');
+                    $this->containerManager->changeContainerCreationStatus($containerId, 0, null);
                     $this->logInfo('Changed container status to \'' . ContainerStatus::toString(ContainerStatus::ERROR_DURING_CREATION) . '\'.');
                 }
                 
@@ -99,7 +99,7 @@ class ContainerCreationService extends AService {
     }
 
     private function getContainerIdsWaitingForCreation(int $offset) {
-        $qb = $this->cr->composeQueryForContainersAwaitingCreation();
+        $qb = $this->containerRepository->composeQueryForContainersAwaitingCreation();
         $qb->limit(self::BATCH_SIZE);
 
         if($offset > 0) {
@@ -120,7 +120,7 @@ class ContainerCreationService extends AService {
 
     private function processContainerCreation(string $containerId) {
         try {
-            $this->cm->createNewContainerAsync($containerId);
+            $this->containerManager->createNewContainerAsync($containerId);
         } catch(AException $e) {
             throw $e;
         }

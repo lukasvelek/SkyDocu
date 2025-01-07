@@ -80,6 +80,7 @@ class Widget extends AComponent {
         $template->data = $this->build();
         $template->controls = $this->buildControls();
         $template->scripts = $this->buildJSScripts();
+        $template->component_name = $this->componentName;
 
         return $template->render()->getRenderedContent();
     }
@@ -135,8 +136,8 @@ class Widget extends AComponent {
         $arb->setMethod()
             ->setComponentAction($this->presenter, $this->componentName . '-refresh')
             ->setFunctionName($this->componentName . '_refresh')
-            ->updateHTMLElement('widget', 'widget')
-            ->enableLoadingAnimation('widget')
+            ->updateHTMLElement('widget-' . $this->componentName, 'widget')
+            ->enableLoadingAnimation('widget-' . $this->componentName)
         ;
 
         $addScript($arb);

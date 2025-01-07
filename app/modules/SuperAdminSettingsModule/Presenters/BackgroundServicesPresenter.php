@@ -8,7 +8,6 @@ use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
 use App\Helpers\GridHelper;
-use App\UI\GridBuilder2\Cell;
 use App\UI\GridBuilder2\Row;
 use App\UI\HTML\HTML;
 

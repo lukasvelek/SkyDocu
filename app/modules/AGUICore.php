@@ -297,6 +297,21 @@ abstract class AGUICore {
 
         return array_merge($url, $params);
     }
+
+    /**
+     * Converts URL defined in an array to string format
+     * 
+     * @param array $url Array URL
+     * @return string URL as string
+     */
+    public function convertArrayUrlToStringUrl(array $url) {
+        $tmp = [];
+        foreach($url as $k => $v) {
+            $tmp[] = $k . '=' . $v;
+        }
+
+        return '?' . implode('&', $tmp);
+    }
 }
 
 ?>

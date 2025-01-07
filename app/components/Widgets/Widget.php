@@ -20,6 +20,7 @@ class Widget extends AComponent {
     private array $data;
     private string $title;
     private bool $hasRefresh;
+    private ?array $titleLink;
 
     /**
      * Class constructor
@@ -33,6 +34,16 @@ class Widget extends AComponent {
         $this->title = 'Widget';
         $this->hasRefresh = false;
         $this->componentName = 'widget';
+        $this->titleLink = null;
+    }
+
+    /**
+     * Sets the title link - the address redirected when user clicks on the widget's title
+     * 
+     * @param array $url Title link
+     */
+    public function setTitleLink(array $url) {
+        $this->titleLink = $url;
     }
 
     /**
@@ -76,13 +87,31 @@ class Widget extends AComponent {
 
     public function render() {
         $template = $this->getTemplate(__DIR__ . '/widget.html');
-        $template->widget_title = $this->title;
+        $template->widget_title = $this->buildTitle();
         $template->data = $this->build();
         $template->controls = $this->buildControls();
         $template->scripts = $this->buildJSScripts();
         $template->component_name = $this->componentName;
 
         return $template->render()->getRenderedContent();
+    }
+
+    /**
+     * Creates HTML code for widget title
+     * 
+     * @return string HTML code
+     */
+    private function buildTitle() {
+        if($this->titleLink === null) {
+            return $this->title;
+        }
+
+        $el = HTML::el('a')
+            ->href($this->convertArrayUrlToStringUrl($this->titleLink))
+            ->text($this->title)
+            ->class('widget-title');
+
+        return $el->toString();
     }
 
     /**

@@ -17,12 +17,14 @@ class HomePresenter extends ASuperAdminSettingsPresenter {
 
     protected function createComponentContainerStatsWidget(HttpRequest $request) {
         $widget = new ContainerStatsWidget($request, $this->app->containerManager);
+        $widget->setTitleLink($this->createFullURL('SuperAdmin:Containers', 'list'));
 
         return $widget;
     }
 
     protected function createComponentBgServicesStatsWidget(HttpRequest $request) {
         $widget = new BackgroundServiceStatsWidget($request, $this->app->systemServicesRepository);
+        $widget->setTitleLink($this->createFullURL('SuperAdminSettings:BackgroundServices', 'list'));
 
         return $widget;
     }

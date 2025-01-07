@@ -688,6 +688,16 @@ div [id*="user-action-history-"] {
     font-size: 24px;
 }
 
+.widget-title a {
+    text-decoration: none;
+
+    color: black;
+}
+
+.widget-title a:hover {
+    text-decoration: underline;
+}
+
 #widget table {
     width: 100%;
 

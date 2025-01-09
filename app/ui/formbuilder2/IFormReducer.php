@@ -2,6 +2,8 @@
 
 namespace App\UI\FormBuilder2;
 
+use App\UI\FormBuilder2\FormState\FormStateList;
+
 /**
  * Common interface for form reducers
  * 
@@ -11,9 +13,9 @@ interface IFormReducer {
     /**
      * Applies form reducer
      * 
-     * @param FormBuilder2 &$form FormBuilder2 instance
+     * @param FormStateList &$stateList
      */
-    function applyReducer(FormBuilder2 &$form);
+    function applyReducer(FormStateList &$stateList);
 }
 
 ?>

@@ -750,7 +750,7 @@ class GridBuilder extends AComponent {
 
             foreach(array_keys($_tableRows) as $k) {
                 if($k == 'header') continue;
-                if(!in_array($k, $cells)) continue;
+                if(!array_key_exists($k, $cells)) continue;
                 
                 $_cells = $cells[$k];
 

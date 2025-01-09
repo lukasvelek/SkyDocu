@@ -27,6 +27,8 @@ class FormBuilder2 extends AComponent {
     private array $scripts;
 
     private FormStateListHelper $stateListHelper;
+
+    public ?IFormReducer $reducer;
     
     /**
      * Class constructor
@@ -44,6 +46,7 @@ class FormBuilder2 extends AComponent {
         $this->method = 'POST';
         $this->labels = [];
         $this->scripts = [];
+        $this->reducer = null;
     }
 
     /**
@@ -106,6 +109,12 @@ class FormBuilder2 extends AComponent {
         $form = new Form($this->name);
         $form->setAction($this->action);
         $form->setMethod($this->method);
+
+        if($this->reducer !== null) {
+            $stateList = $this->getStateList();
+            $this->reducer->applyReducer($stateList);
+            $this->applyStateList($stateList);
+        }
 
         foreach($this->elements as $name => $element) {
             $row = $this->buildElement($name, $element);

@@ -52,24 +52,8 @@ class FormStateListHelper {
      * @param FormStateList $stateList FormStateList instance
      */
     public function applyStateListToForm(FormBuilder2 &$form, FormStateList $stateList) {
-        $keys = $stateList->getKeys();
-
-        foreach($keys as $key) {
-            $element = &$form->elements[$key];
-
-            $element->isHidden = $stateList->$key->isHidden;
-            $element->isRequired = $stateList->$key->isRequired;
-            
-            if($stateList->$key->isReadonly) {
-                if(!array_key_exists('isReadonly', $element->attributes)) {
-                    $element->attributes['isReadonly'] = null;
-                }
-            } else {
-                if(array_key_exists('isReadonly', $element->attributes)) {
-                    unset($element->attributes['isReadonly']);
-                }
-            }
-        }
+        $stateListToForm = new StateListToForm($form, $stateList);
+        $stateListToForm->apply();
     }
 }
 

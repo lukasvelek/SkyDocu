@@ -308,6 +308,12 @@ class Application {
             }
         }
 
+        if(!empty($_POST)) {
+            foreach($_POST as $k => $v) {
+                $request->post[$k] = $v;
+            }
+        }
+
         $request->currentUser = $this->currentUser;
 
         return $request;

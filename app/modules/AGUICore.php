@@ -162,7 +162,7 @@ abstract class AGUICore {
      * @return array Query parameters
      */
     protected function getQueryParams() {
-        $keys = array_keys($_GET);
+        $keys = array_keys($this->httpRequest->query);
 
         $values = [];
         foreach($keys as $key) {
@@ -182,7 +182,7 @@ abstract class AGUICore {
      * @return array POST parameters
      */
     protected function getPostParams() {
-        $keys = array_keys($_POST);
+        $keys = array_keys($this->httpRequest->post);
 
         $values = [];
         foreach($keys as $key) {
@@ -200,13 +200,13 @@ abstract class AGUICore {
      * @return mixed Escaped value or null
      */
     protected function httpGet(string $key, bool $throwException = false) {
-        if(isset($_GET[$key])) {
-            if(!is_array($_GET[$key])) {
-                return htmlspecialchars($_GET[$key]);
+        if(array_key_exists($key, $this->httpRequest->query)) {
+            if(!is_array($this->httpRequest->query[$key])) {
+                return htmlspecialchars($this->httpRequest->query[$key]);
             } else {
                 $tmp = [];
-                foreach($_GET[$key] as $t) {
-                    $tmp[] = htmlspecialchars($t);
+                foreach($this->httpRequest->query[$key] as $q) {
+                    $tmp[] = htmlspecialchars($q);
                 }
                 return $tmp;
             }
@@ -227,8 +227,8 @@ abstract class AGUICore {
      * @return mixed Escaped value or null
      */
     protected function httpPost(string $key, bool $throwException = false) {
-        if(isset($_POST[$key])) {
-            return htmlspecialchars($_POST[$key]);
+        if(array_key_exists($key, $this->httpRequest->post)) {
+            return htmlspecialchars($this->httpRequest->post[$key]);
         } else {
             if($throwException) {
                 throw new RequiredAttributeIsNotSetException($key, '$_POST');

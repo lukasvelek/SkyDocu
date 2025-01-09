@@ -18,6 +18,13 @@ class HttpRequest {
     public array $query;
 
     /**
+     * POST parameters
+     * 
+     * @var array<string, mixed> $post
+     */
+    public array $post;
+
+    /**
      * Is the call AJAX?
      * 
      * @var bool $isAjax
@@ -43,6 +50,7 @@ class HttpRequest {
      */
     public function __construct() {
         $this->query = [];
+        $this->post = [];
         $this->isAjax = false;
         $this->params = [];
         $this->currentUser = null;

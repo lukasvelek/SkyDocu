@@ -9,6 +9,7 @@ use App\Constants\Container\DocumentsGridSystemMetadata;
 use App\Constants\Container\DocumentStatus;
 use App\Constants\Container\GridNames;
 use App\Core\Application;
+use App\Core\Caching\CacheFactory;
 use App\Core\DB\DatabaseRow;
 use App\Core\Http\JsonResponse;
 use App\Enums\AEnumForMetadata;

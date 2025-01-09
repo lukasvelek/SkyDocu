@@ -6,6 +6,7 @@ use App\Constants\Container\StandaloneProcesses;
 use App\Core\DB\DatabaseRow;
 use App\Entities\UserEntity;
 use App\Exceptions\GeneralException;
+use App\Logger\Logger;
 use App\Managers\AManager;
 use App\Managers\EntityManager;
 use App\Managers\UserManager;
@@ -16,10 +17,14 @@ class StandaloneProcessManager extends AManager {
     private UserManager $userManager;
 
     public function __construct(
+        Logger $logger,
+        ?EntityManager $entityManager,
         ProcessManager $processManager,
         UserEntity $currentUser,
         UserManager $userManager
     ) {
+        parent::__construct($logger, $entityManager);
+
         $this->processManager = $processManager;
         $this->currentUser = $currentUser;
         $this->userManager = $userManager;

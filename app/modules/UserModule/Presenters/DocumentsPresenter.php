@@ -72,6 +72,7 @@ class DocumentsPresenter extends AUserPresenter {
         $documentsGrid->setCurrentFolder($this->currentFolderId);
         $documentsGrid->showCustomMetadata();
         $documentsGrid->useCheckboxes($this);
+        $documentsGrid->setCacheFactory($this->cacheFactory);
 
         return $documentsGrid;
     }

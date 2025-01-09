@@ -141,7 +141,10 @@ abstract class AContainerPresenter extends APresenter {
 
                 $className = (string)$class;
 
-                $realArgs = [];
+                $realArgs = [
+                    $this->logger,
+                    $this->entityManager
+                ];
                 foreach($args as $arg) {
                     if(str_starts_with($arg, ':')) {
                         $_arg = explode(':', $arg)[1];

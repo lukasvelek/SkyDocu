@@ -4,6 +4,8 @@ namespace App\UI\FormBuilder2;
 
 use App\Core\Http\HttpRequest;
 use App\UI\AComponent;
+use App\UI\FormBuilder2\FormState\FormStateList;
+use App\UI\FormBuilder2\FormState\FormStateListHelper;
 
 /**
  * FormBuilder allows building forms for interaction with the server
@@ -14,7 +16,7 @@ class FormBuilder2 extends AComponent {
     /**
      * @var array<string, AElement>
      */
-    private array $elements;
+    public array $elements;
     /**
      * @var array<string, Label>
      */
@@ -23,6 +25,8 @@ class FormBuilder2 extends AComponent {
     private array $action;
     private string $method;
     private array $scripts;
+
+    private FormStateListHelper $stateListHelper;
     
     /**
      * Class constructor
@@ -31,6 +35,8 @@ class FormBuilder2 extends AComponent {
      */
     public function __construct(HttpRequest $request) {
         parent::__construct($request);
+
+        $this->stateListHelper = new FormStateListHelper();
 
         $this->elements = [];
         $this->name = 'MyForm';
@@ -367,7 +373,7 @@ class FormBuilder2 extends AComponent {
     /**
      * Returns all form elements
      * 
-     * @return array
+     * @return array<string, AElement>
      */
     public function getElements() {
         return $this->elements;
@@ -382,6 +388,24 @@ class FormBuilder2 extends AComponent {
     public function getElement(string $name) {
         $el = &$this->elements[$name];
         return $el;
+    }
+
+    /**
+     * Returns state list from the form
+     * 
+     * @return FormStateList
+     */
+    public function getStateList() {
+        return $this->stateListHelper->convertFormToStateList($this);
+    }
+
+    /**
+     * Applies state list to the form
+     * 
+     * @param FormStateList $stateList
+     */
+    public function applyStateList(FormStateList $stateList) {
+        $this->stateListHelper->applyStateListToForm($this, $stateList);
     }
 
     public static function createFromComponent(AComponent $component) {}

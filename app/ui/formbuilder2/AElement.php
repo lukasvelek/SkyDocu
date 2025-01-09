@@ -10,9 +10,9 @@ use App\UI\IRenderable;
  * @author Lukas Velek
  */
 abstract class AElement implements IRenderable {
-    protected array $attributes;
-    private bool $isHidden;
-    private bool $isRequired;
+    public array $attributes;
+    public bool $isHidden;
+    public bool $isRequired;
 
     /**
      * Class constructor
@@ -40,7 +40,7 @@ abstract class AElement implements IRenderable {
      * @param array &$attributesWithValue Attributes with value array
      * @param array &$attributesWithoutValue Attributes without value array
      */
-    protected function separateAttributes(array &$attributesWithValue, array &$attributesWithoutValue) {
+    public function separateAttributes(array &$attributesWithValue, array &$attributesWithoutValue) {
         foreach($this->attributes as $name => $value) {
             if($value === null) {
                 $attributesWithoutValue[] = $name;

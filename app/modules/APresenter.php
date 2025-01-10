@@ -32,7 +32,7 @@ abstract class APresenter extends AGUICore {
     private ?string $tabTitle;
     private ?string $action;
     private ArrayList $presenterCache;
-    private ArrayList $scripts;
+    public ArrayList $scripts;
     private ?string $defaultAction;
     public ?string $moduleName;
     private bool $isAjax;

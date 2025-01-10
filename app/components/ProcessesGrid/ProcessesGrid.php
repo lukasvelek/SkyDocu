@@ -77,7 +77,7 @@ class ProcessesGrid extends GridBuilder implements IGridExtendingComponent {
         $this->view = $view;
     }
 
-    protected function prerender() {
+    public function prerender() {
         $this->createDataSource();
 
         $this->fetchDataFromDb();

@@ -127,7 +127,7 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
         $this->showDocumentInfoLink = false;
     }
 
-    protected function prerender() {
+    public function prerender() {
         $this->createDataSource();
 
         $this->fetchDataFromDb();

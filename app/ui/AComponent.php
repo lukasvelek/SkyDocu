@@ -44,6 +44,11 @@ abstract class AComponent extends AGUICore implements IRenderable {
     public function startup() {}
 
     /**
+     * Actions called before render() is called
+     */
+    public function prerender() {}
+
+    /**
      * Creates an instance of component from other component
      * 
      * @param AComponent $component Other component

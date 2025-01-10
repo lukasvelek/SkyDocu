@@ -68,7 +68,7 @@ abstract class AGUICore {
      * 
      * @param APresenter $presenter Current presenter instance
      */
-    public function setPresenter(APresenter $presenter) {
+    public function setPresenter(APresenter &$presenter) {
         $this->presenter = $presenter;
     }
 
@@ -77,7 +77,7 @@ abstract class AGUICore {
      * 
      * @param AModule $module Current module instance
      */
-    public function setModule(AModule $module) {
+    public function setModule(AModule &$module) {
         $this->module = $module;
     }
 
@@ -126,7 +126,8 @@ abstract class AGUICore {
                 if($component instanceof AComponent) {
                     $component->setComponentName($componentName);
                     if(isset($this->presenter)) {
-                        $component->setPresenter($this->presenter);
+                        $presenter = &$this->presenter;
+                        $component->setPresenter($presenter);
                     }
                     $component->setApplication($this->app);
                     $component->startup();

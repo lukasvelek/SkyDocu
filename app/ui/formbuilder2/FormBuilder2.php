@@ -139,100 +139,95 @@ class FormBuilder2 extends AComponent {
             $form->addRow($row);
         }
 
-        $this->processScripts();
-
         return $form->render();
     }
 
-    /**
-     * Processes JS scripts and adds them to the form
-     */
-    private function processScripts() {
-        if($this->callReducerOnChange /*&& $this->reducer !== null*/) {
-            $code = 'function getFormState() {';
+    public function startup() {
+        parent::startup();
 
-            foreach(array_keys($this->elements) as $name) {
-                $code .= 'var ' . $name . '_hidden = $("#' . $name . '").prop("hidden"); ';
-                $code .= 'var ' . $name . '_required = $("#' . $name . '").prop("required"); ';
-                $code .= 'var ' . $name . '_readonly = $("#' . $name . '").prop("readonly"); ';
-            }
+        $code = 'function getFormState() {';
 
-            foreach(array_keys($this->elements) as $name) {
-                $code .= 'if(' . $name . '_hidden == null) { ' . $name . '_hidden = false; }';
-                $code .= 'if(' . $name . '_required == null) { ' . $name . '_required = false; }';
-                $code .= 'if(' . $name . '_readonly == null) { ' . $name . '_readonly = false; }';
-            }
-
-            $jsonArr = [];
-            foreach(array_keys($this->elements) as $name) {
-                $jsonArr[$name] = [
-                    'hidden' => $name . '_hidden',
-                    'required' => $name . '_required',
-                    'readonly' => $name . '_readonly'
-                ];
-            }
-
-            $json = json_encode($jsonArr);
-
-            foreach(array_keys($this->elements) as $name) {
-                $json = str_replace('"' . $name . '_hidden"', $name . '_hidden', $json);
-                $json = str_replace('"' . $name . '_required"', $name . '_required', $json);
-                $json = str_replace('"' . $name . '_readonly"', $name . '_readonly', $json);
-            }
-
-            $code .= 'const json = ' . $json . ';';
-            $code .= 'return json;';
-
-            $code .= '}';
-
-            $this->addScript($code);
-
-            $hArgs = [];
-            $fArgs = [];
-            $callArgs = [];
-
-            foreach($this->httpRequest->query as $k => $v) {
-                if(in_array($k, ['page', 'action', 'do', 'isComponent', 'isAjax', 'state', 'elements'])) continue;
-
-                $hArgs[$k] = '_' . $k;
-                $fArgs[] = '_' . $k;
-                $callArgs[] = $v;
-            }
-
-            $hArgs['state'] = '_state';
-            $fArgs[] = '_state';
-
-            foreach(array_keys($this->elements) as $name) {
-                $hArgs['elements[]'][] = $name;
-            }
-
-            $arb = new AjaxRequestBuilder();
-
-            $arb->setMethod()
-                ->setComponentAction($this->presenter, $this->componentName . '-onChange')
-                ->setHeader($hArgs)
-                ->setFunctionName($this->componentName . '_onChange')
-                ->setFunctionArguments($fArgs)
-                ->updateHTMLElement('form', 'form')
-                ->setComponent()
-                ->addBeforeAjaxOperation('
-                    _state = getFormState();
-                ')
-                ->enableLoadingAnimation('form')
-            ;
-
-            $this->addScript($arb);
-
-            $code = 'function addOnChange() {';
-
-            foreach(array_keys($this->elements) as $name) {
-                $code .= '$("#' . $name . '").on("change", function() { ' . $this->componentName . '_onChange(\'' . implode('\', \'', $callArgs) . '\', \'null\'); });';
-            }
-
-            $code .= '} addOnChange();';
-
-            $this->addScript($code);
+        foreach(array_keys($this->elements) as $name) {
+            $code .= 'var ' . $name . '_hidden = $("#' . $name . '").prop("hidden"); ';
+            $code .= 'var ' . $name . '_required = $("#' . $name . '").prop("required"); ';
+            $code .= 'var ' . $name . '_readonly = $("#' . $name . '").prop("readonly"); ';
         }
+
+        foreach(array_keys($this->elements) as $name) {
+            $code .= 'if(' . $name . '_hidden == null) { ' . $name . '_hidden = false; }';
+            $code .= 'if(' . $name . '_required == null) { ' . $name . '_required = false; }';
+            $code .= 'if(' . $name . '_readonly == null) { ' . $name . '_readonly = false; }';
+        }
+
+        $jsonArr = [];
+        foreach(array_keys($this->elements) as $name) {
+            $jsonArr[$name] = [
+                'hidden' => $name . '_hidden',
+                'required' => $name . '_required',
+                'readonly' => $name . '_readonly'
+            ];
+        }
+
+        $json = json_encode($jsonArr);
+
+        foreach(array_keys($this->elements) as $name) {
+            $json = str_replace('"' . $name . '_hidden"', $name . '_hidden', $json);
+            $json = str_replace('"' . $name . '_required"', $name . '_required', $json);
+            $json = str_replace('"' . $name . '_readonly"', $name . '_readonly', $json);
+        }
+
+        $code .= 'const json = ' . $json . ';';
+        $code .= 'return json;';
+
+        $code .= '}';
+
+        $this->presenter->addScript($code);
+
+        $hArgs = [];
+        $fArgs = [];
+        $callArgs = [];
+
+        foreach($this->httpRequest->query as $k => $v) {
+            if(in_array($k, ['page', 'action', 'do', 'isComponent', 'isAjax', 'state', 'elements'])) continue;
+
+            $hArgs[$k] = '_' . $k;
+            $fArgs[] = '_' . $k;
+            $callArgs[] = $v;
+        }
+
+        $hArgs['state'] = '_state';
+        $fArgs[] = '_state';
+
+        foreach(array_keys($this->elements) as $name) {
+            $hArgs['elements[]'][] = $name;
+        }
+
+        $arb = new AjaxRequestBuilder();
+
+        $arb->setMethod()
+            ->setComponentAction($this->presenter, $this->componentName . '-onChange')
+            ->setHeader($hArgs)
+            ->setFunctionName($this->componentName . '_onChange')
+            ->setFunctionArguments($fArgs)
+            ->updateHTMLElement('form', 'form')
+            ->setComponent()
+            ->addBeforeAjaxOperation('
+                _state = getFormState();
+            ')
+            ->enableLoadingAnimation('form')
+        ;
+
+        $this->presenter->addScript($arb);
+
+        $code = 'function addOnChange() {';
+
+        foreach(array_keys($this->elements) as $name) {
+            $code .= '$("#' . $name . '").on("change", function() { ' . $this->componentName . '_onChange(\'' . implode('\', \'', $callArgs) . '\', \'null\'); });';
+        }
+
+        $code .= '} addOnChange();';
+
+        $this->presenter->addScript($code);
     }
 
     /**

@@ -3,6 +3,7 @@
 namespace App\Modules;
 
 use App\Core\Http\AResponse;
+use App\UI\AComponent;
 use App\UI\HTML\HTML;
 use App\UI\IRenderable;
 
@@ -74,6 +75,21 @@ class TemplateObject {
      * Fills the template macros, renders and builds all components and finally renders the template HTML code
      */
     public function render() {
+        if(!empty($this->__components)) {
+            foreach($this->__components as $name => $object) {
+                $templateName = 'component ' . $name;
+
+                if($object instanceof AComponent) {
+                    $object->prerender();
+                    $object = $object->render();
+                } else {
+                    continue;
+                }
+
+                $this->replace($templateName, $object);
+            }
+        }
+
         foreach($this->__values as $__value) {
             if($this->$__value === null) {
                 continue;
@@ -91,20 +107,6 @@ class TemplateObject {
             }
 
             $this->replace($upperValue, $this->$__value);
-        }
-
-        if(!empty($this->__components)) {
-            foreach($this->__components as $name => $object) {
-                $templateName = 'component ' . $name;
-
-                if($object instanceof IRenderable) {
-                    $object = $object->render();
-                } else {
-                    continue;
-                }
-
-                $this->replace($templateName, $object);
-            }
         }
 
         if(self::SHORTEN_CODE) {

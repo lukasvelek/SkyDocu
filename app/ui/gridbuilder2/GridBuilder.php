@@ -504,7 +504,7 @@ class GridBuilder extends AComponent {
      * @return string HTML code
      */
     public function render() {
-        $this->prerender();
+        $this->build();
 
         $template = $this->getTemplate(__DIR__ . '/grid.html');
 
@@ -521,10 +521,10 @@ class GridBuilder extends AComponent {
     /**
      * Prerenders the grid
      */
-    protected function prerender() {
+    public function prerender() {
+        parent::prerender();
         $this->getActiveFiltersFromCache();
         $this->fetchDataFromDb(true);
-        $this->build();
     }
 
     /**

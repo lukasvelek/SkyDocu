@@ -151,7 +151,7 @@ class FormBuilder2 extends AComponent {
     public function prerender() {
         parent::prerender();
 
-        if($this->callReducerOnChange /*&& $this->reducer !== null*/) {
+        if($this->callReducerOnChange && $this->reducer !== null) {
             $callArgs = [];
 
             foreach($this->httpRequest->query as $k => $v) {

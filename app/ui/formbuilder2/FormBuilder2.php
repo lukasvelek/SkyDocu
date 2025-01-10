@@ -133,7 +133,7 @@ class FormBuilder2 extends AComponent {
         $form->setAction($this->action);
         $form->setMethod($this->method);
 
-        if($this->reducer !== null) {
+        if($this->reducer !== null && !$this->httpRequest->isAjax) {
             $stateList = $this->getStateList();
             $this->reducer->applyReducer($stateList);
             $this->applyStateList($stateList);

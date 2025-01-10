@@ -44,7 +44,7 @@ class StateListToForm {
             if($element instanceof Select) {
                 $element->setSelectedValue($this->stateList->$key->defaultValue);
             } else if($element instanceof AInput) {
-                $element->setValue($this->stateList->$key->defaltValue);
+                $element->setValue($this->stateList->$key->defaultValue);
             }
         }
     }

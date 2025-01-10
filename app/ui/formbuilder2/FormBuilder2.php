@@ -2,7 +2,9 @@
 
 namespace App\UI\FormBuilder2;
 
+use App\Core\AjaxRequestBuilder;
 use App\Core\Http\HttpRequest;
+use App\Core\Http\JsonResponse;
 use App\UI\AComponent;
 use App\UI\FormBuilder2\FormState\FormStateList;
 use App\UI\FormBuilder2\FormState\FormStateListHelper;
@@ -25,6 +27,7 @@ class FormBuilder2 extends AComponent {
     private array $action;
     private string $method;
     private array $scripts;
+    private bool $callReducerOnChange;
 
     private FormStateListHelper $stateListHelper;
 
@@ -47,15 +50,29 @@ class FormBuilder2 extends AComponent {
         $this->labels = [];
         $this->scripts = [];
         $this->reducer = null;
+        $this->callReducerOnChange = false;
+    }
+
+    /**
+     * Sets if reducer should be called on every change
+     * 
+     * @param bool $callReducerOnChange
+     */
+    public function setCallReducerOnChange(bool $callReducerOnChange = true) {
+        $this->callReducerOnChange = $callReducerOnChange;
     }
 
     /**
      * Adds form JS script code
      * 
-     * @param string $rawJsCode Raw JS code
+     * @param AjaxRequestBuilder|string $code JS code
      */
-    public function addScript(string $rawJsCode) {
-        $code = '<script type="text/javascript">' . $rawJsCode . '</script>';
+    public function addScript(AjaxRequestBuilder|string $code) {
+        if($code instanceof AjaxRequestBuilder) {
+            $code = $code->build();
+        }
+
+        $code = '<script type="text/javascript">' . $code . '</script>';
 
         $this->scripts[] = $code;
     }
@@ -122,7 +139,100 @@ class FormBuilder2 extends AComponent {
             $form->addRow($row);
         }
 
+        $this->processScripts();
+
         return $form->render();
+    }
+
+    /**
+     * Processes JS scripts and adds them to the form
+     */
+    private function processScripts() {
+        if($this->callReducerOnChange /*&& $this->reducer !== null*/) {
+            $code = 'function getFormState() {';
+
+            foreach(array_keys($this->elements) as $name) {
+                $code .= 'var ' . $name . '_hidden = $("#' . $name . '").prop("hidden"); ';
+                $code .= 'var ' . $name . '_required = $("#' . $name . '").prop("required"); ';
+                $code .= 'var ' . $name . '_readonly = $("#' . $name . '").prop("readonly"); ';
+            }
+
+            foreach(array_keys($this->elements) as $name) {
+                $code .= 'if(' . $name . '_hidden == null) { ' . $name . '_hidden = false; }';
+                $code .= 'if(' . $name . '_required == null) { ' . $name . '_required = false; }';
+                $code .= 'if(' . $name . '_readonly == null) { ' . $name . '_readonly = false; }';
+            }
+
+            $jsonArr = [];
+            foreach(array_keys($this->elements) as $name) {
+                $jsonArr[$name] = [
+                    'hidden' => $name . '_hidden',
+                    'required' => $name . '_required',
+                    'readonly' => $name . '_readonly'
+                ];
+            }
+
+            $json = json_encode($jsonArr);
+
+            foreach(array_keys($this->elements) as $name) {
+                $json = str_replace('"' . $name . '_hidden"', $name . '_hidden', $json);
+                $json = str_replace('"' . $name . '_required"', $name . '_required', $json);
+                $json = str_replace('"' . $name . '_readonly"', $name . '_readonly', $json);
+            }
+
+            $code .= 'const json = ' . $json . ';';
+            $code .= 'return json;';
+
+            $code .= '}';
+
+            $this->addScript($code);
+
+            $hArgs = [];
+            $fArgs = [];
+            $callArgs = [];
+
+            foreach($this->httpRequest->query as $k => $v) {
+                if(in_array($k, ['page', 'action', 'do', 'isComponent', 'isAjax', 'state', 'elements'])) continue;
+
+                $hArgs[$k] = '_' . $k;
+                $fArgs[] = '_' . $k;
+                $callArgs[] = $v;
+            }
+
+            $hArgs['state'] = '_state';
+            $fArgs[] = '_state';
+
+            foreach(array_keys($this->elements) as $name) {
+                $hArgs['elements[]'][] = $name;
+            }
+
+            $arb = new AjaxRequestBuilder();
+
+            $arb->setMethod()
+                ->setComponentAction($this->presenter, $this->componentName . '-onChange')
+                ->setHeader($hArgs)
+                ->setFunctionName($this->componentName . '_onChange')
+                ->setFunctionArguments($fArgs)
+                ->updateHTMLElement('form', 'form')
+                ->setComponent()
+                ->addBeforeAjaxOperation('
+                    _state = getFormState();
+                ')
+                ->enableLoadingAnimation('form')
+            ;
+
+            $this->addScript($arb);
+
+            $code = 'function addOnChange() {';
+
+            foreach(array_keys($this->elements) as $name) {
+                $code .= '$("#' . $name . '").on("change", function() { ' . $this->componentName . '_onChange(\'' . implode('\', \'', $callArgs) . '\', \'null\'); });';
+            }
+
+            $code .= '} addOnChange();';
+
+            $this->addScript($code);
+        }
     }
 
     /**
@@ -418,6 +528,23 @@ class FormBuilder2 extends AComponent {
     }
 
     public static function createFromComponent(AComponent $component) {}
+
+    /**
+     * Handles on changes handler
+     * 
+     * @return JsonResponse
+     */
+    public function actionOnChange() {
+        $stateList = $this->stateListHelper->createStateListFromJsState($this->httpRequest);
+
+        if($this->reducer !== null) {
+            $this->reducer->applyReducer($stateList);
+        }
+
+        $this->applyStateList($stateList);
+
+        return new JsonResponse(['form' => $this->render()]);
+    }
 }
 
 ?>

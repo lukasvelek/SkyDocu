@@ -158,6 +158,8 @@ class CreateDocumentPresenter extends AUserPresenter {
 
         $form->addSubmit('Create');
 
+        $form->setCallReducerOnChange();
+
         return $form;
     }
 }

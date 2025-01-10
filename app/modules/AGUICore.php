@@ -206,7 +206,13 @@ abstract class AGUICore {
             } else {
                 $tmp = [];
                 foreach($this->httpRequest->query[$key] as $q) {
-                    $tmp[] = htmlspecialchars($q);
+                    if(!is_array($q)) {
+                        $tmp[] = htmlspecialchars($q);
+                    } else {
+                        foreach($q as $_q) {
+                            $tmp[] = htmlspecialchars($_q);
+                        }
+                    }
                 }
                 return $tmp;
             }

@@ -2,6 +2,7 @@
 
 namespace App\UI\FormBuilder2\FormState;
 
+use App\Core\Http\HttpRequest;
 use App\UI\FormBuilder2\FormBuilder2;
 
 /**
@@ -54,6 +55,26 @@ class FormStateListHelper {
     public function applyStateListToForm(FormBuilder2 &$form, FormStateList $stateList) {
         $stateListToForm = new StateListToForm($form, $stateList);
         $stateListToForm->apply();
+    }
+
+    public function createStateListFromJsState(HttpRequest $request) {
+        $stateList = new FormStateList();
+
+        if(!array_key_exists('elements', $request->query) && !array_key_exists('state', $request->query)) {
+            return $stateList;
+        }
+
+        $states = $request->query['elements'];
+
+        foreach($states as $name) {
+            $stateList->addElement($name);
+
+            $stateList->$name->isHidden = ($request->query['state'][$name]['hidden'] == 'true');
+            $stateList->$name->isRequired = ($request->query['state'][$name]['required'] == 'true');
+            $stateList->$name->isReadonly = ($request->query['state'][$name]['readonly'] == 'true');
+        }
+
+        return $stateList;
     }
 }
 

@@ -28,6 +28,7 @@ class FormBuilder2 extends AComponent {
     private string $method;
     private array $scripts;
     private bool $callReducerOnChange;
+    private bool $isPrerendered;
 
     private FormStateListHelper $stateListHelper;
 
@@ -51,6 +52,7 @@ class FormBuilder2 extends AComponent {
         $this->scripts = [];
         $this->reducer = null;
         $this->callReducerOnChange = false;
+        $this->isPrerendered = false;
     }
 
     /**
@@ -110,6 +112,10 @@ class FormBuilder2 extends AComponent {
      * @return string HTML code
      */
     public function render() {
+        if($this->isPrerendered === false) {
+            $this->prerender();
+        }
+
         $template = $this->getTemplate(__DIR__ . '/form.html');
         $template->form = $this->build();
         $template->scripts = implode('', $this->scripts);
@@ -142,38 +148,75 @@ class FormBuilder2 extends AComponent {
         return $form->render();
     }
 
+    public function prerender() {
+        parent::prerender();
+
+        if($this->callReducerOnChange /*&& $this->reducer !== null*/) {
+            $callArgs = [];
+
+            foreach($this->httpRequest->query as $k => $v) {
+                if(in_array($k, ['page', 'action', 'do', 'isComponent', 'isAjax', 'state', 'elements'])) continue;
+
+                $callArgs[] = $v;
+            }
+            $code = 'function addOnChange() {';
+
+            foreach(array_keys($this->elements) as $name) {
+                $code .= '$("#' . $name . '").on("change", function() { ' . $this->componentName . '_onChange(\'' . implode('\', \'', $callArgs) . '\', \'null\'); });';
+            }
+    
+            $code .= '}';
+    
+            $this->addScript($code);
+
+            $this->addScript('addOnChange();');
+        }
+
+        $this->isPrerendered = true;
+    }
+
     public function startup() {
         parent::startup();
+
+        $attributes = [
+            'hidden',
+            'required',
+            'readonly',
+            'value'
+        ];
 
         $code = 'function getFormState() {';
 
         foreach(array_keys($this->elements) as $name) {
-            $code .= 'var ' . $name . '_hidden = $("#' . $name . '").prop("hidden"); ';
-            $code .= 'var ' . $name . '_required = $("#' . $name . '").prop("required"); ';
-            $code .= 'var ' . $name . '_readonly = $("#' . $name . '").prop("readonly"); ';
+            foreach($attributes as $attr) {
+                $code .= 'var ' . $name . '_' . $attr . ' = $("#' . $name . '").prop("' . $attr . '"); ';
+            }
         }
 
         foreach(array_keys($this->elements) as $name) {
-            $code .= 'if(' . $name . '_hidden == null) { ' . $name . '_hidden = false; }';
-            $code .= 'if(' . $name . '_required == null) { ' . $name . '_required = false; }';
-            $code .= 'if(' . $name . '_readonly == null) { ' . $name . '_readonly = false; }';
+            foreach($attributes as $attr) {
+                if($attr == 'value') {
+                    $code .= 'if(' . $name . '_' . $attr . ' == null) { ' . $name . '_attr = "null"; }';
+                    continue;
+                }
+
+                $code .= 'if(' . $name . '_' . $attr . ' == null) { ' . $name . '_attr = false; }';
+            }
         }
 
         $jsonArr = [];
         foreach(array_keys($this->elements) as $name) {
-            $jsonArr[$name] = [
-                'hidden' => $name . '_hidden',
-                'required' => $name . '_required',
-                'readonly' => $name . '_readonly'
-            ];
+            foreach($attributes as $attr) {
+                $jsonArr[$name][$attr] = $name . '_' . $attr;
+            }
         }
 
         $json = json_encode($jsonArr);
 
         foreach(array_keys($this->elements) as $name) {
-            $json = str_replace('"' . $name . '_hidden"', $name . '_hidden', $json);
-            $json = str_replace('"' . $name . '_required"', $name . '_required', $json);
-            $json = str_replace('"' . $name . '_readonly"', $name . '_readonly', $json);
+            foreach($attributes as $attr) {
+                $json = str_replace('"' . $name . '_' . $attr . '"', $name . '_' . $attr, $json);
+            }
         }
 
         $code .= 'const json = ' . $json . ';';
@@ -218,16 +261,6 @@ class FormBuilder2 extends AComponent {
         ;
 
         $this->presenter->addScript($arb);
-
-        $code = 'function addOnChange() {';
-
-        foreach(array_keys($this->elements) as $name) {
-            $code .= '$("#' . $name . '").on("change", function() { ' . $this->componentName . '_onChange(\'' . implode('\', \'', $callArgs) . '\', \'null\'); });';
-        }
-
-        $code .= '} addOnChange();';
-
-        $this->presenter->addScript($code);
     }
 
     /**

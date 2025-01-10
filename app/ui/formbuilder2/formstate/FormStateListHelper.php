@@ -41,6 +41,12 @@ class FormStateListHelper {
                     $stateList->$name->$value = $value;
                 }
             }
+
+            foreach($withValue as $key => $value) {
+                if(isset($stateList->$name->$key)) {
+                    $stateList->$name->$key = $value;
+                }
+            }
         }
 
         return $stateList;
@@ -57,6 +63,12 @@ class FormStateListHelper {
         $stateListToForm->apply();
     }
 
+    /**
+     * Creates StateList from state list returned from JS AJAX call
+     * 
+     * @param HttpRequest $request
+     * @return FormStateList
+     */
     public function createStateListFromJsState(HttpRequest $request) {
         $stateList = new FormStateList();
 
@@ -69,9 +81,18 @@ class FormStateListHelper {
         foreach($states as $name) {
             $stateList->addElement($name);
 
-            $stateList->$name->isHidden = ($request->query['state'][$name]['hidden'] == 'true');
-            $stateList->$name->isRequired = ($request->query['state'][$name]['required'] == 'true');
-            $stateList->$name->isReadonly = ($request->query['state'][$name]['readonly'] == 'true');
+            if(isset($request->query['state'][$name]['hidden'])) {
+                $stateList->$name->isHidden = ($request->query['state'][$name]['hidden'] == 'true');
+            }
+            if(isset($request->query['state'][$name]['required'])) {
+                $stateList->$name->isRequired = ($request->query['state'][$name]['required'] == 'true');
+            }
+            if(isset($request->query['state'][$name]['readonly'])) {
+                $stateList->$name->isReadonly = ($request->query['state'][$name]['readonly'] == 'true');
+            }
+            if(isset($request->query['state'][$name]['value'])) {
+                $stateList->$name->value = ($request->query['state'][$name]['value'] != 'null' ? $request->query['state'][$name]['value'] : null);
+            }
         }
 
         return $stateList;

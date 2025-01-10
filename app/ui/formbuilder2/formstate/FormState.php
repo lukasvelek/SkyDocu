@@ -14,6 +14,7 @@ class FormState {
     public bool $isHidden;
     public bool $isReadonly;
     public mixed $defaultValue;
+    public mixed $value;
 
     /**
      * Class constructor
@@ -26,6 +27,7 @@ class FormState {
         $this->isHidden = false;
         $this->isReadonly = false;
         $this->defaultValue = null;
+        $this->value = null;
     }
 }
 

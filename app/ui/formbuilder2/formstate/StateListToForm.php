@@ -6,6 +6,7 @@ use App\UI\FormBuilder2\AElement;
 use App\UI\FormBuilder2\AInput;
 use App\UI\FormBuilder2\FormBuilder2;
 use App\UI\FormBuilder2\Select;
+use App\UI\FormBuilder2\TextArea;
 
 /**
  * Handles applying state list to the form
@@ -42,9 +43,11 @@ class StateListToForm {
             $this->applyElementAttribute('isReadonly', $key, $element, 'readonly');
 
             if($element instanceof Select) {
-                $element->setSelectedValue($this->stateList->$key->defaultValue);
+                $element->setSelectedValue($this->stateList->$key->value);
             } else if($element instanceof AInput) {
-                $element->setValue($this->stateList->$key->defaultValue);
+                $element->setValue($this->stateList->$key->value);
+            } else if($element instanceof TextArea) {
+                $element->setContent($this->stateList->$key->value);
             }
         }
     }

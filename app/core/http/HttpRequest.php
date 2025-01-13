@@ -46,6 +46,13 @@ class HttpRequest {
     public ?UserEntity $currentUser;
 
     /**
+     * Request method
+     * 
+     * @var ?string $method
+     */
+    public ?string $method;
+
+    /**
      * Class constructor
      */
     public function __construct() {
@@ -54,6 +61,7 @@ class HttpRequest {
         $this->isAjax = false;
         $this->params = [];
         $this->currentUser = null;
+        $this->method = null;
     }
 }
 

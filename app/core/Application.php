@@ -315,6 +315,7 @@ class Application {
         }
 
         $request->currentUser = $this->currentUser;
+        $request->method = $_SERVER['REQUEST_METHOD'];
 
         return $request;
     }

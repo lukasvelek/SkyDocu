@@ -17,7 +17,7 @@ class FunctionRequest extends AProcessForm {
 
         $this->addSelect('user', 'User:')
             ->addRawOption($this->presenter->getUserId(), $this->presenter->getUser()->getFullname(), true)
-            ->isDisabled();
+            ->setDisabled();
 
         $this->addSubmit();
     }

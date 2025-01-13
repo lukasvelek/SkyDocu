@@ -205,6 +205,11 @@ class ProcessesGrid extends GridBuilder implements IGridExtendingComponent {
                         $el = HTML::el('span')
                                 ->text($type);
 
+                        if($type != '#ERROR' && !array_key_exists($value, SystemProcessTypes::getAll())) {
+                            $fgColor = StandaloneProcesses::getForegroundColor($value);
+                            $el->style('color', $fgColor);
+                        }
+
                         return $el;
                     };
                     $col->onExportColumn[] = function(DatabaseRow $row, mixed $value) {

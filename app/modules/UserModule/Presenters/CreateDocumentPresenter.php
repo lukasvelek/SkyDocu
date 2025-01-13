@@ -130,6 +130,8 @@ class CreateDocumentPresenter extends AUserPresenter {
     }
 
     protected function createComponentCreateDocumentForm(HttpRequest $request) {
+        $folderId = (isset($request->query['folderId']) ? $request->query['folderId'] : (isset($request->post['folderId']) ? $request->post['folderId'] : null));
+
         $classesDb = $this->documentManager->getDocumentClassesForDocumentCreateForUser($this->getUserId());
 
         $classes = [];
@@ -142,7 +144,7 @@ class CreateDocumentPresenter extends AUserPresenter {
 
         $form = $this->componentFactory->getFormBuilder();
 
-        $form->setAction($this->createURL('form', ['folderId' => $request->query['folderId']]));
+        $form->setAction($this->createURL('form', ['folderId' => $folderId]));
 
         $form->addTextInput('title', 'Title:')
             ->setRequired();
@@ -154,7 +156,7 @@ class CreateDocumentPresenter extends AUserPresenter {
             ->addRawOptions($classes)
             ->setRequired();
 
-        $this->addCustomMetadataFormControls($form, $request->query['folderId']);
+        $this->addCustomMetadataFormControls($form, $folderId);
 
         $form->addSubmit('Create');
 

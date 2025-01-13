@@ -188,12 +188,15 @@ class FormBuilder2 extends AComponent {
         $code = 'function getFormState() {';
 
         foreach(array_keys($this->elements) as $name) {
+            if($name == 'btn_submit') continue;
             foreach($attributes as $attr) {
                 $code .= 'var ' . $name . '_' . $attr . ' = $("#' . $name . '").prop("' . $attr . '"); ';
             }
         }
 
         foreach(array_keys($this->elements) as $name) {
+            if($name == 'btn_submit') continue;
+
             foreach($attributes as $attr) {
                 if($attr == 'value') {
                     $code .= 'if(' . $name . '_' . $attr . ' == null) { ' . $name . '_attr = "null"; }';
@@ -206,6 +209,8 @@ class FormBuilder2 extends AComponent {
 
         $jsonArr = [];
         foreach(array_keys($this->elements) as $name) {
+            if($name == 'btn_submit') continue;
+            
             foreach($attributes as $attr) {
                 $jsonArr[$name][$attr] = $name . '_' . $attr;
             }
@@ -214,6 +219,8 @@ class FormBuilder2 extends AComponent {
         $json = json_encode($jsonArr);
 
         foreach(array_keys($this->elements) as $name) {
+            if($name == 'btn_submit') continue;
+
             foreach($attributes as $attr) {
                 $json = str_replace('"' . $name . '_' . $attr . '"', $name . '_' . $attr, $json);
             }
@@ -231,7 +238,7 @@ class FormBuilder2 extends AComponent {
         $callArgs = [];
 
         foreach($this->httpRequest->query as $k => $v) {
-            if(in_array($k, ['page', 'action', 'do', 'isComponent', 'isAjax', 'state', 'elements'])) continue;
+            if(array_key_exists($k, $this->action)) continue;
 
             $hArgs[$k] = '_' . $k;
             $fArgs[] = '_' . $k;
@@ -242,13 +249,21 @@ class FormBuilder2 extends AComponent {
         $fArgs[] = '_state';
 
         foreach(array_keys($this->elements) as $name) {
+            if($name == 'btn_submit') continue;
             $hArgs['elements[]'][] = $name;
+        }
+
+        $actionParams = [];
+        foreach($this->action as $k => $v) {
+            if(in_array($k, ['page', 'action', 'do', 'isComponent', 'isAjax'])) continue;
+
+            $actionParams[$k] = $v;
         }
 
         $arb = new AjaxRequestBuilder();
 
-        $arb->setMethod()
-            ->setComponentAction($this->presenter, $this->componentName . '-onChange')
+        $arb->setMethod('POST')
+            ->setComponentAction($this->presenter, $this->componentName . '-onChange', $actionParams)
             ->setHeader($hArgs)
             ->setFunctionName($this->componentName . '_onChange')
             ->setFunctionArguments($fArgs)

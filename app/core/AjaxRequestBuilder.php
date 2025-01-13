@@ -89,12 +89,15 @@ class AjaxRequestBuilder {
      * 
      * @param APresenter $presenter Presenter
      * @param string $actionName Handler action
+     * @param array $params Additional URL parameters
      */
-    public function setAction(APresenter $presenter, string $actionName) {
+    public function setAction(APresenter $presenter, string $actionName, array $params = []) {
         $module = $presenter->moduleName;
         $presenter = $presenter->getCleanName();
 
-        $this->url = $this->composeURLFromArray(['page' => $module . ':' . $presenter, 'action' => $actionName]);
+        $url = array_merge(['page' => $module . ':' . $presenter, 'action' => $actionName], $params);
+
+        $this->url = $this->composeURLFromArray($url);
 
         return $this;
     }
@@ -104,13 +107,16 @@ class AjaxRequestBuilder {
      * 
      * @param APresenter $presenter Presenter
      * @param string $componentActionName Component handler action
+     * @param array $params Additional URL parameters
      */
-    public function setComponentAction(APresenter $presenter, string $componentActionName) {
+    public function setComponentAction(APresenter $presenter, string $componentActionName, array $params = []) {
         $module = $presenter->moduleName;
         $action = $presenter->getAction();
         $presenter = $presenter->getCleanName();
 
-        $this->url = $this->composeURLFromArray(['page' => $module . ':' . $presenter, 'action' => $action, 'do' => $componentActionName]);
+        $url = array_merge(['page' => $module . ':' . $presenter, 'action' => $action, 'do' => $componentActionName], $params);
+
+        $this->url = $this->composeURLFromArray($url);
         $this->isComponent = true;
 
         return $this;
@@ -283,7 +289,12 @@ class AjaxRequestBuilder {
         if(strtoupper($this->method) == 'GET') {
             $code[] = '$.get(';
             $code[] = '"' . $this->url . '",';
-            $code[] = '' . $headParams . '';
+            $code[] = $headParams;
+            $code[] = ')';
+        } else if (strtoupper($this->method) == 'POST') {
+            $code[] = '$.post(';
+            $code[] = '"' . $this->url . '",';
+            $code[] = $headParams;
             $code[] = ')';
         }
         
@@ -322,11 +333,19 @@ class AjaxRequestBuilder {
      */
     private function processHeadParams() {
         if(!array_key_exists('isAjax', $this->headerParams)) {
-            $this->headerParams['isAjax'] = 1;
+            if($this->method == 'GET') {
+                $this->headerParams['isAjax'] = 1;
+            } else {
+                $this->url .= '&isAjax=1';
+            }
         }
 
         if($this->isComponent) {
-            $this->headerParams['isComponent'] = 1;
+            if($this->method == 'GET') {
+                $this->headerParams['isComponent'] = 1;
+            } else {
+                $this->url .= '&isComponent=1';
+            }
         }
 
         $json = json_encode($this->headerParams);

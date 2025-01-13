@@ -20,9 +20,9 @@ use App\UI\AComponent;
  */
 abstract class AGUICore {
     protected HttpRequest $httpRequest;
-    protected Application $app;
-    protected ?APresenter $presenter;
-    protected ?AModule $module;
+    public Application $app;
+    protected ?APresenter $presenter = null;
+    protected ?AModule $module = null;
 
     /**
      * Creates a flash message and returns its HTML code

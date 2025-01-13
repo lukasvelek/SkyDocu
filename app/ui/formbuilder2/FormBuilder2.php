@@ -210,7 +210,7 @@ class FormBuilder2 extends AComponent {
         $jsonArr = [];
         foreach(array_keys($this->elements) as $name) {
             if($name == 'btn_submit') continue;
-            
+
             foreach($attributes as $attr) {
                 $jsonArr[$name][$attr] = $name . '_' . $attr;
             }
@@ -274,8 +274,8 @@ class FormBuilder2 extends AComponent {
             ')
             ->enableLoadingAnimation('form')
         ;
-
-        $this->presenter->addScript($arb);
+        
+        $this->presenter->addScript($code);
     }
 
     /**

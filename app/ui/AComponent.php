@@ -18,7 +18,7 @@ use Exception;
  */
 abstract class AComponent extends AGUICore implements IRenderable {
     protected HttpRequest $httpRequest;
-    protected string $componentName;
+    protected string $componentName = 'Component';
 
     /**
      * Abstract class constructor

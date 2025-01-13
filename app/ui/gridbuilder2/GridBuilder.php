@@ -58,6 +58,7 @@ class GridBuilder extends AComponent {
     private ?int $totalCount;
     private GridHelper $gridHelper;
     private string $gridName;
+    private bool $isPrerendered;
 
     /**
      * Methods called with parameters: DatabaseRow $row, Row $_row, HTML $rowHtml
@@ -120,6 +121,7 @@ class GridBuilder extends AComponent {
         $this->hasCheckboxes = false;
         $this->checkboxHandler = [];
         $this->resultLimit = GRID_SIZE;
+        $this->isPrerendered = false;
     }
 
     /**
@@ -504,7 +506,9 @@ class GridBuilder extends AComponent {
      * @return string HTML code
      */
     public function render() {
-        $this->prerender();
+        if(!$this->isPrerendered) {
+            $this->prerender();
+        }
         $this->build();
 
         $template = $this->getTemplate(__DIR__ . '/grid.html');
@@ -526,6 +530,7 @@ class GridBuilder extends AComponent {
         parent::prerender();
         $this->getActiveFiltersFromCache();
         $this->fetchDataFromDb(true);
+        $this->isPrerendered = true;
     }
 
     /**

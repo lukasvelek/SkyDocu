@@ -23,7 +23,7 @@ class Navbar extends AComponent {
     private TemplateObject $template;
     private UserEntity $user;
     private array $hideLinks;
-    private int $mode;
+    private ?int $mode;
     private ?GroupManager $groupManager;
     private CacheFactory $cacheFactory;
 
@@ -35,7 +35,7 @@ class Navbar extends AComponent {
      * @param UserEntity $user Current user entity
      * @param ?GroupManager Container GroupManager instance
      */
-    public function __construct(HttpRequest $httpRequest, int $mode, UserEntity $user, ?GroupManager $groupManager) {
+    public function __construct(HttpRequest $httpRequest, ?int $mode, UserEntity $user, ?GroupManager $groupManager) {
         parent::__construct($httpRequest);
 
         $this->mode = $mode;
@@ -98,6 +98,9 @@ class Navbar extends AComponent {
                 $this->links = NavbarAdminLinks::toArray();
 
                 break;
+
+            default:
+                break;
         }
     }
 
@@ -121,14 +124,16 @@ class Navbar extends AComponent {
         ];
 
         $containerSwitch = $this->getContainerSwitch();
-        if($containerSwitch !== null) {
+        if($containerSwitch !== null && $this->mode !== null) {
             $userInfoLinks = array_merge(['Containers' => $containerSwitch], $userInfoLinks);
         }
 
         $userInfo = '';
-        foreach($userInfoLinks as $title => $link) {
-            if(!in_array($title, $this->hideLinks)) {
-                $userInfo .= $link;
+        if($this->mode !== null) {
+            foreach($userInfoLinks as $title => $link) {
+                if(!in_array($title, $this->hideLinks)) {
+                    $userInfo .= $link;
+                }
             }
         }
 
@@ -151,6 +156,9 @@ class Navbar extends AComponent {
             case NavbarModes::GENERAL:
             case NavbarModes::ADMINISTRATION:
                 $link = NavbarGeneralLinks::USER_PROFILE;
+                break;
+
+            default:
                 break;
         }
 
@@ -177,6 +185,9 @@ class Navbar extends AComponent {
             case NavbarModes::GENERAL:
             case NavbarModes::ADMINISTRATION:
                 $link = NavbarGeneralLinks::USER_LOGOUT;
+                break;
+
+            default:
                 break;
         }
 

@@ -528,7 +528,7 @@ abstract class APresenter extends AGUICore {
                     $this->redirect(['page' => $moduleName . ':' . $this->title, 'action' => $this->defaultAction]);
                 }
 
-                $this->redirect(['page' => 'Error:E404', 'reason' => 'ActionDoesNotExist']);
+                $this->redirect(['page' => 'Error:E404', 'reason' => 'ActionDoesNotExist', 'calledAction' => $this->action, 'calledPage' => $moduleName . ':' . $this->title]);
             }
         }
 

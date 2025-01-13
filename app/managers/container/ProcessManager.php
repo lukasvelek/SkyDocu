@@ -231,6 +231,41 @@ class ProcessManager extends AManager {
             throw new GeneralException('Database error.');
         }
     }
+
+    public function deleteProcessType(string $typeKey) {
+        $qb = $this->processRepository->commonComposeQuery(false);
+        $qb->andWhere('type = ?', [$typeKey])
+            ->execute();
+
+        $processIds = [];
+        while($row = $qb->fetchAssoc()) {
+            $processIds[] = $row['processId'];
+        }
+
+        foreach($processIds as $processId) {
+            if(!$this->processRepository->deleteProcessDataById($processId)) {
+                throw new GeneralException('Database error.');
+            }
+            if(!$this->processRepository->deleteProcessCommentsForProcessId($processId)) {
+                throw new GeneralException('Database error.');
+            }
+            if(!$this->processRepository->deleteProcessById($processId)) {
+                throw new GeneralException('Database error.');
+            }
+        }
+
+        if(!$this->processRepository->deleteProcessTypeByTypeKey($typeKey)) {
+            throw new GeneralException('Database error.');
+        }
+    }
+
+    public function insertNewProcessType(string $typeKey, string $title, string $description, bool $enabled = true) {
+        $typeId = $this->createId(EntityManager::C_PROCESS_TYPES);
+
+        if(!$this->processRepository->insertNewProcessType($typeId, $typeKey, $title, $description, $enabled)) {
+            throw new GeneralException('Database error.');
+        }
+    }
 }
 
 ?>

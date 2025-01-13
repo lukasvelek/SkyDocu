@@ -504,6 +504,7 @@ class GridBuilder extends AComponent {
      * @return string HTML code
      */
     public function render() {
+        $this->prerender();
         $this->build();
 
         $template = $this->getTemplate(__DIR__ . '/grid.html');

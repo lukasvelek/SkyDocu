@@ -12,10 +12,6 @@ abstract class ASuperAdminPresenter extends APresenter {
         $this->moduleName = 'SuperAdmin';
     }
 
-    public function startup() {
-        parent::startup();
-    }
-
     private function checkAction(string ...$actions) {
         if(in_array($this->httpGet('action'), $actions)) {
             return true;

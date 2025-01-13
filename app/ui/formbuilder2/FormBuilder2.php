@@ -570,7 +570,12 @@ class FormBuilder2 extends AComponent {
         $this->stateListHelper->applyStateListToForm($this, $stateList);
     }
 
-    public static function createFromComponent(AComponent $component) {}
+    public static function createFromComponent(AComponent $component) {
+        $obj = new self($component->httpRequest);
+        $obj->setApplication($component->app);
+        $obj->setPresenter($component->presenter);
+        return $obj;
+    }
 
     /**
      * Handles on changes handler

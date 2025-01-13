@@ -43,6 +43,19 @@ class StandaloneProcessManager extends AManager {
         $this->saveProcessData($processId, $data);
     }
 
+    public function startFunctionRequest(array $data) {
+        $admin = $this->userManager->getUserByUsername('admin');
+
+        $currentOfficerId = $admin->getId();
+        $workflow = [
+            $admin->getId()
+        ];
+
+        $processId = $this->processManager->startProcess(null, StandaloneProcesses::FUNCTION_REQUEST, $this->currentUser->getId(), $currentOfficerId, $workflow);
+
+        $this->saveProcessData($processId, $data);
+    }
+
     private function saveProcessData(string $processId, array $data) {
         $entryId = $this->createId(EntityManager::C_PROCESS_DATA);
 

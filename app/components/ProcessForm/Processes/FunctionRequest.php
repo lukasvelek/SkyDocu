@@ -6,27 +6,25 @@ use App\Constants\Container\StandaloneProcesses;
 use App\UI\AComponent;
 
 /**
- * HomeOffice represents the HomeOffice standalone process
+ * FunctionRequest represents the FunctionRequest standalone process
  * 
  * @author Lukas Velek
  */
-class HomeOffice extends AProcessForm {
+class FunctionRequest extends AProcessForm {
     protected function createForm() {
-        $this->addTextArea('reason', 'Reason:')
+        $this->addTextArea('description', 'Description:')
             ->setRequired();
 
-        $this->addDateInput('dateFrom', 'Date from:')
-            ->setRequired();
+        $this->addSelect('user', 'User:')
+            ->addRawOption($this->presenter->getUserId(), $this->presenter->getUser()->getFullname(), true)
+            ->isDisabled();
 
-        $this->addDateInput('dateTo', 'Date to:')
-            ->setRequired();
-
-        $this->addSubmit('Start');
+        $this->addSubmit();
     }
 
     protected function createAction() {
         $url = $this->baseUrl;
-        $url['name'] = StandaloneProcesses::HOME_OFFICE;
+        $url['name'] = StandaloneProcesses::FUNCTION_REQUEST;
 
         $this->setAction($url);
     }

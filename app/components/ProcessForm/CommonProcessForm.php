@@ -77,7 +77,7 @@ class CommonProcessForm extends AComponent {
 
         switch($this->processName) {
             case StandaloneProcesses::HOME_OFFICE:
-                $obj = new HomeOffice($this->httpRequest, $this->baseUrl);
+                $obj = HomeOffice::createFromComponent($this);
         }
 
         $this->injectToProcessForm($obj);
@@ -91,8 +91,7 @@ class CommonProcessForm extends AComponent {
      * @param AProcessForm &$processForm ProcessForm instace
      */
     private function injectToProcessForm(AProcessForm &$processForm) {
-        $processForm->setApplication($this->app);
-        $processForm->setPresenter($this->presenter);
+        $processForm->baseUrl = $this->baseUrl;
     }
 }
 

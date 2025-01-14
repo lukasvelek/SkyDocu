@@ -3,6 +3,7 @@
 namespace App\UI\GridBuilder2;
 
 use App\Constants\AConstant;
+use App\Constants\IBackgroundColorable;
 use App\Constants\IColorable;
 use App\Core\AjaxRequestBuilder;
 use App\Core\Caching\CacheFactory;
@@ -296,16 +297,24 @@ class GridBuilder extends AComponent {
                     if(in_array(AConstant::class, class_parents($constClass))) {
                         $result = $constClass::toString($value);
 
+                        $el = HTML::el('span');
+                        $el->text($result);
+
                         if(in_array(IColorable::class, class_implements($constClass))) {
                             $color = $constClass::getColor($value);
 
-                            $el = HTML::el('span');
-
-                            $el->text($result)
-                                ->style('color', $color);
-
-                            $result = $el->toString();
+                            $el->style('color', $color);
                         }
+
+                        if(in_array(IBackgroundColorable::class, class_implements($constClass))) {
+                            $bgColor = $constClass::getBackgroundColor($value);
+
+                            $el->style('background-color', $bgColor)
+                                ->style('border-radius', '10px')
+                                ->style('padding', '5px');
+                        }
+
+                        $result = $el->toString();
                     }
                 }
             } catch(Exception $e) {}

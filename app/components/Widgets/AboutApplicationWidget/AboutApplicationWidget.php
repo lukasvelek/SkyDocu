@@ -37,7 +37,8 @@ class AboutApplicationWidget extends Widget {
         return [
             'Application version' => '1.2-dev',
             'Application release date' => '-',
-            'Project github link' => $this->getGithubLink()
+            'Project github link' => $this->getGithubLink(),
+            'PHP version' => $this->getPHPVersion()
         ];
     }
 
@@ -54,6 +55,15 @@ class AboutApplicationWidget extends Widget {
             ->text('SkyDocu GitHub link');
 
         return $el->toString();
+    }
+
+    /**
+     * Returns PHP version
+     * 
+     * @return string PHP version
+     */
+    private function getPHPVersion() {
+        return phpversion();
     }
 }
 

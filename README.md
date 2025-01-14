@@ -11,6 +11,12 @@ The web application is written purely in PHP with a few JS scripts. These JS scr
 ### 1.2 (?)
 - Code readability update
 - Superadministration about application page
+- ErrorModule implementation
+- Core framework updates
+- Bugfixes
+- GridBuilder optimization
+- Form reducing & on change AJAX calling capability
+- Processes grid design update
 
 ### 1.1 (January 7th, 2025)
 - Document processes

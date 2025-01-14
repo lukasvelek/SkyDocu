@@ -206,8 +206,13 @@ class ProcessesGrid extends GridBuilder implements IGridExtendingComponent {
                                 ->text($type);
 
                         if($type != '#ERROR' && !array_key_exists($value, SystemProcessTypes::getAll())) {
-                            $fgColor = StandaloneProcesses::getForegroundColor($value);
-                            $el->style('color', $fgColor);
+                            $fgColor = StandaloneProcesses::getColor($value);
+                            $bgColor = StandaloneProcesses::getBackgroundColor($value);
+
+                            $el->style('color', $fgColor)
+                                ->style('background-color', $bgColor)
+                                ->style('border-radius', '10px')
+                                ->style('padding', '5px');
                         }
 
                         return $el;

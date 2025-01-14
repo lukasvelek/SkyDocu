@@ -41,7 +41,7 @@ class ProcessWidget extends AComponent {
      * Generates colors for the widget
      */
     private function generateColors() {
-        $this->fgColor = StandaloneProcesses::getForegroundColor($this->name);
+        $this->fgColor = StandaloneProcesses::getColor($this->name);
         $this->bgColor = StandaloneProcesses::getBackgroundColor($this->name);
     }
 

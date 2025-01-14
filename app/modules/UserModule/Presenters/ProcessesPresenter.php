@@ -91,10 +91,20 @@ class ProcessesPresenter extends AUserPresenter {
         $type = SystemProcessTypes::gridToString($process->type);
         if($type === null) {
             $type = StandaloneProcesses::toString($process->type);
+
+            $color = StandaloneProcesses::getColor($process->type);
+            $bgColor = StandaloneProcesses::getBackgroundColor($process->type);
+            $type = '<span style="color: ' . $color . '; background-color: ' . $bgColor . '; padding: 5px; border-radius: 10px">' . $type . '</span>';
         }
 
         $createRow('Type', $type);
-        $createRow('Status', ProcessStatus::toString($process->status));
+
+        $statusText = ProcessStatus::toString($process->status);
+        $statusFgColor = ProcessStatus::getColor($process->status);
+        $statusBgColor = ProcessStatus::getBackgroundColor($process->status);
+
+        $statusCode = '<span style="color: ' . $statusFgColor . '; background-color: ' . $statusBgColor . '; padding: 5px; border-radius: 10px">' . $statusText . '</span>';
+        $createRow('Status', $statusCode);
 
         if($process->documentId !== null) {
             try {

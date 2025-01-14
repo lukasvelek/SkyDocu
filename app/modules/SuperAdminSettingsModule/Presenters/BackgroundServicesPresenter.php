@@ -2,14 +2,9 @@
 
 namespace App\Modules\SuperAdminSettingsModule;
 
-use App\Constants\SystemServiceStatus;
-use App\Core\DB\DatabaseRow;
-use App\Core\Http\HttpRequest;
+use App\Components\BackgroundServicesGrid\BackgroundServicesGrid;
 use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
-use App\Helpers\GridHelper;
-use App\UI\GridBuilder2\Row;
-use App\UI\HTML\HTML;
 
 class BackgroundServicesPresenter extends ASuperAdminSettingsPresenter {
     public function __construct() {
@@ -20,44 +15,12 @@ class BackgroundServicesPresenter extends ASuperAdminSettingsPresenter {
         $this->template->links = [];
     }
 
-    public function createComponentBgServicesGrid(HttpRequest $request) {
-        $grid = $this->componentFactory->getGridBuilder();
-        
-        $grid->createDataSourceFromQueryBuilder($this->app->systemServicesRepository->composeQueryForServices(), 'serviceId');
-        $grid->setGridName(GridHelper::GRID_BACKGROUND_SERVICES);
-
-        $grid->addColumnText('title', 'Title');
-        $grid->addColumnDatetime('dateStarted', 'Service started');
-        $grid->addColumnDatetime('dateEnded', 'Service ended');
-        $grid->addColumnConst('status', 'Status', SystemServiceStatus::class);
-
-        $run = $grid->addAction('run');
-        $run->setTitle('Run');
-        $run->onCanRender[] = function(DatabaseRow $row, Row $_row) {
-            return $row->status == 1;
-        };
-        $run->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
-            $el = HTML::el('a')
-                ->class('grid-link')
-                ->href($this->createURLString('run', ['serviceId' => $primaryKey]))
-                ->text('Run');
-
-            return $el;
-        };
-
-        $history = $grid->addAction('history');
-        $history->setTitle('History');
-        $history->onCanRender[] = function(DatabaseRow $row, Row $_row) {
-            return true;
-        };
-        $history->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
-            $el = HTML::el('a')
-                ->class('grid-link')
-                ->href($this->createFullURLString('SuperAdminSettings:BackgroundServicesHistory', 'list', ['serviceId' => $primaryKey]))
-                ->text('History');
-
-            return $el;
-        };
+    public function createComponentBgServicesGrid() {
+        $grid = new BackgroundServicesGrid(
+            $this->componentFactory->getGridBuilder(),
+            $this->app,
+            $this->app->systemServicesRepository
+        );
 
         return $grid;
     }

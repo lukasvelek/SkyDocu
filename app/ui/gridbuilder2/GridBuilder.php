@@ -442,11 +442,17 @@ class GridBuilder extends AComponent {
                 if($value === true || $value == 1) {
                     $el = HTML::el('span')
                             ->style('color', 'green')
+                            ->style('background-color', 'lightgreen')
+                            ->style('border-radius', '10px')
+                            ->style('padding', '5px')
                             ->text('&check;');
                     $cell->setContent($el);
                 } else {
                     $el = HTML::el('span')
                             ->style('color', 'red')
+                            ->style('background-color', 'pink')
+                            ->style('border-radius', '10px')
+                            ->style('padding', '5px')
                             ->text('&times;');
                     $cell->setContent($el);
                 }

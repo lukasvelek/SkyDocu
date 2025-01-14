@@ -45,13 +45,15 @@ class Router {
      */
     public static function generateUrl(array $parts) {
         $queryParameters = [];
-        if(!is_numeric(array_keys($parts)[0])) {
-            foreach($parts as $queryKey => $queryValue) {
-                $queryParameters[] = $queryKey . '=' . $queryValue;
+
+        foreach($parts as $k => $v) {
+            if(is_numeric($k)) {
+                $queryParameters[] = $v;
+            } else {
+                $queryParameters[] = $k . '=' . $v;
             }
-        } else {
-            $queryParameters = $parts;
         }
+        
         return '?' . implode('&', $queryParameters);
     }
 

@@ -3,6 +3,7 @@
 namespace App\Modules\UserModule;
 
 use App\Components\DocumentsGrid\DocumentsGrid;
+use App\Components\DocumetnShareForm\DocumentShareForm;
 use App\Components\FoldersSidebar\FoldersSidebar;
 use App\Constants\Container\CustomMetadataTypes;
 use App\Constants\Container\DocumentStatus;
@@ -209,6 +210,14 @@ class DocumentsPresenter extends AUserPresenter {
         $this->template->document_custom_metadata = $this->loadFromPresenterCache('customMetadataCode');
 
         $this->template->links = $this->createBackUrl('list');
+    }
+
+    public function renderShareForm() {}
+
+    protected function createComponentShareDocumentForm(HttpRequest $request) {
+        $form = new DocumentShareForm($request, $this->app->userRepository);
+
+        return $form;
     }
 }
 

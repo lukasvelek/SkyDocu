@@ -244,6 +244,16 @@ class DocumentManager extends AManager {
     public function updateDocumentCustom(string $documentId, array $data) {
 
     }
+
+    public function getSharedDocumentsForUser(string $userId, bool $returnObjects = true) {
+        $documents = $this->documentRepository->getSharedDocumentsForUser($userId);
+
+        if($returnObjects) {
+            $documents = $this->getDocumentsByIds($documents);
+        }
+
+        return $documents;
+    }
 }
 
 ?>

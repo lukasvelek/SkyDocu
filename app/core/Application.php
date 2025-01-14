@@ -11,7 +11,6 @@ use App\Entities\UserEntity;
 use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
 use App\Exceptions\ModuleDoesNotExistException;
-use App\Helpers\LinkHelper;
 use App\Logger\Logger;
 use App\Managers\ContainerInviteManager;
 use App\Managers\ContainerManager;
@@ -28,6 +27,7 @@ use App\Repositories\GroupRepository;
 use App\Repositories\SystemServicesRepository;
 use App\Repositories\TransactionLogRepository;
 use App\Repositories\UserRepository;
+use App\UI\LinkBuilder;
 use Exception;
 use ReflectionClass;
 
@@ -224,7 +224,7 @@ class Application {
      * @return string URL
      */
     public function composeURL(array $params) {
-        return LinkHelper::createUrlFromArray($params);
+        return LinkBuilder::convertUrlArrayToString($params);
     }
 
     /**

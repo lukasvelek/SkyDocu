@@ -9,9 +9,9 @@ use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
 use App\Exceptions\RequiredAttributeIsNotSetException;
-use App\Helpers\LinkHelper;
 use App\Helpers\TemplateHelper;
 use App\UI\AComponent;
+use App\UI\LinkBuilder;
 
 /**
  * AGUICore is the lowest level UI element. It is implemented by Modules, Presenters and Components - all UI elements
@@ -308,7 +308,7 @@ abstract class AGUICore {
      * @return string URL as string
      */
     public function convertArrayUrlToStringUrl(array $url) {
-        return LinkHelper::createUrlFromArray($url);
+        return LinkBuilder::convertUrlArrayToString($url);
     }
 }
 

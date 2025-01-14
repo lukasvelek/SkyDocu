@@ -5,6 +5,7 @@ namespace App\Components\Sidebar;
 use App\Core\Http\HttpRequest;
 use App\Modules\TemplateObject;
 use App\UI\AComponent;
+use App\UI\LinkBuilder;
 
 /**
  * Sidebar is a component used for displaying links to the user on the side of the page
@@ -64,16 +65,7 @@ class Sidebar2 extends AComponent {
      * @return string Single line URL
      */
     private function composeURL(array $urlParts) {
-        $url = '?';
-
-        $urlCouples = [];
-        foreach($urlParts as $upKey => $upValue) {
-            $urlCouples[] = $upKey . '=' . $upValue;
-        }
-
-        $url .= implode('&', $urlCouples);
-
-        return $url;
+        return LinkBuilder::convertUrlArrayToString($urlParts);
     }
 
     /**

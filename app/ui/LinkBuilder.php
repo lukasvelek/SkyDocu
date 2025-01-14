@@ -28,7 +28,8 @@ class LinkBuilder implements IRenderable {
      */
     public function render() {
         if(!empty($this->urlParts)) {
-            $this->processUrl();
+            $url = self::convertUrlArrayToString($this->urlParts);
+            $this->setHref($url);
         }
 
         $code = '<a ' . $this->processElements() . '>' . $this->text . '</a>';
@@ -111,19 +112,6 @@ class LinkBuilder implements IRenderable {
         $this->elements['title'] = $title;
 
         return $this;
-    }
-
-    /**
-     * Processes the URL array into a string URL and finally saves it to the href attribute
-     */
-    private function processUrl() {
-        $tmp = [];
-
-        foreach($this->urlParts as $k => $v) {
-            $tmp[] = $k . '=' . $v;
-        }
-
-        $this->setHref('?' . implode('&', $tmp));
     }
 
     /**

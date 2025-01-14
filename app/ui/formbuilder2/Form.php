@@ -4,6 +4,7 @@ namespace App\UI\FormBuilder2;
 
 use App\Core\AjaxRequestBuilder;
 use App\UI\HTML\HTML;
+use App\UI\LinkBuilder;
 
 /**
  * Form instance
@@ -117,9 +118,7 @@ class Form extends AElement {
             $parts[] = $key . '=' . $value;
         }
 
-        $url = '?' . implode('&', $parts);
-
-        return $url;
+        return LinkBuilder::convertUrlArrayToString($parts);
     }
 }
 

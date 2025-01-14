@@ -11,6 +11,7 @@ use App\Core\Http\HttpRequest;
 use App\Lib\Processes\ProcessFactory;
 use App\Managers\Container\DocumentManager;
 use App\UI\HTML\HTML;
+use App\UI\LinkBuilder;
 
 /**
  * This class is a dedicated class for better maintaining document bulk actions
@@ -171,13 +172,7 @@ class DocumentBulkActionsHelper {
      * @return string URL
      */
     private function createLink(string $modulePresenter, string $action, array $params = []) {
-        $url = '?page=' . $modulePresenter . '&action=' . $action;
-
-        if(!empty($params)) {
-            $url .= '&' . implode('&', $params);
-        }
-
-        return $url;
+        return LinkBuilder::convertUrlArrayToString(array_merge(['page' => $modulePresenter, 'action' => $action], $params));
     }
 }
 

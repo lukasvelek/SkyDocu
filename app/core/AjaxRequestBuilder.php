@@ -2,8 +2,8 @@
 
 namespace App\Core;
 
-use App\Helpers\LinkHelper;
 use App\Modules\APresenter;
+use App\UI\LinkBuilder;
 
 /**
  * Class that helps developer to create an Ajax request easily.
@@ -140,7 +140,7 @@ class AjaxRequestBuilder {
      * @return string URL string
      */
     private function composeURLFromArray(array $url) {
-        return LinkHelper::createUrlFromArray($url);
+        return LinkBuilder::convertUrlArrayToString($url);
     }
 
     /**

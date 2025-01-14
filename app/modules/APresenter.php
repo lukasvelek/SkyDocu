@@ -184,14 +184,7 @@ abstract class APresenter extends AGUICore {
      * @return string URL as string
      */
     public function createURLString(string $action, array $params = []) {
-        $urlParts = $this->createURL($action, $params);
-
-        $tmp = [];
-        foreach($urlParts as $k => $v) {
-            $tmp[] = $k . '=' . $v;
-        }
-
-        return '?' . implode('&', $tmp);
+        return LinkBuilder::convertUrlArrayToString($this->createURL($action, $params));
     }
 
     /**

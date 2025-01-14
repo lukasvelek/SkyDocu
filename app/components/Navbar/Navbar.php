@@ -8,10 +8,10 @@ use App\Core\Caching\CacheFactory;
 use App\Core\Caching\CacheNames;
 use App\Core\Http\HttpRequest;
 use App\Entities\UserEntity;
-use App\Helpers\LinkHelper;
 use App\Managers\Container\GroupManager;
 use App\Modules\TemplateObject;
 use App\UI\AComponent;
+use App\UI\LinkBuilder;
 
 /**
  * Navigation bar or navbar is the top "bar" that contains links to different parts of the application
@@ -206,7 +206,7 @@ class Navbar extends AComponent {
      * @return string HTML code
      */
     private function createLink(array $url, string $title) {
-        return '<a class="navbar-link" href="' . LinkHelper::createUrlFromArray($url) . '">' . $title . '</a>';
+        return '<a class="navbar-link" href="' . LinkBuilder::convertUrlArrayToString($url) . '">' . $title . '</a>';
     }
 
     public function render() {

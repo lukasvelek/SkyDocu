@@ -2,7 +2,7 @@
 
 namespace App\Constants;
 
-class SystemServiceHistoryStatus extends AConstant implements IColorable {
+class SystemServiceHistoryStatus extends AConstant implements IColorable, IBackgroundColorable {
     public const SUCCESS = 1;
     public const ERROR = 2;
 
@@ -13,12 +13,19 @@ class SystemServiceHistoryStatus extends AConstant implements IColorable {
         };
     }
 
-    public static function getColor($key): ?string
-    {
+    public static function getColor($key): ?string {
         return match((int)$key) {
             self::SUCCESS => 'green',
             self::ERROR => 'red',
             default => 'black'
+        };
+    }
+
+    public static function getBackgroundColor($key): ?string {
+        return match((int)$key) {
+            self::SUCCESS => 'lightgreen',
+            self::ERROR => 'pink',
+            default => null
         };
     }
 }

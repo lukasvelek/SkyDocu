@@ -309,9 +309,11 @@ class GridBuilder extends AComponent {
                         if(in_array(IBackgroundColorable::class, class_implements($constClass))) {
                             $bgColor = $constClass::getBackgroundColor($value);
 
-                            $el->style('background-color', $bgColor)
-                                ->style('border-radius', '10px')
-                                ->style('padding', '5px');
+                            if($bgColor !== null) {
+                                $el->style('background-color', $bgColor)
+                                    ->style('border-radius', '10px')
+                                    ->style('padding', '5px');
+                            }
                         }
 
                         $result = $el->toString();

@@ -24,7 +24,7 @@ class SystemServiceStatus extends AConstant implements IColorable, IBackgroundCo
     public static function getBackgroundColor($key): ?string {
         return match((int)$key) {
             self::NOT_RUNNING => 'pink',
-            self::RUNNING => 'lime',
+            self::RUNNING => 'lightgreen',
             default => null
         };
     }

@@ -2,7 +2,7 @@
 
 namespace App\Constants;
 
-class ContainerStatus extends AConstant implements IColorable {
+class ContainerStatus extends AConstant implements IColorable, IBackgroundColorable {
     public const NEW = 1;
     public const IS_BEING_CREATED = 2;
     public const RUNNING = 3;
@@ -27,6 +27,17 @@ class ContainerStatus extends AConstant implements IColorable {
             self::NOT_RUNNING => 'red',
             self::ERROR_DURING_CREATION => 'red',
             default => 'black'
+        };
+    }
+
+    public static function getBackgroundColor($key): ?string {
+        return match((int)$key) {
+            self::NEW => 'lightgrey',
+            self::IS_BEING_CREATED => 'lightorange',
+            self::RUNNING => 'lightgreen',
+            self::NOT_RUNNING => 'pink',
+            self::ERROR_DURING_CREATION => 'pink',
+            default => null
         };
     }
 }

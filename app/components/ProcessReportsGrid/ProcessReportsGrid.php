@@ -35,6 +35,7 @@ class ProcessReportsGrid extends GridBuilder implements IGridExtendingComponent 
     ) {
         parent::__construct($grid->httpRequest);
         $this->setHelper($grid->getHelper());
+        $this->setCacheFactory($grid->cacheFactory);
 
         $this->app = $app;
         $this->processManager = $processManager;

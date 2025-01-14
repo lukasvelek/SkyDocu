@@ -10,6 +10,7 @@ use App\Core\Datatypes\ArrayList;
 use App\Core\Datetypes\DateTime;
 use App\Core\HashManager;
 use App\Core\Http\AResponse;
+use App\Core\Router;
 use App\Entities\UserEntity;
 use App\Exceptions\ActionDoesNotExistException;
 use App\Exceptions\AException;
@@ -57,6 +58,8 @@ abstract class APresenter extends AGUICore {
 
     protected ComponentFactory $componentFactory;
 
+    protected Router $router;
+
     /**
      * The class constructor
      * 
@@ -94,6 +97,8 @@ abstract class APresenter extends AGUICore {
         $this->permanentFlashMessages = [];
 
         $this->components = [];
+
+        $this->router = new Router();
     }
 
     /**
@@ -102,6 +107,7 @@ abstract class APresenter extends AGUICore {
     public function startup() {
         $this->cacheFactory = new CacheFactory();
         $this->componentFactory = new ComponentFactory($this->httpRequest, $this);
+        $this->router->inject($this, new ModuleManager());
     }
 
     /**

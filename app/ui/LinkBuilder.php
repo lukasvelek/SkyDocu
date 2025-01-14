@@ -2,6 +2,8 @@
 
 namespace App\UI;
 
+use App\Core\Router;
+
 /**
  * Link Builder allows to easily make links.
  * 
@@ -174,12 +176,7 @@ class LinkBuilder implements IRenderable {
      * @return string URL
      */
     public static function convertUrlArrayToString(array $url) {
-        $tmp = [];
-        foreach($url as $k => $v) {
-            $tmp[] = $k . '=' . $v;
-        }
-
-        return '?' . implode('&', $tmp);
+        return Router::generateUrl($url);
     }
 
     /**

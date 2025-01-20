@@ -251,6 +251,27 @@ class DocumentsPresenter extends AUserPresenter {
 
         return $form;
     }
+
+    public function renderListShared() {}
+
+    protected function createComponentSharedDocumentsGrid(HttpRequest $request) {
+        $documentsGrid = new DocumentsGrid(
+            $this->componentFactory->getGridBuilder($this->containerId),
+            $this->app,
+            $this->documentManager,
+            $this->documentBulkActionAuthorizator,
+            $this->groupStandardOperationsAuthorizator,
+            $this->enumManager,
+            $this->gridManager,
+            $this->processFactory
+        );
+
+        $documentsGrid->setShowShared();
+        $documentsGrid->useCheckboxes($this);
+        $documentsGrid->setCacheFactory($this->cacheFactory);
+
+        return $documentsGrid;
+    }
 }
 
 ?>

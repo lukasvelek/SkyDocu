@@ -42,10 +42,9 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
     private ProcessFactory $processFactory;
 
     private bool $allMetadata;
-
     private ?string $currentFolderId;
-
     private bool $showDocumentInfoLink;
+    private bool $showShared;
 
     /**
      * Class constructor
@@ -86,8 +85,8 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
 
         $this->allMetadata = false;
         $this->currentFolderId = null;
-
         $this->showDocumentInfoLink = true;
+        $this->showShared = false;
     }
 
     /**
@@ -97,6 +96,13 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
      */
     public function setCurrentFolder(?string $folderId) {
         $this->currentFolderId = $folderId;
+    }
+
+    /**
+     * Sets if shared documents will be shown
+     */
+    public function setShowShared() {
+        $this->showShared = true;
     }
 
     /**
@@ -134,7 +140,7 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
 
         $this->appendSystemMetadata();
 
-        if($this->allMetadata) {
+        if($this->allMetadata && !$this->showShared) {
             $this->appendCustomMetadata();
         }
 
@@ -151,7 +157,9 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
      * Sets up the grid
      */
     private function setup() {
-        $this->addQueryDependency('folderId', $this->getFolderId());
+        if(!$this->showShared) {
+            $this->addQueryDependency('folderId', $this->getFolderId());
+        }
         $this->setGridName(GridNames::DOCUMENTS_GRID);
     }
 
@@ -177,9 +185,12 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
     }
 
     public function createDataSource() {
-        $folderId = $this->getFolderId();
-
-        $qb = $this->documentManager->composeQueryForDocuments($this->currentUserId, $folderId, $this->allMetadata);
+        if($this->showShared) {
+            $qb = $this->documentManager->composeQueryForSharedDocuments($this->currentUserId);
+        } else {
+            $folderId = $this->getFolderId();
+            $qb = $this->documentManager->composeQueryForDocuments($this->currentUserId, $folderId, $this->allMetadata);
+        }
 
         $this->createDataSourceFromQueryBuilder($qb, 'documentId');
     }

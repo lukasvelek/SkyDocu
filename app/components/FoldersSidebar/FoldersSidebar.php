@@ -83,7 +83,7 @@ class FoldersSidebar extends Sidebar2 {
         $active = false;
         if(array_key_exists('folderId', $this->httpRequest->query) && $this->httpRequest->query['folderId'] == $folder->folderId) {
             $active = true;
-        } else if(!array_key_exists('folderId', $this->httpRequest->query) && $folder->row->title == 'Default') {
+        } else if(!array_key_exists('folderId', $this->httpRequest->query) && $folder->row->title == 'Default' && $this->httpRequest->query['action'] == 'list') {
             $active = true;
         }
 

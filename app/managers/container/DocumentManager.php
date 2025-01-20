@@ -71,6 +71,32 @@ class DocumentManager extends AManager {
         return $qb;
     }
 
+    public function composeQueryForSharedDocuments(string $userId) {
+        $qb = $this->documentRepository->composeQueryForDocuments();
+
+        $sharedDocumentIds = $this->documentRepository->getSharedDocumentsForUser($userId);
+
+        $qb->andWhere($qb->getColumnInValues('documentId', $sharedDocumentIds));
+
+        $groupIds = $this->groupRepository->getGroupsForUser($userId);
+
+        $classes = $this->documentClassRepository->getVisibleClassesForGroups($groupIds);
+
+        if(empty($classes)) {
+            $qb->andWhere('1=0');
+        } else {
+            $qb->andWhere($qb->getColumnInValues('classId', $classes));
+        }
+
+        $sharedDocumentIds = $this->documentRepository->getSharedDocumentsForUser($userId);
+        
+        if(!empty($sharedDocumentIds)) {
+            $qb->orWhere($qb->getColumnInValues('documentId', $sharedDocumentIds));
+        }
+
+        return $qb;
+    }
+
     public function getCustomMetadataForFolder(string $folderId) {
         $metadataIds = $this->folderRepository->getVisibleCustomMetadataIdForFolder($folderId);
 

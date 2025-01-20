@@ -5,6 +5,8 @@ namespace App\UI\FormBuilder2;
 use App\Core\AjaxRequestBuilder;
 use App\Core\Http\HttpRequest;
 use App\Core\Http\JsonResponse;
+use App\Core\Router;
+use App\Modules\ModuleManager;
 use App\UI\AComponent;
 use App\UI\FormBuilder2\FormState\FormStateList;
 use App\UI\FormBuilder2\FormState\FormStateListHelper;
@@ -34,6 +36,7 @@ class FormBuilder2 extends AComponent {
     private FormStateListHelper $stateListHelper;
 
     public ?IFormReducer $reducer;
+    private Router $router;
     
     /**
      * Class constructor
@@ -55,6 +58,8 @@ class FormBuilder2 extends AComponent {
         $this->callReducerOnChange = false;
         $this->isPrerendered = false;
         $this->additionalLinkParams = [];
+
+        $this->router = new Router();
     }
 
     /**
@@ -279,6 +284,11 @@ class FormBuilder2 extends AComponent {
         ;
         
         $this->presenter->addScript($code);
+
+        $this->router->inject($this->presenter, new ModuleManager());
+        if(!$this->router->checkEndpointExists($this->action)) {
+            // throw exception
+        }
     }
 
     /**

@@ -81,6 +81,7 @@ class TemplateObject {
 
                 if($object instanceof AComponent) {
                     $object->prerender();
+                    $object->checkChecks(); // run component checks
                     $object = $object->render();
                 } else {
                     continue;

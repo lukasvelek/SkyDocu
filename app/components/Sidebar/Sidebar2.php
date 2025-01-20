@@ -14,12 +14,14 @@ use App\UI\LinkBuilder;
  */
 class Sidebar2 extends AComponent {
     protected array $links;
+    protected array $staticLinks;
     private TemplateObject $template;
 
     public function __construct(HttpRequest $request) {
         parent::__construct($request);
 
         $this->links = [];
+        $this->staticLinks = [];
         $this->template = new TemplateObject(file_get_contents(__DIR__ . '\\template.html'));
     }
 
@@ -31,7 +33,7 @@ class Sidebar2 extends AComponent {
     }
 
     /**
-     * Adds link
+     * Adds a link
      * 
      * @param string $title Link title
      * @param array $url Link URL
@@ -39,6 +41,17 @@ class Sidebar2 extends AComponent {
      */
     public function addLink(string $title, array $url, bool $isActive = false) {
         $this->links[] = $this->createLink($title, $url, $isActive);
+    }
+
+    /**
+     * Adds a static link
+     * 
+     * @param string $title Link title
+     * @param array $url Link URL
+     * @param bool $isActive Active or not
+     */
+    public function addStaticLink(string $title, array $url, bool $isActive = false) {
+        $this->staticLinks[] = $this->createLink($title, $url, $isActive);
     }
 
     /**
@@ -112,6 +125,26 @@ class Sidebar2 extends AComponent {
         $obj->setPresenter($component->presenter);
 
         return $obj;
+    }
+
+    /**
+     * Checks if given URL parameters are same as in the current URL
+     * 
+     * @param array $urlParams URL parameters conditions
+     * @return bool True if conditions are met or false if not
+     */
+    public function checkIsLinkActive(array $urlParams) {
+        $ok = true;
+        foreach($urlParams as $key => $value) {
+            if(array_key_exists($key, $this->httpRequest->query)) {
+                if($this->httpRequest->query[$key] != $value) {
+                    $ok = false;
+                    break;
+                }
+            }
+        }
+
+        return $ok;
     }
 }
 

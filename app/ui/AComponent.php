@@ -6,6 +6,7 @@ use App\Core\FileManager;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
 use App\Exceptions\CallbackExecutionException;
+use App\Exceptions\GeneralException;
 use App\Modules\AGUICore;
 use App\Modules\TemplateObject;
 use Exception;
@@ -19,6 +20,8 @@ use Exception;
 abstract class AComponent extends AGUICore implements IRenderable {
     protected HttpRequest $httpRequest;
     protected string $componentName = 'Component';
+    private bool $startupCheck = false;
+    private bool $prerenderCheck = false;
 
     /**
      * Abstract class constructor
@@ -41,12 +44,16 @@ abstract class AComponent extends AGUICore implements IRenderable {
     /**
      * Initial component configuration
      */
-    public function startup() {}
+    public function startup() {
+        $this->startupCheck = true;
+    }
 
     /**
      * Actions called before render() is called
      */
-    public function prerender() {}
+    public function prerender() {
+        $this->prerenderCheck = true;
+    }
 
     /**
      * Creates an instance of component from other component
@@ -81,6 +88,18 @@ abstract class AComponent extends AGUICore implements IRenderable {
         $content = FileManager::loadFile($path);
 
         return new TemplateObject($content);
+    }
+
+    /**
+     * Checks if all component checks are checked
+     */
+    public function checkChecks() {
+        if(!$this->startupCheck) {
+            throw new GeneralException('Method \'' . AComponent::class . '::startup()\' has not been called.', null, false);
+        }
+        if(!$this->prerenderCheck) {
+            throw new GeneralException('Method \'' . AComponent::class . '::prerender()\' has not been called.', null, false);
+        }
     }
 }
 

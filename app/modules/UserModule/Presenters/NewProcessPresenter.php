@@ -3,7 +3,7 @@
 namespace App\Modules\UserModule;
 
 use App\Components\ProcessesSelect\ProcessesSelect;
-use App\Components\ProcessForm\CommonProcessForm;
+use App\Components\ProcessViewSidebar\ProcessViewSidebar;
 use App\Constants\Container\ProcessGridViews;
 use App\Constants\Container\StandaloneProcesses;
 use App\Core\Http\FormRequest;
@@ -18,17 +18,7 @@ class NewProcessPresenter extends AUserPresenter {
     public function renderSelect() {}
 
     protected function createComponentProcessViewsSidebar(HttpRequest $request) {
-        $sidebar = $this->componentFactory->getSidebar();
-
-        // START NEW PROCESS
-        $sidebar->addLink('Start new process', $this->createFullURL('User:NewProcess', 'select'), true);
-
-        $sidebar->addHorizontalLine();
-
-        // VIEWS
-        foreach(ProcessGridViews::getAll() as $name => $title) {
-            $sidebar->addLink($title, $this->createFullURL('User:Processes', 'list', ['view' => $name]), false);
-        }
+        $sidebar = new ProcessViewSidebar($request);
 
         return $sidebar;
     }

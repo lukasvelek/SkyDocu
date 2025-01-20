@@ -15,6 +15,7 @@ class Form extends AElement {
     private string $method;
     private array $action;
     public array $scripts;
+    private array $additionalLinkParams;
 
     /**
      * Class constructor
@@ -30,6 +31,7 @@ class Form extends AElement {
         $this->action = [];
         $this->method = 'POST';
         $this->scripts = [];
+        $this->additionalLinkParams = [];
     }
 
     /**
@@ -118,7 +120,26 @@ class Form extends AElement {
             $parts[] = $key . '=' . $value;
         }
 
+        foreach($this->additionalLinkParams as $key => $data) {
+            if(is_array($data)) {
+                foreach($data as $value) {
+                    $parts[] = $key . '[]=' . $value;
+                }
+            } else {
+                $parts[] = $key . '=' . $data;
+            }
+        }
+
         return LinkBuilder::convertUrlArrayToString($parts);
+    }
+
+    /**
+     * Sets additional link params
+     * 
+     * @param array $params Additional link params
+     */
+    public function setAdditionalLinkParams(array $params) {
+        $this->additionalLinkParams = $params;
     }
 }
 

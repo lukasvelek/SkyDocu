@@ -254,6 +254,18 @@ class DocumentManager extends AManager {
 
         return $documents;
     }
+
+    public function shareDocument(string $documentId, string $sharedByUserId, string $sharedToUserId) {
+        $sharedUntil = new DateTime();
+        $sharedUntil->modify('+7d');
+        $sharedUntil = $sharedUntil->getResult();
+
+        $sharingId = $this->createId(EntityManager::C_DOCUMENT_SHARING);
+
+        if(!$this->documentRepository->createNewDocumentSharing($sharingId, $documentId, $sharedByUserId, $sharedToUserId, $sharedUntil)) {
+            throw new GeneralException('Database error.', null, false);
+        }
+    }
 }
 
 ?>

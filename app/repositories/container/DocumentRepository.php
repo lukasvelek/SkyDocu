@@ -146,6 +146,16 @@ class DocumentRepository extends ARepository {
 
         return $qb->fetchBool();
     }
+
+    public function createNewDocumentSharing(string $sharingId, string $documentId, string $sharedByUserId, string $sharedToUserId, string $dateValidUntil) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->insert('document_sharing', ['sharingId', 'documentId', 'authorUserId', 'userId', 'dateValidUntil'])
+            ->values([$sharingId, $documentId, $sharedByUserId, $sharedToUserId, $dateValidUntil])
+            ->execute();
+
+        return $qb->fetchBool();
+    }
 }
 
 ?>

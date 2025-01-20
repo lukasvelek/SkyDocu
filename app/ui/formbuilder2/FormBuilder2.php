@@ -29,6 +29,7 @@ class FormBuilder2 extends AComponent {
     private array $scripts;
     private bool $callReducerOnChange;
     private bool $isPrerendered;
+    private array $additionalLinkParams;
 
     private FormStateListHelper $stateListHelper;
 
@@ -53,6 +54,7 @@ class FormBuilder2 extends AComponent {
         $this->reducer = null;
         $this->callReducerOnChange = false;
         $this->isPrerendered = false;
+        $this->additionalLinkParams = [];
     }
 
     /**
@@ -132,6 +134,7 @@ class FormBuilder2 extends AComponent {
         $form = new Form($this->name);
         $form->setAction($this->action);
         $form->setMethod($this->method);
+        $form->setAdditionalLinkParams($this->additionalLinkParams);
 
         if($this->reducer !== null && !$this->httpRequest->isAjax) {
             $stateList = $this->getStateList();
@@ -592,6 +595,20 @@ class FormBuilder2 extends AComponent {
         $this->applyStateList($stateList);
 
         return new JsonResponse(['form' => $this->render()]);
+    }
+
+    /**
+     * Sets additional link parameters
+     * 
+     * @param string $key Link key
+     * @param mixed $data Link data
+     */
+    public function setAdditionalLinkParameters(string $key, mixed $data) {
+        if($data === null) {
+            return;
+        }
+
+        $this->additionalLinkParams[$key] = $data;
     }
 }
 

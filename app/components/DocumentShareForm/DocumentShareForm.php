@@ -15,6 +15,7 @@ use App\UI\FormBuilder2\FormBuilder2;
  */
 class DocumentShareForm extends FormBuilder2 {
     private UserRepository $userRepository;
+    private array $documentIds;
 
     public function __construct(HttpRequest $request, UserRepository $userRepository) {
         parent::__construct($request);
@@ -35,6 +36,18 @@ class DocumentShareForm extends FormBuilder2 {
     private function beforeRender() {
         $this->createForm();
         $this->createScripts();
+        $this->processDocumentIds();
+    }
+
+    /**
+     * Processes document IDs
+     */
+    private function processDocumentIds() {
+        if(empty($this->documentIds)) {
+            return;
+        }
+
+        $this->setAdditionalLinkParameters('documentId', $this->documentIds);
     }
 
     /**
@@ -104,6 +117,15 @@ class DocumentShareForm extends FormBuilder2 {
      */
     private function getUsers(string $query) {
         return $this->userRepository->searchUsersByUsername($query, [$this->app->currentUser->getId()]);
+    }
+    
+    /**
+     * Sets document IDs for sharing
+     * 
+     * @param array $documentIds Document IDs
+     */
+    public function setDocumentIds(array $documentIds) {
+        $this->documentIds = $documentIds;
     }
 }
 

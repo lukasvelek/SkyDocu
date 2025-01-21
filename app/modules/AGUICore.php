@@ -194,60 +194,6 @@ abstract class AGUICore {
     }
 
     /**
-     * Returns escaped value from $_GET array. It can also throw an exception if the value is not provided.
-     * 
-     * @param string $key Array key
-     * @param bool $throwException True if exception should be thrown or false if not
-     * @return mixed Escaped value or null
-     * @deprecated
-     */
-    protected function httpGet(string $key, bool $throwException = false) {
-        if($this->httpRequest->query($key) !== null) {
-            if(!is_array($this->httpRequest->query($key))) {
-                return htmlspecialchars($this->httpRequest->query($key));
-            } else {
-                $tmp = [];
-                foreach($this->httpRequest->query($key) as $q) {
-                    if(!is_array($q)) {
-                        $tmp[] = htmlspecialchars($q);
-                    } else {
-                        foreach($q as $_q) {
-                            $tmp[] = htmlspecialchars($_q);
-                        }
-                    }
-                }
-                return $tmp;
-            }
-        } else {
-            if($throwException) {
-                throw new RequiredAttributeIsNotSetException($key);
-            } else {
-                return null;
-            }
-        }
-    }
-
-    /**
-     * Returns escaped value from $_POST array. It can also throw an exception if the value is not provided.
-     * 
-     * @param string $key Array key
-     * @param bool $throwException True if exception should be thrown or false if not
-     * @return mixed Escaped value or null
-     * @deprecated
-     */
-    protected function httpPost(string $key, bool $throwException = false) {
-        if(array_key_exists($key, $this->httpRequest->post)) {
-            return htmlspecialchars($this->httpRequest->post[$key]);
-        } else {
-            if($throwException) {
-                throw new RequiredAttributeIsNotSetException($key, '$_POST');
-            } else {
-                return null;
-            }
-        }
-    }
-
-    /**
      * Returns data from the $_SESSION by the key
      * 
      * @param string $key Data key

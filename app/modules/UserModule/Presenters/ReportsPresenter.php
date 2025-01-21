@@ -6,6 +6,7 @@ use App\Components\ProcessReportsGrid\ProcessReportsGrid;
 use App\Components\ProcessReportsSelect\ProcessReportsSelect;
 use App\Constants\Container\StandaloneProcesses;
 use App\Core\Http\HttpRequest;
+use App\Exceptions\RequiredAttributeIsNotSetException;
 
 class ReportsPresenter extends AUserPresenter {
     public function __construct() {
@@ -21,8 +22,14 @@ class ReportsPresenter extends AUserPresenter {
     }
 
     public function handleShowReport() {
-        $name = $this->httpGet('name', true);
-        $view = $this->httpGet('view', true);
+        $name = $this->httpRequest->query('name');
+        if($name === null) {
+            throw new RequiredAttributeIsNotSetException('name');
+        }
+        $view = $this->httpRequest->query('view');
+        if($view === null) {
+            throw new RequiredAttributeIsNotSetException('view');
+        }
 
         $pageTitle = ucfirst($view) . ' ' . StandaloneProcesses::toString($name) . ' requests';
 

@@ -10,7 +10,7 @@ class HomePresenter extends AAnonymPresenter {
     }
 
     public function handleDefault() {
-        $fmHash = $this->httpGet('fmHash');
+        $fmHash = $this->httpRequest->query('fmHash');
 
         $errorMessage = '';
         if($fmHash !== null) {

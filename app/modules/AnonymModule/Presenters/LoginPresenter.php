@@ -91,7 +91,7 @@ class LoginPresenter extends AAnonymPresenter {
         } else {
             $params = [];
 
-            $lastContainer = $this->httpGet('last');
+            $lastContainer = $this->httpRequest->query('last');
             if($lastContainer !== null) {
                 $params['lastContainer'] = $lastContainer;
             }

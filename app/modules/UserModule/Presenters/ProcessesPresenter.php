@@ -11,6 +11,7 @@ use App\Constants\Container\StandaloneProcesses;
 use App\Constants\Container\SystemProcessTypes;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
+use App\Exceptions\RequiredAttributeIsNotSetException;
 use App\Helpers\DateTimeFormatHelper;
 use App\Helpers\ProcessHelper;
 use App\UI\LinkBuilder;
@@ -21,7 +22,7 @@ class ProcessesPresenter extends AUserPresenter {
     }
 
     public function handleList() {
-        $view = $this->httpGet('view');
+        $view = $this->httpRequest->query('view');
 
         if($view === null) {
             $this->redirect($this->createURL('list', ['view' => ProcessGridViews::VIEW_ALL]));
@@ -53,8 +54,11 @@ class ProcessesPresenter extends AUserPresenter {
     }
 
     public function handleProfile() {
-        $processId = $this->httpGet('processId', true);
-        $backView = $this->httpGet('backView');
+        $processId = $this->httpRequest->query('processId');
+        if($processId === null) {
+            throw new RequiredAttributeIsNotSetException('processId');
+        }
+        $backView = $this->httpRequest->query('backView');
 
         try {
             $process = $this->processManager->getProcessById($processId);
@@ -215,7 +219,7 @@ class ProcessesPresenter extends AUserPresenter {
         $this->saveToPresenterCache('process_actions', $processActionsCode);
 
         $links = [];
-        if($this->httpGet('disableBackLink') === null) {
+        if($this->httpRequest->query('disableBackLink') === null) {
             $backLinkParams = [];
             if($backView !== null) {
                 $backLinkParams['view'] = $backView;
@@ -236,10 +240,16 @@ class ProcessesPresenter extends AUserPresenter {
     }
 
     public function handleProcess() {
-        $processId = $this->httpGet('processId', true);
-        $action = $this->httpGet('actionName', true);
-        $backView = $this->httpGet('backView');
-        $isStandalone = $this->httpGet('isStandalone');
+        $processId = $this->httpRequest->query('processId');
+        if($processId === null) {
+            throw new RequiredAttributeIsNotSetException('processId');
+        }
+        $action = $this->httpRequest->query('actionName');
+        if($action === null) {
+            throw new RequiredAttributeIsNotSetException('action');
+        }
+        $backView = $this->httpRequest->query('backView');
+        $isStandalone = $this->httpRequest->query('isStandalone');
 
         try {
             $process = $this->processManager->getProcessById($processId);

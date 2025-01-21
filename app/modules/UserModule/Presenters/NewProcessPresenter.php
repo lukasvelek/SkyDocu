@@ -9,6 +9,7 @@ use App\Constants\Container\StandaloneProcesses;
 use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
+use App\Exceptions\RequiredAttributeIsNotSetException;
 
 class NewProcessPresenter extends AUserPresenter {
     public function __construct() {
@@ -31,7 +32,10 @@ class NewProcessPresenter extends AUserPresenter {
 
     public function handleStartProcess(?FormRequest $fr = null) {
         if($fr !== null) {
-            $name = $this->httpGet('name', true);
+            $name = $this->httpRequest->query('name');
+            if($name === null) {
+                throw new RequiredAttributeIsNotSetException('name');
+            }
 
             $methodName = 'start' . ucfirst($name);
 
@@ -58,7 +62,7 @@ class NewProcessPresenter extends AUserPresenter {
     }
 
     public function handleProcessForm() {
-        $process = $this->httpGet('name');
+        $process = $this->httpRequest->query('name');
         $name = StandaloneProcesses::toString($process);
 
         $this->saveToPresenterCache('processTitle', $name);

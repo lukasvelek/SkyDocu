@@ -324,11 +324,11 @@ abstract class APresenter extends AGUICore {
     public function redirect(array $url = []) {
         if(!empty($url)) {    
             if(!array_key_exists('page', $url)) {
-                $url['page'] = $this->httpGet('page');
+                $url['page'] = $this->httpRequest->query('page');
             }
 
             if(!array_key_exists('_fm', $this->specialRedirectUrlParams)) {
-                $_fm = $this->httpGet('_fm');
+                $_fm = $this->httpRequest->query('_fm');
                 if($_fm !== null) {
                     $this->specialRedirectUrlParams['_fm'] = $_fm;
                 }

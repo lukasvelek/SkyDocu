@@ -12,6 +12,7 @@ use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
 use App\Enums\AEnumForMetadata;
 use App\Exceptions\AException;
+use App\Exceptions\RequiredAttributeIsNotSetException;
 use App\Helpers\DateTimeFormatHelper;
 use App\UI\LinkBuilder;
 
@@ -35,7 +36,7 @@ class DocumentsPresenter extends AUserPresenter {
     }
     
     public function handleList() {
-        $folderId = $this->httpGet('folderId');
+        $folderId = $this->httpRequest->query('folderId');
 
         if($folderId !== null) {
             $this->currentFolderId = $folderId;
@@ -80,13 +81,19 @@ class DocumentsPresenter extends AUserPresenter {
     }
 
     public function handleSwitchFolder() {
-        $folderId = $this->httpGet('folderId', true);
+        $folderId = $this->httpRequest->query('folderId');
+        if($folderId === null) {
+            throw new RequiredAttributeIsNotSetException('folderId');
+        }
         $this->httpSessionSet('current_document_folder_id', $folderId);
         $this->redirect($this->createURL('list', ['folderId' => $folderId]));
     }
 
     public function handleInfo() {
-        $documentId = $this->httpGet('documentId', true);
+        $documentId = $this->httpRequest->query('documentId');
+        if($documentId === null) {
+            throw new RequiredAttributeIsNotSetException('documentId');
+        }
         
         try {
             $document = $this->documentManager->getDocumentById($documentId);

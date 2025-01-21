@@ -7,6 +7,7 @@ use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
+use App\Exceptions\RequiredAttributeIsNotSetException;
 use App\Helpers\GridHelper;
 use App\UI\GridBuilder2\Row;
 use App\UI\HTML\HTML;
@@ -159,7 +160,10 @@ class UsersPresenter extends ASuperAdminSettingsPresenter {
     }
 
     public function handleProfile() {
-        $userId = $this->httpGet('userId', true);
+        $userId = $this->httpRequest->query('userId');
+        if($userId === null) {
+            throw new RequiredAttributeIsNotSetException('userId');
+        }
 
         try {
             $user = $this->app->userManager->getUserById($userId);
@@ -191,7 +195,10 @@ class UsersPresenter extends ASuperAdminSettingsPresenter {
 
     public function handleEditUserForm(?FormRequest $fr = null) {
         if($fr !== null) {
-            $userId = $this->httpGet('userId', true);
+            $userId = $this->httpRequest->query('userId');
+            if($userId === null) {
+                throw new RequiredAttributeIsNotSetException('userId');
+            }
 
             try {
                 $this->app->userRepository->beginTransaction(__METHOD__);
@@ -250,7 +257,7 @@ class UsersPresenter extends ASuperAdminSettingsPresenter {
     public function handleDeleteUserForm(?FormRequest $fr = null) {
         if($fr !== null) {
             try {
-                $user = $this->app->userManager->getUserById($this->httpGet('userId'));
+                $user = $this->app->userManager->getUserById($this->httpRequest->query('userId'));
 
                 if($user->getUsername() != $fr->username) {
                     throw new GeneralException('Username entered does not match with the username of the user to be deleted.');

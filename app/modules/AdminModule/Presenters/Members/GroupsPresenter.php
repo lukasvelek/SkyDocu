@@ -7,6 +7,7 @@ use App\Core\DB\DatabaseRow;
 use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
+use App\Exceptions\RequiredAttributeIsNotSetException;
 use App\UI\GridBuilder2\Cell;
 use App\UI\GridBuilder2\Row;
 use App\UI\HTML\HTML;
@@ -65,7 +66,7 @@ class GroupsPresenter extends AAdminPresenter {
     }
 
     public function handleListMembers() {
-        $groupId = $this->httpGet('groupId');
+        $groupId = $this->httpRequest->query('groupId');
         $group = $this->groupRepository->getGroupById($groupId);
 
         $links = [
@@ -119,7 +120,10 @@ class GroupsPresenter extends AAdminPresenter {
 
     public function handleAddMemberForm(?FormRequest $fr = null) {
         if($fr !== null) {
-            $groupId = $this->httpGet('groupId', true);
+            $groupId = $this->httpRequest->query('groupId');
+            if($groupId === null) {
+                throw new RequiredAttributeIsNotSetException('groupId');
+            }
 
             try {
                 $this->groupRepository->beginTransaction(__METHOD__);
@@ -140,7 +144,7 @@ class GroupsPresenter extends AAdminPresenter {
     }
 
     public function renderAddMemberForm() {
-        $this->template->links = $this->createBackUrl('listMembers', ['groupId' => $this->httpGet('groupId')]);
+        $this->template->links = $this->createBackUrl('listMembers', ['groupId' => $this->httpRequest->query('groupId')]);
     }
 
     protected function createComponentNewMemberForm(HttpRequest $request) {
@@ -180,8 +184,14 @@ class GroupsPresenter extends AAdminPresenter {
     }
 
     public function handleRemoveGroupMember() {
-        $groupId = $this->httpGet('groupId', true);
-        $userId = $this->httpGet('userId', true);
+        $groupId = $this->httpRequest->query('groupId');
+        if($groupId === null) {
+            throw new RequiredAttributeIsNotSetException('groupId');
+        }
+        $userId = $this->httpRequest->query('userId');
+        if($userId === null) {
+            throw new RequiredAttributeIsNotSetException('userId');
+        }
 
         try {
             $this->groupRepository->beginTransaction(__METHOD__);

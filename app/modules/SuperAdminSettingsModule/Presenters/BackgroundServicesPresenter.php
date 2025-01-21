@@ -5,6 +5,7 @@ namespace App\Modules\SuperAdminSettingsModule;
 use App\Components\BackgroundServicesGrid\BackgroundServicesGrid;
 use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
+use App\Exceptions\RequiredAttributeIsNotSetException;
 
 class BackgroundServicesPresenter extends ASuperAdminSettingsPresenter {
     public function __construct() {
@@ -26,7 +27,10 @@ class BackgroundServicesPresenter extends ASuperAdminSettingsPresenter {
     }
 
     public function handleRun() {
-        $serviceId = $this->httpGet('serviceId', true);
+        $serviceId = $this->httpRequest->query('serviceId');
+        if($serviceId === null) {
+            throw new RequiredAttributeIsNotSetException('serviceId');
+        }
 
         try {
             $service = $this->app->systemServicesRepository->getServiceById($serviceId);

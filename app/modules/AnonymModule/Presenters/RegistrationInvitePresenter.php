@@ -7,6 +7,7 @@ use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
+use App\Exceptions\RequiredAttributeIsNotSetException;
 
 class RegistrationInvitePresenter extends AAnonymPresenter {
     private string $containerId;
@@ -17,8 +18,8 @@ class RegistrationInvitePresenter extends AAnonymPresenter {
 
     public function handleForm(?FormRequest $fr = null) {
         if($fr !== null) {
-            $containerId = $this->httpGet('containerId');
-            $inviteId = $this->httpGet('inviteId');
+            $containerId = $this->httpRequest->query('containerId');
+            $inviteId = $this->httpRequest->query('inviteId');
 
             try {
                 $data = [
@@ -48,7 +49,10 @@ class RegistrationInvitePresenter extends AAnonymPresenter {
         } else {
             $this->httpSessionSet('is_registering', '1');
 
-            $inviteId = $this->httpGet('inviteId', true);
+            $inviteId = $this->httpRequest->query('inviteId');
+            if($inviteId === null) {
+                throw new RequiredAttributeIsNotSetException('inviteId');
+            }
 
             try {
                 $invite = $this->app->containerInviteManager->getInviteById($inviteId, false);
@@ -133,7 +137,7 @@ class RegistrationInvitePresenter extends AAnonymPresenter {
     public function renderSuccess() {}
 
     public function renderError() {
-        $this->template->hash = $this->httpGet('hash');
+        $this->template->hash = $this->httpRequest->query('hash');
     }
 }
 

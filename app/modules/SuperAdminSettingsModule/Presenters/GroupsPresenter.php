@@ -8,6 +8,7 @@ use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
 use App\Core\Http\JsonResponse;
 use App\Exceptions\AException;
+use App\Exceptions\RequiredAttributeIsNotSetException;
 use App\UI\GridBuilder2\Cell;
 use App\UI\GridBuilder2\Row;
 use App\UI\HTML\HTML;
@@ -82,7 +83,10 @@ class GroupsPresenter extends ASuperAdminSettingsPresenter {
     }
 
     public function handleListUsers() {
-        $groupId = $this->httpGet('groupId', true);
+        $groupId = $this->httpRequest->query('groupId');
+        if($groupId === null) {
+            throw new RequiredAttributeIsNotSetException('groupId');
+        }
 
         try {
             $group = $this->app->groupManager->getGroupById($groupId);
@@ -134,7 +138,10 @@ class GroupsPresenter extends ASuperAdminSettingsPresenter {
     }
 
     public function handleAddUserForm(?FormRequest $fr = null) {
-        $groupId = $this->httpGet('groupId', true);
+        $groupId = $this->httpRequest->query('groupId');
+        if($groupId === null) {
+            throw new RequiredAttributeIsNotSetException('groupId');
+        }
 
         if($fr !== null) {
             try {
@@ -230,8 +237,14 @@ class GroupsPresenter extends ASuperAdminSettingsPresenter {
     }
 
     public function actionSearchUsersForAddUserForm() {
-        $groupId = $this->httpGet('groupId', true);
-        $query = $this->httpGet('query', true);
+        $groupId = $this->httpRequest->query('groupId');
+        if($groupId === null) {
+            throw new RequiredAttributeIsNotSetException('groupId');
+        }
+        $query = $this->httpRequest->query('query');
+        if($query === null) {
+            throw new RequiredAttributeIsNotSetException('query');
+        }
 
         $groupUsers = $this->app->groupManager->getGroupUsersForGroupId($groupId);
 
@@ -249,8 +262,14 @@ class GroupsPresenter extends ASuperAdminSettingsPresenter {
     }
 
     public function handleRemoveUser() {
-        $groupId = $this->httpGet('groupId', true);
-        $userId = $this->httpGet('userId', true);
+        $groupId = $this->httpRequest->query('groupId', true);
+        if($groupId === null) {
+            throw new RequiredAttributeIsNotSetException('groupId');
+        }
+        $userId = $this->httpRequest->query('userId', true);
+        if($userId === null) {
+            throw new RequiredAttributeIsNotSetException('userId');
+        }
 
         try {
             $this->app->groupMembershipRepository->beginTransaction(__METHOD__);

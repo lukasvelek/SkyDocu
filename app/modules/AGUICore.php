@@ -171,7 +171,7 @@ abstract class AGUICore {
                 continue;
             }
 
-            $values[$key] = $this->httpGet($key);
+            $values[$key] = $this->httpRequest->query($key);
         }
 
         return $values;
@@ -187,7 +187,7 @@ abstract class AGUICore {
 
         $values = [];
         foreach($keys as $key) {
-            $values[$key] = $this->httpPost($key);
+            $values[$key] = $this->httpRequest->post($key);
         }
 
         return $values;
@@ -199,6 +199,7 @@ abstract class AGUICore {
      * @param string $key Array key
      * @param bool $throwException True if exception should be thrown or false if not
      * @return mixed Escaped value or null
+     * @deprecated
      */
     protected function httpGet(string $key, bool $throwException = false) {
         if(array_key_exists($key, $this->httpRequest->query)) {
@@ -232,6 +233,7 @@ abstract class AGUICore {
      * @param string $key Array key
      * @param bool $throwException True if exception should be thrown or false if not
      * @return mixed Escaped value or null
+     * @deprecated
      */
     protected function httpPost(string $key, bool $throwException = false) {
         if(array_key_exists($key, $this->httpRequest->post)) {

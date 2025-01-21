@@ -7,6 +7,7 @@ use App\Constants\Container\DocumentStatus;
 use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
+use App\Exceptions\RequiredAttributeIsNotSetException;
 use App\UI\FormBuilder2\FormBuilder2;
 
 class CreateDocumentPresenter extends AUserPresenter {
@@ -82,7 +83,10 @@ class CreateDocumentPresenter extends AUserPresenter {
 
     public function handleForm(?FormRequest $fr = null) {
         if($fr !== null) {
-            $folderId = $this->httpGet('folderId', true);
+            $folderId = $this->httpRequest->query('folderId');
+            if($folderId === null) {
+                throw new RequiredAttributeIsNotSetException('folderId');
+            }
 
             $customMetadatas = $this->documentManager->getCustomMetadataForFolder($folderId);
 
@@ -126,7 +130,7 @@ class CreateDocumentPresenter extends AUserPresenter {
     }
 
     public function renderForm() {
-        $this->template->links = $this->createBackFullUrl('User:Documents', 'list', ['folderId' => $this->httpGet('folderId')]);
+        $this->template->links = $this->createBackFullUrl('User:Documents', 'list', ['folderId' => $this->httpRequest->query('folderId')]);
     }
 
     protected function createComponentCreateDocumentForm(HttpRequest $request) {

@@ -12,7 +12,7 @@ class UserPresenter extends AUserPresenter {
     }
 
     public function handleProfile() {
-        $userId = $this->httpGet('userId');
+        $userId = $this->httpRequest->query('userId');
 
         if($userId === null) {
             $this->redirect($this->createURL('profile', ['userId' => $this->getUserId()]));

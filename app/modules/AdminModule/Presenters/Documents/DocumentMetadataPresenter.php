@@ -8,6 +8,7 @@ use App\Core\DB\DatabaseRow;
 use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
+use App\Exceptions\RequiredAttributeIsNotSetException;
 use App\UI\GridBuilder2\Action;
 use App\UI\GridBuilder2\Cell;
 use App\UI\GridBuilder2\Row;
@@ -104,7 +105,10 @@ class DocumentMetadataPresenter extends AAdminPresenter {
 
     public function handleEditMetadataForm(?FormRequest $fr = null) {
         if($fr !== null) {
-            $metadataId = $this->httpGet('metadataId', true);
+            $metadataId = $this->httpRequest->query('metadataId');
+            if($metadataId === null) {
+                throw new RequiredAttributeIsNotSetException('metadataId');
+            }
 
             $defaultValue = null;
 
@@ -248,7 +252,10 @@ class DocumentMetadataPresenter extends AAdminPresenter {
     }
 
     public function handleListFolderRights() {
-        $metadataId = $this->httpGet('metadataId', true);
+        $metadataId = $this->httpRequest->query('metadataId');
+        if($metadataId === null) {
+            throw new RequiredAttributeIsNotSetException('metadataId');
+        }
 
         $links = [
             $this->createBackUrl('list'),
@@ -300,8 +307,14 @@ class DocumentMetadataPresenter extends AAdminPresenter {
     }
 
     public function handleRemoveFolderRight() {
-        $metadataId = $this->httpGet('metadataId', true);
-        $folderId = $this->httpGet('folderId', true);
+        $metadataId = $this->httpRequest->query('metadataId');
+        if($metadataId === null) {
+            throw new RequiredAttributeIsNotSetException('metadataId');
+        }
+        $folderId = $this->httpRequest->query('folderId');
+        if($folderId === null) {
+            throw new RequiredAttributeIsNotSetException('folderId');
+        }
 
         try {
             $this->metadataRepository->beginTransaction(__METHOD__);
@@ -322,7 +335,10 @@ class DocumentMetadataPresenter extends AAdminPresenter {
 
     public function handleNewFolderRightForm(?FormRequest $fr = null) {
         if($fr !== null) {
-            $metadataId = $this->httpGet('metadataId', true);
+            $metadataId = $this->httpRequest->query('metadataId');
+            if($metadataId === null) {
+                throw new RequiredAttributeIsNotSetException('metadataId');
+            }
 
             try {
                 $this->metadataRepository->beginTransaction(__METHOD__);
@@ -340,7 +356,7 @@ class DocumentMetadataPresenter extends AAdminPresenter {
 
             $this->redirect($this->createURL('listFolderRights', ['metadataId' => $metadataId]));
         } else {
-            $foldersDb = $this->metadataManager->getFoldersWithoutMetadataRights($this->httpGet('metadataId'));
+            $foldersDb = $this->metadataManager->getFoldersWithoutMetadataRights($this->httpRequest->query('metadataId'));
 
             if(empty($foldersDb)) {
                 $this->addScript('alert(\'No folder found.\');');
@@ -359,7 +375,7 @@ class DocumentMetadataPresenter extends AAdminPresenter {
     }
 
     public function renderNewFolderRightForm() {
-        $this->template->links = $this->createBackUrl('listFolderRights', ['metadataId' => $this->httpGet('metadataId')]);
+        $this->template->links = $this->createBackUrl('listFolderRights', ['metadataId' => $this->httpRequest->query('metadataId')]);
     }
 
     protected function createComponentNewFolderRightForm(HttpRequest $request) {
@@ -379,7 +395,7 @@ class DocumentMetadataPresenter extends AAdminPresenter {
     }
 
     public function handleListEnumValues() {
-        $metadataId = $this->httpGet('metadataId');
+        $metadataId = $this->httpRequest->query('metadataId');
 
         $links = [
             $this->createBackUrl('list'),
@@ -443,7 +459,10 @@ class DocumentMetadataPresenter extends AAdminPresenter {
     }
 
     public function handleNewEnumValueForm(?FormRequest $fr = null) {
-        $metadataId = $this->httpGet('metadataId', true);
+        $metadataId = $this->httpRequest->query('metadataId');
+        if($metadataId === null) {
+            throw new RequiredAttributeIsNotSetException('metadataId');
+        }
 
         if($fr !== null) {
             try {
@@ -465,7 +484,7 @@ class DocumentMetadataPresenter extends AAdminPresenter {
     }
 
     public function renderNewEnumValueForm() {
-        $this->template->links = $this->createBackUrl('listEnumValues', ['metadataId' => $this->httpGet('metadataId')]);
+        $this->template->links = $this->createBackUrl('listEnumValues', ['metadataId' => $this->httpRequest->query('metadataId')]);
     }
 
     protected function createComponentNewMetadataEnumValueForm(HttpRequest $request) {
@@ -482,8 +501,14 @@ class DocumentMetadataPresenter extends AAdminPresenter {
     }
 
     public function handleEditEnumValueForm(?FormRequest $fr = null) {
-        $metadataId = $this->httpGet('metadataId', true);
-        $valueId = $this->httpGet('valueId', true);
+        $metadataId = $this->httpRequest->query('metadataId');
+        if($metadataId === null) {
+            throw new RequiredAttributeIsNotSetException('metadataId');
+        }
+        $valueId = $this->httpRequest->query('valueId');
+        if($valueId === null) {
+            throw new RequiredAttributeIsNotSetException('valueId');
+        }
 
         if($fr !== null) {
             try {
@@ -509,7 +534,7 @@ class DocumentMetadataPresenter extends AAdminPresenter {
     }
 
     public function renderEditEnumValueForm() {
-        $this->template->links = $this->createBackUrl('listEnumValues', ['metadataId' => $this->httpGet('metadataId')]);
+        $this->template->links = $this->createBackUrl('listEnumValues', ['metadataId' => $this->httpRequest->query('metadataId')]);
     }
 
     protected function createComponentEditMetadataEnumValueForm(HttpRequest $request) {
@@ -527,8 +552,14 @@ class DocumentMetadataPresenter extends AAdminPresenter {
     }
 
     public function handleDeleteEnumValue() {
-        $metadataId = $this->httpGet('metadataId', true);
-        $valueId = $this->httpGet('valueId', true);
+        $metadataId = $this->httpRequest->query('metadataId');
+        if($metadataId === null) {
+            throw new RequiredAttributeIsNotSetException('metadataId');
+        }
+        $valueId = $this->httpRequest->query('valueId');
+        if($valueId === null) {
+            throw new RequiredAttributeIsNotSetException('valueId');
+        }
 
         try {
             $this->metadataRepository->beginTransaction(__METHOD__);

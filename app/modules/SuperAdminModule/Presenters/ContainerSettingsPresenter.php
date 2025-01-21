@@ -14,6 +14,7 @@ use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
+use App\Exceptions\RequiredAttributeIsNotSetException;
 use App\Helpers\DateTimeFormatHelper;
 use App\UI\GridBuilder2\Action;
 use App\UI\GridBuilder2\Cell;
@@ -98,7 +99,10 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
     }
 
     public function handleStatus(?FormRequest $fr = null) {
-        $containerId = $this->httpGet('containerId', true);
+        $containerId = $this->httpRequest->query('containerId');
+        if($containerId === null) {
+            throw new RequiredAttributeIsNotSetException('containerId');
+        }
 
         if($fr !== null) {
             try {
@@ -127,7 +131,7 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
 
     public function renderStatus() {
         $this->template->links = [
-            LinkBuilder::createSimpleLink('Show history', $this->createURL('listStatusHistory', ['containerId' => $this->httpGet('containerId')]), 'link')
+            LinkBuilder::createSimpleLink('Show history', $this->createURL('listStatusHistory', ['containerId' => $this->httpRequest->query('containerId')]), 'link')
         ];
     }
 
@@ -203,7 +207,10 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
     }
 
     public function handleStatusPermanentFlashMessage(?FormRequest $fr = null) {
-        $containerId = $this->httpGet('containerId', true);
+        $containerId = $this->httpRequest->query('containerId');
+        if($containerId === null) {
+            throw new RequiredAttributeIsNotSetException('containerId');
+        }
         
         if($fr !== null) {
             try {
@@ -227,7 +234,10 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
     }
 
     public function handleStatusClearPermanentFlashMessage() {
-        $containerId = $this->httpGet('containerId', true);
+        $containerId = $this->httpRequest->query('containerId');
+        if($containerId === null) {
+            throw new RequiredAttributeIsNotSetException('containerId');
+        }
 
         try {
             $this->app->containerRepository->beginTransaction(__METHOD__);
@@ -250,7 +260,7 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
 
     public function renderListStatusHistory() {
         $this->template->links = [
-            $this->createBackUrl('status', ['containerId' => $this->httpGet('containerId')])
+            $this->createBackUrl('status', ['containerId' => $this->httpRequest->query('containerId')])
         ];
     }
 
@@ -277,7 +287,10 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
     }
 
     public function handleAdvanced() {
-        $containerId = $this->httpGet('containerId', true);
+        $containerId = $this->httpRequest->query('containerId');
+        if($containerId === null) {
+            throw new RequiredAttributeIsNotSetException('containerId');
+        }
 
         $containerDeleteLink = HTML::el('a')
             ->class('link')
@@ -296,7 +309,7 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
     }
 
     public function handleContainerDeleteForm(?FormRequest $fr = null) {
-        $containerId = $this->httpGet('containerId');
+        $containerId = $this->httpRequest->query('containerId');
 
         if($fr !== null) {
             try {
@@ -331,7 +344,7 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
 
     public function renderContainerDeleteForm() {
         $this->template->links = [
-            LinkBuilder::createSimpleLink('&larr; Back', $this->createURL('advanced', ['containerId' => $this->httpGet('containerId')]), 'link')
+            LinkBuilder::createSimpleLink('&larr; Back', $this->createURL('advanced', ['containerId' => $this->httpRequest->query('containerId')]), 'link')
         ];
     }
 
@@ -383,7 +396,7 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
     }
 
     public function handleInvites() {
-        $containerId = $this->httpGet('containerId');
+        $containerId = $this->httpRequest->query('containerId');
 
         try {
             $invite = $this->app->containerInviteManager->getInviteForContainer($containerId);
@@ -508,7 +521,10 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
     }
 
     public function handleInvitesWithoutGrid() {
-        $containerId = $this->httpGet('containerId', true);
+        $containerId = $this->httpRequest->query('containerId');
+        if($containerId === null) {
+            throw new RequiredAttributeIsNotSetException('containerId');
+        }
 
         $inviteLink = LinkBuilder::createSimpleLink('Generate invite link', $this->createURL('generateInviteLink', ['containerId' => $containerId]), 'link');
         $this->saveToPresenterCache('links', implode('&nbsp;&nbsp;', [$inviteLink]));
@@ -519,8 +535,11 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
     }
 
     public function handleGenerateInviteLink() {
-        $containerId = $this->httpGet('containerId', true);
-        $regenerate = $this->httpGet('regenerate') !== null;
+        $containerId = $this->httpRequest->query('containerId');
+        if($containerId === null) {
+            throw new RequiredAttributeIsNotSetException('containerId');
+        }
+        $regenerate = $this->httpRequest->query('regenerate') !== null;
 
         $dateValid = new DateTime();
         $dateValid->modify('+1m');
@@ -530,7 +549,7 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
             $this->app->containerInviteRepository->beginTransaction(__METHOD__);
 
             if($regenerate) {
-                $inviteId = $this->httpGet('oldInviteId');
+                $inviteId = $this->httpRequest->query('oldInviteId');
 
                 $this->app->containerInviteManager->disableContainerInvite($inviteId);
             }
@@ -558,8 +577,14 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
     }
 
     public function handleAcceptInvite() {
-        $entryId = $this->httpGet('entryId', true);
-        $containerId = $this->httpGet('containerId', true);
+        $entryId = $this->httpRequest->query('entryId');
+        if($entryId === null) {
+            throw new RequiredAttributeIsNotSetException('entryId');
+        }
+        $containerId = $this->httpRequest->query('containerId');
+        if($containerId === null) {
+            throw new RequiredAttributeIsNotSetException('containerId');
+        }
 
         try {
             $entry = $this->app->containerInviteManager->getInviteUsageById($entryId);
@@ -589,8 +614,14 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
     }
 
     public function handleRejectInvite() {
-        $entryId = $this->httpGet('entryId', true);
-        $containerId = $this->httpGet('containerId', true);
+        $entryId = $this->httpRequest->query('entryId');
+        if($entryId === null) {
+            throw new RequiredAttributeIsNotSetException('entryId');
+        }
+        $containerId = $this->httpRequest->query('containerId');
+        if($containerId === null) {
+            throw new RequiredAttributeIsNotSetException('containerId');
+        }
 
         try {
             $this->app->containerInviteRepository->beginTransaction(__METHOD__);
@@ -614,8 +645,14 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
     }
 
     public function handleDeleteInvite() {
-        $entryId = $this->httpGet('entryId', true);
-        $containerId = $this->httpGet('containerId', true);
+        $entryId = $this->httpRequest->query('entryId');
+        if($entryId === null) {
+            throw new RequiredAttributeIsNotSetException('entryId');
+        }
+        $containerId = $this->httpRequest->query('containerId');
+        if($containerId === null) {
+            throw new RequiredAttributeIsNotSetException('containerId');
+        }
 
         try {
             $this->app->containerInviteRepository->beginTransaction(__METHOD__);

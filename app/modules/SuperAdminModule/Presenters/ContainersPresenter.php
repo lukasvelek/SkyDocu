@@ -66,7 +66,7 @@ class ContainersPresenter extends ASuperAdminPresenter {
                 }
 
                 $canShowReferent = false;
-                if(isset($fr->canShowReferent) && $fr->canShowReferent == 'on') {
+                if($fr->isset('canShowReferent') && $fr->canShowReferent == 'on') {
                     $canShowReferent = true;
                 }
     

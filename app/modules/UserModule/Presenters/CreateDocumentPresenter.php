@@ -98,13 +98,13 @@ class CreateDocumentPresenter extends AUserPresenter {
                 'folderId' => $folderId
             ];
 
-            if(isset($fr->description)) {
+            if($fr->isset('description')) {
                 $metadataValues['description'] = $fr->description;
             }
 
             $customMetadataValues = [];
             foreach($customMetadatas as $metadataId => $metadata) {
-                if(isset($fr->{$metadata->title})) {
+                if($fr->isset($metadata->title)) {
                     if($fr->{$metadata->title} != 'null') {
                         $customMetadataValues[$metadataId] = $fr->{$metadata->title};
                     }

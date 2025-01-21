@@ -64,6 +64,16 @@ class FormRequest {
 
         return $obj;
     }
+
+    /**
+     * Checks if given key is set
+     * 
+     * @param string $key Key to check
+     * @return bool True if key is set or false if not
+     */
+    public function isset(string $key) {
+        return in_array($key, $this->keys);
+    }
 }
 
 ?>

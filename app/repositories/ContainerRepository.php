@@ -205,13 +205,18 @@ class ContainerRepository extends ARepository {
         return $qb;
     }
 
-    public function deleteContainerUsageStatistics(string $containerId) {
+    public function deleteContainerUsageStatistics(string $containerId, array $entryFilter = []) {
         $qb = $this->qb(__METHOD__);
 
         $qb->delete()
             ->from('container_usage_statistics')
-            ->where('containerId = ?', [$containerId])
-            ->execute();
+            ->where('containerId = ?', [$containerId]);
+
+        if(!empty($entryFilter)) {
+            $qb->andWhere($qb->getColumnInValues('entryId', $entryFilter));
+        }
+            
+        $qb->execute();
 
         return $qb->fetchBool();
     }

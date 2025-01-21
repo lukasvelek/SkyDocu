@@ -374,7 +374,7 @@ class DocumentFoldersPresenter extends AAdminPresenter {
 
             try {
                 $check = function(string $key) use ($fr) {
-                    if(isset($fr->{$key}) && $fr->{$key} == 'on') {
+                    if($fr->isset($key) && $fr->{$key} == 'on') {
                         return true;
                     } else {
                         return false;
@@ -504,7 +504,7 @@ class DocumentFoldersPresenter extends AAdminPresenter {
 
             try {
                 $check = function(string $key) use ($fr) {
-                    if(isset($fr->{$key}) && $fr->{$key} == 'on') {
+                    if($fr->isset($key) && $fr->{$key} == 'on') {
                         return true;
                     } else {
                         return false;

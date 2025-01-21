@@ -397,26 +397,56 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
         return $graph;
     }
 
-    public function handleClearUsageStatistics() {
+    public function handleClearUsageStatistics(?FormRequest $fr = null) {
         $containerId = $this->httpRequest->query('containerId');
 
-        try {
-            $this->app->containerRepository->beginTransaction(__METHOD__);
+        if($fr !== null) {
+            try {
+                $this->app->containerRepository->beginTransaction(__METHOD__);
+    
+                $this->app->userAuth->authUser($fr->password);
 
-            if(!$this->app->containerRepository->deleteContainerUsageStatistics($containerId)) {
-                throw new GeneralException('Database error.', null, false);
+                $deleteAll = false;
+                if($fr->isset('deleteAll')) {
+                    $deleteAll = true;
+                }
+
+                $this->app->containerManager->deleteContainerUsageStatistics($containerId, 5, $deleteAll);
+    
+                $this->app->containerRepository->commit($this->getUserId(), __METHOD__);
+    
+                $this->flashMessage('Usage statistics cleared. Please run the background service in order to display statistics.', 'success');
+            } catch(AException $e) {
+                $this->app->containerRepository->rollback(__METHOD__);
+    
+                $this->flashMessage('Could not clear usage statistics. Reason: ' . $e->getMessage(), 'error');
             }
+    
+            $this->redirect($this->createURL('usageStatistics', ['containerId' => $containerId]));
+        }
+    }
 
-            $this->app->containerRepository->commit($this->getUserId(), __METHOD__);
+    public function renderClearUsageStatistics() {}
 
-            $this->flashMessage('Usage statistics cleared. Please run the background service in order to display statistics.', 'success');
-        } catch(AException $e) {
-            $this->app->containerRepository->rollback(__METHOD__);
+    protected function createComponentClearUsageStatisticsConfirmationForm(HttpRequest $request) {
+        $form = $this->componentFactory->getFormBuilder();
 
-            $this->flashMessage('Could not clear usage statistics. Reason: ' . $e->getMessage(), 'error');
+        $form->setAction($this->createURL('clearUsageStatistics', ['containerId' => $request->query('containerId')]));
+        
+        $form->addPasswordInput('password', 'Your password:')
+            ->setRequired();
+
+        if($this->app->containerManager->getContainerUsageStatisticsTotalCount($request->query('containerId')) > 5) {
+            // more than currently displayed in graphs
+
+            $form->addLabel('lbl_moreContainersFound', 'More containers than is currently displayed in graphs found. Please choose whether you want to delete the <b>last 5 entries</b> or <b>all entries</b>.');
+
+            $form->addCheckboxInput('deleteAll', 'Delete all?');
         }
 
-        $this->redirect($this->createURL('usageStatistics', ['containerId' => $containerId]));
+        $form->addSubmit('Clear');
+
+        return $form;
     }
 
     public function handleInvites() {

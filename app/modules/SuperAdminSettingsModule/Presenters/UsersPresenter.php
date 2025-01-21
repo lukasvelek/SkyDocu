@@ -112,7 +112,7 @@ class UsersPresenter extends ASuperAdminSettingsPresenter {
                 $this->app->userRepository->beginTransaction(__METHOD__);
 
                 $email = null;
-                if(isset($fr->email) && $fr->email !== null) {
+                if($fr->isset('email') && $fr->email !== null) {
                     $email = $fr->email;
                 }
 
@@ -208,7 +208,7 @@ class UsersPresenter extends ASuperAdminSettingsPresenter {
                     'fullname' => $fr->fullname,
                 ];
 
-                if(isset($fr->email) && $fr->email !== null) {
+                if($fr->isset('email') && $fr->email !== null) {
                     $data['email'] = $fr->email;
                 }
 

@@ -28,7 +28,7 @@ class RegistrationInvitePresenter extends AAnonymPresenter {
                     'password' => HashManager::hashPassword($fr->password)
                 ];
 
-                if(isset($fr->email) && ($fr->email !== null)) {
+                if($fr->isset('email') && ($fr->email !== null)) {
                     $data['email'] = $fr->email;
                 }
 

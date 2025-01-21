@@ -367,6 +367,35 @@ class ContainerManager extends AManager {
             throw new GeneralException('Could not invalidate cache.');
         }
     }
+
+    public function getContainerUsageStatisticsTotalCount(string $containerId) {
+        $qb = $this->containerRepository->composeQueryForContainerUsageStatistics($containerId);
+
+        $qb->select(['COUNT(entryId) AS count'])
+            ->execute();
+
+        return $qb->fetch('count');
+    }
+
+    public function deleteContainerUsageStatistics(string $containerId, int $limit, bool $deleteAll) {
+        $entries = [];
+
+        if(!$deleteAll) {
+            $qb = $this->containerRepository->composeQueryForContainerUsageStatistics($containerId);
+            $qb->limit($limit)
+                ->orderBy('date', 'DESC')
+                ->select(['entryId'])
+                ->execute();
+
+            while($row = $qb->fetchAssoc()) {
+                $entries[] = $row['entryId'];
+            }
+        }
+
+        if(!$this->containerRepository->deleteContainerUsageStatistics($containerId, $entries)) {
+            throw new GeneralException('Database error.');
+        }
+    }
 }
 
 ?>

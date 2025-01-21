@@ -114,25 +114,25 @@ class DocumentMetadataPresenter extends AAdminPresenter {
 
             switch($fr->type) {
                 case CustomMetadataTypes::BOOL:
-                    if(isset($fr->defaultValueBoolean) && $fr->defaultValueBoolean !== '') {
+                    if($fr->isset('defaultValueBoolean') && $fr->defaultValueBoolean !== '') {
                         $defaultValue = $fr->defaultValueBoolean;
                     }
                     break;
                 
                 case CustomMetadataTypes::DATETIME:
-                    if(isset($fr->defaultValueDatetime) && $fr->defaultValueDatetime !== '') {
+                    if($fr->isset('defaultValueDatetime') && $fr->defaultValueDatetime !== '') {
                         $defaultValue = $fr->defaultValueDatetime;
                     }
                     break;
 
                 case CustomMetadataTypes::NUMBER:
-                    if(isset($fr->defaultValueNumber) && $fr->defaultValueNumber !== '') {
+                    if($fr->isset('defaultValueNumber') && $fr->defaultValueNumber !== '') {
                         $defaultValue = $fr->defaultValueNumber;
                     }
                     break;
 
                 case CustomMetadataTypes::TEXT:
-                    if(isset($fr->defaultValue) && $fr->defaultValue !== '') {
+                    if($fr->isset('defaultValue') && $fr->defaultValue !== '') {
                         $defaultValue = $fr->defaultValue;
                     }
                     break;
@@ -140,7 +140,7 @@ class DocumentMetadataPresenter extends AAdminPresenter {
             
             $isRequired = false;
 
-            if(isset($fr->isRequired) && $fr->isRequired == 'on') {
+            if($fr->isset('isRequired') && $fr->isRequired == 'on') {
                 $isRequired = true;
             }
 
@@ -191,25 +191,25 @@ class DocumentMetadataPresenter extends AAdminPresenter {
 
             switch($fr->type) {
                 case CustomMetadataTypes::BOOL:
-                    if(isset($fr->defaultValueBoolean) && $fr->defaultValueBoolean !== '') {
+                    if($fr->isset('defaultValueBoolean') && $fr->defaultValueBoolean !== '') {
                         $defaultValue = $fr->defaultValueBoolean;
                     }
                     break;
                 
                 case CustomMetadataTypes::DATETIME:
-                    if(isset($fr->defaultValueDatetime) && $fr->defaultValueDatetime !== '') {
+                    if($fr->isset('defaultValueDatetime') && $fr->defaultValueDatetime !== '') {
                         $defaultValue = $fr->defaultValueDatetime;
                     }
                     break;
 
                 case CustomMetadataTypes::NUMBER:
-                    if(isset($fr->defaultValueNumber) && $fr->defaultValueNumber !== '') {
+                    if($fr->isset('defaultValueNumber') && $fr->defaultValueNumber !== '') {
                         $defaultValue = $fr->defaultValueNumber;
                     }
                     break;
 
                 case CustomMetadataTypes::TEXT:
-                    if(isset($fr->defaultValue) && $fr->defaultValue !== '') {
+                    if($fr->isset('defaultValue') && $fr->defaultValue !== '') {
                         $defaultValue = $fr->defaultValue;
                     }
                     break;
@@ -217,7 +217,7 @@ class DocumentMetadataPresenter extends AAdminPresenter {
             
             $isRequired = false;
 
-            if(isset($fr->isRequired) && $fr->isRequired == 'on') {
+            if($fr->isset('isRequired') && $fr->isRequired == 'on') {
                 $isRequired = true;
             }
 

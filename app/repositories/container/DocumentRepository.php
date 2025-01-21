@@ -32,6 +32,41 @@ class DocumentRepository extends ARepository {
         return $documents;
     }
 
+    public function getSharedDocumentsByUser(string $userId) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->select(['documentId'])
+            ->from('document_sharing')
+            ->where('authorUserId = ?', [$userId])
+            ->andWhere('dateValidUntil > current_timestamp()')
+            ->execute();
+
+        $documents = [];
+        while($row = $qb->fetchAssoc()) {
+            $documents[] = $row['documentId'];
+        }
+
+        return $documents;
+    }
+
+    public function getSharesForDocumentIdsByUserId(array $documentIds, string $userId) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->select(['*'])
+            ->from('document_sharing')
+            ->where('authorUserId = ?', [$userId])
+            ->andWhere('dateValidUntil > current_timestamp()')
+            ->andWhere($qb->getColumnInValues('documentId', $documentIds))
+            ->execute();
+
+        $rows = [];
+        while($row = $qb->fetchAssoc()) {
+            $rows[] = $row;
+        }
+
+        return $rows;
+    }
+
     public function getCustomMetadataForDocument(string $documentId) {
         $qb = $this->qb(__METHOD__);
 

@@ -5,6 +5,7 @@ namespace App\Components\DocumetnShareForm;
 use App\Core\AjaxRequestBuilder;
 use App\Core\Http\HttpRequest;
 use App\Core\Http\JsonResponse;
+use App\Managers\Container\DocumentManager;
 use App\Repositories\UserRepository;
 use App\UI\FormBuilder2\FormBuilder2;
 
@@ -15,11 +16,13 @@ use App\UI\FormBuilder2\FormBuilder2;
  */
 class DocumentShareForm extends FormBuilder2 {
     private UserRepository $userRepository;
+    private DocumentManager $documentManager;
     private array $documentIds;
 
-    public function __construct(HttpRequest $request, UserRepository $userRepository) {
+    public function __construct(HttpRequest $request, UserRepository $userRepository, DocumentManager $documentManager) {
         parent::__construct($request);
         $this->userRepository = $userRepository;
+        $this->documentManager = $documentManager;
 
         $this->componentName = 'DocumentShareForm';
     }
@@ -72,12 +75,13 @@ class DocumentShareForm extends FormBuilder2 {
     private function createScripts() {
         $arb = new AjaxRequestBuilder();
         
-        $arb->setMethod()
+        $arb->setMethod('POST')
             ->setComponentAction($this->presenter, $this->componentName . '-searchUsers')
-            ->setHeader(['query' => '_query'])
             ->setFunctionName('getUsers')
             ->setFunctionArguments(['_query', '_lastContainer'])
-            ->updateHTMLElement('user', 'users');
+            ->updateHTMLElement('user', 'users')
+            ->setData(['documentIds' => $this->documentIds, 'query' => '_query'])
+            ->addWhenDoneOperation('if(obj.usersCount == 0) { alert("No users found."); }');
 
         $this->addScript($arb->build());
         
@@ -97,7 +101,8 @@ class DocumentShareForm extends FormBuilder2 {
     }
 
     protected function actionSearchUsers() {
-        $query = $this->httpRequest->query['query'];
+        $query = $this->httpRequest->post['query'];
+        $this->documentIds = $this->httpRequest->post['documentIds'];
 
         $usersDb = $this->getUsers($query);
 
@@ -106,7 +111,7 @@ class DocumentShareForm extends FormBuilder2 {
             $users[] = '<option value="' . $userDb->getId() . '">' . $userDb->getFullname() . '</option>';
         }
 
-        return new JsonResponse(['users' => implode('', $users)]);
+        return new JsonResponse(['users' => implode('', $users), 'usersCount' => count($users)]);
     }
 
     /**
@@ -116,7 +121,25 @@ class DocumentShareForm extends FormBuilder2 {
      * @return array Found users
      */
     private function getUsers(string $query) {
-        return $this->userRepository->searchUsersByUsername($query, [$this->app->currentUser->getId()]);
+        $usersDb = $this->userRepository->searchUsersByUsername($query, [$this->app->currentUser->getId()]);
+
+        $shares = $this->documentManager->getSharesForDocumentIdsByUserId($this->documentIds, $this->app->currentUser->getId());
+
+        $usersInShares = [];
+        foreach($shares as $share) {
+            if(!in_array($share->userId, $usersInShares)) {
+                $usersInShares[] = $share->userId;
+            }
+        }
+        
+        $users = [];
+        foreach($usersDb as $user) {
+            if(!in_array($user->getId(), $usersInShares)) {
+                $users[] = $user;
+            }
+        }
+
+        return $users;
     }
     
     /**

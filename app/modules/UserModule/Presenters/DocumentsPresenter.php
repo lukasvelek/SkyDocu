@@ -242,7 +242,7 @@ class DocumentsPresenter extends AUserPresenter {
     }
 
     protected function createComponentShareDocumentForm(HttpRequest $request) {
-        $form = new DocumentShareForm($request, $this->app->userRepository);
+        $form = new DocumentShareForm($request, $this->app->userRepository, $this->documentManager);
 
         if(!$request->isAjax) {
             $form->setAction($this->createURL('shareForm', ['folderId' => $request->query['backFolderId']]));

@@ -283,7 +283,7 @@ class FormBuilder2 extends AComponent {
             ->enableLoadingAnimation('form')
         ;
         
-        $this->presenter->addScript($code);
+        $this->presenter->addScript($arb);
 
         $this->router->inject($this->presenter, new ModuleManager());
         if(!$this->router->checkEndpointExists($this->action)) {

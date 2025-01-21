@@ -271,6 +271,13 @@ class DocumentManager extends AManager {
 
     }
 
+    /**
+     * Returns an array of documents or document IDs that have been shared to the given $userId
+     * 
+     * @param string $userId User ID
+     * @param bool $returnObjects True if document objects should be returned, or false if only document IDs should be returned
+     * @return array
+     */
     public function getSharedDocumentsForUser(string $userId, bool $returnObjects = true) {
         $documents = $this->documentRepository->getSharedDocumentsForUser($userId);
 
@@ -279,6 +286,34 @@ class DocumentManager extends AManager {
         }
 
         return $documents;
+    }
+
+    /**
+     * Returns an array of documents or document IDs that have been shared by the given $userId
+     * 
+     * @param string $userId User ID
+     * @param bool $returnObjects True if document objects should be returned, or false if only document IDs should be returned
+     * @return array
+     */
+    public function getSharedDocumentsByUser(string $userId, bool $returnObjects = true) {
+        $documents = $this->documentRepository->getSharedDocumentsByUser($userId);
+
+        if($returnObjects) {
+            $documents = $this->getDocumentsByIds($documents);
+        }
+
+        return $documents;
+    }
+
+    public function getSharesForDocumentIdsByUserId(array $documentIds, string $userId) {
+        $rows = $this->documentRepository->getSharesForDocumentIdsByUserId($documentIds, $userId);
+
+        $shares = [];
+        foreach($rows as $row) {
+            $shares[] = DatabaseRow::createFromDbRow($row);
+        }
+
+        return $shares;
     }
 
     public function shareDocument(string $documentId, string $sharedByUserId, string $sharedToUserId) {

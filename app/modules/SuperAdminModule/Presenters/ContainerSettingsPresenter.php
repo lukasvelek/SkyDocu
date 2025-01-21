@@ -366,7 +366,9 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
         return $form;
     }
 
-    public function renderUsageStatistics() {}
+    public function renderUsageStatistics() {
+        $this->template->links = LinkBuilder::createSimpleLink('Clear statistics', $this->createURL('clearUsageStatistics', ['containerId' => $this->httpRequest->query('containerId')]), 'link');
+    }
 
     protected function createComponentContainerUsageStatsGraph(HttpRequest $request) {
         $graph = new ContainerUsageStatsGraph($request, $this->app->containerRepository);
@@ -393,6 +395,28 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
         $graph->setCanvasWidth(400);
 
         return $graph;
+    }
+
+    public function handleClearUsageStatistics() {
+        $containerId = $this->httpRequest->query('containerId');
+
+        try {
+            $this->app->containerRepository->beginTransaction(__METHOD__);
+
+            if(!$this->app->containerRepository->deleteContainerUsageStatistics($containerId)) {
+                throw new GeneralException('Database error.', null, false);
+            }
+
+            $this->app->containerRepository->commit($this->getUserId(), __METHOD__);
+
+            $this->flashMessage('Usage statistics cleared. Please run the background service in order to display statistics.', 'success');
+        } catch(AException $e) {
+            $this->app->containerRepository->rollback(__METHOD__);
+
+            $this->flashMessage('Could not clear usage statistics. Reason: ' . $e->getMessage(), 'error');
+        }
+
+        $this->redirect($this->createURL('usageStatistics', ['containerId' => $containerId]));
     }
 
     public function handleInvites() {

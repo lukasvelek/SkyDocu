@@ -204,6 +204,17 @@ class ContainerRepository extends ARepository {
 
         return $qb;
     }
+
+    public function deleteContainerUsageStatistics(string $containerId) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->delete()
+            ->from('container_usage_statistics')
+            ->where('containerId = ?', [$containerId])
+            ->execute();
+
+        return $qb->fetchBool();
+    }
 }
 
 ?>

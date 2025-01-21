@@ -5,6 +5,8 @@ namespace App\UI\FormBuilder2;
 use App\Core\AjaxRequestBuilder;
 use App\Core\Http\HttpRequest;
 use App\Core\Http\JsonResponse;
+use App\Core\Router;
+use App\Modules\ModuleManager;
 use App\UI\AComponent;
 use App\UI\FormBuilder2\FormState\FormStateList;
 use App\UI\FormBuilder2\FormState\FormStateListHelper;
@@ -29,10 +31,12 @@ class FormBuilder2 extends AComponent {
     private array $scripts;
     private bool $callReducerOnChange;
     private bool $isPrerendered;
+    private array $additionalLinkParams;
 
     private FormStateListHelper $stateListHelper;
 
     public ?IFormReducer $reducer;
+    private Router $router;
     
     /**
      * Class constructor
@@ -53,6 +57,9 @@ class FormBuilder2 extends AComponent {
         $this->reducer = null;
         $this->callReducerOnChange = false;
         $this->isPrerendered = false;
+        $this->additionalLinkParams = [];
+
+        $this->router = new Router();
     }
 
     /**
@@ -132,6 +139,7 @@ class FormBuilder2 extends AComponent {
         $form = new Form($this->name);
         $form->setAction($this->action);
         $form->setMethod($this->method);
+        $form->setAdditionalLinkParams($this->additionalLinkParams);
 
         if($this->reducer !== null && !$this->httpRequest->isAjax) {
             $stateList = $this->getStateList();
@@ -275,7 +283,12 @@ class FormBuilder2 extends AComponent {
             ->enableLoadingAnimation('form')
         ;
         
-        $this->presenter->addScript($code);
+        $this->presenter->addScript($arb);
+
+        $this->router->inject($this->presenter, new ModuleManager());
+        if(!$this->router->checkEndpointExists($this->action)) {
+            // throw exception
+        }
     }
 
     /**
@@ -592,6 +605,20 @@ class FormBuilder2 extends AComponent {
         $this->applyStateList($stateList);
 
         return new JsonResponse(['form' => $this->render()]);
+    }
+
+    /**
+     * Sets additional link parameters
+     * 
+     * @param string $key Link key
+     * @param mixed $data Link data
+     */
+    public function setAdditionalLinkParameters(string $key, mixed $data) {
+        if($data === null) {
+            return;
+        }
+
+        $this->additionalLinkParams[$key] = $data;
     }
 }
 

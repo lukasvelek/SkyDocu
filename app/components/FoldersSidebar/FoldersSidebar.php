@@ -19,6 +19,8 @@ class FoldersSidebar extends Sidebar2 {
     public function __construct(HttpRequest $request, FolderManager $folderManager, string $action) {
         parent::__construct($request);
 
+        $this->setComponentName('foldersSidebar');
+
         $this->folderManager = $folderManager;
         $this->action = $action;
         
@@ -35,7 +37,25 @@ class FoldersSidebar extends Sidebar2 {
             $this->createFolderList(new Folder($vf), $list, 0);
         }
 
+        /** CUSTOM STATIC LINKS */
+
+        $this->addStaticLink('Shared documents', $this->createFullURL('User:Documents', 'listShared'), $this->checkIsLinkActive(['page' => 'User:Documents', 'action' => 'listShared']));
+
+        /** END OF CUSTOM STATIC LINKS */
+
         $this->links = $list;
+    }
+
+    public function prerender() {
+        parent::prerender();
+
+        if(!empty($this->staticLinks)) {
+            array_unshift($this->links, '<hr>');
+
+            foreach($this->staticLinks as $link) {
+                array_unshift($this->links, $link);
+            }
+        }
     }
 
     /**
@@ -63,7 +83,7 @@ class FoldersSidebar extends Sidebar2 {
         $active = false;
         if(array_key_exists('folderId', $this->httpRequest->query) && $this->httpRequest->query['folderId'] == $folder->folderId) {
             $active = true;
-        } else if(!array_key_exists('folderId', $this->httpRequest->query) && $folder->row->title == 'Default') {
+        } else if(!array_key_exists('folderId', $this->httpRequest->query) && $folder->row->title == 'Default' && $this->httpRequest->query['action'] == 'list') {
             $active = true;
         }
 

@@ -3,6 +3,7 @@
 namespace App\Modules\UserModule;
 
 use App\Components\ProcessesGrid\ProcessesGrid;
+use App\Components\ProcessViewSidebar\ProcessViewSidebar;
 use App\Constants\Container\ProcessFormValues\HomeOffice;
 use App\Constants\Container\ProcessGridViews;
 use App\Constants\Container\ProcessStatus;
@@ -32,22 +33,7 @@ class ProcessesPresenter extends AUserPresenter {
     }
 
     protected function createComponentProcessViewsSidebar(HttpRequest $request) {
-        $actives = [];
-        foreach(ProcessGridViews::getAll() as $name => $title) {
-            $actives[$name] = ($request->query['view'] == $name);
-        }
-
-        $sidebar = $this->componentFactory->getSidebar();
-
-        // START NEW PROCESS
-        $sidebar->addLink('Start new process', $this->createFullURL('User:NewProcess', 'select'));
-
-        $sidebar->addHorizontalLine();
-
-        // VIEWS
-        foreach(ProcessGridViews::getAll() as $name => $title) {
-            $sidebar->addLink($title, $this->createURL('list', ['view' => $name]), $actives[$name]);
-        }
+        $sidebar = new ProcessViewSidebar($request);
 
         return $sidebar;
     }

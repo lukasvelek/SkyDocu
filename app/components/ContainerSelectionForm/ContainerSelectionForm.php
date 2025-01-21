@@ -126,7 +126,7 @@ class ContainerSelectionForm extends FormBuilder2 {
                 alert("No container name entered.");
             } else {
                 getContainers(_query, _lastContainer);
-            $("#container").removeAttr("disabled");
+                $("#container").removeAttr("disabled");
             }
         }';
 

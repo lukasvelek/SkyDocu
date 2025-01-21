@@ -71,6 +71,32 @@ class DocumentManager extends AManager {
         return $qb;
     }
 
+    public function composeQueryForSharedDocuments(string $userId) {
+        $qb = $this->documentRepository->composeQueryForDocuments();
+
+        $sharedDocumentIds = $this->documentRepository->getSharedDocumentsForUser($userId);
+
+        $qb->andWhere($qb->getColumnInValues('documentId', $sharedDocumentIds));
+
+        $groupIds = $this->groupRepository->getGroupsForUser($userId);
+
+        $classes = $this->documentClassRepository->getVisibleClassesForGroups($groupIds);
+
+        if(empty($classes)) {
+            $qb->andWhere('1=0');
+        } else {
+            $qb->andWhere($qb->getColumnInValues('classId', $classes));
+        }
+
+        $sharedDocumentIds = $this->documentRepository->getSharedDocumentsForUser($userId);
+        
+        if(!empty($sharedDocumentIds)) {
+            $qb->orWhere($qb->getColumnInValues('documentId', $sharedDocumentIds));
+        }
+
+        return $qb;
+    }
+
     public function getCustomMetadataForFolder(string $folderId) {
         $metadataIds = $this->folderRepository->getVisibleCustomMetadataIdForFolder($folderId);
 
@@ -243,6 +269,63 @@ class DocumentManager extends AManager {
 
     public function updateDocumentCustom(string $documentId, array $data) {
 
+    }
+
+    /**
+     * Returns an array of documents or document IDs that have been shared to the given $userId
+     * 
+     * @param string $userId User ID
+     * @param bool $returnObjects True if document objects should be returned, or false if only document IDs should be returned
+     * @return array
+     */
+    public function getSharedDocumentsForUser(string $userId, bool $returnObjects = true) {
+        $documents = $this->documentRepository->getSharedDocumentsForUser($userId);
+
+        if($returnObjects) {
+            $documents = $this->getDocumentsByIds($documents);
+        }
+
+        return $documents;
+    }
+
+    /**
+     * Returns an array of documents or document IDs that have been shared by the given $userId
+     * 
+     * @param string $userId User ID
+     * @param bool $returnObjects True if document objects should be returned, or false if only document IDs should be returned
+     * @return array
+     */
+    public function getSharedDocumentsByUser(string $userId, bool $returnObjects = true) {
+        $documents = $this->documentRepository->getSharedDocumentsByUser($userId);
+
+        if($returnObjects) {
+            $documents = $this->getDocumentsByIds($documents);
+        }
+
+        return $documents;
+    }
+
+    public function getSharesForDocumentIdsByUserId(array $documentIds, string $userId) {
+        $rows = $this->documentRepository->getSharesForDocumentIdsByUserId($documentIds, $userId);
+
+        $shares = [];
+        foreach($rows as $row) {
+            $shares[] = DatabaseRow::createFromDbRow($row);
+        }
+
+        return $shares;
+    }
+
+    public function shareDocument(string $documentId, string $sharedByUserId, string $sharedToUserId) {
+        $sharedUntil = new DateTime();
+        $sharedUntil->modify('+7d');
+        $sharedUntil = $sharedUntil->getResult();
+
+        $sharingId = $this->createId(EntityManager::C_DOCUMENT_SHARING);
+
+        if(!$this->documentRepository->createNewDocumentSharing($sharingId, $documentId, $sharedByUserId, $sharedToUserId, $sharedUntil)) {
+            throw new GeneralException('Database error.', null, false);
+        }
     }
 }
 

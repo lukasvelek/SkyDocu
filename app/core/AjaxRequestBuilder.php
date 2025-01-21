@@ -434,6 +434,11 @@ class AjaxRequestBuilder {
         return $this;
     }
 
+    /**
+     * Processes data and if needed implements JS function arguments into the JSON
+     * 
+     * @return string Processed data formatted to JSON
+     */
     private function processData() {
         $toReplace = [];
         foreach($this->functionArgs as $k) {

@@ -72,26 +72,26 @@ class FormStateListHelper {
     public function createStateListFromJsState(HttpRequest $request) {
         $stateList = new FormStateList();
 
-        if(!array_key_exists('elements', $request->post) && !array_key_exists('state', $request->post)) {
+        if($request->post('elements') === null && $request->post('state') === null) {
             return $stateList;
         }
 
-        $states = $request->post['elements'];
+        $states = $request->post('elements');
 
         foreach($states as $name) {
             $stateList->addElement($name);
 
-            if(isset($request->post['state'][$name]['hidden'])) {
-                $stateList->$name->isHidden = ($request->post['state'][$name]['hidden'] == 'true');
+            if(isset($request->post('state')[$name]['hidden'])) {
+                $stateList->$name->isHidden = ($request->post('state')[$name]['hidden'] == 'true');
             }
-            if(isset($request->post['state'][$name]['required'])) {
-                $stateList->$name->isRequired = ($request->post['state'][$name]['required'] == 'true');
+            if(isset($request->post('state')[$name]['required'])) {
+                $stateList->$name->isRequired = ($request->post('state')[$name]['required'] == 'true');
             }
-            if(isset($request->post['state'][$name]['readonly'])) {
-                $stateList->$name->isReadonly = ($request->post['state'][$name]['readonly'] == 'true');
+            if(isset($request->post('state')[$name]['readonly'])) {
+                $stateList->$name->isReadonly = ($request->post('state')[$name]['readonly'] == 'true');
             }
-            if(isset($request->post['state'][$name]['value'])) {
-                $stateList->$name->value = ($request->post['state'][$name]['value'] != 'null' ? $request->post['state'][$name]['value'] : null);
+            if(isset($request->post('state')[$name]['value'])) {
+                $stateList->$name->value = ($request->post('state')[$name]['value'] != 'null' ? $request->post('state')[$name]['value'] : null);
             }
         }
 

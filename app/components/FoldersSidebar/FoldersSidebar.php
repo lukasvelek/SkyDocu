@@ -81,9 +81,9 @@ class FoldersSidebar extends Sidebar2 {
         }
 
         $active = false;
-        if(array_key_exists('folderId', $this->httpRequest->query) && $this->httpRequest->query['folderId'] == $folder->folderId) {
+        if($this->httpRequest->query('folderId') !== null && $this->httpRequest->query('folderId') == $folder->folderId) {
             $active = true;
-        } else if(!array_key_exists('folderId', $this->httpRequest->query) && $folder->row->title == 'Default' && $this->httpRequest->query['action'] == 'list') {
+        } else if($this->httpRequest->query('folderId') === null && $folder->row->title == 'Default' && $this->httpRequest->query('action') == 'list') {
             $active = true;
         }
 

@@ -1251,8 +1251,8 @@ class GridBuilder extends AComponent {
     private function getGridPage() {
         $page = 0;
 
-        if(isset($this->httpRequest->query['gridPage'])) {
-            $page = $this->httpRequest->query['gridPage'];
+        if($this->httpRequest->query('gridPage') !== null) {
+            $page = $this->httpRequest->query('gridPage');
         }
 
         $page = $this->gridHelper->getGridPage($this->gridName, $page);
@@ -1331,8 +1331,8 @@ class GridBuilder extends AComponent {
      */
     public function actionRefresh() {
         foreach($this->filters as $name => $filter) {
-            if(isset($this->httpRequest->query[$name])) {
-                $this->activeFilters[$name] = $this->httpRequest->query[$name];
+            if($this->httpRequest->query($name) !== null) {
+                $this->activeFilters[$name] = $this->httpRequest->query($name);
             }
         }
         if(!($this instanceof IGridExtendingComponent)) {
@@ -1348,8 +1348,8 @@ class GridBuilder extends AComponent {
      */
     public function actionPage() {
         foreach($this->filters as $name => $filter) {
-            if(isset($this->httpRequest->query[$name])) {
-                $this->activeFilters[$name] = $this->httpRequest->query[$name];
+            if($this->httpRequest->query($name) !== null) {
+                $this->activeFilters[$name] = $this->httpRequest->query($name);
             }
         }
         if(!($this instanceof IGridExtendingComponent)) {
@@ -1365,8 +1365,8 @@ class GridBuilder extends AComponent {
      */
     public function actionFilter() {
         foreach($this->filters as $name => $filter) {
-            if(isset($this->httpRequest->query[$name])) {
-                $this->activeFilters[$name] = $this->httpRequest->query[$name];
+            if($this->httpRequest->query($name) !== null) {
+                $this->activeFilters[$name] = $this->httpRequest->query($name);
             }
         }
 

@@ -149,8 +149,8 @@ class LoginPresenter extends AAnonymPresenter {
                     'text' => $title
                 ];
 
-                if(array_key_exists('lastContainer', $this->httpRequest->query)) {
-                    if($group->containerId == $this->httpRequest->query['lastContainer']) {
+                if($this->httpRequest->query('lastContainer') !== null) {
+                    if($group->containerId == $this->httpRequest->query('lastContainer')) {
                         $c['selected'] = 'selected';
                     }
                 }

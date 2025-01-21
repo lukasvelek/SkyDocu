@@ -134,7 +134,7 @@ class CreateDocumentPresenter extends AUserPresenter {
     }
 
     protected function createComponentCreateDocumentForm(HttpRequest $request) {
-        $folderId = (isset($request->query['folderId']) ? $request->query['folderId'] : (isset($request->post['folderId']) ? $request->post['folderId'] : null));
+        $folderId = $request->query('folderId') ?? ($request->post('folderId') ?? null);
 
         $classesDb = $this->documentManager->getDocumentClassesForDocumentCreateForUser($this->getUserId());
 

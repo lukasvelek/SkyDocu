@@ -57,7 +57,7 @@ class ProcessesSelect extends AComponent {
                 'name' => $key
             ];
 
-            $link = $this->createFullURLString($this->httpRequest->query['page'], 'processForm', $params);
+            $link = $this->createFullURLString($this->httpRequest->query('page'), 'processForm', $params);
 
             $widget = new ProcessWidget($this->httpRequest, $key, $title, $link);
             $widget->startup();

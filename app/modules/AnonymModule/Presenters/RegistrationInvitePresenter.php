@@ -116,7 +116,7 @@ class RegistrationInvitePresenter extends AAnonymPresenter {
     protected function createComponentRegistrationForm(HttpRequest $request) {
         $form = $this->componentFactory->getFormBuilder();
 
-        $form->setAction($this->createURL('form', ['inviteId' => $request->query['inviteId'], 'containerId' => $this->containerId]));
+        $form->setAction($this->createURL('form', ['inviteId' => $request->query('inviteId'), 'containerId' => $this->containerId]));
 
         $form->addTextInput('username', 'Username:')
             ->setRequired();

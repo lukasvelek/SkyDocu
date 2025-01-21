@@ -232,11 +232,11 @@ class UsersPresenter extends ASuperAdminSettingsPresenter {
     }
 
     protected function createComponentEditUserForm(HttpRequest $request) {
-        $user = $this->app->userManager->getUserById($request->query['userId']);
+        $user = $this->app->userManager->getUserById($request->query('userId'));
         
         $form = $this->componentFactory->getFormBuilder();
 
-        $form->setAction($this->createURL('editUserForm', ['userId' => $request->query['userId']]));
+        $form->setAction($this->createURL('editUserForm', ['userId' => $request->query('userId')]));
 
         $form->addTextInput('username', 'Username:')
             ->setRequired()
@@ -297,11 +297,11 @@ class UsersPresenter extends ASuperAdminSettingsPresenter {
     }
 
     protected function createComponentDeleteUserForm(HttpRequest $request) {
-        $user = $this->app->userManager->getUserById($request->query['userId']);
+        $user = $this->app->userManager->getUserById($request->query('userId'));
 
         $form = $this->componentFactory->getFormBuilder();
 
-        $form->setAction($this->createURL('deleteUserForm', ['userId' => $request->query['userId']]));
+        $form->setAction($this->createURL('deleteUserForm', ['userId' => $request->query('userId')]));
 
         $form->addLabel('main', 'Do you want to delete user \'' . $user->getUsername() . '\'?');
 

@@ -87,10 +87,10 @@ class GroupsPresenter extends AAdminPresenter {
     protected function createComponentGroupMembersGrid(HttpRequest $request) {
         $grid = $this->componentFactory->getGridBuilder($this->containerId);
 
-        $group = $this->groupRepository->getGroupById($request->query['groupId']);
+        $group = $this->groupRepository->getGroupById($request->query('groupId'));
 
-        $grid->createDataSourceFromQueryBuilder($this->groupRepository->composeQueryForGroupMembers($request->query['groupId']), 'relationId');
-        $grid->addQueryDependency('groupId', $request->query['groupId']);
+        $grid->createDataSourceFromQueryBuilder($this->groupRepository->composeQueryForGroupMembers($request->query('groupId')), 'relationId');
+        $grid->addQueryDependency('groupId', $request->query('groupId'));
 
         $grid->addColumnUser('userId', 'User');
 
@@ -107,7 +107,7 @@ class GroupsPresenter extends AAdminPresenter {
                 $el = HTML::el('a')
                     ->title('Remove')
                     ->text('Remove')
-                    ->href($this->createURLString('removeGroupMember', ['groupId' => $request->query['groupId'], 'userId' => $row->userId]))
+                    ->href($this->createURLString('removeGroupMember', ['groupId' => $request->query('groupId'), 'userId' => $row->userId]))
                     ->class('grid-link')
                 ;
 
@@ -151,7 +151,7 @@ class GroupsPresenter extends AAdminPresenter {
         $container = $this->app->containerManager->getContainerById($this->httpSessionGet('container'));
 
         $containerUsers = $this->app->groupManager->getGroupUsersForGroupTitle($container->title . ' - users');
-        $groupUsers = $this->groupRepository->getMembersForGroup($request->query['groupId']);
+        $groupUsers = $this->groupRepository->getMembersForGroup($request->query('groupId'));
 
         $users = [];
         foreach($containerUsers as $user) {
@@ -165,7 +165,7 @@ class GroupsPresenter extends AAdminPresenter {
 
         $form = $this->componentFactory->getFormBuilder();
 
-        $form->setAction($this->createURL('addMemberForm', ['groupId' => $request->query['groupId']]));
+        $form->setAction($this->createURL('addMemberForm', ['groupId' => $request->query('groupId')]));
 
         $select = $form->addSelect('user', 'User:')
             ->setRequired()

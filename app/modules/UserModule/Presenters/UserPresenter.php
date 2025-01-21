@@ -52,10 +52,10 @@ class UserPresenter extends AUserPresenter {
     protected function createComponentUserGroupMembershipsGrid(HttpRequest $request) {
         $grid = $this->componentFactory->getGridBuilder($this->containerId);
 
-        $qb = $this->groupManager->composeQueryForGroupsWhereUserIsMember($request->query['userId']);
+        $qb = $this->groupManager->composeQueryForGroupsWhereUserIsMember($request->query('userId'));
 
         $grid->createDataSourceFromQueryBuilder($qb, 'groupId');
-        $grid->addQueryDependency('userId', $request->query['userId']);
+        $grid->addQueryDependency('userId', $request->query('userId'));
 
         $grid->addColumnConst('title', 'Title', SystemGroups::class);
 

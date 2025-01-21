@@ -81,8 +81,8 @@ class NewProcessPresenter extends AUserPresenter {
 
     protected function createComponentProcessForm(HttpRequest $request) {
         $processForm = $this->componentFactory->getCommonProcessForm();
-        $processForm->setProcess($request->query['name']);
-        $processForm->setBaseUrl(['page' => $request->query['page'], 'action' => 'startProcess']);
+        $processForm->setProcess($request->query('name'));
+        $processForm->setBaseUrl(['page' => $request->query('page'), 'action' => 'startProcess']);
 
         return $processForm;
     }

@@ -136,8 +136,8 @@ class Sidebar2 extends AComponent {
     public function checkIsLinkActive(array $urlParams) {
         $ok = true;
         foreach($urlParams as $key => $value) {
-            if(array_key_exists($key, $this->httpRequest->query)) {
-                if($this->httpRequest->query[$key] != $value) {
+            if($this->httpRequest->query($key) !== null) {
+                if($this->httpRequest->query($key) != $value) {
                     $ok = false;
                     break;
                 }

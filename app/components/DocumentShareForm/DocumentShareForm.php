@@ -101,8 +101,8 @@ class DocumentShareForm extends FormBuilder2 {
     }
 
     protected function actionSearchUsers() {
-        $query = $this->httpRequest->post['query'];
-        $this->documentIds = $this->httpRequest->post['documentIds'];
+        $query = $this->httpRequest->post('query');
+        $this->documentIds = $this->httpRequest->post('documentIds');
 
         $usersDb = $this->getUsers($query);
 

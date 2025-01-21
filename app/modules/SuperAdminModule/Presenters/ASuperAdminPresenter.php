@@ -21,7 +21,7 @@ abstract class ASuperAdminPresenter extends APresenter {
     }
 
     protected function createComponentSidebar(HttpRequest $request) {
-        $containerId = $request->query['containerId'];
+        $containerId = $request->query('containerId');
 
         $sidebar = $this->componentFactory->getSidebar();
 

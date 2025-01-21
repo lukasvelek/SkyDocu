@@ -202,8 +202,8 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
      */
     private function getFolderId() {
         if($this->currentFolderId === null) {
-            if(isset($this->httpRequest->query['folderId'])) {
-                $this->currentFolderId = $this->httpRequest->query['folderId'];
+            if($this->httpRequest->query('folderId') !== null) {
+                $this->currentFolderId = $this->httpRequest->query('folderId');
             } else {
                 throw new GeneralException('No folder is selected.');
             }
@@ -528,8 +528,8 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
      */
     public function useCheckboxes(APresenter $presenter) {
         $params = [];
-        if(array_key_exists('folderId', $this->httpRequest->query)) {
-            $params['folderId'] = $this->httpRequest->query['folderId'];
+        if($this->httpRequest->query('folderId') !== null) {
+            $params['folderId'] = $this->httpRequest->query('folderId');
         }
 
         $this->addCheckboxes2($presenter, 'bulkAction', $params);
@@ -582,7 +582,7 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
     public function actionBulkAction() {
         $modal = new BulkActionsModal($this);
 
-        $ids = $this->httpRequest->query['ids'];
+        $ids = $this->httpRequest->query('ids');
 
         $this->documentBulkActionsHelper->setFolderId($this->getFolderId());
         $bulkActions = $this->documentBulkActionsHelper->getBulkActions($ids, $this->currentFolderId);

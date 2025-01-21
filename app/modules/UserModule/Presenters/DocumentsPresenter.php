@@ -227,33 +227,33 @@ class DocumentsPresenter extends AUserPresenter {
             try {
                 $this->documentRepository->beginTransaction(__METHOD__);
 
-                foreach($this->httpRequest->query['documentId'] as $documentId) {
+                foreach($this->httpRequest->query('documentId') as $documentId) {
                     $this->documentManager->shareDocument($documentId, $this->getUserId(), $data['user']);
                 }
 
                 $this->documentRepository->commit($this->getUserId(), __METHOD__);
 
-                $this->flashMessage(sprintf('Successfully shared %d %s.', count($this->httpRequest->query['documentId']), (count($this->httpRequest->query['documentId']) > 1 ? 'documents' : 'document')), 'success');
+                $this->flashMessage(sprintf('Successfully shared %d %s.', count($this->httpRequest->query('documentId')), (count($this->httpRequest->query('documentId')) > 1 ? 'documents' : 'document')), 'success');
             } catch(AException $e) {
                 $this->documentRepository->rollback(__METHOD__);
                 
-                $this->flashMessage('Could not share document' . (count($this->httpRequest->query['documentId']) > 1 ? 's' : '') . '. Reason: ' . $e->getMessage(), 'error');
+                $this->flashMessage('Could not share document' . (count($this->httpRequest->query('documentId')) > 1 ? 's' : '') . '. Reason: ' . $e->getMessage(), 'error');
             }
 
-            $this->redirect($this->createURL('list', ['folderId' => $this->httpRequest->query['folderId']]));
+            $this->redirect($this->createURL('list', ['folderId' => $this->httpRequest->query('folderId')]));
         }
     }
 
     public function renderShareForm() {
-        $this->template->links = $this->createBackUrl('list', ['folderId' => $this->httpRequest->query['backFolderId']]);
+        $this->template->links = $this->createBackUrl('list', ['folderId' => $this->httpRequest->query('backFolderId')]);
     }
 
     protected function createComponentShareDocumentForm(HttpRequest $request) {
         $form = new DocumentShareForm($request, $this->app->userRepository, $this->documentManager);
 
         if(!$request->isAjax) {
-            $form->setAction($this->createURL('shareForm', ['folderId' => $request->query['backFolderId']]));
-            $form->setDocumentIds($request->query['documentId']);
+            $form->setAction($this->createURL('shareForm', ['folderId' => $request->query('backFolderId')]));
+            $form->setDocumentIds($request->query('documentId'));
         }
 
         return $form;

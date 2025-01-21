@@ -30,7 +30,7 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
     public function renderHome() {}
 
     protected function createComponentContainerInfoForm(HttpRequest $request) {
-        $container = $this->app->containerManager->getContainerById($request->query['containerId']);
+        $container = $this->app->containerManager->getContainerById($request->query('containerId'));
 
         $groupUsers = $this->app->groupManager->getGroupUsersForGroupTitle($container->title . ' - users');
 
@@ -68,7 +68,7 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
     }
     
     protected function createComponentContainerPendingInvitesGrid(HttpRequest $request) {
-        $container = $this->app->containerManager->getContainerById($request->query['containerId']);
+        $container = $this->app->containerManager->getContainerById($request->query('containerId'));
 
         $grid = $this->componentFactory->getGridBuilder($container->containerId);
 
@@ -136,11 +136,11 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
     }
 
     protected function createComponentContainerStatusForm(HttpRequest $request) {
-        $container = $this->app->containerManager->getContainerById($request->query['containerId']);
+        $container = $this->app->containerManager->getContainerById($request->query('containerId'));
 
         $form = $this->componentFactory->getFormBuilder();
 
-        $form->setAction($this->createURL('status', ['containerId' => $request->query['containerId']]));
+        $form->setAction($this->createURL('status', ['containerId' => $request->query('containerId')]));
 
         $disabled = false;
         $statuses = [];
@@ -188,11 +188,11 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
     }
 
     protected function createComponentContainerPermanentFlashMessageForm(HttpRequest $request) {
-        $container = $this->app->containerManager->getContainerById($request->query['containerId']);
+        $container = $this->app->containerManager->getContainerById($request->query('containerId'));
 
         $form = $this->componentFactory->getFormBuilder();
 
-        $form->setAction($this->createURL('statusPermanentFlashMessage', ['containerId' => $request->query['containerId']]));
+        $form->setAction($this->createURL('statusPermanentFlashMessage', ['containerId' => $request->query('containerId')]));
 
         $permanentFlashMessage = $form->addTextArea('permanentFlashMessage', 'Flash message text:')
             ->setRequired();
@@ -267,8 +267,8 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
     protected function createComponentContainerStatusHistoryGrid(HttpRequest $request) {
         $grid = $this->componentFactory->getGridBuilder();
 
-        $grid->createDataSourceFromQueryBuilder($this->app->containerRepository->composeQueryForContainerStatusHistory($request->query['containerId']), 'historyId');
-        $grid->addQueryDependency('containerId', $request->query['containerId']);
+        $grid->createDataSourceFromQueryBuilder($this->app->containerRepository->composeQueryForContainerStatusHistory($request->query('containerId')), 'historyId');
+        $grid->addQueryDependency('containerId', $request->query('containerId'));
 
         $grid->addColumnUser('userId', 'User');
         $col = $grid->addColumnText('description', 'Description');
@@ -349,11 +349,11 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
     }
 
     protected function createComponentContainerDeleteForm(HttpRequest $request) {
-        $container = $this->app->containerManager->getContainerById($request->query['containerId']);
+        $container = $this->app->containerManager->getContainerById($request->query('containerId'));
 
         $form = $this->componentFactory->getFormBuilder();
 
-        $form->setAction($this->createURL('containerDeleteForm', ['containerId' => $request->query['containerId']]));
+        $form->setAction($this->createURL('containerDeleteForm', ['containerId' => $request->query('containerId')]));
 
         $form->addTextInput('title', 'Container title (\'' . $container->title . '\'):')
             ->setRequired();
@@ -371,7 +371,7 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
     protected function createComponentContainerUsageStatsGraph(HttpRequest $request) {
         $graph = new ContainerUsageStatsGraph($request, $this->app->containerRepository);
 
-        $graph->setContainerId($request->query['containerId']);
+        $graph->setContainerId($request->query('containerId'));
         $graph->setCanvasWidth(400);
 
         return $graph;
@@ -380,7 +380,7 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
     protected function createComponentContainerUsageAverageResponseTimeGraph(HttpRequest $request) {
         $graph = new ContainerUsageAverageResponseTimeGraph($request, $this->app->containerRepository);
 
-        $graph->setContainerId($request->query['containerId']);
+        $graph->setContainerId($request->query('containerId'));
         $graph->setCanvasWidth(400);
 
         return $graph;
@@ -389,7 +389,7 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
     protected function createComponentContainerUsageTotalResponseTimeGraph(HttpRequest $request) {
         $graph = new ContainerUsageTotalResponseTimeGraph($request, $this->app->containerRepository);
 
-        $graph->setContainerId($request->query['containerId']);
+        $graph->setContainerId($request->query('containerId'));
         $graph->setCanvasWidth(400);
 
         return $graph;
@@ -449,11 +449,11 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
     protected function createComponentContainerInvitesGrid(HttpRequest $request) {
         $grid = $this->componentFactory->getGridBuilder();
 
-        $qb = $this->app->containerInviteManager->composeQueryForContainerInviteUsages($request->query['containerId']);
+        $qb = $this->app->containerInviteManager->composeQueryForContainerInviteUsages($request->query('containerId'));
         $qb->orderBy('status');
         
         $grid->createDataSourceFromQueryBuilder($qb, 'entryId');
-        $grid->addQueryDependency('containerId', $request->query['containerId']);
+        $grid->addQueryDependency('containerId', $request->query('containerId'));
 
         $grid->addColumnConst('status', 'Status', ContainerInviteUsageStatus::class);
 

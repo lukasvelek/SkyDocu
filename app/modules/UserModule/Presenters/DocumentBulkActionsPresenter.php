@@ -15,7 +15,7 @@ class DocumentBulkActionsPresenter extends AUserPresenter {
         if($process === null) {
             throw new RequiredAttributeIsNotSetException('process');
         }
-        $documentIds = $this->httpRequest->query['documentId'];
+        $documentIds = $this->httpRequest->query('documentId');
 
         $exceptions = [];
 

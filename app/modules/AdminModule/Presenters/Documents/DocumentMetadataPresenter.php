@@ -175,12 +175,12 @@ class DocumentMetadataPresenter extends AAdminPresenter {
     }
 
     protected function createComponentEditDocumentMetadataForm(HttpRequest $request) {
-        $metadata = $this->metadataManager->getMetadataById($request->query['metadataId']);
+        $metadata = $this->metadataManager->getMetadataById($request->query('metadataId'));
 
         $form = new DocumentMetadataForm($request);
 
         $form->setMetadata($metadata);
-        $form->setAction($this->createURL('editMetadataForm', ['metadataId' => $request->query['metadataId']]));
+        $form->setAction($this->createURL('editMetadataForm', ['metadataId' => $request->query('metadataId')]));
 
         return $form;
     }
@@ -273,7 +273,7 @@ class DocumentMetadataPresenter extends AAdminPresenter {
         $grid = $this->componentFactory->getGridBuilder($this->containerId);
 
         $qb = $this->metadataRepository->composeQueryForMetadataFolderRights();
-        $qb->andWhere('customMetadataId = ?', [$request->query['metadataId']]);
+        $qb->andWhere('customMetadataId = ?', [$request->query('metadataId')]);
 
         $grid->createDataSourceFromQueryBuilder($qb, 'relationId');
 
@@ -383,7 +383,7 @@ class DocumentMetadataPresenter extends AAdminPresenter {
 
         $form = $this->componentFactory->getFormBuilder();
 
-        $form->setAction($this->createURL('newFolderRightForm', ['metadataId' => $request->query['metadataId']]));
+        $form->setAction($this->createURL('newFolderRightForm', ['metadataId' => $request->query('metadataId')]));
 
         $form->addSelect('folder', 'Folder:')
             ->setRequired()
@@ -412,11 +412,11 @@ class DocumentMetadataPresenter extends AAdminPresenter {
     protected function createComponentMetadataEnumValuesGrid(HttpRequest $request) {
         $grid = $this->componentFactory->getGridBuilder($this->containerId);
 
-        $qb = $this->metadataRepository->composeQueryMetadataEnumValues($request->query['metadataId']);
+        $qb = $this->metadataRepository->composeQueryMetadataEnumValues($request->query('metadataId'));
         $qb->orderBy('metadataKey');
 
         $grid->createDataSourceFromQueryBuilder($qb, 'valueId');
-        $grid->addQueryDependency('metadataId', $request->query['metadataId']);
+        $grid->addQueryDependency('metadataId', $request->query('metadataId'));
 
         $grid->addColumnText('title', 'Title');
 
@@ -427,7 +427,7 @@ class DocumentMetadataPresenter extends AAdminPresenter {
         };
         $edit->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) use ($request) {
             $el = HTML::el('a')
-                    ->href($this->createURLString('editEnumValueForm', ['metadataId' => $request->query['metadataId'], 'valueId' => $primaryKey]))
+                    ->href($this->createURLString('editEnumValueForm', ['metadataId' => $request->query('metadataId'), 'valueId' => $primaryKey]))
                     ->text('Edit')
                     ->class('grid-link');
 
@@ -437,7 +437,7 @@ class DocumentMetadataPresenter extends AAdminPresenter {
         $delete = $grid->addAction('delete');
         $delete->setTitle('Delete');
         $delete->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) use ($request) {
-            $result = $this->metadataManager->isMetadataEnumValueUsed($row->valueId, $request->query['metadataId']);
+            $result = $this->metadataManager->isMetadataEnumValueUsed($row->valueId, $request->query('metadataId'));
 
             if($result === true) {
                 $action->setTitle('This value is being used.');
@@ -450,7 +450,7 @@ class DocumentMetadataPresenter extends AAdminPresenter {
             $el = HTML::el('a')
                     ->text('Delete')
                     ->class('grid-link')
-                    ->href($this->createURLString('deleteEnumValue', ['metadataId' => $request->query['metadataId'], 'valueId' => $primaryKey]));
+                    ->href($this->createURLString('deleteEnumValue', ['metadataId' => $request->query('metadataId'), 'valueId' => $primaryKey]));
 
             return $el;
         };
@@ -490,7 +490,7 @@ class DocumentMetadataPresenter extends AAdminPresenter {
     protected function createComponentNewMetadataEnumValueForm(HttpRequest $request) {
         $form = $this->componentFactory->getFormBuilder();
 
-        $form->setAction($this->createURL('newEnumValueForm', ['metadataId' => $request->query['metadataId']]));
+        $form->setAction($this->createURL('newEnumValueForm', ['metadataId' => $request->query('metadataId')]));
 
         $form->addTextInput('title', 'Title:')
             ->setRequired();
@@ -540,7 +540,7 @@ class DocumentMetadataPresenter extends AAdminPresenter {
     protected function createComponentEditMetadataEnumValueForm(HttpRequest $request) {
         $form = $this->componentFactory->getFormBuilder();
 
-        $form->setAction($this->createURL('editEnumValueForm', ['metadataId' => $request->query['metadataId'], 'valueId' => $request->query['valueId']]));
+        $form->setAction($this->createURL('editEnumValueForm', ['metadataId' => $request->query('metadataId'), 'valueId' => $request->query('valueId')]));
 
         $form->addTextInput('title', 'Title:')
             ->setRequired()

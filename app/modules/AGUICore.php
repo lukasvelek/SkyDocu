@@ -202,12 +202,12 @@ abstract class AGUICore {
      * @deprecated
      */
     protected function httpGet(string $key, bool $throwException = false) {
-        if(array_key_exists($key, $this->httpRequest->query)) {
-            if(!is_array($this->httpRequest->query[$key])) {
-                return htmlspecialchars($this->httpRequest->query[$key]);
+        if($this->httpRequest->query($key) !== null) {
+            if(!is_array($this->httpRequest->query($key))) {
+                return htmlspecialchars($this->httpRequest->query($key));
             } else {
                 $tmp = [];
-                foreach($this->httpRequest->query[$key] as $q) {
+                foreach($this->httpRequest->query($key) as $q) {
                     if(!is_array($q)) {
                         $tmp[] = htmlspecialchars($q);
                     } else {
@@ -220,7 +220,7 @@ abstract class AGUICore {
             }
         } else {
             if($throwException) {
-                throw new RequiredAttributeIsNotSetException($key, '$_GET');
+                throw new RequiredAttributeIsNotSetException($key);
             } else {
                 return null;
             }

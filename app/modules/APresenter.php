@@ -532,7 +532,7 @@ abstract class APresenter extends AGUICore {
         }
 
         // Process component action
-        if(isset($this->httpRequest->query['do'])) {
+        if($this->httpRequest->query('do') !== null) {
             $templateContent2 = $this->processComponentAction($templateContent);
 
             if($templateContent2 !== null) {
@@ -553,7 +553,7 @@ abstract class APresenter extends AGUICore {
      */
     private function processComponentAction(TemplateObject $templateContent) {
         // Split the component action parameter
-        $do = $this->httpRequest->query['do'];
+        $do = $this->httpRequest->query('do');
         $doParts = explode('-', $do);
 
         if(count($doParts) < 2) {
@@ -584,7 +584,7 @@ abstract class APresenter extends AGUICore {
             if(method_exists($component, $methodName)) {
                 $result = $this->logger->stopwatch(function() use ($component, $methodName) {
                     try {
-                        if(isset($this->httpRequest->query['isFormSubmit']) && $this->httpRequest->query['isFormSubmit'] == '1') { // it is a form
+                        if($this->httpRequest->query('isFormSubmit') == '1') { // it is a form
                             $fr = $this->createFormRequest();
                             $result = $component->processMethod($methodName, [$this->httpRequest, $fr]);
                         } else {

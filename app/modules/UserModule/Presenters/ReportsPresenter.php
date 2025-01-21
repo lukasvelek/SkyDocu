@@ -55,8 +55,8 @@ class ReportsPresenter extends AUserPresenter {
             $this->standaloneProcessManager
         );
 
-        $grid->setView($request->query['view']);
-        $grid->setProcessType($request->query['name']);
+        $grid->setView($request->query('view'));
+        $grid->setProcessType($request->query('name'));
 
         return $grid;
     }

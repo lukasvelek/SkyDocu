@@ -22,8 +22,8 @@ class ErrorModule extends AModule {
     private function createNavbar() {
         $mode = null;
 
-        if(array_key_exists('calledPage', $this->httpRequest->query)) {
-            $page = $this->httpRequest->query['calledPage'];
+        if($this->httpRequest->query('calledPage') !== null) {
+            $page = $this->httpRequest->query('calledPage');
             $module = explode(':', $page)[0];
 
             switch($module) {

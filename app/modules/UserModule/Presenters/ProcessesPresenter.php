@@ -48,7 +48,7 @@ class ProcessesPresenter extends AUserPresenter {
             $this->documentManager
         );
 
-        $grid->setView($request->query['view']);
+        $grid->setView($request->query('view'));
     
         return $grid;
     }

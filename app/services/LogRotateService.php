@@ -152,7 +152,7 @@ class LogRotateService extends AService {
         $oldFiles = [];
 
         foreach($containers as $containerId) {
-            $files = FileManager::getFilesInFolder(APP_ABSOLUTE_DIR . LOG_DIR . $containerId . '\\', false);
+            $files = FileManager::getFilesInFolder(APP_ABSOLUTE_DIR . LOG_DIR . 'containers\\' . $containerId . '\\', false);
 
             foreach($files as $filename => $filepath) {
                 $filenameParts = explode('.', $filename);
@@ -185,23 +185,23 @@ class LogRotateService extends AService {
                 $logMonth = explode('-', $logDate)[1];
                 $logDay = explode('-', $logDate)[2];
 
-                if(!FileManager::folderExists(APP_ABSOLUTE_DIR . LOG_DIR . $containerId . '\\' . $logYear)) {
+                if(!FileManager::folderExists(APP_ABSOLUTE_DIR . LOG_DIR . 'containers\\' . $containerId . '\\' . $logYear)) {
                     $this->logInfo('Folder \'' . APP_ABSOLUTE_DIR . LOG_DIR . $containerId . '\\' . $logYear . '\' does not exist. Creating...');
 
-                    FileManager::createFolder(APP_ABSOLUTE_DIR . LOG_DIR . $containerId . '\\' . $logYear);
+                    FileManager::createFolder(APP_ABSOLUTE_DIR . LOG_DIR . 'containers\\' . $containerId . '\\' . $logYear);
                 }
-                if(!FileManager::folderExists(APP_ABSOLUTE_DIR . LOG_DIR . $containerId . '\\' . $logYear . '\\' . $logMonth)) {
-                    $this->logInfo('Folder \'' . APP_ABSOLUTE_DIR . LOG_DIR . $containerId . '\\' . $logYear . '\\' . $logMonth . '\' does not exist. Creating...');
+                if(!FileManager::folderExists(APP_ABSOLUTE_DIR . LOG_DIR . 'containers\\' . $containerId . '\\' . $logYear . '\\' . $logMonth)) {
+                    $this->logInfo('Folder \'' . APP_ABSOLUTE_DIR . LOG_DIR . 'containers\\' . $containerId . '\\' . $logYear . '\\' . $logMonth . '\' does not exist. Creating...');
 
-                    FileManager::createFolder(APP_ABSOLUTE_DIR . LOG_DIR . $containerId . '\\' . $logYear . '\\' . $logMonth);
+                    FileManager::createFolder(APP_ABSOLUTE_DIR . LOG_DIR . 'containers\\' . $containerId . '\\' . $logYear . '\\' . $logMonth);
                 }
-                if(!FileManager::folderExists(APP_ABSOLUTE_DIR . LOG_DIR . $containerId . '\\' . $logYear . '\\' . $logMonth . '\\' . $logDay)) {
-                    $this->logInfo('Folder \'' . APP_ABSOLUTE_DIR . LOG_DIR . $containerId . '\\' . $logYear . '\\' . $logMonth . '\\' . $logDay . '\' does not exist. Creating...');
+                if(!FileManager::folderExists(APP_ABSOLUTE_DIR . LOG_DIR . 'containers\\' . $containerId . '\\' . $logYear . '\\' . $logMonth . '\\' . $logDay)) {
+                    $this->logInfo('Folder \'' . APP_ABSOLUTE_DIR . LOG_DIR . 'containers\\' . $containerId . '\\' . $logYear . '\\' . $logMonth . '\\' . $logDay . '\' does not exist. Creating...');
 
-                    FileManager::createFolder(APP_ABSOLUTE_DIR . LOG_DIR . $containerId . '\\' . $logYear . '\\' . $logMonth . '\\' . $logDay);
+                    FileManager::createFolder(APP_ABSOLUTE_DIR . LOG_DIR . 'containers\\' . $containerId . '\\' . $logYear . '\\' . $logMonth . '\\' . $logDay);
                 }
 
-                $newPath = APP_ABSOLUTE_DIR . LOG_DIR . $containerId . '\\' . $logYear . '\\' . $logMonth . '\\' . $logDay . '\\' . $filename;
+                $newPath = APP_ABSOLUTE_DIR . LOG_DIR . 'containers\\' . $containerId . '\\' . $logYear . '\\' . $logMonth . '\\' . $logDay . '\\' . $filename;
                 $this->logInfo('New path for file \'' . $filename . '\' is \'' . $newPath . '\'.');
 
                 $result = FileManager::moveFile($filepath, $newPath);

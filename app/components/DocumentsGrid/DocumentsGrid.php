@@ -584,7 +584,8 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
 
         $ids = $this->httpRequest->query['ids'];
 
-        $bulkActions = $this->documentBulkActionsHelper->getBulkActions($ids);
+        $this->documentBulkActionsHelper->setFolderId($this->getFolderId());
+        $bulkActions = $this->documentBulkActionsHelper->getBulkActions($ids, $this->currentFolderId);
 
         $modal->setBulkActions($bulkActions);
         $modal->startup();

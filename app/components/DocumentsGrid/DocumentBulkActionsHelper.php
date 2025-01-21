@@ -24,6 +24,7 @@ class DocumentBulkActionsHelper {
     private DocumentBulkActionAuthorizator $documentBulkActionAuthorizator;
     private GroupStandardOperationsAuthorizator $groupStandardOperationsAuthorizator;
     private ProcessFactory $processFactory;
+    private string $folderId;
 
     private HttpRequest $request;
 
@@ -42,6 +43,15 @@ class DocumentBulkActionsHelper {
         $this->processFactory = $processFactory;
 
         $this->request = $request;
+    }
+
+    /**
+     * Sets the current folder ID
+     * 
+     * @param string $folderId
+     */
+    public function setFolderId(string $folderId) {
+        $this->folderId = $folderId;
     }
 
     /**
@@ -118,9 +128,7 @@ class DocumentBulkActionsHelper {
             'process=' . $bulkAction
         ];
 
-        if(array_key_exists('folderId', $this->request->query)) {
-            $urlParams[] = 'backFolderId=' . $this->request->query['folderId'];
-        }
+        $urlParams[] = 'backFolderId=' . $this->folderId;
 
         foreach($documentIds as $documentId) {
             $urlParams[] = 'documentId[]=' . $documentId;
@@ -146,9 +154,7 @@ class DocumentBulkActionsHelper {
             'backAction=' . $this->request->query['action']
         ];
 
-        if(array_key_exists('folderId', $this->request->query)) {
-            $urlParams['backFolderId'] = $this->request->query['folderId'];
-        }
+        $urlParams[] = 'backFolderId=' . $this->folderId;
 
         foreach($documentIds as $documentId) {
             $urlParams[] = 'documentId[]=' . $documentId;

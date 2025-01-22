@@ -543,6 +543,7 @@ class GridBuilder extends AComponent {
         }
         
         $template->grid_name = $this->gridName;
+        
         return $template->render()->getRenderedContent();
     }
 

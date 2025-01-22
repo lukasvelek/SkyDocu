@@ -18,6 +18,8 @@ The web application is written purely in PHP with a few JS scripts. These JS scr
 - GridBuilder optimization
 - Form reducing & on change AJAX calling capability
 - Processes grid design update
+- Document sharing
+- Core AJAX requests and responses update
 
 ### 1.1 (January 7th, 2025)
 - Document processes

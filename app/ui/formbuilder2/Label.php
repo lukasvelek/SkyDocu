@@ -56,7 +56,7 @@ class Label extends AElement {
      * @return string HTML code
      */
     public function render() {
-        $code = '<label id="' . $this->name . '" for="' . $this->for . '">';
+        $code = '<label id="' . $this->name . '" for="' . $this->for . '" title="' . (str_ends_with($this->text, ':') ? substr($this->text, 0, -1) : $this->text) . '">';
 
         if($this->isTitle) {
             $code .= '<span style="font-size: 20px">' . $this->text . '</span>';

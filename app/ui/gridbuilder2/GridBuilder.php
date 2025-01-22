@@ -1306,6 +1306,7 @@ class GridBuilder extends AComponent {
                 ->onClick($this->componentName . '_processFilterModalOpen()')
                 ->id('formSubmit')
                 ->text('Filter')
+                ->title('Filter')
         ;
 
         $btns = [
@@ -1324,6 +1325,7 @@ class GridBuilder extends AComponent {
                     ->onClick($this->componentName . '_filterClear(' . implode(', ', $args) . ')')
                     ->id('formSubmit')
                     ->text('Clear filter')
+                    ->title('Clear filter')
             ;
 
             $btns[] = $btn->toString();

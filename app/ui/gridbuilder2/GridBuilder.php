@@ -528,12 +528,10 @@ class GridBuilder extends AComponent {
         }
         $this->build();
 
+        $template = null;
         if($this->table === null) {
             $template = $this->getTemplate(__DIR__ . '/grid-empty.html');
             $template->grid = $this->createFlashMessage('info', 'No data found.', 0, false, true);
-            $template->grid_name = $this->gridName;
-
-            return $template->render()->getRenderedContent();
         } else {
             $template = $this->getTemplate(__DIR__ . '/grid.html');
 
@@ -542,10 +540,10 @@ class GridBuilder extends AComponent {
             $template->controls = $this->createGridControls();
             $template->filter_modal = '';
             $template->filters = $this->createGridFilterControls();
-            $template->grid_name = $this->gridName;
-
-            return $template->render()->getRenderedContent();
         }
+        
+        $template->grid_name = $this->gridName;
+        return $template->render()->getRenderedContent();
     }
 
     /**
@@ -807,22 +805,6 @@ class GridBuilder extends AComponent {
         }
 
         if(count($_tableRows) == 1) {
-            /*$span = count($this->columns);
-            if($this->hasCheckboxes) {
-                $span++;
-            }
-
-            $cell = new Cell();
-            $cell->setSpan($span);
-            $cell->setName('no-data-message');
-            $cell->setContent('No data found.');
-
-            $row = new Row();
-            $row->addCell($cell);
-            $row->setPrimaryKey(null);
-
-            $_tableRows[] = $row;*/
-
             $this->table = null;
         } else {
             $this->table = new Table($_tableRows);

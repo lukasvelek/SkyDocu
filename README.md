@@ -23,6 +23,10 @@ The web application is written purely in PHP with a few JS scripts. These JS scr
 - Updated config.php define checking
 - Empty GridBuilder design update
 - Accessibility update
+    - GridBuilder column name hints
+    - GridBuilder control hints
+    - Link hints
+    - FormBuilder element hints
 
 ### 1.1 (January 7th, 2025)
 - Document processes

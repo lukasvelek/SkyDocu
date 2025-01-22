@@ -65,7 +65,7 @@ class Label extends AElement {
         }
 
         if($this->required) {
-            $code .= ' <span style="color: red">*</span>';
+            $code .= ' <span style="color: red" title="This field is required">*</span>';
         }
 
         $code .= '</label>';

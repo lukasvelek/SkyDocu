@@ -9,7 +9,9 @@ use App\Core\Caching\CacheNames;
 use App\Core\Datatypes\ArrayList;
 use App\Core\Datetypes\DateTime;
 use App\Core\HashManager;
+use App\Core\Http\Ajax\Requests\AAjaxRequest;
 use App\Core\Http\AResponse;
+use App\Core\Http\JsonErrorResponse;
 use App\Core\Router;
 use App\Entities\UserEntity;
 use App\Exceptions\ActionDoesNotExistException;
@@ -521,7 +523,7 @@ abstract class APresenter extends AGUICore {
         // There has been an error during action handling or rendering
         if($ok === false) {
             if($this->isAjax && !$this->isComponentAjax) {
-                $this->redirect(['page' => 'Error:E404', 'reason' => 'ActionDoesNotExist']);
+                return new TemplateObject((new JsonErrorResponse('ActionDoesNotExist'))->getResult());
             } else {
                 if($this->defaultAction !== null) {
                     $this->redirect(['page' => $moduleName . ':' . $this->title, 'action' => $this->defaultAction]);
@@ -728,11 +730,15 @@ abstract class APresenter extends AGUICore {
     /**
      * Adds JS script to the page
      * 
-     * @param string $scriptContent JS script content
+     * @param AjaxRequestBuilder|AAjaxRequest|string $scriptContent JS script content
      */
-    public function addScript(AjaxRequestBuilder|string $scriptContent) {
+    public function addScript(AjaxRequestBuilder|AAjaxRequest|string $scriptContent) {
         if($scriptContent instanceof AjaxRequestBuilder) {
             $scriptContent = $scriptContent->build();
+        } else if($scriptContent instanceof AAjaxRequest) {
+            $code = $scriptContent->build();
+            $scriptContent->checkChecks();
+            $scriptContent = $code;
         }
         
         $this->scripts->add(null, '<script type="text/javascript">' . $scriptContent . '</script>');

@@ -3,6 +3,7 @@
 namespace App\UI\FormBuilder2;
 
 use App\Core\AjaxRequestBuilder;
+use App\Core\Http\Ajax\Requests\AAjaxRequest;
 use App\Core\Http\HttpRequest;
 use App\Core\Http\JsonResponse;
 use App\Core\Router;
@@ -74,11 +75,15 @@ class FormBuilder2 extends AComponent {
     /**
      * Adds form JS script code
      * 
-     * @param AjaxRequestBuilder|string $code JS code
+     * @param AjaxRequestBuilder|AAjaxRequest|string $code JS code
      */
-    public function addScript(AjaxRequestBuilder|string $code) {
+    public function addScript(AjaxRequestBuilder|AAjaxRequest|string $code) {
         if($code instanceof AjaxRequestBuilder) {
             $code = $code->build();
+        } else if($code instanceof AAjaxRequest) {
+            $_code = $code->build();
+            $code->checkChecks();
+            $code = $_code;
         }
 
         $code = '<script type="text/javascript">' . $code . '</script>';

@@ -42,6 +42,13 @@ abstract class AComponent extends AGUICore implements IRenderable {
     }
 
     /**
+     * Returns the component name
+     */
+    public function getComponentName(): string {
+        return $this->componentName;
+    }
+
+    /**
      * Initial component configuration
      */
     public function startup() {

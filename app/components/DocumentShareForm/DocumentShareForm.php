@@ -3,6 +3,8 @@
 namespace App\Components\DocumetnShareForm;
 
 use App\Core\AjaxRequestBuilder;
+use App\Core\Http\Ajax\HTMLPageOperation;
+use App\Core\Http\Ajax\Requests\PostAjaxRequest;
 use App\Core\Http\HttpRequest;
 use App\Core\Http\JsonResponse;
 use App\Managers\Container\DocumentManager;
@@ -73,17 +75,23 @@ class DocumentShareForm extends FormBuilder2 {
      * Creates JS scripts
      */
     private function createScripts() {
-        $arb = new AjaxRequestBuilder();
+        $par = new PostAjaxRequest($this->httpRequest);
         
-        $arb->setMethod('POST')
-            ->setComponentAction($this->presenter, $this->componentName . '-searchUsers')
-            ->setFunctionName('getUsers')
-            ->setFunctionArguments(['_query', '_lastContainer'])
-            ->updateHTMLElement('user', 'users')
-            ->setData(['documentIds' => $this->documentIds, 'query' => '_query'])
-            ->addWhenDoneOperation('if(obj.usersCount == 0) { alert("No users found."); }');
+        $par->setData([
+            'documentIds' => $this->documentIds,
+            'query' => '_query'
+        ])
+            ->addArgument('_query')
+            ->setComponentUrl($this, 'searchUsers')
+        ;
 
-        $this->addScript($arb->build());
+        $update = new HTMLPageOperation();
+        $update->setHtmlEntityId('user')
+            ->setJsonResponseObjectName('users');
+
+        $par->addOnFinishOperation($update);
+
+        $this->addScript($par);
         
         // Search button handler
         $code = 'function searchUsers() {
@@ -92,7 +100,7 @@ class DocumentShareForm extends FormBuilder2 {
             if(_query.length == 0) {
                 alert("No username entered.");
             } else {
-                getUsers(_query);
+                ' . $par->call('_query') . '
                 $("#user").removeAttr("disabled");
             }
         }';

@@ -65,6 +65,23 @@ class RenderEngine {
                 $this->renderedContent = $this->module->render($this->presenterTitle, $this->actionTitle);
             }
 
+            // Optimization - the returned code is on a single line
+            if(!$this->isAjax) {
+                $parts = explode("\r\n", $this->renderedContent);
+
+                $tmp = [];
+                foreach($parts as $part) {
+                    if($part == '') {
+                        continue;
+                    }
+
+                    $x = trim($part);
+                    $tmp[] = $x;
+                }
+
+                $this->renderedContent = implode('', $tmp);
+            }
+
             return $this->renderedContent;
         } catch(AException|Exception $e) {
             throw $e;

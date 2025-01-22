@@ -22,6 +22,7 @@ The web application is written purely in PHP with a few JS scripts. These JS scr
 - Core AJAX requests and responses update
 - Updated config.php define checking
 - Empty GridBuilder design update
+- Accessibility update
 
 ### 1.1 (January 7th, 2025)
 - Document processes

@@ -79,6 +79,7 @@ class LinkBuilder implements IRenderable {
      */
     public function setText(string $text) {
         $this->text = $text;
+        $this->setTitle($text);
 
         return $this;
     }

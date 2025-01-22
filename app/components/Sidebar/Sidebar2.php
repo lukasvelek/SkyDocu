@@ -62,11 +62,12 @@ class Sidebar2 extends AComponent {
      * @param bool $isActive Is link active?
      */
     public function addJSLink(string $title, string $jsHandler, bool $isActive = false) {
+        $_title = $title;
         if($isActive) {
-            $title = '<b>' . $title . '</b>';
+            $_title = '<b>' . $title . '</b>';
         }
 
-        $code = '<a class="sidebar-link" href="#" onclick="' . $jsHandler . '">' . $title . '</a>';
+        $code = '<a class="sidebar-link" href="#" onclick="' . $jsHandler . '" title="' . $title . '">' . $_title . '</a>';
 
         $this->links[] = $code;
     }
@@ -92,11 +93,12 @@ class Sidebar2 extends AComponent {
     protected function createLink(string $title, array $url, bool $isActive) {
         $url = $this->composeURL($url);
 
+        $_title = $title;
         if($isActive) {
-            $title = '<b>' . $title . '</b>';
+            $_title = '<b>' . $title . '</b>';
         }
 
-        $code = '<a class="sidebar-link" href="' . $url . '">' . $title . '</a>';
+        $code = '<a class="sidebar-link" href="' . $url . '" title="' . $title .'">' . $_title . '</a>';
         return $code;
     }
 

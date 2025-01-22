@@ -1190,7 +1190,7 @@ class GridBuilder extends AComponent {
             }
         }
 
-        return '<a class="link" href="#" onclick="' . $this->componentName . '_gridRefresh(' . implode(', ', $args) . ')">Refresh &orarr;</a>';
+        return '<a class="link" href="#" onclick="' . $this->componentName . '_gridRefresh(' . implode(', ', $args) . ')" title="Refresh grid">Refresh &orarr;</a>';
     }
 
     /**
@@ -1233,7 +1233,26 @@ class GridBuilder extends AComponent {
             }
         }
 
-        return '<button type="button" class="grid-control-button" onclick="' . $this->componentName . '_page(' . implode(', ', $args) . ')"' . ($disabled ? ' disabled' : '') . '>' . $text . '</button>';
+        $description = null;
+        switch($text) {
+            case '&lt;&lt;':
+                $description = 'Go to first page';
+                break;
+
+            case '&lt;':
+                $description = 'Go to previous page';
+                break;
+
+            case '&gt;':
+                $description = 'Go to next page';
+                break;
+
+            case '&gt;&gt;':
+                $description = 'Go to last page';
+                break;
+        }
+
+        return '<button type="button" class="grid-control-button" onclick="' . $this->componentName . '_page(' . implode(', ', $args) . ')"' . ($disabled ? ' disabled' : '') . ($description !== null ? (' title="' . $description . '"') : '') . '>' . $text . '</button>';
     }
 
     /**

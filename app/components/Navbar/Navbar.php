@@ -148,11 +148,6 @@ class Navbar extends AComponent {
     private function getUserProfileLink() {
         $link = null;
         switch($this->mode) {
-            case NavbarModes::SUPERADMINISTRATION:
-            case NavbarModes::SUPERADMINISTRATION_SETTINGS:
-                $link = NavbarSuperAdminLinks::USER_PROFILE;
-                break;
-
             case NavbarModes::GENERAL:
             case NavbarModes::ADMINISTRATION:
                 $link = NavbarGeneralLinks::USER_PROFILE;
@@ -163,7 +158,7 @@ class Navbar extends AComponent {
         }
 
         if($link === null) {
-            return '';
+            return '<span class="navbar-link" style="cursor: pointer" title="' . $this->user->getFullname() . '">' . $this->user->getFullname() . '</span>';
         }
 
         return $this->createLink($link, $this->user->getFullname());
@@ -206,7 +201,7 @@ class Navbar extends AComponent {
      * @return string HTML code
      */
     private function createLink(array $url, string $title) {
-        return '<a class="navbar-link" href="' . LinkBuilder::convertUrlArrayToString($url) . '">' . $title . '</a>';
+        return '<a class="navbar-link" href="' . LinkBuilder::convertUrlArrayToString($url) . '" title="' . $title . '">' . $title . '</a>';
     }
 
     public function render() {

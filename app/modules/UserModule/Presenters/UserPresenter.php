@@ -5,6 +5,7 @@ namespace App\Modules\UserModule;
 use App\Constants\Container\SystemGroups;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
+use App\Helpers\DateTimeFormatHelper;
 
 class UserPresenter extends AUserPresenter {
     public function __construct() {
@@ -35,7 +36,7 @@ class UserPresenter extends AUserPresenter {
 
         $addInfo('Full name', $user->getFullname());
         $addInfo('Email', ($user->getEmail() ?? '-'));
-        $addInfo('Member since', $user->getDateCreated());
+        $addInfo('Member since', DateTimeFormatHelper::formatDateToUserFriendly($user->getDateCreated()));
         $addInfo('ID', $user->getId());
 
         $this->saveToPresenterCache('userProfile', $userProfile);

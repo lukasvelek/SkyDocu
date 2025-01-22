@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Core\Http\Ajax;
+namespace App\Core\Http\Ajax\Operations;
 
 /**
  * Operation for updating an HTML element in the page around an AJAX call

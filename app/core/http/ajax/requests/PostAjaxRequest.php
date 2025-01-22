@@ -10,15 +10,11 @@ use App\Core\Http\HttpRequest;
  * @author Lukas Velek
  */
 class PostAjaxRequest extends AAjaxRequest {
-    private array $data;
-
     /**
      * Class constructor
      */
     public function __construct(HttpRequest $request) {
         parent::__construct($request);
-
-        $this->data = [];
         return $this;
     }
 
@@ -30,11 +26,9 @@ class PostAjaxRequest extends AAjaxRequest {
      */
     public function setData(array $data, bool $append = false): static {
         if($append) {
-            $this->data = array_merge($this->data, $data);
-        } else {
-            $this->data = $data;
+            $data = array_merge($this->data, $data);
         }
-        return $this;
+        return parent::setData($data);
     }
 
     public function build(): string {
@@ -51,19 +45,6 @@ class PostAjaxRequest extends AAjaxRequest {
         $code .= '}});';
 
         return $this->internalBuild($code);
-    }
-
-    /**
-     * Processes data payload
-     */
-    private function processData(): string {
-        $json = json_encode($this->data);
-
-        foreach($this->arguments as $argument) {
-            $json = str_replace('"' . $argument . '"', $argument, $json);
-        }
-
-        return $json;
     }
 }
 

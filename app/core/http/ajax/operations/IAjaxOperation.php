@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Core\Http\Ajax;
+namespace App\Core\Http\Ajax\Operations;
 
 /**
  * Common interface for all operations used in ajax requests

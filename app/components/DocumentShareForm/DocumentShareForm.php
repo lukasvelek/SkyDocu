@@ -2,8 +2,9 @@
 
 namespace App\Components\DocumetnShareForm;
 
-use App\Core\AjaxRequestBuilder;
-use App\Core\Http\Ajax\HTMLPageOperation;
+use App\Core\Http\Ajax\Operations\AlertOperation;
+use App\Core\Http\Ajax\Operations\CustomOperation;
+use App\Core\Http\Ajax\Operations\HTMLPageOperation;
 use App\Core\Http\Ajax\Requests\PostAjaxRequest;
 use App\Core\Http\HttpRequest;
 use App\Core\Http\JsonResponse;
@@ -85,11 +86,18 @@ class DocumentShareForm extends FormBuilder2 {
             ->setComponentUrl($this, 'searchUsers')
         ;
 
+        // update the element
         $update = new HTMLPageOperation();
         $update->setHtmlEntityId('user')
             ->setJsonResponseObjectName('users');
 
         $par->addOnFinishOperation($update);
+
+        // inform user if no users found
+        $informUser = new CustomOperation();
+        $informUser->addCode('if(obj.usersCount == 0) { ' . (new AlertOperation('No users found.'))->build() . ' }');
+
+        $par->addOnFinishOperation($informUser);
 
         $this->addScript($par);
         
@@ -100,7 +108,7 @@ class DocumentShareForm extends FormBuilder2 {
             if(_query.length == 0) {
                 alert("No username entered.");
             } else {
-                ' . $par->call('_query') . '
+                ' . $par->call('_query') . ';
                 $("#user").removeAttr("disabled");
             }
         }';

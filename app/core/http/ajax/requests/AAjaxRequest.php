@@ -3,7 +3,7 @@
 namespace App\Core\Http\Ajax\Requests;
 
 use App\Core\HashManager;
-use App\Core\Http\Ajax\IAjaxOperation;
+use App\Core\Http\Ajax\Operations\IAjaxOperation;
 use App\Core\Http\HttpRequest;
 use App\Core\Router;
 use App\Exceptions\GeneralException;
@@ -16,6 +16,10 @@ use App\UI\AComponent;
  */
 abstract class AAjaxRequest implements IAjaxRequest {
     private HttpRequest $request;
+    private bool $buildCheck;
+    private string $functionName;
+    private bool $isComponent;
+
     protected array $url;
     /**
      * @var array<int, IAjaxOperation> $onFinishOperations
@@ -25,10 +29,8 @@ abstract class AAjaxRequest implements IAjaxRequest {
      * @var array<int, IAjaxOperations> $beforeStartOperations
      */
     protected array $beforeStartOperations;
-    private string $functionName;
     protected array $arguments;
-    private bool $buildCheck;
-    private bool $isComponent;
+    protected array $data;
 
     /**
      * Abstract class constructor
@@ -42,6 +44,7 @@ abstract class AAjaxRequest implements IAjaxRequest {
         $this->arguments = [];
         $this->buildCheck = false;
         $this->isComponent = false;
+        $this->data = [];
 
         $this->functionName = $this->generateFunctionName();
     }
@@ -177,6 +180,29 @@ abstract class AAjaxRequest implements IAjaxRequest {
         }
 
         return $this->getFunctionName() . '(' . implode(', ', $finalParams) . ')';
+    }
+
+    /**
+     * Processes data payload
+     */
+    protected function processData(): string {
+        $json = json_encode($this->data);
+
+        foreach($this->arguments as $argument) {
+            $json = str_replace('"' . $argument . '"', $argument, $json);
+        }
+
+        return $json;
+    }
+
+    /**
+     * Sets the request's data payload
+     * 
+     * @param array $data Data
+     */
+    public function setData(array $data): static {
+        $this->data = $data;
+        return $this;
     }
 }
 

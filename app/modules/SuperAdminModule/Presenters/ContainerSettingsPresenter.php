@@ -145,7 +145,7 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
         $disabled = false;
         $statuses = [];
         foreach(ContainerStatus::getAll() as $key => $value) {
-            if($container->status == ContainerStatus::NEW || $container->status == ContainerStatus::IS_BEING_CREATED) {
+            if(in_array($container->status, [ContainerStatus::NEW, ContainerStatus::IS_BEING_CREATED, ContainerStatus::ERROR_DURING_CREATION])) {
                 $status = [
                     'text' => $value,
                     'value' => $key
@@ -182,7 +182,12 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
         $form->addTextArea('description', 'Description:')
             ->setRequired();
 
-        $form->addSubmit('Save');
+        $submit = $form->addSubmit('Save')
+            ->setDisabled($disabled);
+
+        if($disabled) {
+            $submit->addAttribute('title', 'Status cannot be changed currently.');
+        }
 
         return $form;
     }

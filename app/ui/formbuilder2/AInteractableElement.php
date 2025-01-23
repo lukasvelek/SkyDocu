@@ -24,7 +24,7 @@ abstract class AInteractableElement extends AElement {
      * 
      * @param string $text Placeholder text
      */
-    public function setPlaceholder(string $text) {
+    public function setPlaceholder(string $text): static {
         $this->addAttribute('placeholder', $text);
         return $this;
     }
@@ -34,7 +34,7 @@ abstract class AInteractableElement extends AElement {
      * 
      * @param bool $required True if the element is required
      */
-    public function setRequired(bool $required = true) {
+    public function setRequired(bool $required = true): static {
         $this->commonChangeUIParam('required', $required);
         $this->modifiers[] = 'required';
         parent::setRequired($required);
@@ -46,7 +46,7 @@ abstract class AInteractableElement extends AElement {
      * 
      * @param bool $disabled True if the element is disabled
      */
-    public function setDisabled(bool $disabled = true) {
+    public function setDisabled(bool $disabled = true): static {
         $this->commonChangeUIParam('disabled', $disabled);
         $this->modifiers[] = 'disabled';
         return $this;
@@ -91,7 +91,7 @@ abstract class AInteractableElement extends AElement {
      * 
      * @param string $jsHandler JS handler
      */
-    public function onChange(string $jsHandler) {
+    public function onChange(string $jsHandler): static {
         $this->addAttribute('onclick', $jsHandler);
         return $this;
     }

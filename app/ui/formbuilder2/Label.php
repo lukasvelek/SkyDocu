@@ -35,7 +35,7 @@ class Label extends AElement {
      * 
      * @param bool $required True if the element is required
      */
-    public function setRequired(bool $required = true) {
+    public function setRequired(bool $required = true): static {
         $this->required = $required;
         return $this;
     }
@@ -45,7 +45,7 @@ class Label extends AElement {
      * 
      * @param bool $title Is the element a title?
      */
-    public function setTitle(bool $title = true) {
+    public function setTitle(bool $title = true): static {
         $this->isTitle = $title;
         return $this;
     }

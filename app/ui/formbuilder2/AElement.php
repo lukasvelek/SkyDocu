@@ -29,7 +29,7 @@ abstract class AElement implements IRenderable {
      * @param string $name Attribute name
      * @param mixed $value Value or null if it is a modifier
      */
-    public function addAttribute(string $name, mixed $value = null) {
+    public function addAttribute(string $name, mixed $value = null): static {
         $this->attributes[$name] = $value;
         return $this;
     }
@@ -68,9 +68,8 @@ abstract class AElement implements IRenderable {
     /**
      * Hides the element
      */
-    public function setHidden(bool $hidden = true) {
+    public function setHidden(bool $hidden = true): static {
         $this->isHidden = $hidden;
-
         return $this;
     }
 
@@ -88,9 +87,8 @@ abstract class AElement implements IRenderable {
      * 
      * @param bool $required True if required or false if not
      */
-    public function setRequired(bool $required = true) {
+    public function setRequired(bool $required = true): static {
         $this->isRequired = $required;
-
         return $this;
     }
 

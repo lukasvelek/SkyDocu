@@ -91,7 +91,11 @@ class FormStateListHelper {
                 $stateList->$name->isReadonly = ($request->post('state')[$name]['readonly'] == 'true');
             }
             if(isset($request->post('state')[$name]['value'])) {
-                $stateList->$name->value = ($request->post('state')[$name]['value'] != 'null' ? $request->post('state')[$name]['value'] : null);
+                if($request->post('state')[$name]['value'] != 'null' && $request->post('state')[$name]['value'] != '') {
+                    $stateList->$name->value = $request->post('state')[$name]['value'];
+                } else {
+                    $stateList->$name->value = null;
+                }
             }
         }
 

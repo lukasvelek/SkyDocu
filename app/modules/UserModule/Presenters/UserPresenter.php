@@ -7,6 +7,7 @@ use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
 use App\Helpers\DateTimeFormatHelper;
+use App\Lib\Forms\Reducers\UserOutOfOfficeFormReducer;
 use App\UI\LinkBuilder;
 
 class UserPresenter extends AUserPresenter {
@@ -115,12 +116,17 @@ class UserPresenter extends AUserPresenter {
         $form->setAction($this->createURL('outOfOfficeForm'));
 
         $form->addDateInput('dateFrom', 'Date from:')
+            ->setMinimum(date('Y-m-d'))
             ->setRequired();
 
         $form->addDateInput('dateTo', 'Date to:')
+            ->setMinimum(date('Y-m-d'))
             ->setRequired();
 
         $form->addSubmit();
+
+        $form->setCallReducerOnChange();
+        $form->reducer = new UserOutOfOfficeFormReducer($request);
 
         return $form;
     }

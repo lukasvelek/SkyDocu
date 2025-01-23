@@ -36,7 +36,7 @@ class AboutApplicationWidget extends Widget {
     private function processData() {
         return [
             'Application version' => '1.2-dev',
-            'Application release date' => '-',
+            'Version release date' => '-',
             'Project github link' => $this->getGithubLink(),
             'PHP version' => $this->getPHPVersion()
         ];

@@ -11,11 +11,33 @@ class UserAbsenceRepository extends ARepository {
             ->where('userId = ?', [$userId])
             ->andWhere('dateFrom < current_timestamp()')
             ->andWhere('dateTo > current_timestamp()')
+            ->andWhere('active = 1')
             ->execute()
             ->limit(1)
             ->orderBy('dateCreated', 'DESC');
 
         return $qb->fetch();
+    }
+
+    public function insertUserAbsence(string $absenceId, string $userId, string $dateFrom, string $dateTo) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->insert('user_absence', ['absenceId', 'userId', 'dateFrom', 'dateTo'])
+            ->values([$absenceId, $userId, $dateFrom, $dateTo])
+            ->execute();
+
+        return $qb->fetchBool();
+    }
+
+    public function updateUserAbsence(string $absenceId, array $data) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->update('user_absence')
+            ->set($data)
+            ->where('absenceId = ?', [$absenceId])
+            ->execute();
+
+        return $qb->fetchBool();
     }
 }
 

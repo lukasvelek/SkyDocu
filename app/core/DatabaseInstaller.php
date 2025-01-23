@@ -144,7 +144,8 @@ class DatabaseInstaller {
                 'userId' => 'VARCHAR(256) NOT NULL',
                 'dateFrom' => 'DATETIME NOT NULL',
                 'dateTo' => 'DATETIME NOT NULL',
-                'dateCreated' => 'DATETIME NOT NULL DEFAULT current_timestamp()'
+                'dateCreated' => 'DATETIME NOT NULL DEFAULT current_timestamp()',
+                'active' => 'INT(2) NOT NULL DEFAULT 1'
             ],
         ];
 

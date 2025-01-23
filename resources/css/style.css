@@ -52,10 +52,9 @@ body {
 }
 
 .fm-info {
-    color: blue;
-    background-color: rgb(150, 200, 255);
-
-    border: 1px solid blue;
+    color: #133c55;
+    background-color: #84d2f6;
+    border: 1px solid #133c55;
 }
 
 .fm-error {

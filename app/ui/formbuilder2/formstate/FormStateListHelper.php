@@ -97,6 +97,12 @@ class FormStateListHelper {
                     $stateList->$name->value = null;
                 }
             }
+            if(isset($request->post('state')[$name]['min'])) {
+                $stateList->$name->minimum = $request->post('state')[$name]['min'];
+            }
+            if(isset($request->post('state')[$name]['max'])) {
+                $stateList->$name->maximum = $request->post('state')[$name]['max'];
+            }
         }
 
         return $stateList;

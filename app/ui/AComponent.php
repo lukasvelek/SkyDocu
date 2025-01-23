@@ -18,7 +18,7 @@ use Exception;
  * @version 1.0
  */
 abstract class AComponent extends AGUICore implements IRenderable {
-    protected HttpRequest $httpRequest;
+    public HttpRequest $httpRequest;
     protected string $componentName = 'Component';
     private bool $startupCheck = false;
     private bool $prerenderCheck = false;

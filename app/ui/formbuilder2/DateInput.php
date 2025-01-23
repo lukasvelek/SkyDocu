@@ -22,7 +22,10 @@ class DateInput extends AInput {
      * 
      * @param string $minimum Minimum value
      */
-    public function setMinimum(string $minimum): static {
+    public function setMinimum(?string $minimum): static {
+        if($minimum === null) {
+            return $this->removeAttribute('min');
+        }
         return $this->addAttribute('min', $minimum);
     }
 
@@ -31,7 +34,10 @@ class DateInput extends AInput {
      * 
      * @param string $maximum Maximum value
      */
-    public function setMaximum(string $maximum): static {
+    public function setMaximum(?string $maximum): static {
+        if($maximum === null) {
+            return $this->removeAttribute('max');
+        }
         return $this->addAttribute('max', $maximum);
     }
 }

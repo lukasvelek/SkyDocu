@@ -4,6 +4,7 @@ namespace App\UI\FormBuilder2\FormState;
 
 use App\UI\FormBuilder2\AElement;
 use App\UI\FormBuilder2\AInput;
+use App\UI\FormBuilder2\DateInput;
 use App\UI\FormBuilder2\FormBuilder2;
 use App\UI\FormBuilder2\Select;
 use App\UI\FormBuilder2\TextArea;
@@ -34,6 +35,7 @@ class StateListToForm {
     public function apply() {
         $keys = $this->stateList->getKeys();
 
+        // Goes through all elements in the statelist
         foreach($keys as $key) {
             $element = &$this->form->elements[$key];
 
@@ -42,12 +44,21 @@ class StateListToForm {
             
             $this->applyElementAttribute('isReadonly', $key, $element, 'readonly');
 
+            // Value handling
             if($element instanceof Select) {
                 $element->setSelectedValue($this->stateList->$key->value);
             } else if($element instanceof AInput) {
                 $element->setValue($this->stateList->$key->value);
             } else if($element instanceof TextArea) {
                 $element->setContent($this->stateList->$key->value);
+            }
+
+            // Minimum and Maximum
+            if($this->form->httpRequest->isAjax) {
+                if($element instanceof DateInput) {
+                    $element->setMinimum($this->stateList->$key->minimum);
+                    $element->setMaximum($this->stateList->$key->maximum);
+                }
             }
         }
     }

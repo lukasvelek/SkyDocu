@@ -25,6 +25,7 @@ class EntityManager extends AManager {
     public const CONTAINER_USAGE_STATISTICS = 'container_usage_statistics';
     public const CONTAINER_INVITES = 'container_invites';
     public const CONTAINER_INVITE_USAGE = 'container_invite_usage';
+    public const USER_ABSENCE = 'user_absence';
 
     public const C_GROUPS = 'groups';
     public const C_DOCUMENT_CLASSES = 'document_classes';
@@ -136,6 +137,7 @@ class EntityManager extends AManager {
             self::CONTAINER_USAGE_STATISTICS => 'entryId',
             self::CONTAINER_INVITES => 'inviteId',
             self::CONTAINER_INVITE_USAGE => 'entryId',
+            self::USER_ABSENCE => 'absenceId',
 
             self::C_GROUPS => 'groupId',
             self::C_DOCUMENT_CLASSES => 'classId',

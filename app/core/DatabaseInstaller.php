@@ -139,6 +139,13 @@ class DatabaseInstaller {
                 'status' => 'INT(4) NOT NULL DEFAULT 1',
                 'dateCreated' => 'DATETIME NOT NULL DEFAULT current_timestamp()'
             ],
+            'user_absence' => [
+                'absenceId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',
+                'userId' => 'VARCHAR(256) NOT NULL',
+                'dateFrom' => 'DATETIME NOT NULL',
+                'dateTo' => 'DATETIME NOT NULL',
+                'dateCreated' => 'DATETIME NOT NULL DEFAULT current_timestamp()'
+            ],
         ];
 
         $i = 0;

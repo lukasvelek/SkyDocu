@@ -18,6 +18,7 @@ Future plans include:
 - New widgets (__1.3__)
     - For in-container Administration-System-Dashboard
     - For in-container Dashboard
+- Dark theme support (__1.4__)
 
 ## Changelog
 ### 1.2 (?)

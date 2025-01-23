@@ -12,10 +12,10 @@ The web application is written purely in PHP with a few JS scripts. These JS scr
 These future plans are also in Issues list and can be distinguished by their milestone.
 
 Future plans include:
-- Archive
-- Widget / Component skeletons
+- Archive (__1.3__)
+- Widget / Component skeletons (__1.3__)
     - Instead of a loading loop icon
-- New widgets
+- New widgets (__1.3__)
     - For in-container Administration-System-Dashboard
     - For in-container Dashboard
 

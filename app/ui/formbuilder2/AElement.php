@@ -35,6 +35,18 @@ abstract class AElement implements IRenderable {
     }
 
     /**
+     * Removes an attribute
+     * 
+     * @param string $name Attribute name
+     */
+    public function removeAttribute(string $name): static {
+        if(array_key_exists($name, $this->attributes)) {
+            unset($this->attributes[$name]);
+        }
+        return $this;
+    }
+
+    /**
      * Separates attributes with values and without values
      * 
      * @param array &$attributesWithValue Attributes with value array

@@ -15,6 +15,8 @@ class FormState {
     public bool $isReadonly;
     public mixed $defaultValue;
     public mixed $value;
+    public mixed $minimum;
+    public mixed $maximum;
 
     /**
      * Class constructor
@@ -28,6 +30,8 @@ class FormState {
         $this->isReadonly = false;
         $this->defaultValue = null;
         $this->value = null;
+        $this->minimum = null;
+        $this->maximum = null;
     }
 }
 

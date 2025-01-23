@@ -195,7 +195,9 @@ class FormBuilder2 extends AComponent {
             'hidden',
             'required',
             'readonly',
-            'value'
+            'value',
+            'min',
+            'max'
         ];
 
         $code = 'function getFormState() {';
@@ -211,12 +213,12 @@ class FormBuilder2 extends AComponent {
             if($name == 'btn_submit') continue;
 
             foreach($attributes as $attr) {
-                if($attr == 'value') {
-                    $code .= 'if(' . $name . '_' . $attr . ' == null) { ' . $name . '_attr = "null"; }';
+                if(in_array($attr, ['value', 'min', 'max'])) {
+                    $code .= 'if(' . $name . '_' . $attr . ' === undefined || ' . $name . '_' . $attr . ' === false || ' . $name . '_' . $attr . ' === "") { ' . $name . '_' . $attr . ' = "null"; }';
                     continue;
                 }
 
-                $code .= 'if(' . $name . '_' . $attr . ' == null) { ' . $name . '_attr = false; }';
+                $code .= 'if(' . $name . '_' . $attr . ' === undefined || ' . $name . '_' . $attr . ' === false || ' . $name . '_' . $attr . ' === "") { ' . $name . '_' . $attr . ' = false; }';
             }
         }
 

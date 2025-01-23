@@ -101,7 +101,11 @@ class FolderManager extends AManager {
             }
         }
 
-        $this->cacheFactory->invalidateCacheByNamespace(CacheNames::FOLDER_SUBFOLDERS_MAPPING);
+        if(!$this->cacheFactory->invalidateCacheByNamespace(CacheNames::FOLDER_SUBFOLDERS_MAPPING) ||
+            !$this->cacheFactory->invalidateCacheByNamespace(CacheNames::VISIBLE_FOLDER_IDS_FOR_GROUP) ||
+            !$this->cacheFactory->invalidateCacheByNamespace(CacheNames::VISIBLE_FOLDERS_FOR_USER)) {
+            throw new GeneralException('Could not invalidate cache.');
+        }
     }
 
     public function updateGroupFolderRight(string $folderId, string $groupId, bool $canView = true, bool $canCreate = false, bool $canEdit = false, bool $canDelete = false) {

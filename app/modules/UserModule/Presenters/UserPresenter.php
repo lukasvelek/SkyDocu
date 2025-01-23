@@ -6,6 +6,7 @@ use App\Constants\Container\SystemGroups;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
 use App\Helpers\DateTimeFormatHelper;
+use App\UI\LinkBuilder;
 
 class UserPresenter extends AUserPresenter {
     public function __construct() {
@@ -43,11 +44,21 @@ class UserPresenter extends AUserPresenter {
         // END OF USER PROFILE
 
         $this->setTitle('User profile');
+
+        $links = [];
+        if($this->getUserId() == $userId) {
+            // current user
+
+            $links[] = LinkBuilder::createSimpleLink('Set out-of-office', $this->createURL('outOfOfficeForm'), 'link');
+        }
+
+        $this->saveToPresenterCache('links', implode('&nbsp;&nbsp;', $links));
     }
 
     public function renderProfile() {
         $this->template->username = $this->loadFromPresenterCache('username');
         $this->template->user_profile = $this->loadFromPresenterCache('userProfile');
+        $this->template->links = $this->loadFromPresenterCache('links');
     }
 
     protected function createComponentUserGroupMembershipsGrid(HttpRequest $request) {

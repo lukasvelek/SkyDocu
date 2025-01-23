@@ -285,7 +285,7 @@ class ContainerManager extends AManager {
 
     public function changeContainerCreationStatus(string $containerId, int $percent, ?string $description) {
         $data = [
-            'percentFinished' => $percent,
+            'percentFinished' => (string)$percent,
             'description' => $description
         ];
 

@@ -3,6 +3,7 @@
 namespace App\Managers;
 
 use App\Core\DB\DatabaseRow;
+use App\Exceptions\GeneralException;
 use App\Logger\Logger;
 use App\Repositories\UserSubstituteRepository;
 
@@ -51,6 +52,40 @@ class UserSubstituteManager extends AManager {
             return DatabaseRow::createFromDbRow($this->mUserSubstituteCache[$userId]);
         } else {
             return null;
+        }
+    }
+
+    /**
+     * Sets given user's substitute
+     * 
+     * @param string $userId User ID
+     * @param string $substituteUserId Substitute user ID
+     * @throws GeneralException
+     */
+    public function setUserAbstitute(string $userId, string $substituteUserId) {
+        if($this->hasUserSubstitute($userId)) {
+            // update
+            if(!$this->userSubstituteRepository->updateUserSubstitute($userId, $substituteUserId)) {
+                throw new GeneralException('Database error.');
+            }
+        } else {
+            // insert
+            $entryId = $this->createId(EntityManager::USER_SUBSTITUTES);
+            if(!$this->userSubstituteRepository->insertUserSubstitute($entryId, $userId, $substituteUserId)) {
+                throw new GeneralException('Database error.');
+            }
+        }
+    }
+
+    /**
+     * Removes user's substitute
+     * 
+     * @param string $userId User ID
+     * @throws GeneralException
+     */
+    public function removeUserSubstitute(string $userId) {
+        if(!$this->userSubstituteRepository->removeUserSubstitute($userId)) {
+            throw new GeneralException('Database error.');
         }
     }
 }

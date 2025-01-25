@@ -2,6 +2,7 @@
 
 namespace App\Modules\UserModule;
 
+use App\Components\UserSubstituteForm\UserSubstituteForm;
 use App\Constants\Container\SystemGroups;
 use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
@@ -55,8 +56,19 @@ class UserPresenter extends AUserPresenter {
                 $links[] = LinkBuilder::createSimpleLink('Set out-of-office', $this->createURL('outOfOfficeForm'), 'link');
             } else {
                 $absence = $this->app->userAbsenceManager->getUserCurrentAbsence($this->getUserId());
-                $links[] = '<span>You are currently out-of-office until: ' . DateTimeFormatHelper::formatDateToUserFriendly($absence->dateTo, 'd.m.Y') . '. </span>';
+                $links[] = '<span>You are currently out-of-office until: ' . DateTimeFormatHelper::formatDateToUserFriendly($absence->dateTo, 'd.m.Y') . '.</span>';
                 $links[] = LinkBuilder::createSimpleLink('Clear out-of-office', $this->createURL('clearOutOfOffice', ['absenceId' => $absence->absenceId]), 'link');
+            }
+
+            $links[] = '<span>|</span>';
+
+            if(!$this->app->userSubstituteManager->hasUserSubstitute($this->getUserId())) {
+                $links[] = LinkBuilder::createSimpleLink('Set substitute', $this->createURL('substituteForm'), 'link');
+            } else {
+                $substitute = $this->app->userSubstituteManager->getUserSubstitute($this->getUserId());
+                $substituteUser = $this->app->userManager->getUserById($substitute->substituteUserId);
+                $links[] = '<span>Your substitute: ' . $substituteUser->getFullname() . '.</span>';
+                $links[] = LinkBuilder::createSimpleLink('Set substitute', $this->createURL('substituteForm'), 'link');
             }
         }
 
@@ -149,6 +161,41 @@ class UserPresenter extends AUserPresenter {
         }
 
         $this->redirect($this->createURL('profile', ['userId' => $this->getUserId()]));
+    }
+
+    public function handleSubstituteForm(?FormRequest $fr = null) {
+        if($fr !== null) {
+            $data = $fr->getData();
+
+            try {
+                $this->app->userSubstituteRepository->beginTransaction(__METHOD__);
+
+                $this->app->userSubstituteManager->setUserAbstitute($this->getUserId(), $data['user']);
+
+                $this->app->userSubstituteRepository->commit($this->getUserId(), __METHOD__);
+
+                $this->flashMessage('Successfully changed substitute.', 'success');
+            } catch(AException $e) {
+                $this->app->userSubstituteRepository->rollback(__METHOD__);
+
+                $this->flashMessage('Could not change substitute. Reason: ' . $e->getMessage(), 'error', 10);
+            }
+
+            $this->redirect($this->createURL('profile', ['userId' => $this->getUserId()]));
+        }
+    }
+
+    public function renderSubstituteForm() {
+        $this->template->links = $this->createBackUrl('profile', ['userId' => $this->getUserId()]);
+    }
+
+    protected function createComponentSubstituteForm(HttpRequest $request) {
+        $form = new UserSubstituteForm($request, $this->app->userRepository);
+
+        $form->setCurrentUserId($this->getUserId());
+        $form->setAction($this->createURL('substituteForm'));
+
+        return $form;
     }
 }
 

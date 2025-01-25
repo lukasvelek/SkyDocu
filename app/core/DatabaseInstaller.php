@@ -147,6 +147,11 @@ class DatabaseInstaller {
                 'dateCreated' => 'DATETIME NOT NULL DEFAULT current_timestamp()',
                 'active' => 'INT(2) NOT NULL DEFAULT 1'
             ],
+            'user_substitutes' => [
+                'entryId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',
+                'userId' => 'VARCHAR(256) NOT NULL',
+                'substituteUserId' => 'VARCHAR(256) NOT NULL'
+            ]
         ];
 
         $i = 0;

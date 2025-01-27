@@ -2,7 +2,7 @@
 SkyDocu is a web DMS that has been created to be run in a cloud. It has a superadministration where the superadministrator can manage containers.
 Containers are instances of DMS applications for customers.
 
-Current version: ___1.2___
+Current version: ___1.3-dev___
 Latest version: ___1.2___ (January 27th, 2025)
 
 ## Tech stack

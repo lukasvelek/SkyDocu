@@ -39,6 +39,18 @@ class UserAbsenceRepository extends ARepository {
 
         return $qb->fetchBool();
     }
+
+    public function composeQueryForCurrentlyAbsentUsers() {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->select(['*'])
+            ->from('user_absence')
+            ->Where('dateFrom < current_timestamp()')
+            ->andWhere('dateTo > current_timestamp()')
+            ->andWhere('active = 1');
+
+        return $qb;
+    }
 }
 
 ?>

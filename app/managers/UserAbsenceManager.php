@@ -13,7 +13,7 @@ use App\Repositories\UserAbsenceRepository;
  * @author Lukas Velek
  */
 class UserAbsenceManager extends AManager {
-    private UserAbsenceRepository $userAbsenceRepository;
+    public UserAbsenceRepository $userAbsenceRepository;
     private array $mUserAbsenceCache;
 
     public function __construct(Logger $logger, EntityManager $entityManager, UserAbsenceRepository $userAbsenceRepository) {

@@ -3,11 +3,9 @@
 namespace App\Services;
 
 use App\Constants\Container\StandaloneProcesses;
-use App\Constants\ContainerStatus;
 use App\Core\DB\DatabaseManager;
 use App\Core\ServiceManager;
 use App\Exceptions\AException;
-use App\Exceptions\GeneralException;
 use App\Logger\Logger;
 use App\Managers\Container\GroupManager;
 use App\Managers\Container\ProcessManager;
@@ -72,9 +70,9 @@ class ContainerStandaloneProcessCheckerService extends AService {
             $entityManager = new EntityManager($this->logger, $contentRepository);
             $userSubstituteRepository = new UserSubstituteRepository($this->serviceManager->systemServicesRepository->conn, $this->logger);
             $userAbsenceRepository = new UserAbsenceRepository($this->serviceManager->systemServicesRepository->conn, $this->logger);
-
             $processRepository = new ProcessRepository($containerConnection, $this->logger);
             $groupRepository = new GroupRepository($containerConnection, $this->logger);
+
             $groupManager = new GroupManager($this->logger, $entityManager, $groupRepository, $this->userRepository);
             $userSubstituteManager = new UserSubstituteManager($this->logger, $this->entityManager, $userSubstituteRepository);
             $userAbsenceManager = new UserAbsenceManager($this->logger, $this->entityManager, $userAbsenceRepository);

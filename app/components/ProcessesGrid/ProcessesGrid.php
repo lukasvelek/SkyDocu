@@ -156,6 +156,7 @@ class ProcessesGrid extends GridBuilder implements IGridExtendingComponent {
     private function appendCurrentOfficer(string $colName, string $colTitle) {
         $col = $this->addColumnUser($colName, $colTitle);
         $col->onRenderColumn[] = function(DatabaseRow $row, Row $_row, Cell $cell, HTML $html, mixed $value) {
+            $el = HTML::el('span');
             if($row->currentOfficerSubstituteUserId !== null) {
                 $username = '-';
                 try {
@@ -163,12 +164,11 @@ class ProcessesGrid extends GridBuilder implements IGridExtendingComponent {
                     $username = $user->getFullname();
                 } catch(AException $e) {}
 
-                $el = HTML::el('span');
-
                 $el->text($value . ' (<i title="Current officer\'s substitute">' . $username . '</i>)');
-
-                return $el;
+            } else {
+                $el->text($value);
             }
+            return $el;
         };
     }
 

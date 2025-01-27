@@ -42,6 +42,8 @@ use ReflectionClass;
  * @author Lukas Velek
  */
 class Application {
+    public const APP_VERSION = '1.2';
+
     private array $modules;
     public ?UserEntity $currentUser;
 

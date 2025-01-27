@@ -3,6 +3,7 @@
 namespace App\Components\Widgets\AboutApplicationWidget;
 
 use App\Components\Widgets\Widget;
+use App\Core\Application;
 use App\Core\Http\HttpRequest;
 use App\UI\HTML\HTML;
 
@@ -35,7 +36,7 @@ class AboutApplicationWidget extends Widget {
      */
     private function processData() {
         return [
-            'Application version' => '1.2-dev',
+            'Application version' => Application::APP_VERSION,
             'Version release date' => '-',
             'Project github link' => $this->getGithubLink(),
             'PHP version' => $this->getPHPVersion()

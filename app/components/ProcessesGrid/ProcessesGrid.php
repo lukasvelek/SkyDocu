@@ -148,6 +148,31 @@ class ProcessesGrid extends GridBuilder implements IGridExtendingComponent {
     }
 
     /**
+     * Appends current officer to the grid. If the current officer has a substitute and this substitute is set in "currentOfficerSubstituteUserId" column, they are also displayed.
+     * 
+     * @param string $colName Column name
+     * @param string $colTitle Column title
+     */
+    private function appendCurrentOfficer(string $colName, string $colTitle) {
+        $col = $this->addColumnUser($colName, $colTitle);
+        $col->onRenderColumn[] = function(DatabaseRow $row, Row $_row, Cell $cell, HTML $html, mixed $value) {
+            if($row->currentOfficerSubstituteUserId !== null) {
+                $username = '-';
+                try {
+                    $user = $this->app->userManager->getUserById($row->currentOfficerSubstituteUserId);
+                    $username = $user->getFullname();
+                } catch(AException $e) {}
+
+                $el = HTML::el('span');
+
+                $el->text($value . ' (<i title="Current officer\'s substitute">' . $username . '</i>)');
+
+                return $el;
+            }
+        };
+    }
+
+    /**
      * Appends system metadata to grid
      */
     private function appendSystemMetadata() {
@@ -158,8 +183,12 @@ class ProcessesGrid extends GridBuilder implements IGridExtendingComponent {
 
             switch($name) {
                 case ProcessesGridSystemMetadata::AUTHOR_USER_ID:
-                case ProcessesGridSystemMetadata::CURRENT_OFFICER_USER_ID:
                     $this->addColumnUser($name, $text);
+                    break;
+
+                case ProcessesGridSystemMetadata::CURRENT_OFFICER_USER_ID:
+                    $this->appendCurrentOfficer($name, $text);
+
                     break;
 
                 case ProcessesGridSystemMetadata::DATE_CREATED:
@@ -167,7 +196,7 @@ class ProcessesGrid extends GridBuilder implements IGridExtendingComponent {
                     break;
 
                 case ProcessesGridSystemMetadata::DOCUMENT_ID:
-                    $dataSource = clone $this->filledDataSource;
+                    $dataSource = $this->filledDataSource;
 
                     $documentIds = [];
                     while($row = $dataSource->fetchAssoc()) {

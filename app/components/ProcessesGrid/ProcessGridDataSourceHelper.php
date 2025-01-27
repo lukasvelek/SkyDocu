@@ -74,7 +74,8 @@ class ProcessGridDataSourceHelper {
      */
     private function composeQueryWaitingForMe(string $currentUserId) {
         $qb = $this->processRepository->commonComposeQuery();
-        $qb->andWhere('currentOfficerUserId = ?', [$currentUserId]);
+        $qb->andWhere('(currentOfficerUserId = :currentOfficer OR currentOfficerSubstituteUserId = :currentOfficer)')
+            ->setParams([':currentOfficer' => $currentUserId]);
         return $qb;
     }
 
@@ -96,7 +97,7 @@ class ProcessGridDataSourceHelper {
      */
     private function composeQueryFinished(string $currentUserId) {
         $qb = $this->processRepository->commonComposeQuery(false);
-        $qb->andWhere('authorUserId = :author OR currentOfficerUserId = :currentOfficer OR workflowUserIds LIKE :workflow');
+        $qb->andWhere('authorUserId = :author OR currentOfficerUserId = :currentOfficer OR workflowUserIds LIKE :workflow OR currentOfficerSubstituteUserId = :currentOfficer');
         $qb->setParams([':author' => $currentUserId, ':currentOfficer' => $currentUserId, ':workflow' => '%' . $currentUserId . '%']);
         $qb->andWhere('status = ?', [ProcessStatus::FINISHED]);
         return $qb;

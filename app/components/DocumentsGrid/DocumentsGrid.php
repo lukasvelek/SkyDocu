@@ -158,9 +158,10 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
     private function setup() {
         if(!$this->showShared) {
             $this->addQueryDependency('folderId', $this->getFolderId());
-            $this->addQueryDependency('query', $this->quickSearchQuery);
         }
         $this->setGridName(GridNames::DOCUMENTS_GRID);
+        
+        $this->addQuickSearch('title', 'Title');
     }
 
     /**
@@ -608,6 +609,8 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
     }
 
     public function actionQuickSearch(): JsonResponse {
+        $this->quickSearchQuery = $this->httpRequest->post('query');
+
         $this->prerender();
 
         return parent::actionQuickSearch();

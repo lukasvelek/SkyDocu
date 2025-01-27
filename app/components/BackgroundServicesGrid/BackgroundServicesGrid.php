@@ -5,6 +5,7 @@ namespace App\Components\BackgroundServicesGrid;
 use App\Constants\SystemServiceStatus;
 use App\Core\Application;
 use App\Core\DB\DatabaseRow;
+use App\Core\Http\JsonResponse;
 use App\Helpers\GridHelper;
 use App\Repositories\SystemServicesRepository;
 use App\UI\GridBuilder2\GridBuilder;
@@ -64,6 +65,8 @@ class BackgroundServicesGrid extends GridBuilder implements IGridExtendingCompon
      */
     private function setup() {
         $this->setGridName(GridHelper::GRID_BACKGROUND_SERVICES);
+
+        $this->addQuickSearch('title', 'Title');
     }
 
     /**
@@ -107,6 +110,14 @@ class BackgroundServicesGrid extends GridBuilder implements IGridExtendingCompon
         $this->addColumnDatetime('dateStarted', 'Service started');
         $this->addColumnDatetime('dateEnded', 'Service ended');
         $this->addColumnConst('status', 'Status', SystemServiceStatus::class);
+    }
+    
+    public function actionQuickSearch(): JsonResponse {
+        $this->quickSearchQuery = $this->httpRequest->post('query');
+
+        $this->prerender();
+
+        return parent::actionQuickSearch();
     }
 }
 

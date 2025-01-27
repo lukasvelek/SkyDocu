@@ -54,6 +54,8 @@ class ContainersPresenter extends ASuperAdminPresenter {
 
             return $el;
         };
+
+        $grid->addQuickSearch('title', 'Title');
         
         return $grid;
     }

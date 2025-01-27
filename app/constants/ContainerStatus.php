@@ -33,7 +33,7 @@ class ContainerStatus extends AConstant implements IColorable, IBackgroundColora
     public static function getBackgroundColor($key): ?string {
         return match((int)$key) {
             self::NEW => 'lightgrey',
-            self::IS_BEING_CREATED => 'lightorange',
+            self::IS_BEING_CREATED => 'yellow',
             self::RUNNING => 'lightgreen',
             self::NOT_RUNNING => 'pink',
             self::ERROR_DURING_CREATION => 'pink',

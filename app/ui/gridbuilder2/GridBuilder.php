@@ -539,10 +539,12 @@ class GridBuilder extends AComponent {
                 $conditions[] = $filter['colName'] . ' LIKE :quickSearchQuery';
             }
 
-            $tmp = '(' . implode(' OR ', $conditions) . ')';
+            if(!empty($conditions)) {
+                $tmp = '(' . implode(' OR ', $conditions) . ')';
 
-            $qb->andWhere($tmp)
-                ->setParams([':quickSearchQuery' => '%' . $this->quickSearchQuery . '%']);
+                $qb->andWhere($tmp)
+                    ->setParams([':quickSearchQuery' => '%' . $this->quickSearchQuery . '%']);
+            }
         }
 
         return $qb;
@@ -581,6 +583,9 @@ class GridBuilder extends AComponent {
      */
     public function prerender() {
         parent::prerender();
+        if($this->quickSearchQuery !== null) {
+            $this->addQueryDependency('query', $this->quickSearchQuery);
+        }
         $this->getActiveFiltersFromCache();
         $this->fetchDataFromDb(true);
         $this->isPrerendered = true;
@@ -1668,7 +1673,9 @@ class GridBuilder extends AComponent {
      * Handles Quick Search
      */
     public function actionQuickSearch(): JsonResponse {
-        $this->quickSearchQuery = $this->httpRequest->post('query');
+        if($this->quickSearchQuery === null) {
+            $this->quickSearchQuery = $this->httpRequest->post('query');
+        }
 
         if(!($this instanceof IGridExtendingComponent)) {
             $this->build();

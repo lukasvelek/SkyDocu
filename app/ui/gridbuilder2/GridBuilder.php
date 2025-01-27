@@ -169,13 +169,11 @@ class GridBuilder extends AComponent {
      * Clears active filters (in cache)
      */
     protected function clearActiveFilters() {
-        /*$cache = $this->cacheFactory->getCache(CacheNames::GRID_FILTER_DATA);
+        $cache = $this->cacheFactory->getCache(CacheNames::GRID_FILTER_DATA);
 
         $cache->save($this->gridName . $this->app->currentUser?->getId(), function() {
             return [];
-        });*/
-
-        $this->cacheFactory->invalidateCacheByNamespace(CacheNames::GRID_FILTER_DATA);
+        });
 
         $this->activeFilters = [];
     }
@@ -260,7 +258,7 @@ class GridBuilder extends AComponent {
      * @param string $placeholderText Text that will be displayed as a place holder
      */
     public function addQuickSearch(string $colName, string $placeholderText) {
-        $this->quickSearchFilter = ['colName' => $colName, 'placeholderText' => $placeholderText];
+        $this->quickSearchFilter[] = ['colName' => $colName, 'placeholderText' => $placeholderText];
     }
 
     /**
@@ -536,7 +534,14 @@ class GridBuilder extends AComponent {
         }
 
         if($this->quickSearchQuery !== null) {
-            $qb->andWhere($this->quickSearchFilter['colName'] . ' LIKE :quickSearchQuery')
+            $conditions = [];
+            foreach($this->quickSearchFilter as $filter) {
+                $conditions[] = $filter['colName'] . ' LIKE :quickSearchQuery';
+            }
+
+            $tmp = '(' . implode(' OR ', $conditions) . ')';
+
+            $qb->andWhere($tmp)
                 ->setParams([':quickSearchQuery' => '%' . $this->quickSearchQuery . '%']);
         }
 
@@ -592,7 +597,7 @@ class GridBuilder extends AComponent {
             if($this->dataSource === null) {
                 throw new GeneralException('No data source is set.');
             }
-    
+
             $dataSource = clone $this->dataSource;
     
             $this->processQueryBuilderDataSource($dataSource);
@@ -1397,7 +1402,12 @@ class GridBuilder extends AComponent {
 
         if(!empty($this->quickSearchFilter)) {
             $input = new TextInput($this->componentName . '_search');
-            $input->setPlaceholder($this->quickSearchFilter['placeholderText']);
+            $texts = [];
+            foreach($this->quickSearchFilter as $filter) {
+                $texts[] = $filter['placeholderText'];
+            }
+            $placeholderText = implode(', ', $texts);
+            $input->setPlaceholder($placeholderText);
             if($this->quickSearchQuery !== null) {
                 $input->setValue($this->quickSearchQuery);
             }

@@ -27,6 +27,11 @@ Future plans include:
 
 ## Changelog
 ### 1.3 (?)
+- Grid searching
+    - Containers grid
+    - In-container Documents grid
+    - In-container Users grid
+    - In-conatiner Groups grid
 
 ### 1.2 (January 27th, 2025)
 - Code readability update

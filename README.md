@@ -26,7 +26,9 @@ Future plans include:
 - Grid searching (__1.3__)
 
 ## Changelog
-### 1.2 (?)
+### 1.3 (?)
+
+### 1.2 (January 27th, 2025)
 - Code readability update
 - Superadministration about application page
 - ErrorModule implementation

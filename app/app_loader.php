@@ -153,23 +153,45 @@ function requireFiles(array $files, bool $createContainer) {
 }
 
 function checkDefines() {
-    if(!defined('CACHE_DIR')) {
-        throw new UndefinedConstantException('CACHE_DIR');
+    $defines = [
+        'CACHE_DIR',
+        'LOG_LEVEL',
+        'SQL_LOG_LEVEL',
+        'LOG_STOPWATCH',
+        'LOG_DIR',
+        'CONTAINERS_DIR',
+        'APP_ABSOLUTE_DIR',
+        'PHP_ABSOLUTE_DIR',
+        'APP_HOSTNAME',
+        'APP_URL',
+        'GRID_SIZE',
+        'MAX_GRID_EXPORT_SIZE',
+        'MAX_CONTAINER_DOCUMENT_FOLDER_NESTING_LEVEL',
+        'DB_SERVER',
+        'DB_USER',
+        'DB_PASS',
+        'DB_MASTER_NAME'
+    ];
+    foreach($defines as $define) {
+        if(!defined($define)) {
+            throw new UndefinedConstantException($define);
+        }
     }
 }
 
 /**
  * Principle of loading application files:
  * 
- * 1. The loader tries to obtain a "container" that contains a sorted list of paths to found necessary files
- * 2A. If the "container" does not exist, the loader search for all files (except for folders, files or file extensions defined)
- * 2A2. The loader sorts these files as: Interfacers, Abstract classes and Classes
+ * 1. Necessary defines are checked for existence
+ * 2. The loader tries to obtain a "container" that contains a sorted list of paths to found necessary files
+ * 3A. If the "container" does not exist, the loader search for all files (except for folders, files or file extensions defined)
+ * 3A2. The loader sorts these files as: Interfacers, Abstract classes and Classes
  *          - the Classes are sorted accordingly to the extending classes
  *                  - e.g.: class A extends class B -> class B is loaded before class A
  * 
- * 2B. The container is found and the sorted files are loaded as an array
- * 3. Files are looped through and "required"
- * (4. If the container didn't exist in the first place, it is also created)
+ * 3B. The container is found and the sorted files are loaded as an array
+ * 4. Files are looped through and "required"
+ * (5. If the container didn't exist in the first place, it is also created)
  */
 
 checkDefines();

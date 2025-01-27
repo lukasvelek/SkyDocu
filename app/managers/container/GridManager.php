@@ -11,16 +11,16 @@ use App\Managers\EntityManager;
 use App\Repositories\Container\GridRepository;
 
 class GridManager extends AManager {
-    private GridRepository $gr;
+    private GridRepository $gridRepository;
 
-    public function __construct(Logger $logger, EntityManager $entityManager, GridRepository $gr) {
+    public function __construct(Logger $logger, EntityManager $entityManager, GridRepository $gridRepository) {
         parent::__construct($logger, $entityManager);
 
-        $this->gr = $gr;
+        $this->gridRepository = $gridRepository;
     }
 
     public function getGridConfigurationForGridName(string $gridName) {
-        $row = $this->gr->getGridConfigurationForGridName($gridName);
+        $row = $this->gridRepository->getGridConfigurationForGridName($gridName);
 
         if($row === null) {
             return null;
@@ -40,29 +40,29 @@ class GridManager extends AManager {
     public function createGridConfiguration(string $gridName, array $columns) {
         $configurationId = $this->createId(EntityManager::C_GRID_CONFIGURATION);
 
-        if(!$this->gr->insertGridConfiguration($configurationId, $gridName, $this->processColumnsArrayToString($columns))) {
+        if(!$this->gridRepository->insertGridConfiguration($configurationId, $gridName, $this->processColumnsArrayToString($columns))) {
             throw new GeneralException('Database error.');
         }
     }
 
     public function updateGridConfiguration(string $gridName, array $columns) {
-        if(!$this->gr->updateGridConfiguration($gridName, $this->processColumnsArrayToString($columns))) {
+        if(!$this->gridRepository->updateGridConfiguration($gridName, $this->processColumnsArrayToString($columns))) {
             throw new GeneralException('Database error.');
         }
     }
 
     public function deleteGridConfiguration(string $gridName) {
-        if(!$this->gr->deleteGridConfiguration($gridName)) {
+        if(!$this->gridRepository->deleteGridConfiguration($gridName)) {
             throw new GeneralException('Database error.');
         }
     }
 
     public function composeQueryForGridConfigurations() {
-        return $this->gr->composeQueryForGridConfigurations();
+        return $this->gridRepository->composeQueryForGridConfigurations();
     }
 
     public function getGridsWithNoConfiguration(bool $forSelect) {
-        $qb = $this->gr->composeQueryForGridConfigurations();
+        $qb = $this->gridRepository->composeQueryForGridConfigurations();
         $qb->execute();
 
         $gridsDb = [];

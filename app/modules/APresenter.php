@@ -9,7 +9,10 @@ use App\Core\Caching\CacheNames;
 use App\Core\Datatypes\ArrayList;
 use App\Core\Datetypes\DateTime;
 use App\Core\HashManager;
+use App\Core\Http\Ajax\Requests\AAjaxRequest;
 use App\Core\Http\AResponse;
+use App\Core\Http\JsonErrorResponse;
+use App\Core\Router;
 use App\Entities\UserEntity;
 use App\Exceptions\ActionDoesNotExistException;
 use App\Exceptions\AException;
@@ -32,7 +35,7 @@ abstract class APresenter extends AGUICore {
     private ?string $tabTitle;
     private ?string $action;
     private ArrayList $presenterCache;
-    private ArrayList $scripts;
+    public ArrayList $scripts;
     private ?string $defaultAction;
     public ?string $moduleName;
     private bool $isAjax;
@@ -56,6 +59,8 @@ abstract class APresenter extends AGUICore {
     public array $components;
 
     protected ComponentFactory $componentFactory;
+
+    protected Router $router;
 
     /**
      * The class constructor
@@ -94,6 +99,8 @@ abstract class APresenter extends AGUICore {
         $this->permanentFlashMessages = [];
 
         $this->components = [];
+
+        $this->router = new Router();
     }
 
     /**
@@ -102,6 +109,7 @@ abstract class APresenter extends AGUICore {
     public function startup() {
         $this->cacheFactory = new CacheFactory();
         $this->componentFactory = new ComponentFactory($this->httpRequest, $this);
+        $this->router->inject($this, new ModuleManager());
     }
 
     /**
@@ -184,14 +192,7 @@ abstract class APresenter extends AGUICore {
      * @return string URL as string
      */
     public function createURLString(string $action, array $params = []) {
-        $urlParts = $this->createURL($action, $params);
-
-        $tmp = [];
-        foreach($urlParts as $k => $v) {
-            $tmp[] = $k . '=' . $v;
-        }
-
-        return '?' . implode('&', $tmp);
+        return LinkBuilder::convertUrlArrayToString($this->createURL($action, $params));
     }
 
     /**
@@ -325,11 +326,11 @@ abstract class APresenter extends AGUICore {
     public function redirect(array $url = []) {
         if(!empty($url)) {    
             if(!array_key_exists('page', $url)) {
-                $url['page'] = $this->httpGet('page');
+                $url['page'] = $this->httpRequest->query('page');
             }
 
             if(!array_key_exists('_fm', $this->specialRedirectUrlParams)) {
-                $_fm = $this->httpGet('_fm');
+                $_fm = $this->httpRequest->query('_fm');
                 if($_fm !== null) {
                     $this->specialRedirectUrlParams['_fm'] = $_fm;
                 }
@@ -522,18 +523,18 @@ abstract class APresenter extends AGUICore {
         // There has been an error during action handling or rendering
         if($ok === false) {
             if($this->isAjax && !$this->isComponentAjax) {
-                $this->redirect(['page' => 'Error:E404', 'reason' => 'ActionDoesNotExist']);
+                return new TemplateObject((new JsonErrorResponse('ActionDoesNotExist'))->getResult());
             } else {
                 if($this->defaultAction !== null) {
                     $this->redirect(['page' => $moduleName . ':' . $this->title, 'action' => $this->defaultAction]);
                 }
 
-                $this->redirect(['page' => 'Error:E404', 'reason' => 'ActionDoesNotExist']);
+                $this->redirect(['page' => 'Error:E404', 'reason' => 'ActionDoesNotExist', 'calledAction' => $this->action, 'calledPage' => $moduleName . ':' . $this->title]);
             }
         }
 
         // Process component action
-        if(isset($this->httpRequest->query['do'])) {
+        if($this->httpRequest->query('do') !== null) {
             $templateContent2 = $this->processComponentAction($templateContent);
 
             if($templateContent2 !== null) {
@@ -554,7 +555,7 @@ abstract class APresenter extends AGUICore {
      */
     private function processComponentAction(TemplateObject $templateContent) {
         // Split the component action parameter
-        $do = $this->httpRequest->query['do'];
+        $do = $this->httpRequest->query('do');
         $doParts = explode('-', $do);
 
         if(count($doParts) < 2) {
@@ -585,7 +586,7 @@ abstract class APresenter extends AGUICore {
             if(method_exists($component, $methodName)) {
                 $result = $this->logger->stopwatch(function() use ($component, $methodName) {
                     try {
-                        if(isset($this->httpRequest->query['isFormSubmit']) && $this->httpRequest->query['isFormSubmit'] == '1') { // it is a form
+                        if($this->httpRequest->query('isFormSubmit') == '1') { // it is a form
                             $fr = $this->createFormRequest();
                             $result = $component->processMethod($methodName, [$this->httpRequest, $fr]);
                         } else {
@@ -729,11 +730,15 @@ abstract class APresenter extends AGUICore {
     /**
      * Adds JS script to the page
      * 
-     * @param string $scriptContent JS script content
+     * @param AjaxRequestBuilder|AAjaxRequest|string $scriptContent JS script content
      */
-    public function addScript(AjaxRequestBuilder|string $scriptContent) {
+    public function addScript(AjaxRequestBuilder|AAjaxRequest|string $scriptContent) {
         if($scriptContent instanceof AjaxRequestBuilder) {
             $scriptContent = $scriptContent->build();
+        } else if($scriptContent instanceof AAjaxRequest) {
+            $code = $scriptContent->build();
+            $scriptContent->checkChecks();
+            $scriptContent = $code;
         }
         
         $this->scripts->add(null, '<script type="text/javascript">' . $scriptContent . '</script>');
@@ -762,10 +767,11 @@ abstract class APresenter extends AGUICore {
             $this->logger->warning('Flash messages saved to cache: ' . var_export($this->flashMessages, true), __METHOD__);
         }
 
-        $result = $this->cacheFactory->saveCaches();
+        $messages = [];
+        $result = $this->cacheFactory->saveCaches($messages);
 
         if($result === false) {
-            throw new GeneralException('Could not save flash messages.');
+            throw new GeneralException('Could not save flash messages. Data: ' . implode("\r\n", $messages));
         }
     }
 

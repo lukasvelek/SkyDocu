@@ -2,10 +2,12 @@
 
 namespace App\Modules;
 
+use App\Components\ProcessForm\CommonProcessForm;
 use App\Components\Sidebar\Sidebar2;
 use App\Core\Caching\CacheFactory;
 use App\Core\Http\HttpRequest;
 use App\Helpers\GridHelper;
+use App\UI\AComponent;
 use App\UI\FormBuilder2\FormBuilder2;
 use App\UI\GridBuilder2\GridBuilder;
 
@@ -53,6 +55,7 @@ class ComponentFactory {
      */
     public function getFormBuilder() {
         $form = new FormBuilder2($this->request);
+        $this->injectDefault($form);
         return $form;
     }
 
@@ -82,6 +85,27 @@ class ComponentFactory {
      */
     private function getCacheFactory() {
         return ($this->cacheFactory !== null) ? $this->cacheFactory : $this->presenter->cacheFactory;
+    }
+
+    /**
+     * Returns instance of CommonProcessForm
+     * 
+     * @return CommonProcessForm CommonProcessForm instance
+     */
+    public function getCommonProcessForm() {
+        $form = new CommonProcessForm($this->request);
+        $this->injectDefault($form);
+        return $form;
+    }
+
+    /**
+     * Injects default variables
+     * 
+     * @param AComponent &$component Component
+     */
+    private function injectDefault(AComponent &$component) {
+        $component->setApplication($this->presenter->app);
+        $component->setPresenter($this->presenter);
     }
 }
 

@@ -11,13 +11,14 @@ use App\Entities\UserEntity;
 use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
 use App\Exceptions\ModuleDoesNotExistException;
-use App\Helpers\LinkHelper;
 use App\Logger\Logger;
 use App\Managers\ContainerInviteManager;
 use App\Managers\ContainerManager;
 use App\Managers\EntityManager;
 use App\Managers\GroupManager;
+use App\Managers\UserAbsenceManager;
 use App\Managers\UserManager;
+use App\Managers\UserSubstituteManager;
 use App\Modules\ModuleManager;
 use App\Repositories\ContainerInviteRepository;
 use App\Repositories\ContainerRepository;
@@ -27,7 +28,10 @@ use App\Repositories\GroupMembershipRepository;
 use App\Repositories\GroupRepository;
 use App\Repositories\SystemServicesRepository;
 use App\Repositories\TransactionLogRepository;
+use App\Repositories\UserAbsenceRepository;
 use App\Repositories\UserRepository;
+use App\Repositories\UserSubstituteRepository;
+use App\UI\LinkBuilder;
 use Exception;
 use ReflectionClass;
 
@@ -38,6 +42,8 @@ use ReflectionClass;
  * @author Lukas Velek
  */
 class Application {
+    public const APP_VERSION = '1.2';
+
     private array $modules;
     public ?UserEntity $currentUser;
 
@@ -63,6 +69,8 @@ class Application {
     public GroupMembershipRepository $groupMembershipRepository;
     public ContainerRepository $containerRepository;
     public ContainerInviteRepository $containerInviteRepository;
+    public UserAbsenceRepository $userAbsenceRepository;
+    public UserSubstituteRepository $userSubstituteRepository;
 
     public ServiceManager $serviceManager;
     public UserManager $userManager;
@@ -70,6 +78,8 @@ class Application {
     public GroupManager $groupManager;
     public ContainerManager $containerManager;
     public ContainerInviteManager $containerInviteManager;
+    public UserAbsenceManager $userAbsenceManager;
+    public UserSubstituteManager $userSubstituteManager;
 
     public array $repositories;
 
@@ -107,6 +117,8 @@ class Application {
         $this->groupManager = new GroupManager($this->logger, $this->entityManager, $this->groupRepository, $this->groupMembershipRepository);
         $this->containerManager = new ContainerManager($this->logger, $this->entityManager, $this->containerRepository, $this->dbManager, $this->groupManager);
         $this->containerInviteManager = new ContainerInviteManager($this->logger, $this->entityManager, $this->containerInviteRepository);
+        $this->userAbsenceManager = new UserAbsenceManager($this->logger, $this->entityManager, $this->userAbsenceRepository);
+        $this->userSubstituteManager = new UserSubstituteManager($this->logger, $this->entityManager, $this->userSubstituteRepository);
 
         $this->isAjaxRequest = false;
 
@@ -224,7 +236,7 @@ class Application {
      * @return string URL
      */
     public function composeURL(array $params) {
-        return LinkHelper::createUrlFromArray($params);
+        return LinkBuilder::convertUrlArrayToString($params);
     }
 
     /**
@@ -308,7 +320,14 @@ class Application {
             }
         }
 
+        if(!empty($_POST)) {
+            foreach($_POST as $k => $v) {
+                $request->post[$k] = $v;
+            }
+        }
+
         $request->currentUser = $this->currentUser;
+        $request->method = $_SERVER['REQUEST_METHOD'];
 
         return $request;
     }

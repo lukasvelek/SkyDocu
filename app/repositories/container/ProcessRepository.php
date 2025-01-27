@@ -182,6 +182,60 @@ class ProcessRepository extends ARepository {
 
         return $qb->fetchBool();
     }
+
+    public function insertNewProcessType(string $typeId, string $typeKey, string $title, string $description, bool $isEnabled = true) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->insert('process_types', ['typeId', 'typeKey', 'title', 'description', 'isEnabled'])
+            ->values([$typeId, $typeKey, $title, $description, $isEnabled])
+            ->execute();
+
+        return $qb->fetchBool();
+    }
+
+    public function deleteProcessTypeByTypeKey(string $typeKey) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->delete()
+            ->from('process_types')
+            ->where('typeKey = ?', [$typeKey])
+            ->execute();
+
+        return $qb->fetchBool();
+    }
+
+    public function deleteProcessDataById(string $processId) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->delete()
+            ->from('process_data')
+            ->where('processId = ?', [$processId])
+            ->execute();
+
+        return $qb->fetchBool();
+    }
+
+    public function deleteProcessById(string $processId) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->delete()
+            ->from('processes')
+            ->where('processId = ?', [$processId])
+            ->execute();
+
+        return $qb->fetchBool();
+    }
+
+    public function deleteProcessCommentsForProcessId(string $processId) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->delete()
+            ->from('process_comments')
+            ->where('processId = ?', [$processId])
+            ->execute();
+
+        return $qb->fetchBool();
+    }
 }
 
 ?>

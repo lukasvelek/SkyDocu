@@ -3,6 +3,7 @@
 namespace App\Components\ProcessForm\Processes;
 
 use App\Core\Http\HttpRequest;
+use App\UI\AComponent;
 use App\UI\FormBuilder2\FormBuilder2;
 
 /**
@@ -11,12 +12,10 @@ use App\UI\FormBuilder2\FormBuilder2;
  * @author Lukas Velek
  */
 abstract class AProcessForm extends FormBuilder2 {
-    protected array $baseUrl;
+    public array $baseUrl;
 
-    public function __construct(HttpRequest $request, array $baseUrl) {
+    public function __construct(HttpRequest $request) {
         parent::__construct($request);
-
-        $this->baseUrl = $baseUrl;
     }
 
     public function render() {

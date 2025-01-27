@@ -10,9 +10,9 @@ use App\UI\IRenderable;
  * @author Lukas Velek
  */
 abstract class AElement implements IRenderable {
-    protected array $attributes;
-    private bool $isHidden;
-    private bool $isRequired;
+    public array $attributes;
+    public bool $isHidden;
+    public bool $isRequired;
 
     /**
      * Class constructor
@@ -29,8 +29,20 @@ abstract class AElement implements IRenderable {
      * @param string $name Attribute name
      * @param mixed $value Value or null if it is a modifier
      */
-    public function addAttribute(string $name, mixed $value = null) {
+    public function addAttribute(string $name, mixed $value = null): static {
         $this->attributes[$name] = $value;
+        return $this;
+    }
+
+    /**
+     * Removes an attribute
+     * 
+     * @param string $name Attribute name
+     */
+    public function removeAttribute(string $name): static {
+        if(array_key_exists($name, $this->attributes)) {
+            unset($this->attributes[$name]);
+        }
         return $this;
     }
 
@@ -40,7 +52,7 @@ abstract class AElement implements IRenderable {
      * @param array &$attributesWithValue Attributes with value array
      * @param array &$attributesWithoutValue Attributes without value array
      */
-    protected function separateAttributes(array &$attributesWithValue, array &$attributesWithoutValue) {
+    public function separateAttributes(array &$attributesWithValue, array &$attributesWithoutValue) {
         foreach($this->attributes as $name => $value) {
             if($value === null) {
                 $attributesWithoutValue[] = $name;
@@ -68,9 +80,8 @@ abstract class AElement implements IRenderable {
     /**
      * Hides the element
      */
-    public function setHidden(bool $hidden = true) {
+    public function setHidden(bool $hidden = true): static {
         $this->isHidden = $hidden;
-
         return $this;
     }
 
@@ -88,9 +99,8 @@ abstract class AElement implements IRenderable {
      * 
      * @param bool $required True if required or false if not
      */
-    public function setRequired(bool $required = true) {
+    public function setRequired(bool $required = true): static {
         $this->isRequired = $required;
-
         return $this;
     }
 

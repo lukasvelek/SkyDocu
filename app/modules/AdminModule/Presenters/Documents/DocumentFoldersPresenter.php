@@ -8,6 +8,7 @@ use App\Core\DB\DatabaseRow;
 use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
+use App\Exceptions\RequiredAttributeIsNotSetException;
 use App\UI\GridBuilder2\Action;
 use App\UI\GridBuilder2\Cell;
 use App\UI\GridBuilder2\Row;
@@ -29,8 +30,8 @@ class DocumentFoldersPresenter extends AAdminPresenter {
             LinkBuilder::createSimpleLink('Home', $this->createURL('list'), 'link')
         ];
 
-        if($this->httpGet('folderId') !== null) {
-            $folderId = $this->httpGet('folderId');
+        if($this->httpRequest->query('folderId') !== null) {
+            $folderId = $this->httpRequest->query('folderId');
             
             $newFolderLink = LinkBuilder::createSimpleLink('New folder', $this->createURL('newFolderForm', ['folderId' => $folderId]), 'link');
             
@@ -69,8 +70,8 @@ class DocumentFoldersPresenter extends AAdminPresenter {
         $qb = $this->folderManager->composeQueryForVisibleFoldersForUser($this->getUserId());
 
         $isSubfolder = false;
-        if(array_key_exists('folderId', $request->query)) {
-            $qb = $this->folderManager->composeQueryForSubfoldersForFolder($request->query['folderId']);
+        if($this->httpRequest->query('folderId') !== null) {
+            $qb = $this->folderManager->composeQueryForSubfoldersForFolder($request->query('folderId'));
             $isSubfolder = true;
         }
 
@@ -174,7 +175,7 @@ class DocumentFoldersPresenter extends AAdminPresenter {
     }
 
     public function handleNewFolderForm(?FormRequest $fr = null) {
-        $folderId = $this->httpGet('folderId');
+        $folderId = $this->httpRequest->query('folderId');
 
         if($fr !== null) {
             try {
@@ -214,8 +215,8 @@ class DocumentFoldersPresenter extends AAdminPresenter {
 
     protected function createComponentNewDocumentFolderForm(HttpRequest $request) {
         $url = '';
-        if(array_key_exists('folderId', $request->query)) {
-            $url = $this->createURL('newFolderForm', ['folderId' => $request->query['folderId']]);
+        if($this->httpRequest->query('folderId') !== null) {
+            $url = $this->createURL('newFolderForm', ['folderId' => $request->query('folderId')]);
         } else {
             $url = $this->createURL('newFolderForm');
         }
@@ -233,8 +234,13 @@ class DocumentFoldersPresenter extends AAdminPresenter {
     }
 
     public function handleListGroupRights() {
-        $folderId = $this->httpGet('folderId', true);
-        $parentFolderId = $this->httpGet('parentFolderId') ?? $folderId;
+        $folderId = $this->httpRequest->query('folderId');
+
+        if($folderId === null) {
+            throw new RequiredAttributeIsNotSetException('folderId');
+        }
+
+        $parentFolderId = $this->httpRequest->query('parentFolderId') ?? $folderId;
 
         $folder = $this->folderManager->getFolderById($folderId);
 
@@ -261,8 +267,8 @@ class DocumentFoldersPresenter extends AAdminPresenter {
     protected function createComponentDocumentFoldersGroupRightsGrid(HttpRequest $request) {
         $grid = $this->componentFactory->getGridBuilder($this->containerId);
 
-        $grid->createDataSourceFromQueryBuilder($this->folderRepository->composeQueryForGroupRightsInFolder($request->query['folderId']), 'relationId');
-        $grid->addQueryDependency('folderId', $request->query['folderId']);
+        $grid->createDataSourceFromQueryBuilder($this->folderRepository->composeQueryForGroupRightsInFolder($request->query('folderId')), 'relationId');
+        $grid->addQueryDependency('folderId', $request->query('folderId'));
 
         $col = $grid->addColumnText('groupId', 'Group');
         $col->onRenderColumn[] = function(DatabaseRow $row, Row $_row, Cell $cell, HTML $html, mixed $value) {
@@ -286,9 +292,9 @@ class DocumentFoldersPresenter extends AAdminPresenter {
             return true;
         };
         $edit->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) use ($request) {
-            $params = ['folderId' => $request->query['folderId'], 'groupId' => $row->groupId];
-            if(array_key_exists('parentFolderId', $request->query)) {
-                $params['parentFolderId'] = $request->query['parentFolderId'];
+            $params = ['folderId' => $request->query('folderId'), 'groupId' => $row->groupId];
+            if($this->httpRequest->query('parentFolderId') !== null) {
+                $params['parentFolderId'] = $request->query('parentFolderId');
             }
 
             $el = HTML::el('a')
@@ -308,9 +314,9 @@ class DocumentFoldersPresenter extends AAdminPresenter {
             return !($group['title'] == 'administrators');
         };
         $delete->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) use ($request) {
-            $params = ['folderId' => $request->query['folderId'], 'groupId' => $row->groupId];
-            if(array_key_exists('parentFolderId', $request->query)) {
-                $params['parentFolderId'] = $request->query['parentFolderId'];
+            $params = ['folderId' => $request->query('folderId'), 'groupId' => $row->groupId];
+            if($this->httpRequest->query('parentFolderId') !== null) {
+                $params['parentFolderId'] = $request->query('parentFolderId');
             }
 
             $el = HTML::el('a')
@@ -326,9 +332,15 @@ class DocumentFoldersPresenter extends AAdminPresenter {
     }
 
     public function handleDeleteFolderGroupRights() {
-        $folderId = $this->httpGet('folderId', true);
-        $parentFolderId = $this->httpGet('parentFolderId') ?? $folderId;
-        $groupId = $this->httpGet('groupId', true);
+        $folderId = $this->httpRequest->query('folderId');
+        if($folderId === null) {
+            throw new RequiredAttributeIsNotSetException('folderId');
+        }
+        $parentFolderId = $this->httpRequest->query('parentFolderId') ?? $folderId;
+        $groupId = $this->httpRequest->query('groupId');
+        if($groupId === null) {
+            throw new RequiredAttributeIsNotSetException('groupId');
+        }
 
         try {
             $this->folderRepository->beginTransaction(__METHOD__);
@@ -354,12 +366,15 @@ class DocumentFoldersPresenter extends AAdminPresenter {
 
     public function handleNewFolderGroupRightsForm(?FormRequest $fr = null) {
         if($fr !== null) {
-            $folderId = $this->httpGet('folderId', true);
-            $parentFolderId = $this->httpGet('parentFolderId') ?? $folderId;
+            $folderId = $this->httpRequest->query('folderId');
+            if($folderId === null) {
+                throw new RequiredAttributeIsNotSetException('folderId');
+            }
+            $parentFolderId = $this->httpRequest->query('parentFolderId') ?? $folderId;
 
             try {
                 $check = function(string $key) use ($fr) {
-                    if(isset($fr->{$key}) && $fr->{$key} == 'on') {
+                    if($fr->isset($key) && $fr->{$key} == 'on') {
                         return true;
                     } else {
                         return false;
@@ -398,8 +413,11 @@ class DocumentFoldersPresenter extends AAdminPresenter {
     }
 
     public function renderNewFolderGroupRightsForm() {
-        $folderId = $this->httpGet('folderId');
-        $parentFolderId = $this->httpGet('parentFolderId') ?? $folderId;
+        $folderId = $this->httpRequest->query('folderId');
+        if($folderId === null) {
+            throw new RequiredAttributeIsNotSetException('folderId');
+        }
+        $parentFolderId = $this->httpRequest->query('parentFolderId') ?? $folderId;
 
         $params = ['folderId' => $folderId];
         if($parentFolderId != $folderId) {
@@ -412,7 +430,7 @@ class DocumentFoldersPresenter extends AAdminPresenter {
     }
 
     protected function createComponentNewFolderGroupRightsForm(HttpRequest $request) {
-        $groupsDb = $this->folderRepository->composeQueryForGroupRightsInFolder($request->query['folderId'])
+        $groupsDb = $this->folderRepository->composeQueryForGroupRightsInFolder($request->query('folderId'))
             ->execute();
 
         $groups = [];
@@ -439,9 +457,9 @@ class DocumentFoldersPresenter extends AAdminPresenter {
 
         $form = $this->componentFactory->getFormBuilder();
 
-        $params = ['folderId' => $request->query['folderId']];
-        if(array_key_exists('parentFolderId', $request->query)) {
-            $params['parentFolderId'] = $request->query['parentFolderId'];
+        $params = ['folderId' => $request->query('folderId')];
+        if($this->httpRequest->query('parentFolderId') !== null) {
+            $params['parentFolderId'] = $request->query('parentFolderId');
         }
 
         $form->setAction($this->createURL('newFolderGroupRightsForm', $params));
@@ -474,13 +492,19 @@ class DocumentFoldersPresenter extends AAdminPresenter {
 
     public function handleEditFolderGroupRightsForm(?FormRequest $fr = null) {
         if($fr !== null) {
-            $folderId = $this->httpGet('folderId', true);
-            $parentFolderId = $this->httpGet('parentFolderId') ?? $folderId;
-            $groupId = $this->httpGet('groupId', true);
+            $folderId = $this->httpRequest->query('folderId');
+            if($folderId === null) {
+                throw new RequiredAttributeIsNotSetException('folderId');
+            }
+            $parentFolderId = $this->httpRequest->query('parentFolderId') ?? $folderId;
+            $groupId = $this->httpRequest->query('groupId');
+            if($groupId === null) {
+                throw new RequiredAttributeIsNotSetException('groupId');
+            }
 
             try {
                 $check = function(string $key) use ($fr) {
-                    if(isset($fr->{$key}) && $fr->{$key} == 'on') {
+                    if($fr->isset($key) && $fr->{$key} == 'on') {
                         return true;
                     } else {
                         return false;
@@ -519,8 +543,11 @@ class DocumentFoldersPresenter extends AAdminPresenter {
     }
 
     public function renderEditFolderGroupRightsForm() {
-        $folderId = $this->httpGet('folderId');
-        $parentFolderId = $this->httpGet('parentFolderId') ?? $folderId;
+        $folderId = $this->httpRequest->query('folderId');
+        if($folderId === null) {
+            throw new RequiredAttributeIsNotSetException('folderId');
+        }
+        $parentFolderId = $this->httpRequest->query('parentFolderId') ?? $folderId;
 
         $params = ['folderId' => $folderId];
         if($parentFolderId != $folderId) {
@@ -531,19 +558,19 @@ class DocumentFoldersPresenter extends AAdminPresenter {
     }
 
     protected function createComponentEditFolderGroupRightsForm(HttpRequest $request) {
-        $row = $this->folderRepository->composeQueryForGroupRightsInFolder($request->query['folderId']);
-        $row = $row->andWhere('groupId = ?', [$request->query['groupId']])
+        $row = $this->folderRepository->composeQueryForGroupRightsInFolder($request->query('folderId'));
+        $row = $row->andWhere('groupId = ?', [$request->query('groupId')])
             ->execute()->fetch();
 
         $row = DatabaseRow::createFromDbRow($row);
 
-        $group = $this->groupManager->getGroupById($request->query['groupId']);
+        $group = $this->groupManager->getGroupById($request->query('groupId'));
 
         $form = $this->componentFactory->getFormBuilder();
         
-        $params = ['folderId' => $request->query['folderId'], 'groupId' => $request->query['groupId']];
-        if(array_key_exists('parentFolderId', $request->query['parentFolderId'])) {
-            $params['parentFolderId'] = $request->query['parentFolderId'];
+        $params = ['folderId' => $request->query('folderId'), 'groupId' => $request->query('folderId')];
+        if($this->httpRequest->query('parentFolderId') !== null) {
+            $params['parentFolderId'] = $request->query('parentFolderId');
         }
 
         $form->setAction($this->createURL('editFolderGroupRightsForm', $params));
@@ -568,8 +595,11 @@ class DocumentFoldersPresenter extends AAdminPresenter {
     }
 
     public function handleListMetadata() {
-        $folderId = $this->httpGet('folderId', true);
-        $parentFolderId = $this->httpGet('parentFolderId') ?? $folderId;
+        $folderId = $this->httpRequest->query('folderId');
+        if($folderId === null) {
+            throw new RequiredAttributeIsNotSetException('folderId');
+        }
+        $parentFolderId = $this->httpRequest->query('parentFolderId') ?? $folderId;
 
         $params = ['folderId' => $folderId];
         if($parentFolderId != $folderId) {
@@ -591,8 +621,8 @@ class DocumentFoldersPresenter extends AAdminPresenter {
     protected function createComponentFolderMetadataGrid(HttpRequest $request) {
         $grid = $this->componentFactory->getGridBuilder($this->containerId);
 
-        $grid->createDataSourceFromQueryBuilder($this->metadataManager->composeQueryForMetadataForFolder($request->query['folderId']), 'metadataId');
-        $grid->addQueryDependency('folderId', $request->query['folderId']);
+        $grid->createDataSourceFromQueryBuilder($this->metadataManager->composeQueryForMetadataForFolder($request->query('folderId')), 'metadataId');
+        $grid->addQueryDependency('folderId', $request->query('folderId'));
 
         $grid->addColumnText('title', 'Title');
         $grid->addColumnText('guiTitle', 'GUI title');
@@ -606,8 +636,8 @@ class DocumentFoldersPresenter extends AAdminPresenter {
         };
         $delete->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) use ($request) {
             $params = ['metadataId' => $row->customMetadataId, 'folderId' => $row->folderId];
-            if(array_key_exists('parentFolderId', $request->query)) {
-                $params['parentFolderId'] = $request->query['parentFolderId'];
+            if($this->httpRequest->query('parentFolderId') !== null) {
+                $params['parentFolderId'] = $request->query('parentFolderId');
             }
 
             $el = HTML::el('a')
@@ -622,8 +652,11 @@ class DocumentFoldersPresenter extends AAdminPresenter {
     }
 
     public function handleAddMetadataToFolderForm(?FormRequest $fr = null) {
-        $folderId = $this->httpGet('folderId', true);
-        $parentFolderId = $this->httpGet('parentFolderId') ?? $folderId;
+        $folderId = $this->httpRequest->query('folderId');
+        if($folderId === null) {
+            throw new RequiredAttributeIsNotSetException('folderId');
+        }
+        $parentFolderId = $this->httpRequest->query('parentFolderId') ?? $folderId;
 
         if($fr !== null) {
             try {
@@ -650,8 +683,11 @@ class DocumentFoldersPresenter extends AAdminPresenter {
     }
 
     public function renderAddMetadataToFolderForm() {
-        $folderId = $this->httpGet('folderId');
-        $parentFolderId = $this->httpGet('parentFolderId') ?? $folderId;
+        $folderId = $this->httpRequest->query('folderId');
+        if($folderId === null) {
+            throw new RequiredAttributeIsNotSetException('folderId');
+        }
+        $parentFolderId = $this->httpRequest->query('parentFolderId') ?? $folderId;
 
         $params = ['folderId' => $folderId];
         if($parentFolderId != $folderId) {
@@ -661,7 +697,7 @@ class DocumentFoldersPresenter extends AAdminPresenter {
     }
 
     protected function createComponentAddMetadataToFolderForm(HttpRequest $request) {
-        $qb = $this->metadataManager->composeQueryForMetadataNotInFolder($request->query['folderId']);
+        $qb = $this->metadataManager->composeQueryForMetadataNotInFolder($request->query('folderId'));
         $qb->execute();
 
         $metadataSelect = [];
@@ -676,12 +712,12 @@ class DocumentFoldersPresenter extends AAdminPresenter {
 
         $form = $this->componentFactory->getFormBuilder();
 
-        $params = ['folderId' => $request->query['folderId']];
-        if(array_key_exists('parentFolderId', $request->query)) {
-            $params['parentFolderId'] = $request->query['parentFolderId'];
+        $params = ['folderId' => $request->query('folderId')];
+        if($this->httpRequest->query('parentFolderId') !== null) {
+            $params['parentFolderId'] = $request->query('parentFolderId');
         }
 
-        $form->setAction($this->createURL('addMetadataToFolderForm', ['folderId' => $request->query['folderId']]));
+        $form->setAction($this->createURL('addMetadataToFolderForm', ['folderId' => $request->query('folderId')]));
 
         $form->addSelect('metadata', 'Metadata:')
             ->addRawOptions($metadataSelect)
@@ -694,9 +730,15 @@ class DocumentFoldersPresenter extends AAdminPresenter {
     }
 
     public function handleRemoveMetadataFromFolder() {
-        $folderId = $this->httpGet('folderId', true);
-        $parentFolderId = $this->httpGet('parentFolderId') ?? $folderId;
-        $metadataId = $this->httpGet('metadataId', true);
+        $folderId = $this->httpRequest->query('folderId');
+        if($folderId === null) {
+            throw new RequiredAttributeIsNotSetException('folderId');
+        }
+        $parentFolderId = $this->httpRequest->query('parentFolderId') ?? $folderId;
+        $metadataId = $this->httpRequest->query('metadataId');
+        if($metadataId === null) {
+            throw new RequiredAttributeIsNotSetException('metadataId');
+        }
 
         try {
             $this->metadataRepository->beginTransaction(__METHOD__);

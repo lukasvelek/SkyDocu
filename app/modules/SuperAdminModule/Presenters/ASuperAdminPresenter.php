@@ -12,12 +12,8 @@ abstract class ASuperAdminPresenter extends APresenter {
         $this->moduleName = 'SuperAdmin';
     }
 
-    public function startup() {
-        parent::startup();
-    }
-
     private function checkAction(string ...$actions) {
-        if(in_array($this->httpGet('action'), $actions)) {
+        if(in_array($this->httpRequest->query('action'), $actions)) {
             return true;
         } else {
             return false;
@@ -25,14 +21,14 @@ abstract class ASuperAdminPresenter extends APresenter {
     }
 
     protected function createComponentSidebar(HttpRequest $request) {
-        $containerId = $request->query['containerId'];
+        $containerId = $request->query('containerId');
 
         $sidebar = $this->componentFactory->getSidebar();
 
         $home = $this->checkAction('home');
         $status = $this->checkAction('status', 'listStatusHistory');
         $advanced = $this->checkAction('advanced');
-        $usageStatistics = $this->checkAction('usageStatistics');
+        $usageStatistics = $this->checkAction('usageStatistics', 'clearUsageStatistics');
         $invites = $this->checkAction('invites', 'invitesWithoutGrid');
 
         $sidebar->addLink('&larr; Back', $this->createFullURL('SuperAdmin:Containers', 'list'));

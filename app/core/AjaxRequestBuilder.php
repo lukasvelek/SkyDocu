@@ -2,8 +2,8 @@
 
 namespace App\Core;
 
-use App\Helpers\LinkHelper;
 use App\Modules\APresenter;
+use App\UI\LinkBuilder;
 
 /**
  * Class that helps developer to create an Ajax request easily.
@@ -22,6 +22,7 @@ class AjaxRequestBuilder {
     private array $elements;
     private bool $useLoadingAnimation;
     private bool $isComponent;
+    private array $data;
 
     /**
      * Class constructor
@@ -38,7 +39,18 @@ class AjaxRequestBuilder {
         $this->elements = [];
         $this->useLoadingAnimation = true;
         $this->isComponent = false;
+        $this->data = [];
 
+        return $this;
+    }
+
+    /**
+     * Sets POST data payload
+     * 
+     * @param array $data
+     */
+    public function setData(array $data): static {
+        $this->data = $data;
         return $this;
     }
 
@@ -47,16 +59,15 @@ class AjaxRequestBuilder {
      * 
      * @param bool $component True if the call is coming from a component or false if not
      */
-    public function setComponent(bool $component = true) {
+    public function setComponent(bool $component = true): static {
         $this->isComponent = $component;
-
         return $this;
     }
     
     /**
      * Disables loading animation when ajax request is being processed
      */
-    public function disableLoadingAnimation() {
+    public function disableLoadingAnimation(): static {
         $this->useLoadingAnimation = false;
 
         return $this;
@@ -67,7 +78,7 @@ class AjaxRequestBuilder {
      * 
      * @param string $code JS code
      */
-    public function addBeforeAjaxOperation(string $code) {
+    public function addBeforeAjaxOperation(string $code): static {
         $this->beforeAjaxOperations[] = $code;
 
         return $this;
@@ -78,7 +89,7 @@ class AjaxRequestBuilder {
      * 
      * @param string $argName Argument name
      */
-    public function addCustomArg(string $argName) {
+    public function addCustomArg(string $argName): static {
         $this->customArgs[] = $argName;
 
         return $this;
@@ -89,12 +100,15 @@ class AjaxRequestBuilder {
      * 
      * @param APresenter $presenter Presenter
      * @param string $actionName Handler action
+     * @param array $params Additional URL parameters
      */
-    public function setAction(APresenter $presenter, string $actionName) {
+    public function setAction(APresenter $presenter, string $actionName, array $params = []): static {
         $module = $presenter->moduleName;
         $presenter = $presenter->getCleanName();
 
-        $this->url = $this->composeURLFromArray(['page' => $module . ':' . $presenter, 'action' => $actionName]);
+        $url = array_merge(['page' => $module . ':' . $presenter, 'action' => $actionName], $params);
+
+        $this->url = $this->composeURLFromArray($url);
 
         return $this;
     }
@@ -104,13 +118,16 @@ class AjaxRequestBuilder {
      * 
      * @param APresenter $presenter Presenter
      * @param string $componentActionName Component handler action
+     * @param array $params Additional URL parameters
      */
-    public function setComponentAction(APresenter $presenter, string $componentActionName) {
+    public function setComponentAction(APresenter $presenter, string $componentActionName, array $params = []): static {
         $module = $presenter->moduleName;
         $action = $presenter->getAction();
         $presenter = $presenter->getCleanName();
 
-        $this->url = $this->composeURLFromArray(['page' => $module . ':' . $presenter, 'action' => $action, 'do' => $componentActionName]);
+        $url = array_merge(['page' => $module . ':' . $presenter, 'action' => $action, 'do' => $componentActionName], $params);
+
+        $this->url = $this->composeURLFromArray($url);
         $this->isComponent = true;
 
         return $this;
@@ -121,7 +138,7 @@ class AjaxRequestBuilder {
      * 
      * @param array $url Handler URL params
      */
-    public function setURL(array $url) {
+    public function setURL(array $url): static {
         $this->url = $this->composeURLFromArray($url);
 
         return $this;
@@ -134,7 +151,7 @@ class AjaxRequestBuilder {
      * @return string URL string
      */
     private function composeURLFromArray(array $url) {
-        return LinkHelper::createUrlFromArray($url);
+        return LinkBuilder::convertUrlArrayToString($url);
     }
 
     /**
@@ -142,7 +159,7 @@ class AjaxRequestBuilder {
      * 
      * @param array $params Header arguments
      */
-    public function setHeader(array $params) {
+    public function setHeader(array $params): static {
         $this->headerParams = $params;
 
         return $this;
@@ -153,7 +170,7 @@ class AjaxRequestBuilder {
      * 
      * @param string $code JS code
      */
-    public function addWhenDoneOperation(string $code) {
+    public function addWhenDoneOperation(string $code): static {
         $this->whenDoneOperations[] = $code;
 
         return $this;
@@ -166,7 +183,7 @@ class AjaxRequestBuilder {
      * @param string $jsonResultName JSON object parameter name
      * @param null|bool $append True if the JSON result should be appended or false if it should overwrite the currrent content or null if the JSON result should be prepended
      */
-    public function updateHTMLElement(string $htmlElementId, string $jsonResultName, null|bool $append = false) {
+    public function updateHTMLElement(string $htmlElementId, string $jsonResultName, null|bool $append = false): static {
         if(!$append) {
             $this->elements[] = $htmlElementId;
         }
@@ -190,7 +207,7 @@ class AjaxRequestBuilder {
      * @param string $jsonResultName JSON object parameter name
      * @param bool $append True if the JSON result should be appended or false if it should overwrite the current content
      */
-    public function updateHTMLElementRaw(string $htmlElement, string $jsonResultName, bool $append = false) {
+    public function updateHTMLElementRaw(string $htmlElement, string $jsonResultName, bool $append = false): static {
         if(!$append) {
             $this->elements[] = $htmlElement;
         }
@@ -204,7 +221,7 @@ class AjaxRequestBuilder {
      * 
      * @param string $htmlElement HTML element
      */
-    public function hideHTMLElementRaw(string $htmlElement) {
+    public function hideHTMLElementRaw(string $htmlElement): static {
         $this->addWhenDoneOperation('$(' . $htmlElement . ').hide();');
 
         return $this;
@@ -215,7 +232,7 @@ class AjaxRequestBuilder {
      * 
      * @param string $htmlElementId ID of the HTML element
      */
-    public function hideHTMLElement(string $htmlElementId) {
+    public function hideHTMLElement(string $htmlElementId): static {
         $this->hideHTMLElementRaw('"#' . $htmlElementId . '"');
 
         return $this;
@@ -226,7 +243,7 @@ class AjaxRequestBuilder {
      * 
      * @param string $name JS function name
      */
-    public function setFunctionName(string $name) {
+    public function setFunctionName(string $name): static {
         $this->functionName = $name;
 
         return $this;
@@ -237,7 +254,7 @@ class AjaxRequestBuilder {
      * 
      * @param array $args JS function arguments
      */
-    public function setFunctionArguments(array $args) {
+    public function setFunctionArguments(array $args): static {
         $this->functionArgs = $args;
 
         return $this;
@@ -248,7 +265,7 @@ class AjaxRequestBuilder {
      * 
      * @param string $method Method
      */
-    public function setMethod(string $method = 'GET') {
+    public function setMethod(string $method = 'GET'): static {
         $this->method = $method;
 
         return $this;
@@ -283,7 +300,18 @@ class AjaxRequestBuilder {
         if(strtoupper($this->method) == 'GET') {
             $code[] = '$.get(';
             $code[] = '"' . $this->url . '",';
-            $code[] = '' . $headParams . '';
+            $code[] = $headParams;
+            $code[] = ')';
+        } else if (strtoupper($this->method) == 'POST') {
+            $code[] = '$.post(';
+            $code[] = '"' . $this->url . '",';
+
+            if(!empty($this->data)) {
+                $code[] = $this->processData();
+            } else {
+                $code[] = $headParams;
+            }
+
             $code[] = ')';
         }
         
@@ -322,11 +350,19 @@ class AjaxRequestBuilder {
      */
     private function processHeadParams() {
         if(!array_key_exists('isAjax', $this->headerParams)) {
-            $this->headerParams['isAjax'] = 1;
+            if($this->method == 'GET') {
+                $this->headerParams['isAjax'] = 1;
+            } else {
+                $this->url .= '&isAjax=1';
+            }
         }
 
         if($this->isComponent) {
-            $this->headerParams['isComponent'] = 1;
+            if($this->method == 'GET') {
+                $this->headerParams['isComponent'] = 1;
+            } else {
+                $this->url .= '&isComponent=1';
+            }
         }
 
         $json = json_encode($this->headerParams);
@@ -388,7 +424,7 @@ class AjaxRequestBuilder {
      * @param string $element Element name
      * @param bool $isRaw True if the element name is raw or false if not
      */
-    public function enableLoadingAnimation(string $element, bool $isRaw = false) {
+    public function enableLoadingAnimation(string $element, bool $isRaw = false): static {
         $code = '
             $(' . ($isRaw ? '' : '"#') . $element . ($isRaw ? '' : '"') . ').html(\'<div id="center"><img src="resources/loading.gif" width="64"><br>Loading...</div>\');
         ';
@@ -396,6 +432,27 @@ class AjaxRequestBuilder {
         $this->addBeforeAjaxOperation($code);
 
         return $this;
+    }
+
+    /**
+     * Processes data and if needed implements JS function arguments into the JSON
+     * 
+     * @return string Processed data formatted to JSON
+     */
+    private function processData() {
+        $toReplace = [];
+        foreach($this->functionArgs as $k) {
+            if(in_array($k, $this->data)) {
+                $toReplace[] = $k;
+            }
+        }
+
+        $data = json_encode($this->data);
+        foreach($toReplace as $k) {
+            $data = str_replace('"' . $k . '"', $k, $data);
+        }
+
+        return $data;
     }
 }
 

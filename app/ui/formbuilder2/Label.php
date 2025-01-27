@@ -35,7 +35,7 @@ class Label extends AElement {
      * 
      * @param bool $required True if the element is required
      */
-    public function setRequired(bool $required = true) {
+    public function setRequired(bool $required = true): static {
         $this->required = $required;
         return $this;
     }
@@ -45,7 +45,7 @@ class Label extends AElement {
      * 
      * @param bool $title Is the element a title?
      */
-    public function setTitle(bool $title = true) {
+    public function setTitle(bool $title = true): static {
         $this->isTitle = $title;
         return $this;
     }
@@ -56,7 +56,7 @@ class Label extends AElement {
      * @return string HTML code
      */
     public function render() {
-        $code = '<label id="' . $this->name . '" for="' . $this->for . '">';
+        $code = '<label id="' . $this->name . '" for="' . $this->for . '" title="' . (str_ends_with($this->text, ':') ? substr($this->text, 0, -1) : $this->text) . '">';
 
         if($this->isTitle) {
             $code .= '<span style="font-size: 20px">' . $this->text . '</span>';
@@ -65,7 +65,7 @@ class Label extends AElement {
         }
 
         if($this->required) {
-            $code .= ' <span style="color: red">*</span>';
+            $code .= ' <span style="color: red" title="This field is required">*</span>';
         }
 
         $code .= '</label>';

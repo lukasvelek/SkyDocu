@@ -6,6 +6,7 @@ use App\Constants\Container\StandaloneProcesses;
 use App\Core\DB\DatabaseRow;
 use App\Entities\UserEntity;
 use App\Exceptions\GeneralException;
+use App\Logger\Logger;
 use App\Managers\AManager;
 use App\Managers\EntityManager;
 use App\Managers\UserManager;
@@ -16,10 +17,14 @@ class StandaloneProcessManager extends AManager {
     private UserManager $userManager;
 
     public function __construct(
+        Logger $logger,
+        ?EntityManager $entityManager,
         ProcessManager $processManager,
         UserEntity $currentUser,
         UserManager $userManager
     ) {
+        parent::__construct($logger, $entityManager);
+
         $this->processManager = $processManager;
         $this->currentUser = $currentUser;
         $this->userManager = $userManager;
@@ -38,6 +43,19 @@ class StandaloneProcessManager extends AManager {
         $this->saveProcessData($processId, $data);
     }
 
+    public function startFunctionRequest(array $data) {
+        $admin = $this->userManager->getUserByUsername('admin');
+
+        $currentOfficerId = $admin->getId();
+        $workflow = [
+            $admin->getId()
+        ];
+
+        $processId = $this->processManager->startProcess(null, StandaloneProcesses::FUNCTION_REQUEST, $this->currentUser->getId(), $currentOfficerId, $workflow);
+
+        $this->saveProcessData($processId, $data);
+    }
+
     private function saveProcessData(string $processId, array $data) {
         $entryId = $this->createId(EntityManager::C_PROCESS_DATA);
 
@@ -45,23 +63,23 @@ class StandaloneProcessManager extends AManager {
             unset($data['btn_submit']);
         }
 
-        if(!$this->processManager->pr->insertNewProcessData($entryId, $processId, serialize($data))) {
+        if(!$this->processManager->processRepository->insertNewProcessData($entryId, $processId, serialize($data))) {
             throw new GeneralException('Database error.');
         }
     }
 
     public function getProcessData(string $processId) {
-        return $this->processManager->pr->getProcessDataForProcess($processId);
+        return $this->processManager->processRepository->getProcessDataForProcess($processId);
     }
 
     public function updateProcessType(string $typeKey, array $data) {
-        if(!$this->processManager->pr->updateProcessType($typeKey, $data)) {
+        if(!$this->processManager->processRepository->updateProcessType($typeKey, $data)) {
             throw new GeneralException('Database error.');
         }
     }
 
     public function getEnabledProcessTypes() {
-        $qb = $this->processManager->pr->composeQueryForProcessTypes();
+        $qb = $this->processManager->processRepository->composeQueryForProcessTypes();
         $qb->andWhere('isEnabled = 1')
             ->execute();
 
@@ -74,7 +92,7 @@ class StandaloneProcessManager extends AManager {
     }
 
     public function composeQueryForProcessTypeInstances(string $processType) {
-        $qb = $this->processManager->pr->commonComposeQuery(false);
+        $qb = $this->processManager->processRepository->commonComposeQuery(false);
         $qb->andWhere('type = ?', [$processType]);
         return $qb;
     }

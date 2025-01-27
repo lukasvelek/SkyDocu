@@ -11,6 +11,7 @@ use App\Core\Http\HttpRequest;
 use App\Lib\Processes\ProcessFactory;
 use App\Managers\Container\DocumentManager;
 use App\UI\HTML\HTML;
+use App\UI\LinkBuilder;
 
 /**
  * This class is a dedicated class for better maintaining document bulk actions
@@ -18,22 +19,39 @@ use App\UI\HTML\HTML;
  * @author Lukas Velek
  */
 class DocumentBulkActionsHelper {
-    private DocumentManager $dm;
+    private DocumentManager $documentManager;
     private Application $app;
-    private DocumentBulkActionAuthorizator $dbaa;
-    private GroupStandardOperationsAuthorizator $gsoa;
-    private ProcessFactory $pf;
+    private DocumentBulkActionAuthorizator $documentBulkActionAuthorizator;
+    private GroupStandardOperationsAuthorizator $groupStandardOperationsAuthorizator;
+    private ProcessFactory $processFactory;
+    private string $folderId;
 
     private HttpRequest $request;
 
-    public function __construct(Application $app, DocumentManager $dm, HttpRequest $request, DocumentBulkActionAuthorizator $dbaa, GroupStandardOperationsAuthorizator $gsoa, ProcessFactory $pf) {
-        $this->dm = $dm;
+    public function __construct(
+        Application $app,
+        DocumentManager $documentManager,
+        HttpRequest $request,
+        DocumentBulkActionAuthorizator $documentBulkActionAuthorizator,
+        GroupStandardOperationsAuthorizator $groupStandardOperationsAuthorizator,
+        ProcessFactory $processFactory
+    ) {
+        $this->documentManager = $documentManager;
         $this->app = $app;
-        $this->dbaa = $dbaa;
-        $this->gsoa = $gsoa;
-        $this->pf = $pf;
+        $this->documentBulkActionAuthorizator = $documentBulkActionAuthorizator;
+        $this->groupStandardOperationsAuthorizator = $groupStandardOperationsAuthorizator;
+        $this->processFactory = $processFactory;
 
         $this->request = $request;
+    }
+
+    /**
+     * Sets the current folder ID
+     * 
+     * @param string $folderId
+     */
+    public function setFolderId(string $folderId) {
+        $this->folderId = $folderId;
     }
 
     /**
@@ -50,6 +68,10 @@ class DocumentBulkActionsHelper {
         /*if($this->gsoa->canUserViewDocumentHistory($this->app->currentUser->getId())) {
             $bulkActions[] = DocumentBulkActions::DOCUMENT_HISTORY;
         }*/
+
+        if($this->groupStandardOperationsAuthorizator->canUserShareDocuments($this->app->currentUser->getID()) && $this->checkIfDocumentsCanBeShared($documentIds)) {
+            $bulkActions[] = DocumentBulkActions::SHARING;
+        }
 
         // 1b. Create array of allowed processes
         $this->appendProcessBulkActions($documentIds, $processBulkActions);
@@ -75,19 +97,19 @@ class DocumentBulkActionsHelper {
      */
     private function appendProcessBulkActions(array $documentIds, array &$bulkActions) {
         // Archivation
-        $p = $this->pf->createDocumentArchivationProcess();
+        $p = $this->processFactory->createDocumentArchivationProcess();
         if($p->canExecute($documentIds, null)) {
             $bulkActions[] = SystemProcessTypes::ARCHIVATION;
         }
 
         // Shredding request
-        $p = $this->pf->createDocumentShreddingRequestProcess();
+        $p = $this->processFactory->createDocumentShreddingRequestProcess();
         if($p->canExecute($documentIds, null)) {
             $bulkActions[] = SystemProcessTypes::SHREDDING_REQUEST;
         }
 
         // Shredding
-        $p = $this->pf->createDocumentShreddingProcess();
+        $p = $this->processFactory->createDocumentShreddingProcess();
         if($p->canExecute($documentIds, null)) {
             $bulkActions[] = SystemProcessTypes::SHREDDING;
         }
@@ -101,14 +123,12 @@ class DocumentBulkActionsHelper {
      */
     private function createBulkActionUrlForProcess(array $documentIds, string $bulkAction) {
         $urlParams = [
-            'backPage=' . $this->request->query['page'],
-            'backAction=' . $this->request->query['action'],
+            'backPage=' . $this->request->query('page'),
+            'backAction=' . $this->request->query('action'),
             'process=' . $bulkAction
         ];
 
-        if(array_key_exists('folderId', $this->request->query)) {
-            $urlParams[] = 'backFolderId=' . $this->request->query['folderId'];
-        }
+        $urlParams[] = 'backFolderId=' . $this->folderId;
 
         foreach($documentIds as $documentId) {
             $urlParams[] = 'documentId[]=' . $documentId;
@@ -130,13 +150,11 @@ class DocumentBulkActionsHelper {
      */
     private function createBulkActionUrl(array $documentIds, string $bulkAction) {
         $urlParams = [
-            'backPage=' . $this->request->query['page'],
-            'backAction=' . $this->request->query['action']
+            'backPage=' . $this->request->query('page'),
+            'backAction=' . $this->request->query('action')
         ];
 
-        if(array_key_exists('folderId', $this->request->query)) {
-            $urlParams['backFolderId'] = $this->request->query['folderId'];
-        }
+        $urlParams[] = 'backFolderId=' . $this->folderId;
 
         foreach($documentIds as $documentId) {
             $urlParams[] = 'documentId[]=' . $documentId;
@@ -149,6 +167,10 @@ class DocumentBulkActionsHelper {
         switch($bulkAction) {
             case DocumentBulkActions::DOCUMENT_HISTORY:
                 $el->href($this->createLink('User:Documents', 'documentHistory', $urlParams));
+                break;
+
+            case DocumentBulkActions::SHARING:
+                $el->href($this->createLink('User:Documents', 'shareForm', $urlParams));
                 break;
         }
 
@@ -164,13 +186,26 @@ class DocumentBulkActionsHelper {
      * @return string URL
      */
     private function createLink(string $modulePresenter, string $action, array $params = []) {
-        $url = '?page=' . $modulePresenter . '&action=' . $action;
+        return LinkBuilder::convertUrlArrayToString(array_merge(['page' => $modulePresenter, 'action' => $action], $params));
+    }
 
-        if(!empty($params)) {
-            $url .= '&' . implode('&', $params);
+    /**
+     * Checks if given documents can be shared
+     * 
+     * @param array $documentIds Document IDs
+     * @return bool True or false
+     */
+    private function checkIfDocumentsCanBeShared(array $documentIds) {
+        // document must not be shared to current user
+        $sharedDocuments = $this->documentManager->getSharedDocumentsForUser($this->app->currentUser->getId(), false);
+
+        foreach($sharedDocuments as $sharedDocumentId) {
+            if(in_array($sharedDocumentId, $documentIds)) {
+                return false;
+            }
         }
 
-        return $url;
+        return true;
     }
 }
 

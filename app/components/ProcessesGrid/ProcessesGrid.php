@@ -32,7 +32,7 @@ use QueryBuilder\QueryBuilder;
 class ProcessesGrid extends GridBuilder implements IGridExtendingComponent {
     private string $currentUserId;
     private GridManager $gridManager;
-    private ProcessGridDataSourceHelper $dsHelper;
+    private ProcessGridDataSourceHelper $dataSourceHelper;
     private string $view;
     private ProcessManager $processManager;
     private DocumentManager $documentManager;
@@ -63,7 +63,7 @@ class ProcessesGrid extends GridBuilder implements IGridExtendingComponent {
         $this->processManager = $processManager;
         $this->documentManager = $documentManager;
 
-        $this->dsHelper = new ProcessGridDataSourceHelper($this->processManager->pr);
+        $this->dataSourceHelper = new ProcessGridDataSourceHelper($this->processManager->processRepository);
 
         $this->view = ProcessGridViews::VIEW_ALL;
     }
@@ -77,7 +77,7 @@ class ProcessesGrid extends GridBuilder implements IGridExtendingComponent {
         $this->view = $view;
     }
 
-    protected function prerender() {
+    public function prerender() {
         $this->createDataSource();
 
         $this->fetchDataFromDb();
@@ -102,7 +102,7 @@ class ProcessesGrid extends GridBuilder implements IGridExtendingComponent {
     }
 
     public function createDataSource() {
-        $qb = $this->dsHelper->composeQuery($this->view, $this->currentUserId);
+        $qb = $this->dataSourceHelper->composeQuery($this->view, $this->currentUserId);
 
         $this->createDataSourceFromQueryBuilder($qb, 'processId');
     }
@@ -148,18 +148,47 @@ class ProcessesGrid extends GridBuilder implements IGridExtendingComponent {
     }
 
     /**
+     * Appends current officer to the grid. If the current officer has a substitute and this substitute is set in "currentOfficerSubstituteUserId" column, they are also displayed.
+     * 
+     * @param string $colName Column name
+     * @param string $colTitle Column title
+     */
+    private function appendCurrentOfficer(string $colName, string $colTitle) {
+        $col = $this->addColumnUser($colName, $colTitle);
+        $col->onRenderColumn[] = function(DatabaseRow $row, Row $_row, Cell $cell, HTML $html, mixed $value) {
+            $el = HTML::el('span');
+            if($row->currentOfficerSubstituteUserId !== null) {
+                $username = '-';
+                try {
+                    $user = $this->app->userManager->getUserById($row->currentOfficerSubstituteUserId);
+                    $username = $user->getFullname();
+                } catch(AException $e) {}
+
+                $el->text($value . ' (<i title="Current officer\'s substitute">' . $username . '</i>)');
+            } else {
+                $el->text($value);
+            }
+            return $el;
+        };
+    }
+
+    /**
      * Appends system metadata to grid
      */
     private function appendSystemMetadata() {
-        $metadata = $this->dsHelper->getMetadataToAppendForView($this->view);
+        $metadata = $this->dataSourceHelper->getMetadataToAppendForView($this->view);
 
         foreach($metadata as $name) {
             $text = ProcessesGridSystemMetadata::toString($name);
 
             switch($name) {
                 case ProcessesGridSystemMetadata::AUTHOR_USER_ID:
-                case ProcessesGridSystemMetadata::CURRENT_OFFICER_USER_ID:
                     $this->addColumnUser($name, $text);
+                    break;
+
+                case ProcessesGridSystemMetadata::CURRENT_OFFICER_USER_ID:
+                    $this->appendCurrentOfficer($name, $text);
+
                     break;
 
                 case ProcessesGridSystemMetadata::DATE_CREATED:
@@ -167,7 +196,7 @@ class ProcessesGrid extends GridBuilder implements IGridExtendingComponent {
                     break;
 
                 case ProcessesGridSystemMetadata::DOCUMENT_ID:
-                    $dataSource = clone $this->filledDataSource;
+                    $dataSource = $this->filledDataSource;
 
                     $documentIds = [];
                     while($row = $dataSource->fetchAssoc()) {
@@ -204,6 +233,16 @@ class ProcessesGrid extends GridBuilder implements IGridExtendingComponent {
 
                         $el = HTML::el('span')
                                 ->text($type);
+
+                        if($type != '#ERROR' && !array_key_exists($value, SystemProcessTypes::getAll())) {
+                            $fgColor = StandaloneProcesses::getColor($value);
+                            $bgColor = StandaloneProcesses::getBackgroundColor($value);
+
+                            $el->style('color', $fgColor)
+                                ->style('background-color', $bgColor)
+                                ->style('border-radius', '10px')
+                                ->style('padding', '5px');
+                        }
 
                         return $el;
                     };

@@ -5,7 +5,6 @@ namespace App\Core\Caching;
 use App\Core\Caching\Cache;
 use App\Core\Datetypes\DateTime;
 use App\Core\FileManager;
-use App\Core\HashManager;
 
 /**
  * CacheFactory allows to create cache
@@ -41,7 +40,8 @@ class CacheFactory {
      * Class destructor
      */
     public function __destruct() {
-        $this->saveCaches();
+        $messages = [];
+        $this->saveCaches($messages);
 
         $this->persistentCaches = [];
     }
@@ -76,7 +76,8 @@ class CacheFactory {
         $cache = $this->getCache($namespace, $expire);
         $cache->invalidate();
 
-        $this->saveCaches();
+        $messages = [];
+        $this->saveCaches($messages);
 
         return true;
     }
@@ -204,12 +205,13 @@ class CacheFactory {
     /**
      * Saves persistent caches
      * 
+     * @param array &$messages Messages
      * @return bool True on success or false on failure
      */
-    public function saveCaches() {
+    public function saveCaches(array &$messages) {
         foreach($this->persistentCaches as $cache) {
             if($cache->isInvalidated()) {
-                return $this->deleteCache($cache->getNamespace());
+                return $this->deleteCache($cache->getNamespace(), $messages);
             } else {
                 $_cache = $this->getCache($cache->getNamespace());
                 $_data = $_cache->getData();
@@ -221,7 +223,7 @@ class CacheFactory {
                         self::I_NS_CACHE_LAST_WRITE_DATE => $cache->getLastWriteDate()?->getResult()
                     ];
     
-                    return $this->saveDataToCache($cache->getNamespace(), $tmp);
+                    return $this->saveDataToCache($cache->getNamespace(), $tmp, $messages);
                 }
             }
         }
@@ -232,9 +234,10 @@ class CacheFactory {
      * 
      * @param string $namespace Namespace
      * @param array $data Persistent cache data
+     * @param array &$messages Messages
      * @return bool True on success or false on failure
      */
-    private function saveDataToCache(string $namespace, array $data) {
+    private function saveDataToCache(string $namespace, array $data, array &$messages) {
         $path = APP_ABSOLUTE_DIR . CACHE_DIR . $namespace . '\\';
 
         if($this->customNamespace !== null) {
@@ -247,7 +250,13 @@ class CacheFactory {
         $filename = $date . $namespace;
         $filename = md5($filename);
 
+        if(FileManager::fileExists($path . $filename)) {
+            $messages[] = 'File \'' . $path . $filename . '\' already exists.';
+        }
+
         $result = FileManager::saveFile($path, $filename, serialize($data), true, false);
+
+        $messages[] = 'Result after saving file: ' . var_export($result, true);
 
         return $result !== false;
     }
@@ -256,16 +265,26 @@ class CacheFactory {
      * Deletes persistent cache
      * 
      * @param string $namespace Namespace
+     * @param array &$messages Messages
      * @return bool True on success or false on failure
      */
-    private function deleteCache(string $namespace) {
+    private function deleteCache(string $namespace, array &$messages) {
         $path = APP_ABSOLUTE_DIR . CACHE_DIR . $namespace . '\\';
 
         if($this->customNamespace !== null) {
             $path .= $this->customNamespace . '\\';
         }
         
+        $messages[] = 'Deleting \'' . $path . '\'. ';
+
+        if(!FileManager::folderExists($path)) {
+            $messages[] = 'Cache namespace \'' . $namespace . '\' does not exist in \'' . $path . '\'.';
+            return true;
+        }
+
         $result = FileManager::deleteFolderRecursively($path, false);
+
+        $messages[] = 'Result after deleting folder (resursively): ' . var_export($result, true);
         
         if($result === true) {
             $this->cacheLogger->logCacheNamespaceDeleted($namespace, __METHOD__);

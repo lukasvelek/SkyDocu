@@ -3,6 +3,7 @@
 namespace App\Modules\UserModule;
 
 use App\Exceptions\AException;
+use App\Exceptions\RequiredAttributeIsNotSetException;
 
 class DocumentBulkActionsPresenter extends AUserPresenter {
     public function __construct() {
@@ -10,8 +11,11 @@ class DocumentBulkActionsPresenter extends AUserPresenter {
     }
 
     public function handleStartProcess() {
-        $process = $this->httpGet('process', true);
-        $documentIds = $this->httpRequest->query['documentId'];
+        $process = $this->httpRequest->query('process');
+        if($process === null) {
+            throw new RequiredAttributeIsNotSetException('process');
+        }
+        $documentIds = $this->httpRequest->query('documentId');
 
         $exceptions = [];
 
@@ -36,20 +40,20 @@ class DocumentBulkActionsPresenter extends AUserPresenter {
             $this->flashMessage('An error occurred while running process. Reason: ' . $e->getMessage(), 'error', 10);
         }
 
-        $backPage = $this->httpGet('backPage');
-        $backAction = $this->httpGet('backAction');
+        $backPage = $this->httpRequest->query('backPage');
+        $backAction = $this->httpRequest->query('backAction');
 
         $backUrl = [];
         if($backPage !== null && $backAction !== null) {
             $backUrl = ['page' => $backPage, 'action' => $backAction];
 
-            $folderId = $this->httpGet('folderId');
+            $folderId = $this->httpRequest->query('folderId');
             if($folderId !== null) {
                 $backUrl['folderId'] = $folderId;
             }
         } else {
             $backUrl = $this->createFullURL('User:Documents', 'list');
-            $folderId = $this->httpGet('folderId');
+            $folderId = $this->httpRequest->query('folderId');
             if($folderId !== null) {
                 $backUrl['folderId'] = $folderId;
             }

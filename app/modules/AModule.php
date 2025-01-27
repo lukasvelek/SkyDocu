@@ -210,9 +210,7 @@ abstract class AModule extends AGUICore {
     protected function startup(string $presenterTitle, string $actionTitle) {
         $this->template = $this->getCommonTemplate();
 
-        $realPresenterTitle = 'App\\Modules\\' . $this->title . '\\' . $presenterTitle;
-
-        $this->presenter = new $realPresenterTitle();
+        $this->presenter = $this->createPresenterInstance($presenterTitle);
         $this->presenter->setTemplate($this->isAjax ? null : $this->template);
         $this->presenter->setParams(['module' => $this->title]);
         $this->presenter->setAction($actionTitle);
@@ -225,6 +223,18 @@ abstract class AModule extends AGUICore {
         $this->presenter->lock();
         
         $this->presenter->startup();
+    }
+
+    /**
+     * Creates an instance of presenter with given name
+     * 
+     * @param string $presenterTitle Presenter title
+     * @return APresenter Presenter instance
+     */
+    public function createPresenterInstance(string $presenterTitle) {
+        $realPresenterTitle = 'App\\Modules\\' . $this->title . '\\' . $presenterTitle;
+
+        return new $realPresenterTitle();
     }
 
     /**
@@ -243,12 +253,32 @@ abstract class AModule extends AGUICore {
      * @param null|GroupManager $groupManager GroupManager instance or null
      * @return Navbar Navbar instance
      */
-    protected function createNavbarInstance(int $mode, ?GroupManager $groupManager) {
+    protected function createNavbarInstance(?int $mode, ?GroupManager $groupManager) {
         $navbar = new Navbar($this->httpRequest, $mode, $this->app->currentUser, $groupManager);
         
         $navbar->setComponentName('navbar');
 
         return $navbar;
+    }
+
+    /**
+     * Checks if a presenter with given name exists
+     * 
+     * @param string $presenterName Presenter name
+     * @return bool True if exists or false if not
+     */
+    public function checkPresenterExists(string $presenterName) {
+        if(empty($this->presenters)) {
+            return false;
+        }
+
+        foreach($this->presenters as $presenter) {
+            if(str_contains($presenter, $presenterName)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
 

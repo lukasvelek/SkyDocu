@@ -2,6 +2,8 @@
 
 namespace App\UI;
 
+use App\Core\Router;
+
 /**
  * Link Builder allows to easily make links.
  * 
@@ -28,7 +30,8 @@ class LinkBuilder implements IRenderable {
      */
     public function render() {
         if(!empty($this->urlParts)) {
-            $this->processUrl();
+            $url = self::convertUrlArrayToString($this->urlParts);
+            $this->setHref($url);
         }
 
         $code = '<a ' . $this->processElements() . '>' . $this->text . '</a>';
@@ -76,6 +79,7 @@ class LinkBuilder implements IRenderable {
      */
     public function setText(string $text) {
         $this->text = $text;
+        $this->setTitle($text);
 
         return $this;
     }
@@ -111,19 +115,6 @@ class LinkBuilder implements IRenderable {
         $this->elements['title'] = $title;
 
         return $this;
-    }
-
-    /**
-     * Processes the URL array into a string URL and finally saves it to the href attribute
-     */
-    private function processUrl() {
-        $tmp = [];
-
-        foreach($this->urlParts as $k => $v) {
-            $tmp[] = $k . '=' . $v;
-        }
-
-        $this->setHref('?' . implode('&', $tmp));
     }
 
     /**
@@ -186,12 +177,7 @@ class LinkBuilder implements IRenderable {
      * @return string URL
      */
     public static function convertUrlArrayToString(array $url) {
-        $tmp = [];
-        foreach($url as $k => $v) {
-            $tmp[] = $k . '=' . $v;
-        }
-
-        return '?' . implode('&', $tmp);
+        return Router::generateUrl($url);
     }
 
     /**

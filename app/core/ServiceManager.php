@@ -17,20 +17,21 @@ use App\Repositories\UserRepository;
  * @author Lukas Velek
  */
 class ServiceManager {
-    private SystemServicesRepository $ssr;
-    private UserRepository $ur;
-    private EntityManager $em;
+    public SystemServicesRepository $systemServicesRepository;
+    private UserRepository $userRepository;
+    private EntityManager $entityManager;
 
     /**
      * Class constructor
      * 
-     * @param SystemServicesRepository $ssr SystemServicesRepository instance
-     * @param UserRepository $ur UserRepository instance
+     * @param SystemServicesRepository $systemServicesRepository SystemServicesRepository instance
+     * @param UserRepository $userRepository UserRepository instance
+     * @param EntityManager $entityManager EntityManager instance
      */
-    public function __construct(SystemServicesRepository $ssr, UserRepository $ur, EntityManager $em) {
-        $this->ssr = $ssr;
-        $this->ur = $ur;
-        $this->em = $em;
+    public function __construct(SystemServicesRepository $systemServicesRepository, UserRepository $userRepository, EntityManager $entityManager) {
+        $this->systemServicesRepository = $systemServicesRepository;
+        $this->userRepository = $userRepository;
+        $this->entityManager = $entityManager;
     }
 
     /**
@@ -81,7 +82,7 @@ class ServiceManager {
     public function startService(string $serviceTitle) {
         $serviceId = $this->getServiceId($serviceTitle);
 
-        if(!$this->ssr->updateService($serviceId, ['dateStarted' => date('Y-m-d H:i:s'), 'dateEnded' => NULL, 'status' => SystemServiceStatus::RUNNING])) {
+        if(!$this->systemServicesRepository->updateService($serviceId, ['dateStarted' => date('Y-m-d H:i:s'), 'dateEnded' => NULL, 'status' => SystemServiceStatus::RUNNING])) {
             throw new ServiceException('Could not update service status.');
         }
     }
@@ -96,16 +97,16 @@ class ServiceManager {
     public function stopService(string $serviceTitle, bool $error) {
         $serviceId = $this->getServiceId($serviceTitle);
 
-        if(!$this->ssr->updateService($serviceId, ['dateEnded' => date('Y-m-d H:i:s'), 'status' => SystemServiceStatus::NOT_RUNNING])) {
+        if(!$this->systemServicesRepository->updateService($serviceId, ['dateEnded' => date('Y-m-d H:i:s'), 'status' => SystemServiceStatus::NOT_RUNNING])) {
             throw new ServiceException('Could not update service status.');
         }
 
         try {
-            $historyId = $this->em->generateEntityId(EntityManager::SERVICE_HISTORY);
+            $historyId = $this->entityManager->generateEntityId(EntityManager::SERVICE_HISTORY);
 
             $status = $error ? SystemServiceHistoryStatus::ERROR : SystemServiceHistoryStatus::SUCCESS;
 
-            if(!$this->ssr->createHistoryEntry($historyId, $serviceId, $status)) {
+            if(!$this->systemServicesRepository->createHistoryEntry($historyId, $serviceId, $status)) {
                 throw new ServiceException('Could not create service history entry.');
             }
         } catch(AException $e) {
@@ -120,7 +121,7 @@ class ServiceManager {
      * @return string Service ID
      */
     private function getServiceId(string $serviceTitle) {
-        $service = $this->ssr->getServiceByTitle($serviceTitle);
+        $service = $this->systemServicesRepository->getServiceByTitle($serviceTitle);
 
         if($service === null) {
             throw new ServiceException('Could not retrieve service information from the database.');
@@ -135,7 +136,7 @@ class ServiceManager {
      * @return string|null Service user ID or null
      */
     public function getServiceUserId() {
-        $user = $this->ur->getUserByUsername('service_user');
+        $user = $this->userRepository->getUserByUsername('service_user');
 
         if($user !== null) {
             return $user->getId();

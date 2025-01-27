@@ -3,13 +3,16 @@
 namespace App\Modules\UserModule;
 
 use App\Components\DocumentsGrid\DocumentsGrid;
+use App\Components\DocumetnShareForm\DocumentShareForm;
 use App\Components\FoldersSidebar\FoldersSidebar;
 use App\Constants\Container\CustomMetadataTypes;
 use App\Constants\Container\DocumentStatus;
 use App\Core\DB\DatabaseRow;
+use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
 use App\Enums\AEnumForMetadata;
 use App\Exceptions\AException;
+use App\Exceptions\RequiredAttributeIsNotSetException;
 use App\Helpers\DateTimeFormatHelper;
 use App\UI\LinkBuilder;
 
@@ -33,7 +36,7 @@ class DocumentsPresenter extends AUserPresenter {
     }
     
     public function handleList() {
-        $folderId = $this->httpGet('folderId');
+        $folderId = $this->httpRequest->query('folderId');
 
         if($folderId !== null) {
             $this->currentFolderId = $folderId;
@@ -72,18 +75,25 @@ class DocumentsPresenter extends AUserPresenter {
         $documentsGrid->setCurrentFolder($this->currentFolderId);
         $documentsGrid->showCustomMetadata();
         $documentsGrid->useCheckboxes($this);
+        $documentsGrid->setCacheFactory($this->cacheFactory);
 
         return $documentsGrid;
     }
 
     public function handleSwitchFolder() {
-        $folderId = $this->httpGet('folderId', true);
+        $folderId = $this->httpRequest->query('folderId');
+        if($folderId === null) {
+            throw new RequiredAttributeIsNotSetException('folderId');
+        }
         $this->httpSessionSet('current_document_folder_id', $folderId);
         $this->redirect($this->createURL('list', ['folderId' => $folderId]));
     }
 
     public function handleInfo() {
-        $documentId = $this->httpGet('documentId', true);
+        $documentId = $this->httpRequest->query('documentId');
+        if($documentId === null) {
+            throw new RequiredAttributeIsNotSetException('documentId');
+        }
         
         try {
             $document = $this->documentManager->getDocumentById($documentId);
@@ -208,6 +218,66 @@ class DocumentsPresenter extends AUserPresenter {
         $this->template->document_custom_metadata = $this->loadFromPresenterCache('customMetadataCode');
 
         $this->template->links = $this->createBackUrl('list');
+    }
+
+    public function handleShareForm(?FormRequest $fr = null) {
+        if($fr !== null) {
+            $data = $fr->getData();
+
+            try {
+                $this->documentRepository->beginTransaction(__METHOD__);
+
+                foreach($this->httpRequest->query('documentId') as $documentId) {
+                    $this->documentManager->shareDocument($documentId, $this->getUserId(), $data['user']);
+                }
+
+                $this->documentRepository->commit($this->getUserId(), __METHOD__);
+
+                $this->flashMessage(sprintf('Successfully shared %d %s.', count($this->httpRequest->query('documentId')), (count($this->httpRequest->query('documentId')) > 1 ? 'documents' : 'document')), 'success');
+            } catch(AException $e) {
+                $this->documentRepository->rollback(__METHOD__);
+                
+                $this->flashMessage('Could not share document' . (count($this->httpRequest->query('documentId')) > 1 ? 's' : '') . '. Reason: ' . $e->getMessage(), 'error');
+            }
+
+            $this->redirect($this->createURL('list', ['folderId' => $this->httpRequest->query('folderId')]));
+        }
+    }
+
+    public function renderShareForm() {
+        $this->template->links = $this->createBackUrl('list', ['folderId' => $this->httpRequest->query('backFolderId')]);
+    }
+
+    protected function createComponentShareDocumentForm(HttpRequest $request) {
+        $form = new DocumentShareForm($request, $this->app->userRepository, $this->documentManager);
+
+        if(!$request->isAjax) {
+            $form->setAction($this->createURL('shareForm', ['folderId' => $request->query('backFolderId')]));
+            $form->setDocumentIds($request->query('documentId'));
+        }
+
+        return $form;
+    }
+
+    public function renderListShared() {}
+
+    protected function createComponentSharedDocumentsGrid(HttpRequest $request) {
+        $documentsGrid = new DocumentsGrid(
+            $this->componentFactory->getGridBuilder($this->containerId),
+            $this->app,
+            $this->documentManager,
+            $this->documentBulkActionAuthorizator,
+            $this->groupStandardOperationsAuthorizator,
+            $this->enumManager,
+            $this->gridManager,
+            $this->processFactory
+        );
+
+        $documentsGrid->setShowShared();
+        $documentsGrid->useCheckboxes($this);
+        $documentsGrid->setCacheFactory($this->cacheFactory);
+
+        return $documentsGrid;
     }
 }
 

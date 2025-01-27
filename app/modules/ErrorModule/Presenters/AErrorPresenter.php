@@ -8,7 +8,7 @@ abstract class AErrorPresenter extends APresenter {
     protected function __construct(string $name, string $title) {
         parent::__construct($name, $title);
 
-        $this->moduleName = 'ErrorModule';
+        $this->moduleName = 'Error';
     }
 }
 

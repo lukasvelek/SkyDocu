@@ -76,8 +76,8 @@ class ContainerSelectionForm extends FormBuilder2 {
      */
     private function createSearchForm() {
         $lastContainer = 'null';
-        if(isset($this->httpRequest->query['lastContainer'])) {
-            $lastContainer = $this->httpRequest->query['lastContainer'];
+        if($this->httpRequest->query('lastContainer') !== null) {
+            $lastContainer = $this->httpRequest->query('lastContainer');
         }
 
         $this->addTextInput('containerSearch', 'Search container:')
@@ -126,7 +126,7 @@ class ContainerSelectionForm extends FormBuilder2 {
                 alert("No container name entered.");
             } else {
                 getContainers(_query, _lastContainer);
-            $("#container").removeAttr("disabled");
+                $("#container").removeAttr("disabled");
             }
         }';
 
@@ -139,7 +139,7 @@ class ContainerSelectionForm extends FormBuilder2 {
      * @return JsonResponse Return value
      */
     protected function actionSearchContainers() {
-        $query = $this->httpRequest->query['query'];
+        $query = $this->httpRequest->query('query');
 
         $containers = $this->getContainers($query);
 
@@ -200,8 +200,8 @@ class ContainerSelectionForm extends FormBuilder2 {
                     'text' => $title
                 ];
 
-                if(array_key_exists('lastContainer', $this->httpRequest->query)) {
-                    if($group->containerId == $this->httpRequest->query['lastContainer']) {
+                if($this->httpRequest->query('lastContainer') !== null) {
+                    if($group->containerId == $this->httpRequest->query('lastContainer')) {
                         $c['selected'] = 'selected';
                     }
                 }

@@ -13,7 +13,7 @@ abstract class ACommonButton extends AElement {
      * 
      * @param bool $disabled True if the button is disabled
      */
-    public function setDisabled(bool $disabled = true) {
+    public function setDisabled(bool $disabled = true): static {
         if($disabled) {
             $this->addAttribute('disabled');
         } else {
@@ -21,6 +21,7 @@ abstract class ACommonButton extends AElement {
                 unset($this->attributes['disabled']);
             }
         }
+        return $this;
     }
 }
 

@@ -46,6 +46,10 @@ class Button extends ACommonButton {
 
         $this->appendAttributesToCode($code);
 
+        if(!array_key_exists('title', $this->attributes)) {
+            $code .= ' title="' . $this->text . '"';
+        }
+
         $code .= '>' . $this->text . '</button>';
 
         return $code;

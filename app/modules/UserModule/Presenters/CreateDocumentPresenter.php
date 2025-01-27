@@ -7,6 +7,7 @@ use App\Constants\Container\DocumentStatus;
 use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
+use App\Exceptions\RequiredAttributeIsNotSetException;
 use App\UI\FormBuilder2\FormBuilder2;
 
 class CreateDocumentPresenter extends AUserPresenter {
@@ -82,7 +83,10 @@ class CreateDocumentPresenter extends AUserPresenter {
 
     public function handleForm(?FormRequest $fr = null) {
         if($fr !== null) {
-            $folderId = $this->httpGet('folderId', true);
+            $folderId = $this->httpRequest->query('folderId');
+            if($folderId === null) {
+                throw new RequiredAttributeIsNotSetException('folderId');
+            }
 
             $customMetadatas = $this->documentManager->getCustomMetadataForFolder($folderId);
 
@@ -94,13 +98,13 @@ class CreateDocumentPresenter extends AUserPresenter {
                 'folderId' => $folderId
             ];
 
-            if(isset($fr->description)) {
+            if($fr->isset('description')) {
                 $metadataValues['description'] = $fr->description;
             }
 
             $customMetadataValues = [];
             foreach($customMetadatas as $metadataId => $metadata) {
-                if(isset($fr->{$metadata->title})) {
+                if($fr->isset($metadata->title)) {
                     if($fr->{$metadata->title} != 'null') {
                         $customMetadataValues[$metadataId] = $fr->{$metadata->title};
                     }
@@ -126,10 +130,12 @@ class CreateDocumentPresenter extends AUserPresenter {
     }
 
     public function renderForm() {
-        $this->template->links = $this->createBackFullUrl('User:Documents', 'list', ['folderId' => $this->httpGet('folderId')]);
+        $this->template->links = $this->createBackFullUrl('User:Documents', 'list', ['folderId' => $this->httpRequest->query('folderId')]);
     }
 
     protected function createComponentCreateDocumentForm(HttpRequest $request) {
+        $folderId = $request->query('folderId') ?? ($request->post('folderId') ?? null);
+
         $classesDb = $this->documentManager->getDocumentClassesForDocumentCreateForUser($this->getUserId());
 
         $classes = [];
@@ -142,7 +148,7 @@ class CreateDocumentPresenter extends AUserPresenter {
 
         $form = $this->componentFactory->getFormBuilder();
 
-        $form->setAction($this->createURL('form', ['folderId' => $request->query['folderId']]));
+        $form->setAction($this->createURL('form', ['folderId' => $folderId]));
 
         $form->addTextInput('title', 'Title:')
             ->setRequired();
@@ -154,7 +160,7 @@ class CreateDocumentPresenter extends AUserPresenter {
             ->addRawOptions($classes)
             ->setRequired();
 
-        $this->addCustomMetadataFormControls($form, $request->query['folderId']);
+        $this->addCustomMetadataFormControls($form, $folderId);
 
         $form->addSubmit('Create');
 

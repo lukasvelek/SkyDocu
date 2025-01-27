@@ -2,8 +2,15 @@
 
 namespace App\UI\FormBuilder2;
 
+use App\Core\AjaxRequestBuilder;
+use App\Core\Http\Ajax\Requests\AAjaxRequest;
 use App\Core\Http\HttpRequest;
+use App\Core\Http\JsonResponse;
+use App\Core\Router;
+use App\Modules\ModuleManager;
 use App\UI\AComponent;
+use App\UI\FormBuilder2\FormState\FormStateList;
+use App\UI\FormBuilder2\FormState\FormStateListHelper;
 
 /**
  * FormBuilder allows building forms for interaction with the server
@@ -14,7 +21,7 @@ class FormBuilder2 extends AComponent {
     /**
      * @var array<string, AElement>
      */
-    private array $elements;
+    public array $elements;
     /**
      * @var array<string, Label>
      */
@@ -23,6 +30,14 @@ class FormBuilder2 extends AComponent {
     private array $action;
     private string $method;
     private array $scripts;
+    private bool $callReducerOnChange;
+    private bool $isPrerendered;
+    private array $additionalLinkParams;
+
+    private FormStateListHelper $stateListHelper;
+
+    public ?IFormReducer $reducer;
+    private Router $router;
     
     /**
      * Class constructor
@@ -32,21 +47,46 @@ class FormBuilder2 extends AComponent {
     public function __construct(HttpRequest $request) {
         parent::__construct($request);
 
+        $this->stateListHelper = new FormStateListHelper();
+
         $this->elements = [];
         $this->name = 'MyForm';
         $this->action = [];
         $this->method = 'POST';
         $this->labels = [];
         $this->scripts = [];
+        $this->reducer = null;
+        $this->callReducerOnChange = false;
+        $this->isPrerendered = false;
+        $this->additionalLinkParams = [];
+
+        $this->router = new Router();
+    }
+
+    /**
+     * Sets if reducer should be called on every change
+     * 
+     * @param bool $callReducerOnChange
+     */
+    public function setCallReducerOnChange(bool $callReducerOnChange = true) {
+        $this->callReducerOnChange = $callReducerOnChange;
     }
 
     /**
      * Adds form JS script code
      * 
-     * @param string $rawJsCode Raw JS code
+     * @param AjaxRequestBuilder|AAjaxRequest|string $code JS code
      */
-    public function addScript(string $rawJsCode) {
-        $code = '<script type="text/javascript">' . $rawJsCode . '</script>';
+    public function addScript(AjaxRequestBuilder|AAjaxRequest|string $code) {
+        if($code instanceof AjaxRequestBuilder) {
+            $code = $code->build();
+        } else if($code instanceof AAjaxRequest) {
+            $_code = $code->build();
+            $code->checkChecks();
+            $code = $_code;
+        }
+
+        $code = '<script type="text/javascript">' . $code . '</script>';
 
         $this->scripts[] = $code;
     }
@@ -84,6 +124,10 @@ class FormBuilder2 extends AComponent {
      * @return string HTML code
      */
     public function render() {
+        if($this->isPrerendered === false) {
+            $this->prerender();
+        }
+
         $template = $this->getTemplate(__DIR__ . '/form.html');
         $template->form = $this->build();
         $template->scripts = implode('', $this->scripts);
@@ -100,6 +144,13 @@ class FormBuilder2 extends AComponent {
         $form = new Form($this->name);
         $form->setAction($this->action);
         $form->setMethod($this->method);
+        $form->setAdditionalLinkParams($this->additionalLinkParams);
+
+        if($this->reducer !== null && !$this->httpRequest->isAjax) {
+            $stateList = $this->getStateList();
+            $this->reducer->applyReducer($stateList);
+            $this->applyStateList($stateList);
+        }
 
         foreach($this->elements as $name => $element) {
             $row = $this->buildElement($name, $element);
@@ -108,6 +159,143 @@ class FormBuilder2 extends AComponent {
         }
 
         return $form->render();
+    }
+
+    public function prerender() {
+        parent::prerender();
+
+        if($this->callReducerOnChange && $this->reducer !== null) {
+            $callArgs = [];
+
+            foreach($this->httpRequest->query as $k => $v) {
+                if(in_array($k, ['page', 'action', 'do', 'isComponent', 'isAjax', 'state', 'elements'])) continue;
+
+                $callArgs[] = $v;
+            }
+            $code = 'function addOnChange() {';
+
+            foreach(array_keys($this->elements) as $name) {
+                $code .= '$("#' . $name . '").on("change", function() { ' . $this->componentName . '_onChange(\'' . implode('\', \'', $callArgs) . '\', \'null\'); });';
+            }
+    
+            $code .= '}';
+    
+            $this->addScript($code);
+
+            $this->addScript('addOnChange();');
+        }
+
+        $this->isPrerendered = true;
+    }
+
+    public function startup() {
+        parent::startup();
+
+        $attributes = [
+            'hidden',
+            'required',
+            'readonly',
+            'value',
+            'min',
+            'max'
+        ];
+
+        $code = 'function getFormState() {';
+
+        foreach(array_keys($this->elements) as $name) {
+            if($name == 'btn_submit') continue;
+            foreach($attributes as $attr) {
+                $code .= 'var ' . $name . '_' . $attr . ' = $("#' . $name . '").prop("' . $attr . '"); ';
+            }
+        }
+
+        foreach(array_keys($this->elements) as $name) {
+            if($name == 'btn_submit') continue;
+
+            foreach($attributes as $attr) {
+                if(in_array($attr, ['value', 'min', 'max'])) {
+                    $code .= 'if(' . $name . '_' . $attr . ' === undefined || ' . $name . '_' . $attr . ' === false || ' . $name . '_' . $attr . ' === "") { ' . $name . '_' . $attr . ' = "null"; }';
+                    continue;
+                }
+
+                $code .= 'if(' . $name . '_' . $attr . ' === undefined || ' . $name . '_' . $attr . ' === false || ' . $name . '_' . $attr . ' === "") { ' . $name . '_' . $attr . ' = false; }';
+            }
+        }
+
+        $jsonArr = [];
+        foreach(array_keys($this->elements) as $name) {
+            if($name == 'btn_submit') continue;
+
+            foreach($attributes as $attr) {
+                $jsonArr[$name][$attr] = $name . '_' . $attr;
+            }
+        }
+
+        $json = json_encode($jsonArr);
+
+        foreach(array_keys($this->elements) as $name) {
+            if($name == 'btn_submit') continue;
+
+            foreach($attributes as $attr) {
+                $json = str_replace('"' . $name . '_' . $attr . '"', $name . '_' . $attr, $json);
+            }
+        }
+
+        $code .= 'const json = ' . $json . ';';
+        $code .= 'return json;';
+
+        $code .= '}';
+
+        $this->presenter->addScript($code);
+
+        $hArgs = [];
+        $fArgs = [];
+        $callArgs = [];
+
+        foreach($this->httpRequest->query as $k => $v) {
+            if(array_key_exists($k, $this->action)) continue;
+
+            $hArgs[$k] = '_' . $k;
+            $fArgs[] = '_' . $k;
+            $callArgs[] = $v;
+        }
+
+        $hArgs['state'] = '_state';
+        $fArgs[] = '_state';
+
+        foreach(array_keys($this->elements) as $name) {
+            if($name == 'btn_submit') continue;
+            $hArgs['elements[]'][] = $name;
+        }
+
+        $actionParams = [];
+        foreach($this->action as $k => $v) {
+            if(in_array($k, ['page', 'action', 'do', 'isComponent', 'isAjax'])) continue;
+
+            $actionParams[$k] = $v;
+        }
+
+        $arb = new AjaxRequestBuilder();
+
+        $arb->setMethod('POST')
+            ->setComponentAction($this->presenter, $this->componentName . '-onChange', $actionParams)
+            ->setHeader($hArgs)
+            ->setFunctionName($this->componentName . '_onChange')
+            ->setFunctionArguments($fArgs)
+            ->updateHTMLElement('form', 'form')
+            ->setComponent()
+            ->addBeforeAjaxOperation('
+                _state = getFormState();
+            ')
+            ->enableLoadingAnimation('form')
+        ;
+        
+        $this->presenter->addScript($arb);
+
+        $this->router->inject($this->presenter, new ModuleManager());
+        if(!$this->router->checkEndpointExists($this->action)) {
+            // throw exception
+        }
     }
 
     /**
@@ -367,7 +555,7 @@ class FormBuilder2 extends AComponent {
     /**
      * Returns all form elements
      * 
-     * @return array
+     * @return array<string, AElement>
      */
     public function getElements() {
         return $this->elements;
@@ -384,7 +572,61 @@ class FormBuilder2 extends AComponent {
         return $el;
     }
 
-    public static function createFromComponent(AComponent $component) {}
+    /**
+     * Returns state list from the form
+     * 
+     * @return FormStateList
+     */
+    public function getStateList() {
+        return $this->stateListHelper->convertFormToStateList($this);
+    }
+
+    /**
+     * Applies state list to the form
+     * 
+     * @param FormStateList $stateList
+     */
+    public function applyStateList(FormStateList $stateList) {
+        $this->stateListHelper->applyStateListToForm($this, $stateList);
+    }
+
+    public static function createFromComponent(AComponent $component) {
+        $obj = new self($component->httpRequest);
+        $obj->setApplication($component->app);
+        $obj->setPresenter($component->presenter);
+        return $obj;
+    }
+
+    /**
+     * Handles on changes handler
+     * 
+     * @return JsonResponse
+     */
+    public function actionOnChange() {
+        $stateList = $this->stateListHelper->createStateListFromJsState($this->httpRequest);
+
+        if($this->reducer !== null) {
+            $this->reducer->applyReducer($stateList);
+        }
+
+        $this->applyStateList($stateList);
+
+        return new JsonResponse(['form' => $this->render()]);
+    }
+
+    /**
+     * Sets additional link parameters
+     * 
+     * @param string $key Link key
+     * @param mixed $data Link data
+     */
+    public function setAdditionalLinkParameters(string $key, mixed $data) {
+        if($data === null) {
+            return;
+        }
+
+        $this->additionalLinkParams[$key] = $data;
+    }
 }
 
 ?>

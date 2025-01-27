@@ -139,6 +139,19 @@ class DatabaseInstaller {
                 'status' => 'INT(4) NOT NULL DEFAULT 1',
                 'dateCreated' => 'DATETIME NOT NULL DEFAULT current_timestamp()'
             ],
+            'user_absence' => [
+                'absenceId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',
+                'userId' => 'VARCHAR(256) NOT NULL',
+                'dateFrom' => 'DATETIME NOT NULL',
+                'dateTo' => 'DATETIME NOT NULL',
+                'dateCreated' => 'DATETIME NOT NULL DEFAULT current_timestamp()',
+                'active' => 'INT(2) NOT NULL DEFAULT 1'
+            ],
+            'user_substitutes' => [
+                'entryId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',
+                'userId' => 'VARCHAR(256) NOT NULL',
+                'substituteUserId' => 'VARCHAR(256) NOT NULL'
+            ]
         ];
 
         $i = 0;
@@ -257,6 +270,9 @@ class DatabaseInstaller {
         $this->logger->info('Created ' . $i . ' users.', __METHOD__);
     }
 
+    /**
+     * Creates system groups and adds the default members to them
+     */
     private function createGroupsAndTheirMembers() {
         $this->logger->info('Creating groups and adding users to them.', __METHOD__);
 
@@ -312,7 +328,9 @@ class DatabaseInstaller {
         $services = [
             'ContainerCreation' => 'container_creation_service.php',
             'LogRotate' => 'log_rotate_service.php',
-            'ContainerUsageStatistics' => 'container_usage_statistics_service.php'
+            'ContainerUsageStatistics' => 'container_usage_statistics_service.php',
+            'ContainerStandaloneProcessChecker' => 'container_standalone_process_checker_service.php',
+            'ProcessSubstitute' => 'process_substitute_service.php'
         ];
 
         foreach($services as $title => $path) {

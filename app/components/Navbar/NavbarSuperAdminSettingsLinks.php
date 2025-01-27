@@ -13,6 +13,7 @@ class NavbarSuperAdminSettingsLinks {
     public const USERS = ['page' => 'SuperAdminSettings:Users', 'action' => 'list'];
     public const GROUPS = ['page' => 'SuperAdminSettings:Groups', 'action' => 'list'];
     public const BG_SERVICES = ['page' => 'SuperAdminSettings:BackgroundServices', 'action' => 'list'];
+    public const ABOUT_APP = ['page' => 'SuperAdminSettings:AboutApplication', 'action' => 'default'];
 
     public const USER_PROFILE = ['page' => 'SuperAdmin:UserProfile', 'action' => 'profile'];
     public const USER_LOGOUT = ['page' => 'SuperAdmin:Logout', 'action' => 'logout'];
@@ -28,7 +29,8 @@ class NavbarSuperAdminSettingsLinks {
             'Dashboard' => self::DASHBOARD,
             'Users' => self::USERS,
             'Groups' => self::GROUPS,
-            'Background services' => self::BG_SERVICES
+            'Background services' => self::BG_SERVICES,
+            'About application' => self::ABOUT_APP
         ];
     }
 }

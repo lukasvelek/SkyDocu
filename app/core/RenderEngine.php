@@ -27,9 +27,11 @@ class RenderEngine {
     /**
      * Class constructor
      * 
+     * @param Logger $logger Logger instance
      * @param AModule $module Module class instance that extends AModule
      * @param string $presenter Presenter name
      * @param string $action Action name
+     * @param Application $application Application instance
      */
     public function __construct(Logger $logger, AModule $module, string $presenter, string $action, Application $application) {
         $this->logger = $logger;
@@ -61,6 +63,23 @@ class RenderEngine {
 
             if($this->renderedContent === null) {
                 $this->renderedContent = $this->module->render($this->presenterTitle, $this->actionTitle);
+            }
+
+            // Optimization - the returned code is on a single line
+            if(!$this->isAjax) {
+                $parts = explode("\r\n", $this->renderedContent);
+
+                $tmp = [];
+                foreach($parts as $part) {
+                    if($part == '') {
+                        continue;
+                    }
+
+                    $x = trim($part);
+                    $tmp[] = $x;
+                }
+
+                $this->renderedContent = implode('', $tmp);
             }
 
             return $this->renderedContent;

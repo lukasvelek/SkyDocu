@@ -25,6 +25,8 @@ class EntityManager extends AManager {
     public const CONTAINER_USAGE_STATISTICS = 'container_usage_statistics';
     public const CONTAINER_INVITES = 'container_invites';
     public const CONTAINER_INVITE_USAGE = 'container_invite_usage';
+    public const USER_ABSENCE = 'user_absence';
+    public const USER_SUBSTITUTES = 'user_substitutes';
 
     public const C_GROUPS = 'groups';
     public const C_DOCUMENT_CLASSES = 'document_classes';
@@ -44,21 +46,22 @@ class EntityManager extends AManager {
     public const C_PROCESS_COMMENTS = 'process_comments';
     public const C_PROCESS_METADATA_HISTORY = 'process_metadata_history';
     public const C_PROCESS_DATA = 'process_data';
+    public const C_DOCUMENT_SHARING = 'document_sharing';
 
     private const __MAX__ = 100;
 
-    private ContentRepository $cr;
+    private ContentRepository $contentRepository;
 
     /**
      * Class constructor
      * 
      * @param Logger $logger Logger instance
-     * @param ContentRepository $cr ContentRepository instance
+     * @param ContentRepository $contentRepository ContentRepository instance
      */
-    public function __construct(Logger $logger, ContentRepository $cr) {
+    public function __construct(Logger $logger, ContentRepository $contentRepository) {
         parent::__construct($logger, null);
 
-        $this->cr = $cr;
+        $this->contentRepository = $contentRepository;
     }
 
     public function generateEntityIdCustomDb(string $category, DatabaseConnection $customConn) {
@@ -103,7 +106,7 @@ class EntityManager extends AManager {
 
             $primaryKeyName = $this->getPrimaryKeyNameByCategory($category);
 
-            $unique = $this->cr->checkIdIsUnique($category, $primaryKeyName, $entityId);
+            $unique = $this->contentRepository->checkIdIsUnique($category, $primaryKeyName, $entityId);
 
             if($unique || $x >= self::__MAX__) {
                 $run = false;
@@ -135,6 +138,8 @@ class EntityManager extends AManager {
             self::CONTAINER_USAGE_STATISTICS => 'entryId',
             self::CONTAINER_INVITES => 'inviteId',
             self::CONTAINER_INVITE_USAGE => 'entryId',
+            self::USER_ABSENCE => 'absenceId',
+            self::USER_SUBSTITUTES => 'entryId',
 
             self::C_GROUPS => 'groupId',
             self::C_DOCUMENT_CLASSES => 'classId',
@@ -153,7 +158,8 @@ class EntityManager extends AManager {
             self::C_PROCESSES => 'processId',
             self::C_PROCESS_COMMENTS => 'commentId',
             self::C_PROCESS_METADATA_HISTORY => 'entryId',
-            self::C_PROCESS_DATA => 'entryId'
+            self::C_PROCESS_DATA => 'entryId',
+            self::C_DOCUMENT_SHARING => 'sharingId'
         };
     }
 }

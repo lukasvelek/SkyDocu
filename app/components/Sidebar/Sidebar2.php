@@ -5,15 +5,23 @@ namespace App\Components\Sidebar;
 use App\Core\Http\HttpRequest;
 use App\Modules\TemplateObject;
 use App\UI\AComponent;
+use App\UI\LinkBuilder;
 
+/**
+ * Sidebar is a component used for displaying links to the user on the side of the page
+ * 
+ * @author Lukas Velek
+ */
 class Sidebar2 extends AComponent {
     protected array $links;
+    protected array $staticLinks;
     private TemplateObject $template;
 
     public function __construct(HttpRequest $request) {
         parent::__construct($request);
 
         $this->links = [];
+        $this->staticLinks = [];
         $this->template = new TemplateObject(file_get_contents(__DIR__ . '\\template.html'));
     }
 
@@ -25,7 +33,7 @@ class Sidebar2 extends AComponent {
     }
 
     /**
-     * Adds link
+     * Adds a link
      * 
      * @param string $title Link title
      * @param array $url Link URL
@@ -36,6 +44,17 @@ class Sidebar2 extends AComponent {
     }
 
     /**
+     * Adds a static link
+     * 
+     * @param string $title Link title
+     * @param array $url Link URL
+     * @param bool $isActive Active or not
+     */
+    public function addStaticLink(string $title, array $url, bool $isActive = false) {
+        $this->staticLinks[] = $this->createLink($title, $url, $isActive);
+    }
+
+    /**
      * Adds JS link
      * 
      * @param string $title Link title
@@ -43,11 +62,12 @@ class Sidebar2 extends AComponent {
      * @param bool $isActive Is link active?
      */
     public function addJSLink(string $title, string $jsHandler, bool $isActive = false) {
+        $_title = $title;
         if($isActive) {
-            $title = '<b>' . $title . '</b>';
+            $_title = '<b>' . $title . '</b>';
         }
 
-        $code = '<a class="sidebar-link" href="#" onclick="' . $jsHandler . '">' . $title . '</a>';
+        $code = '<a class="sidebar-link" href="#" onclick="' . $jsHandler . '" title="' . $title . '">' . $_title . '</a>';
 
         $this->links[] = $code;
     }
@@ -59,16 +79,7 @@ class Sidebar2 extends AComponent {
      * @return string Single line URL
      */
     private function composeURL(array $urlParts) {
-        $url = '?';
-
-        $urlCouples = [];
-        foreach($urlParts as $upKey => $upValue) {
-            $urlCouples[] = $upKey . '=' . $upValue;
-        }
-
-        $url .= implode('&', $urlCouples);
-
-        return $url;
+        return LinkBuilder::convertUrlArrayToString($urlParts);
     }
 
     /**
@@ -82,11 +93,12 @@ class Sidebar2 extends AComponent {
     protected function createLink(string $title, array $url, bool $isActive) {
         $url = $this->composeURL($url);
 
+        $_title = $title;
         if($isActive) {
-            $title = '<b>' . $title . '</b>';
+            $_title = '<b>' . $title . '</b>';
         }
 
-        $code = '<a class="sidebar-link" href="' . $url . '">' . $title . '</a>';
+        $code = '<a class="sidebar-link" href="' . $url . '" title="' . $title .'">' . $_title . '</a>';
         return $code;
     }
 
@@ -115,6 +127,26 @@ class Sidebar2 extends AComponent {
         $obj->setPresenter($component->presenter);
 
         return $obj;
+    }
+
+    /**
+     * Checks if given URL parameters are same as in the current URL
+     * 
+     * @param array $urlParams URL parameters conditions
+     * @return bool True if conditions are met or false if not
+     */
+    public function checkIsLinkActive(array $urlParams) {
+        $ok = true;
+        foreach($urlParams as $key => $value) {
+            if($this->httpRequest->query($key) !== null) {
+                if($this->httpRequest->query($key) != $value) {
+                    $ok = false;
+                    break;
+                }
+            }
+        }
+
+        return $ok;
     }
 }
 

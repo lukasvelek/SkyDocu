@@ -4,15 +4,9 @@ namespace App\Repositories\Container;
 
 use App\Constants\Container\GroupStandardOperationRights;
 use App\Core\Caching\CacheNames;
-use App\Core\DatabaseConnection;
-use App\Logger\Logger;
 use App\Repositories\ARepository;
 
 class GroupRepository extends ARepository {
-    public function __construct(DatabaseConnection $db, Logger $logger) {
-        parent::__construct($db, $logger);
-    }
-
     public function getGroupsForUser(string $userId) {
         $qb = $this->qb(__METHOD__);
 

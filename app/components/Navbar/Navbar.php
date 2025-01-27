@@ -8,10 +8,10 @@ use App\Core\Caching\CacheFactory;
 use App\Core\Caching\CacheNames;
 use App\Core\Http\HttpRequest;
 use App\Entities\UserEntity;
-use App\Helpers\LinkHelper;
 use App\Managers\Container\GroupManager;
 use App\Modules\TemplateObject;
 use App\UI\AComponent;
+use App\UI\LinkBuilder;
 
 /**
  * Navigation bar or navbar is the top "bar" that contains links to different parts of the application
@@ -23,7 +23,7 @@ class Navbar extends AComponent {
     private TemplateObject $template;
     private UserEntity $user;
     private array $hideLinks;
-    private int $mode;
+    private ?int $mode;
     private ?GroupManager $groupManager;
     private CacheFactory $cacheFactory;
 
@@ -35,7 +35,7 @@ class Navbar extends AComponent {
      * @param UserEntity $user Current user entity
      * @param ?GroupManager Container GroupManager instance
      */
-    public function __construct(HttpRequest $httpRequest, int $mode, UserEntity $user, ?GroupManager $groupManager) {
+    public function __construct(HttpRequest $httpRequest, ?int $mode, UserEntity $user, ?GroupManager $groupManager) {
         parent::__construct($httpRequest);
 
         $this->mode = $mode;
@@ -98,6 +98,9 @@ class Navbar extends AComponent {
                 $this->links = NavbarAdminLinks::toArray();
 
                 break;
+
+            default:
+                break;
         }
     }
 
@@ -121,14 +124,16 @@ class Navbar extends AComponent {
         ];
 
         $containerSwitch = $this->getContainerSwitch();
-        if($containerSwitch !== null) {
+        if($containerSwitch !== null && $this->mode !== null) {
             $userInfoLinks = array_merge(['Containers' => $containerSwitch], $userInfoLinks);
         }
 
         $userInfo = '';
-        foreach($userInfoLinks as $title => $link) {
-            if(!in_array($title, $this->hideLinks)) {
-                $userInfo .= $link;
+        if($this->mode !== null) {
+            foreach($userInfoLinks as $title => $link) {
+                if(!in_array($title, $this->hideLinks)) {
+                    $userInfo .= $link;
+                }
             }
         }
 
@@ -143,19 +148,17 @@ class Navbar extends AComponent {
     private function getUserProfileLink() {
         $link = null;
         switch($this->mode) {
-            case NavbarModes::SUPERADMINISTRATION:
-            case NavbarModes::SUPERADMINISTRATION_SETTINGS:
-                $link = NavbarSuperAdminLinks::USER_PROFILE;
-                break;
-
             case NavbarModes::GENERAL:
             case NavbarModes::ADMINISTRATION:
                 $link = NavbarGeneralLinks::USER_PROFILE;
                 break;
+
+            default:
+                break;
         }
 
         if($link === null) {
-            return '';
+            return '<span class="navbar-link" style="cursor: pointer" title="' . $this->user->getFullname() . '">' . $this->user->getFullname() . '</span>';
         }
 
         return $this->createLink($link, $this->user->getFullname());
@@ -178,6 +181,9 @@ class Navbar extends AComponent {
             case NavbarModes::ADMINISTRATION:
                 $link = NavbarGeneralLinks::USER_LOGOUT;
                 break;
+
+            default:
+                break;
         }
 
         if($link === null) {
@@ -195,7 +201,7 @@ class Navbar extends AComponent {
      * @return string HTML code
      */
     private function createLink(array $url, string $title) {
-        return '<a class="navbar-link" href="' . LinkHelper::createUrlFromArray($url) . '">' . $title . '</a>';
+        return '<a class="navbar-link" href="' . LinkBuilder::convertUrlArrayToString($url) . '" title="' . $title . '">' . $title . '</a>';
     }
 
     public function render() {

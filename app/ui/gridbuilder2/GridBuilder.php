@@ -3,6 +3,7 @@
 namespace App\UI\GridBuilder2;
 
 use App\Constants\AConstant;
+use App\Constants\IBackgroundColorable;
 use App\Constants\IColorable;
 use App\Core\AjaxRequestBuilder;
 use App\Core\Caching\CacheFactory;
@@ -51,13 +52,14 @@ class GridBuilder extends AComponent {
      */
     private array $columns;
     private array $columnLabels;
-    private Table $table;
+    private ?Table $table;
     private bool $enablePagination;
     private bool $enableExport;
     private int $gridPage;
     private ?int $totalCount;
-    private GridHelper $helper;
+    private GridHelper $gridHelper;
     private string $gridName;
+    private bool $isPrerendered;
 
     /**
      * Methods called with parameters: DatabaseRow $row, Row $_row, HTML $rowHtml
@@ -120,6 +122,7 @@ class GridBuilder extends AComponent {
         $this->hasCheckboxes = false;
         $this->checkboxHandler = [];
         $this->resultLimit = GRID_SIZE;
+        $this->isPrerendered = false;
     }
 
     /**
@@ -178,10 +181,10 @@ class GridBuilder extends AComponent {
     /**
      * Sets the GridHelper instance
      * 
-     * @param GridHelper $helper GridHelper instance
+     * @param GridHelper $gridHelper GridHelper instance
      */
-    public function setHelper(GridHelper $helper) {
-        $this->helper = $helper;
+    public function setHelper(GridHelper $gridHelper) {
+        $this->gridHelper = $gridHelper;
     }
 
     /**
@@ -190,7 +193,7 @@ class GridBuilder extends AComponent {
      * @return GridHelper GridHelper instance
      */
     public function getHelper() {
-        return $this->helper;
+        return $this->gridHelper;
     }
 
     /**
@@ -294,16 +297,26 @@ class GridBuilder extends AComponent {
                     if(in_array(AConstant::class, class_parents($constClass))) {
                         $result = $constClass::toString($value);
 
+                        $el = HTML::el('span');
+                        $el->text($result);
+
                         if(in_array(IColorable::class, class_implements($constClass))) {
                             $color = $constClass::getColor($value);
 
-                            $el = HTML::el('span');
-
-                            $el->text($result)
-                                ->style('color', $color);
-
-                            $result = $el->toString();
+                            $el->style('color', $color);
                         }
+
+                        if(in_array(IBackgroundColorable::class, class_implements($constClass))) {
+                            $bgColor = $constClass::getBackgroundColor($value);
+
+                            if($bgColor !== null) {
+                                $el->style('background-color', $bgColor)
+                                    ->style('border-radius', '10px')
+                                    ->style('padding', '5px');
+                            }
+                        }
+
+                        $result = $el->toString();
                     }
                 }
             } catch(Exception $e) {}
@@ -429,11 +442,17 @@ class GridBuilder extends AComponent {
                 if($value === true || $value == 1) {
                     $el = HTML::el('span')
                             ->style('color', 'green')
+                            ->style('background-color', 'lightgreen')
+                            ->style('border-radius', '10px')
+                            ->style('padding', '5px')
                             ->text('&check;');
                     $cell->setContent($el);
                 } else {
                     $el = HTML::el('span')
                             ->style('color', 'red')
+                            ->style('background-color', 'pink')
+                            ->style('border-radius', '10px')
+                            ->style('padding', '5px')
                             ->text('&times;');
                     $cell->setContent($el);
                 }
@@ -504,27 +523,38 @@ class GridBuilder extends AComponent {
      * @return string HTML code
      */
     public function render() {
-        $this->prerender();
+        if(!$this->isPrerendered) {
+            $this->prerender();
+        }
+        $this->build();
 
-        $template = $this->getTemplate(__DIR__ . '/grid.html');
+        $template = null;
+        if($this->table === null) {
+            $template = $this->getTemplate(__DIR__ . '/grid-empty.html');
+            $template->grid = $this->createFlashMessage('info', 'No data found.', 0, false, true);
+        } else {
+            $template = $this->getTemplate(__DIR__ . '/grid.html');
 
-        $template->scripts = $this->createScripts();
-        $template->grid = $this->table->output();
-        $template->controls = $this->createGridControls();
-        $template->filter_modal = '';
-        $template->filters = $this->createGridFilterControls();
+            $template->scripts = $this->createScripts();
+            $template->grid = $this->table->output();
+            $template->controls = $this->createGridControls();
+            $template->filter_modal = '';
+            $template->filters = $this->createGridFilterControls();
+        }
+        
         $template->grid_name = $this->gridName;
-
+        
         return $template->render()->getRenderedContent();
     }
 
     /**
      * Prerenders the grid
      */
-    protected function prerender() {
+    public function prerender() {
+        parent::prerender();
         $this->getActiveFiltersFromCache();
         $this->fetchDataFromDb(true);
-        $this->build();
+        $this->isPrerendered = true;
     }
 
     /**
@@ -571,8 +601,6 @@ class GridBuilder extends AComponent {
         }
 
         $_tableRows['header'] = $_headerRow;
-
-        $hasActionsCol = false;
 
         $cursor = clone $this->fetchDataFromDb();
 
@@ -752,6 +780,8 @@ class GridBuilder extends AComponent {
 
             foreach(array_keys($_tableRows) as $k) {
                 if($k == 'header') continue;
+                if(!array_key_exists($k, $cells)) continue;
+                
                 $_cells = $cells[$k];
 
                 foreach($tmp as $name) {
@@ -776,24 +806,10 @@ class GridBuilder extends AComponent {
         }
 
         if(count($_tableRows) == 1) {
-            $span = count($this->columns);
-            if($this->hasCheckboxes) {
-                $span++;
-            }
-
-            $cell = new Cell();
-            $cell->setSpan($span);
-            $cell->setName('no-data-message');
-            $cell->setContent('No data found.');
-
-            $row = new Row();
-            $row->addCell($cell);
-            $row->setPrimaryKey(null);
-
-            $_tableRows[] = $row;
+            $this->table = null;
+        } else {
+            $this->table = new Table($_tableRows);
         }
-
-        $this->table = new Table($_tableRows);
     }
 
     /**
@@ -852,7 +868,7 @@ class GridBuilder extends AComponent {
         $scripts = [];
 
         $addScript = function(AjaxRequestBuilder $arb) use (&$scripts) {
-            $scripts[] = '<script type="text/javascript">' . $arb->build() . '</script>';
+            $scripts[] = $arb->build();
         };
 
         // REFRESH
@@ -957,14 +973,12 @@ class GridBuilder extends AComponent {
         // FILTER MODAL
         if(!empty($this->filters)) {
             $scripts[] = '
-                <script type="text/javascript">
                     async function ' . $this->componentName . '_processFilterModalOpen() {
                         $("#grid-filter-modal-inner")
                             .css("height", "90%")
                             .css("visibility", "visible")
                             .css("width", "90%");
                     }
-                </script>
             ';
 
             $arb = new AjaxRequestBuilder();
@@ -995,14 +1009,12 @@ class GridBuilder extends AComponent {
         // EXPORT MODAL
         if($this->enableExport) {
             $scripts[] = '
-                <script type="text/javascript">
                     async function ' . $this->componentName . '_processExportModalOpen() {
                         $("#grid-export-modal-inner")
                             .css("height", "90%")
                             .css("visibility", "visible")
                             .css("width", "90%");
                     }
-                </script>
             ';
         }
 
@@ -1110,7 +1122,6 @@ class GridBuilder extends AComponent {
             $addScript($arb);
 
             $scripts[] = '
-                <script type="text/javascript">
                     function ' . $this->componentName . '_processBulkActionsModalOpen(_showLoading) {
                         if(_showLoading) {
                             $("#modal").html(\'<div id="bulk-actions-modal-inner" style="visibility: hidden; height: 0px; position: absolute; top: 5%; left: 5%; background-color: rgba(225, 225, 225, 1); z-index: 9999; border-radius: 5px;"></div>\');
@@ -1127,11 +1138,10 @@ class GridBuilder extends AComponent {
                         $("#modal").html(\'\');
                         $("#modal").hide();
                     }
-                </script>
             ';
         }
 
-        return implode('', $scripts);
+        return '<script type="text/javascript">' . implode("\r\n\r\n", $scripts) . '</script>';
     }
 
     /**
@@ -1180,7 +1190,7 @@ class GridBuilder extends AComponent {
             }
         }
 
-        return '<a class="link" href="#" onclick="' . $this->componentName . '_gridRefresh(' . implode(', ', $args) . ')">Refresh &orarr;</a>';
+        return '<a class="link" href="#" onclick="' . $this->componentName . '_gridRefresh(' . implode(', ', $args) . ')" title="Refresh grid">Refresh &orarr;</a>';
     }
 
     /**
@@ -1223,7 +1233,26 @@ class GridBuilder extends AComponent {
             }
         }
 
-        return '<button type="button" class="grid-control-button" onclick="' . $this->componentName . '_page(' . implode(', ', $args) . ')"' . ($disabled ? ' disabled' : '') . '>' . $text . '</button>';
+        $description = null;
+        switch($text) {
+            case '&lt;&lt;':
+                $description = 'Go to first page';
+                break;
+
+            case '&lt;':
+                $description = 'Go to previous page';
+                break;
+
+            case '&gt;':
+                $description = 'Go to next page';
+                break;
+
+            case '&gt;&gt;':
+                $description = 'Go to last page';
+                break;
+        }
+
+        return '<button type="button" class="grid-control-button" onclick="' . $this->componentName . '_page(' . implode(', ', $args) . ')"' . ($disabled ? ' disabled' : '') . ($description !== null ? (' title="' . $description . '"') : '') . '>' . $text . '</button>';
     }
 
     /**
@@ -1234,11 +1263,11 @@ class GridBuilder extends AComponent {
     private function getGridPage() {
         $page = 0;
 
-        if(isset($this->httpRequest->query['gridPage'])) {
-            $page = $this->httpRequest->query['gridPage'];
+        if($this->httpRequest->query('gridPage') !== null) {
+            $page = $this->httpRequest->query('gridPage');
         }
 
-        $page = $this->helper->getGridPage($this->gridName, $page);
+        $page = $this->gridHelper->getGridPage($this->gridName, $page);
 
         return (int)$page;
     }
@@ -1277,6 +1306,7 @@ class GridBuilder extends AComponent {
                 ->onClick($this->componentName . '_processFilterModalOpen()')
                 ->id('formSubmit')
                 ->text('Filter')
+                ->title('Filter')
         ;
 
         $btns = [
@@ -1295,6 +1325,7 @@ class GridBuilder extends AComponent {
                     ->onClick($this->componentName . '_filterClear(' . implode(', ', $args) . ')')
                     ->id('formSubmit')
                     ->text('Clear filter')
+                    ->title('Clear filter')
             ;
 
             $btns[] = $btn->toString();
@@ -1314,8 +1345,8 @@ class GridBuilder extends AComponent {
      */
     public function actionRefresh() {
         foreach($this->filters as $name => $filter) {
-            if(isset($this->httpRequest->query[$name])) {
-                $this->activeFilters[$name] = $this->httpRequest->query[$name];
+            if($this->httpRequest->query($name) !== null) {
+                $this->activeFilters[$name] = $this->httpRequest->query($name);
             }
         }
         if(!($this instanceof IGridExtendingComponent)) {
@@ -1331,8 +1362,8 @@ class GridBuilder extends AComponent {
      */
     public function actionPage() {
         foreach($this->filters as $name => $filter) {
-            if(isset($this->httpRequest->query[$name])) {
-                $this->activeFilters[$name] = $this->httpRequest->query[$name];
+            if($this->httpRequest->query($name) !== null) {
+                $this->activeFilters[$name] = $this->httpRequest->query($name);
             }
         }
         if(!($this instanceof IGridExtendingComponent)) {
@@ -1348,8 +1379,8 @@ class GridBuilder extends AComponent {
      */
     public function actionFilter() {
         foreach($this->filters as $name => $filter) {
-            if(isset($this->httpRequest->query[$name])) {
-                $this->activeFilters[$name] = $this->httpRequest->query[$name];
+            if($this->httpRequest->query($name) !== null) {
+                $this->activeFilters[$name] = $this->httpRequest->query($name);
             }
         }
 

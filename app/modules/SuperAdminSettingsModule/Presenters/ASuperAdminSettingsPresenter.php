@@ -10,10 +10,6 @@ abstract class ASuperAdminSettingsPresenter extends APresenter {
 
         $this->moduleName = 'SuperAdminSettings';
     }
-
-    public function startup() {
-        parent::startup();
-    }
 }
 
 ?>

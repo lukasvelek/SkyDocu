@@ -3,7 +3,6 @@
 namespace App\Managers\Container;
 
 use App\Constants\Container\SystemGroups;
-use App\Core\Caching\Cache;
 use App\Core\Caching\CacheNames;
 use App\Core\DB\DatabaseRow;
 use App\Exceptions\GeneralException;
@@ -15,27 +14,27 @@ use App\Repositories\Container\FolderRepository;
 use App\Repositories\Container\GroupRepository;
 
 class FolderManager extends AManager {
-    private FolderRepository $fr;
-    private GroupRepository $gr;
+    private FolderRepository $folderRepository;
+    private GroupRepository $groupRepository;
 
-    public function __construct(Logger $logger, EntityManager $entityManager, FolderRepository $fr, GroupRepository $gr) {
+    public function __construct(Logger $logger, EntityManager $entityManager, FolderRepository $folderRepository, GroupRepository $groupRepository) {
         parent::__construct($logger, $entityManager);
 
-        $this->fr = $fr;
-        $this->gr = $gr;
+        $this->folderRepository = $folderRepository;
+        $this->groupRepository = $groupRepository;
     }
 
     public function getVisibleFolderIdsForGroup(string $groupId) {
         $cache = $this->cacheFactory->getCache(CacheNames::VISIBLE_FOLDER_IDS_FOR_GROUP);
         return $cache->load($groupId, function() use ($groupId) {
-            return $this->fr->getVisibleFolderIdsForGroup($groupId);
+            return $this->folderRepository->getVisibleFolderIdsForGroup($groupId);
         });
     }
 
     public function getVisibleFoldersForUser(string $userId) {
         $cache = $this->cacheFactory->getCache(CacheNames::VISIBLE_FOLDERS_FOR_USER);
         return $cache->load($userId, function() use ($userId) {
-            $groupIds = $this->gr->getGroupsForUser($userId);
+            $groupIds = $this->groupRepository->getGroupsForUser($userId);
 
             $folderIds = [];
             foreach($groupIds as $groupId) {
@@ -50,7 +49,7 @@ class FolderManager extends AManager {
 
             $folders = [];
             foreach($folderIds as $folderId) {
-                $folder = $this->fr->getFolderById($folderId);
+                $folder = $this->folderRepository->getFolderById($folderId);
                 $folder = DatabaseRow::createFromDbRow($folder);
 
                 $folders[] = $folder;
@@ -61,7 +60,7 @@ class FolderManager extends AManager {
     }
 
     public function composeQueryForVisibleFoldersForUser(string $userId) {
-        $groupIds = $this->gr->getGroupsForUser($userId);
+        $groupIds = $this->groupRepository->getGroupsForUser($userId);
 
         $folderIds = [];
         foreach($groupIds as $groupId) {
@@ -74,7 +73,7 @@ class FolderManager extends AManager {
             }
         }
 
-        $qb = $this->fr->composeQueryForFolders();
+        $qb = $this->folderRepository->composeQueryForFolders();
 
         $qb->where($qb->getColumnInValues('folderId', $folderIds))
             ->orderBy('title');
@@ -85,13 +84,13 @@ class FolderManager extends AManager {
     public function createNewFolder(string $title, string $callingUserId, ?string $parentFolderId = null) {
         $folderId = $this->createId(EntityManager::C_DOCUMENT_FOLDERS);
 
-        if(!$this->fr->createNewFolder($folderId, $title, $parentFolderId)) {
+        if(!$this->folderRepository->createNewFolder($folderId, $title, $parentFolderId)) {
             throw new GeneralException('Database error.');
         }
 
         if($parentFolderId === null) {
-            $groupIds = $this->gr->getGroupsForUser($callingUserId);
-            $administratorsGroup = $this->gr->getGroupByTitle(SystemGroups::ADMINISTRATORS);
+            $groupIds = $this->groupRepository->getGroupsForUser($callingUserId);
+            $administratorsGroup = $this->groupRepository->getGroupByTitle(SystemGroups::ADMINISTRATORS);
 
             foreach($groupIds as $groupId) {
                 if($administratorsGroup !== null && $administratorsGroup['groupId'] == $groupId) {
@@ -102,11 +101,15 @@ class FolderManager extends AManager {
             }
         }
 
-        $this->cacheFactory->invalidateCacheByNamespace(CacheNames::FOLDER_SUBFOLDERS_MAPPING);
+        if(!$this->cacheFactory->invalidateCacheByNamespace(CacheNames::FOLDER_SUBFOLDERS_MAPPING) ||
+            !$this->cacheFactory->invalidateCacheByNamespace(CacheNames::VISIBLE_FOLDER_IDS_FOR_GROUP) ||
+            !$this->cacheFactory->invalidateCacheByNamespace(CacheNames::VISIBLE_FOLDERS_FOR_USER)) {
+            throw new GeneralException('Could not invalidate cache.');
+        }
     }
 
     public function updateGroupFolderRight(string $folderId, string $groupId, bool $canView = true, bool $canCreate = false, bool $canEdit = false, bool $canDelete = false) {
-        $relationId = $this->fr->getGroupFolderRelationId($groupId, $folderId);
+        $relationId = $this->folderRepository->getGroupFolderRelationId($groupId, $folderId);
 
         $data = [
             'canView' => $canView ? 1 : 0,
@@ -123,10 +126,10 @@ class FolderManager extends AManager {
 
             $relationId = $this->createId(EntityManager::C_DOCUMENT_FOLDER_GROUP_RELATION);
             $new = true;
-            $result = $this->fr->insertGroupFolderRelation($relationId, $data);
+            $result = $this->folderRepository->insertGroupFolderRelation($relationId, $data);
         } else {
             // update
-            $result = $this->fr->updateGroupFolderRelation($relationId, $data);
+            $result = $this->folderRepository->updateGroupFolderRelation($relationId, $data);
         }
 
         if(!$result) {
@@ -140,7 +143,7 @@ class FolderManager extends AManager {
     }
 
     public function deleteGroupFolderRight(string $folderId, string $groupId) {
-        if(!$this->fr->removeGroupFolderRelation($folderId, $groupId)) {
+        if(!$this->folderRepository->removeGroupFolderRelation($folderId, $groupId)) {
             throw new GeneralException('Database error.');
         }
 
@@ -151,7 +154,7 @@ class FolderManager extends AManager {
     }
 
     public function getFolderById(string $folderId) {
-        $folder = $this->fr->getFolderById($folderId);
+        $folder = $this->folderRepository->getFolderById($folderId);
 
         if($folder === null) {
             throw new NonExistingEntityException('Folder does not exist.');
@@ -161,7 +164,7 @@ class FolderManager extends AManager {
     }
 
     public function getDefaultFolder() {
-        $qb = $this->fr->composeQueryForFolders();
+        $qb = $this->folderRepository->composeQueryForFolders();
         $folder = $qb->andWhere('isSystem = 1')
             ->andWhere('title = ?', ['Default'])
             ->execute()
@@ -193,7 +196,7 @@ class FolderManager extends AManager {
     }
 
     public function composeQueryForSubfoldersForFolder(string $folderId) {
-        $qb = $this->fr->composeQueryForFolders();
+        $qb = $this->folderRepository->composeQueryForFolders();
         $qb->andWhere('parentFolderId = ?', [$folderId])
             ->orderBy('title');
 

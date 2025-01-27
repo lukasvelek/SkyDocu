@@ -2,6 +2,8 @@
 
 namespace App\Components\ProcessForm;
 
+use App\Components\ProcessForm\Processes\AProcessForm;
+use App\Components\ProcessForm\Processes\FunctionRequest;
 use App\Components\ProcessForm\Processes\HomeOffice;
 use App\Constants\Container\StandaloneProcesses;
 use App\Core\Http\HttpRequest;
@@ -76,8 +78,26 @@ class CommonProcessForm extends AComponent {
 
         switch($this->processName) {
             case StandaloneProcesses::HOME_OFFICE:
-                return new HomeOffice($this->httpRequest, $this->baseUrl);
+                $obj = HomeOffice::createFromComponent($this);
+                break;
+                
+            case StandaloneProcesses::FUNCTION_REQUEST:
+                $obj = FunctionRequest::createFromComponent($this);
+                break;
         }
+
+        $this->injectToProcessForm($obj);
+
+        return $obj;
+    }
+
+    /**
+     * Injects default values to the process form
+     * 
+     * @param AProcessForm &$processForm ProcessForm instace
+     */
+    private function injectToProcessForm(AProcessForm &$processForm) {
+        $processForm->baseUrl = $this->baseUrl;
     }
 }
 

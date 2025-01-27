@@ -8,15 +8,20 @@ use App\Managers\Container\StandaloneProcessManager;
 use App\Modules\TemplateObject;
 use App\UI\AComponent;
 
+/**
+ * ProcessesSelect is a component that displays enabled standalone processes to the user
+ * 
+ * @author Lukas Velek
+ */
 class ProcessesSelect extends AComponent {
     private TemplateObject $template;
     private array $widgets;
-    private StandaloneProcessManager $spm;
+    private StandaloneProcessManager $standaloneProcessManager;
 
-    public function __construct(HttpRequest $request, StandaloneProcessManager $spm) {
+    public function __construct(HttpRequest $request, StandaloneProcessManager $standaloneProcessManager) {
         parent::__construct($request);
 
-        $this->spm = $spm;
+        $this->standaloneProcessManager = $standaloneProcessManager;
 
         $this->template = $this->loadTemplateFromPath(__DIR__ . '\\template.html');
         $this->widgets = [];
@@ -30,13 +35,19 @@ class ProcessesSelect extends AComponent {
 
     public static function createFromComponent(AComponent $component) {}
 
+    /**
+     * Loads template and fills it
+     */
     private function beforeRender() {
         $this->loadWidgets();
         $this->fillTemplate();
     }
 
+    /**
+     * Loads widgets - enabled processes
+     */
     private function loadWidgets() {
-        $enabledWidgets = $this->spm->getEnabledProcessTypes();
+        $enabledWidgets = $this->standaloneProcessManager->getEnabledProcessTypes();
 
         foreach($enabledWidgets as $row) {
             $key = $row->typeKey;
@@ -46,7 +57,7 @@ class ProcessesSelect extends AComponent {
                 'name' => $key
             ];
 
-            $link = $this->createFullURLString($this->httpRequest->query['page'], 'processForm', $params);
+            $link = $this->createFullURLString($this->httpRequest->query('page'), 'processForm', $params);
 
             $widget = new ProcessWidget($this->httpRequest, $key, $title, $link);
             $widget->startup();
@@ -54,6 +65,9 @@ class ProcessesSelect extends AComponent {
         }
     }
 
+    /**
+     * Fills the template with data
+     */
     private function fillTemplate() {
         $countInRow = 3;
 

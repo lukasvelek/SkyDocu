@@ -99,6 +99,7 @@ class Cell extends AElement {
     public function output(): HTML {
         if($this->isHeader) {
             $this->html->changeTag('th');
+            $this->html->title($this->content);
         }
 
         $this->processRender();

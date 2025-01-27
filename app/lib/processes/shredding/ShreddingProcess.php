@@ -8,6 +8,11 @@ use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
 use App\Lib\Processes\ADocumentBulkProcess;
 
+/**
+ * Shredding document bulk process
+ * 
+ * @author Lukas Velek
+ */
 class ShreddingProcess extends ADocumentBulkProcess {
     private ?AException $finalExecuteException = null;
 
@@ -53,13 +58,13 @@ class ShreddingProcess extends ADocumentBulkProcess {
         $result = true;
 
         try {
-            $this->documentManager->dr->beginTransaction(__METHOD__);
+            $this->documentManager->documentRepository->beginTransaction(__METHOD__);
 
             $this->documentManager->updateDocument($documentId, $data);
 
-            $this->documentManager->dr->commit($userId ?? $this->currentUser->getId(), __METHOD__);
+            $this->documentManager->documentRepository->commit($userId ?? $this->currentUser->getId(), __METHOD__);
         } catch(AException $e) {
-            $this->documentManager->dr->rollback(__METHOD__);
+            $this->documentManager->documentRepository->rollback(__METHOD__);
 
             $this->finalExecuteException = $e;
 

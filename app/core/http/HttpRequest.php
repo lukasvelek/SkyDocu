@@ -18,6 +18,13 @@ class HttpRequest {
     public array $query;
 
     /**
+     * POST parameters
+     * 
+     * @var array<string, mixed> $post
+     */
+    public array $post;
+
+    /**
      * Is the call AJAX?
      * 
      * @var bool $isAjax
@@ -39,13 +46,50 @@ class HttpRequest {
     public ?UserEntity $currentUser;
 
     /**
+     * Request method
+     * 
+     * @var ?string $method
+     */
+    public ?string $method;
+
+    /**
      * Class constructor
      */
     public function __construct() {
         $this->query = [];
+        $this->post = [];
         $this->isAjax = false;
         $this->params = [];
         $this->currentUser = null;
+        $this->method = null;
+    }
+
+    /**
+     * Returns the given key from the query. If the key is not found, then null is returned instead.
+     * 
+     * @param string $key Searched key
+     * @return mixed Data from query or null
+     */
+    public function query(string $key) {
+        if(array_key_exists($key, $this->query)) {
+            return $this->query[$key];
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * Returns the given key from the POST. If the key is not found, the null is returned instead.
+     * 
+     * @param string $key Searched key
+     * @return mixed Data from POST or null
+     */
+    public function post(string $key) {
+        if(array_key_exists($key, $this->post)) {
+            return $this->post[$key];
+        } else {
+            return null;
+        }
     }
 }
 

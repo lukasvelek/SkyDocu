@@ -5,6 +5,7 @@ namespace App\Modules\AdminModule;
 use App\Constants\Container\StandaloneProcesses;
 use App\Core\DB\DatabaseRow;
 use App\Exceptions\AException;
+use App\Exceptions\RequiredAttributeIsNotSetException;
 use App\UI\GridBuilder2\Cell;
 use App\UI\GridBuilder2\Row;
 use App\UI\HTML\HTML;
@@ -66,8 +67,14 @@ class ProcessListPresenter extends AAdminPresenter {
     }
 
     public function handleSwitch() {
-        $type = $this->httpGet('type', true);
-        $operation = $this->httpGet('operation', true);
+        $type = $this->httpRequest->query('type');
+        if($type === null) {
+            throw new RequiredAttributeIsNotSetException('type');
+        }
+        $operation = $this->httpRequest->query('operation');
+        if($operation === null) {
+            throw new RequiredAttributeIsNotSetException('operation');
+        }
 
         $data = [];
         if($operation == 'enable') {

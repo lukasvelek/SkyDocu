@@ -21,6 +21,7 @@ class Widget extends AComponent {
     private string $title;
     private bool $hasRefresh;
     private ?array $titleLink;
+    private bool $titleHidden;
 
     /**
      * Class constructor
@@ -35,6 +36,7 @@ class Widget extends AComponent {
         $this->hasRefresh = false;
         $this->componentName = 'widget';
         $this->titleLink = null;
+        $this->titleHidden = false;
     }
 
     /**
@@ -77,6 +79,20 @@ class Widget extends AComponent {
     }
 
     /**
+     * Hides the widget title
+     */
+    public function hideTitle() {
+        $this->titleHidden = true;
+    }
+
+    /**
+     * Shows the widget title
+     */
+    public function showTitle() {
+        $this->titleHidden = false;
+    }
+
+    /**
      * Enables data refresh
      * 
      * @param bool $refresh True if refresh button is allowed or false if not
@@ -102,8 +118,12 @@ class Widget extends AComponent {
      * @return string HTML code
      */
     private function buildTitle() {
+        if($this->titleHidden) {
+            return '';
+        }
+
         if($this->titleLink === null) {
-            return $this->title;
+            return '<div class="row"><div class="col-md"><p class="widget-title">' . $this->title . '</p></div></div>';
         }
 
         $el = HTML::el('a')
@@ -111,7 +131,7 @@ class Widget extends AComponent {
             ->text($this->title)
             ->class('widget-title');
 
-        return $el->toString();
+        return '<div class="row"><div class="col-md">' . $el->toString() . '</div></div>';
     }
 
     /**

@@ -8,7 +8,7 @@ class AutoLoginPresenter extends AAnonymPresenter {
     }
 
     public function handleCheckLogin() {
-        $fm = $this->httpGet('_fm');
+        $fm = $this->httpRequest->query('_fm');
 
         if($this->httpSessionGet('userId') === null) {
             $url = ['page' => 'Anonym:Login', 'action' => 'loginForm'];
@@ -30,7 +30,7 @@ class AutoLoginPresenter extends AAnonymPresenter {
             return ['page' => 'Anonym:Login', 'action' => 'containerForm'];
         }
 
-        if($this->app->groupManager->isUserMemberOfSuperadministrators($this->getUserId()) || ($this->app->groupManager->isUserMemberOfSuperadministrators($this->getUserId()) && ($this->httpSessionGet('container') !== null && $this->httpSessionGet('container') == 'superadministrators'))) {
+        if($this->getUserId() !== null && ($this->app->groupManager->isUserMemberOfSuperadministrators($this->getUserId()) || ($this->app->groupManager->isUserMemberOfSuperadministrators($this->getUserId()) && ($this->httpSessionGet('container') !== null && $this->httpSessionGet('container') == 'superadministrators')))) {
             // redirect to superadmin
             return ['page' => 'SuperAdmin:Home', 'action' => 'home'];
         } else if($this->httpSessionGet('container') !== null) {

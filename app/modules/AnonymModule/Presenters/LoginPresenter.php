@@ -91,7 +91,7 @@ class LoginPresenter extends AAnonymPresenter {
         } else {
             $params = [];
 
-            $lastContainer = $this->httpGet('last');
+            $lastContainer = $this->httpRequest->query('last');
             if($lastContainer !== null) {
                 $params['lastContainer'] = $lastContainer;
             }
@@ -149,8 +149,8 @@ class LoginPresenter extends AAnonymPresenter {
                     'text' => $title
                 ];
 
-                if(array_key_exists('lastContainer', $this->httpRequest->query)) {
-                    if($group->containerId == $this->httpRequest->query['lastContainer']) {
+                if($this->httpRequest->query('lastContainer') !== null) {
+                    if($group->containerId == $this->httpRequest->query('lastContainer')) {
                         $c['selected'] = 'selected';
                     }
                 }

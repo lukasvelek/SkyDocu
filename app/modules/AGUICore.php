@@ -11,6 +11,7 @@ use App\Exceptions\GeneralException;
 use App\Exceptions\RequiredAttributeIsNotSetException;
 use App\Helpers\TemplateHelper;
 use App\UI\AComponent;
+use App\UI\LinkBuilder;
 
 /**
  * AGUICore is the lowest level UI element. It is implemented by Modules, Presenters and Components - all UI elements
@@ -19,9 +20,9 @@ use App\UI\AComponent;
  */
 abstract class AGUICore {
     protected HttpRequest $httpRequest;
-    protected Application $app;
-    protected ?APresenter $presenter;
-    protected ?AModule $module;
+    public Application $app;
+    protected ?APresenter $presenter = null;
+    protected ?AModule $module = null;
 
     /**
      * Creates a flash message and returns its HTML code
@@ -67,7 +68,7 @@ abstract class AGUICore {
      * 
      * @param APresenter $presenter Current presenter instance
      */
-    public function setPresenter(APresenter $presenter) {
+    public function setPresenter(APresenter &$presenter) {
         $this->presenter = $presenter;
     }
 
@@ -76,7 +77,7 @@ abstract class AGUICore {
      * 
      * @param AModule $module Current module instance
      */
-    public function setModule(AModule $module) {
+    public function setModule(AModule &$module) {
         $this->module = $module;
     }
 
@@ -125,7 +126,8 @@ abstract class AGUICore {
                 if($component instanceof AComponent) {
                     $component->setComponentName($componentName);
                     if(isset($this->presenter)) {
-                        $component->setPresenter($this->presenter);
+                        $presenter = &$this->presenter;
+                        $component->setPresenter($presenter);
                     }
                     $component->setApplication($this->app);
                     $component->startup();
@@ -161,7 +163,7 @@ abstract class AGUICore {
      * @return array Query parameters
      */
     protected function getQueryParams() {
-        $keys = array_keys($_GET);
+        $keys = array_keys($this->httpRequest->query);
 
         $values = [];
         foreach($keys as $key) {
@@ -169,7 +171,7 @@ abstract class AGUICore {
                 continue;
             }
 
-            $values[$key] = $this->httpGet($key);
+            $values[$key] = $this->httpRequest->query($key);
         }
 
         return $values;
@@ -181,60 +183,14 @@ abstract class AGUICore {
      * @return array POST parameters
      */
     protected function getPostParams() {
-        $keys = array_keys($_POST);
+        $keys = array_keys($this->httpRequest->post);
 
         $values = [];
         foreach($keys as $key) {
-            $values[$key] = $this->httpPost($key);
+            $values[$key] = $this->httpRequest->post($key);
         }
 
         return $values;
-    }
-
-    /**
-     * Returns escaped value from $_GET array. It can also throw an exception if the value is not provided.
-     * 
-     * @param string $key Array key
-     * @param bool $throwException True if exception should be thrown or false if not
-     * @return mixed Escaped value or null
-     */
-    protected function httpGet(string $key, bool $throwException = false) {
-        if(isset($_GET[$key])) {
-            if(!is_array($_GET[$key])) {
-                return htmlspecialchars($_GET[$key]);
-            } else {
-                $tmp = [];
-                foreach($_GET[$key] as $t) {
-                    $tmp[] = htmlspecialchars($t);
-                }
-                return $tmp;
-            }
-        } else {
-            if($throwException) {
-                throw new RequiredAttributeIsNotSetException($key, '$_GET');
-            } else {
-                return null;
-            }
-        }
-    }
-
-    /**
-     * Returns escaped value from $_POST array. It can also throw an exception if the value is not provided.
-     * 
-     * @param string $key Array key
-     * @param bool $throwException True if exception should be thrown or false if not
-     * @return mixed Escaped value or null
-     */
-    protected function httpPost(string $key, bool $throwException = false) {
-        if(isset($_POST[$key])) {
-            return htmlspecialchars($_POST[$key]);
-        } else {
-            if($throwException) {
-                throw new RequiredAttributeIsNotSetException($key, '$_POST');
-            } else {
-                return null;
-            }
-        }
     }
 
     /**
@@ -276,12 +232,7 @@ abstract class AGUICore {
     public function createFullURLString(string $modulePresenter, string $action, array $params = []) {
         $urlParts = $this->createFullURL($modulePresenter, $action, $params);
 
-        $tmp = [];
-        foreach($urlParts as $k => $v) {
-            $tmp[] = $k . '=' . $v;
-        }
-
-        return '?' . implode('&', $tmp);
+        return $this->convertArrayUrlToStringUrl($urlParts);
     }
 
     /**
@@ -305,12 +256,7 @@ abstract class AGUICore {
      * @return string URL as string
      */
     public function convertArrayUrlToStringUrl(array $url) {
-        $tmp = [];
-        foreach($url as $k => $v) {
-            $tmp[] = $k . '=' . $v;
-        }
-
-        return '?' . implode('&', $tmp);
+        return LinkBuilder::convertUrlArrayToString($url);
     }
 }
 

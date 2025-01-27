@@ -3,14 +3,15 @@
 namespace App\Modules\UserModule;
 
 use App\Components\ProcessesGrid\ProcessesGrid;
+use App\Components\ProcessViewSidebar\ProcessViewSidebar;
 use App\Constants\Container\ProcessFormValues\HomeOffice;
 use App\Constants\Container\ProcessGridViews;
 use App\Constants\Container\ProcessStatus;
 use App\Constants\Container\StandaloneProcesses;
 use App\Constants\Container\SystemProcessTypes;
-use App\Core\Datetypes\DateTime;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
+use App\Exceptions\RequiredAttributeIsNotSetException;
 use App\Helpers\DateTimeFormatHelper;
 use App\Helpers\ProcessHelper;
 use App\UI\LinkBuilder;
@@ -21,7 +22,7 @@ class ProcessesPresenter extends AUserPresenter {
     }
 
     public function handleList() {
-        $view = $this->httpGet('view');
+        $view = $this->httpRequest->query('view');
 
         if($view === null) {
             $this->redirect($this->createURL('list', ['view' => ProcessGridViews::VIEW_ALL]));
@@ -33,22 +34,7 @@ class ProcessesPresenter extends AUserPresenter {
     }
 
     protected function createComponentProcessViewsSidebar(HttpRequest $request) {
-        $actives = [];
-        foreach(ProcessGridViews::getAll() as $name => $title) {
-            $actives[$name] = ($request->query['view'] == $name);
-        }
-
-        $sidebar = $this->componentFactory->getSidebar();
-
-        // START NEW PROCESS
-        $sidebar->addLink('Start new process', $this->createFullURL('User:NewProcess', 'select'));
-
-        $sidebar->addHorizontalLine();
-
-        // VIEWS
-        foreach(ProcessGridViews::getAll() as $name => $title) {
-            $sidebar->addLink($title, $this->createURL('list', ['view' => $name]), $actives[$name]);
-        }
+        $sidebar = new ProcessViewSidebar($request);
 
         return $sidebar;
     }
@@ -62,14 +48,17 @@ class ProcessesPresenter extends AUserPresenter {
             $this->documentManager
         );
 
-        $grid->setView($request->query['view']);
+        $grid->setView($request->query('view'));
     
         return $grid;
     }
 
     public function handleProfile() {
-        $processId = $this->httpGet('processId', true);
-        $backView = $this->httpGet('backView');
+        $processId = $this->httpRequest->query('processId');
+        if($processId === null) {
+            throw new RequiredAttributeIsNotSetException('processId');
+        }
+        $backView = $this->httpRequest->query('backView');
 
         try {
             $process = $this->processManager->getProcessById($processId);
@@ -92,10 +81,20 @@ class ProcessesPresenter extends AUserPresenter {
         $type = SystemProcessTypes::gridToString($process->type);
         if($type === null) {
             $type = StandaloneProcesses::toString($process->type);
+
+            $color = StandaloneProcesses::getColor($process->type);
+            $bgColor = StandaloneProcesses::getBackgroundColor($process->type);
+            $type = '<span style="color: ' . $color . '; background-color: ' . $bgColor . '; padding: 5px; border-radius: 10px">' . $type . '</span>';
         }
 
         $createRow('Type', $type);
-        $createRow('Status', ProcessStatus::toString($process->status));
+
+        $statusText = ProcessStatus::toString($process->status);
+        $statusFgColor = ProcessStatus::getColor($process->status);
+        $statusBgColor = ProcessStatus::getBackgroundColor($process->status);
+
+        $statusCode = '<span style="color: ' . $statusFgColor . '; background-color: ' . $statusBgColor . '; padding: 5px; border-radius: 10px">' . $statusText . '</span>';
+        $createRow('Status', $statusCode);
 
         if($process->documentId !== null) {
             try {
@@ -125,6 +124,15 @@ class ProcessesPresenter extends AUserPresenter {
             $currentOfficer = '-';
         }
         $createRow('Current officer', $currentOfficer);
+
+        if($process->currentOfficerSubstituteUserId !== null) {
+            try {
+                $currentOfficerSubstitute = $this->app->userManager->getUserById($process->currentOfficerSubstituteUserId)->getFullname();
+            } catch(AException $e) {
+                $currentOfficerSubstitute = '-';
+            }
+            $createRow('Current officer\'s substitute', $currentOfficerSubstitute);
+        }
         
         $workflowUsers = ProcessHelper::convertWorkflowFromDb($process);
 
@@ -220,7 +228,7 @@ class ProcessesPresenter extends AUserPresenter {
         $this->saveToPresenterCache('process_actions', $processActionsCode);
 
         $links = [];
-        if($this->httpGet('disableBackLink') === null) {
+        if($this->httpRequest->query('disableBackLink') === null) {
             $backLinkParams = [];
             if($backView !== null) {
                 $backLinkParams['view'] = $backView;
@@ -241,10 +249,16 @@ class ProcessesPresenter extends AUserPresenter {
     }
 
     public function handleProcess() {
-        $processId = $this->httpGet('processId', true);
-        $action = $this->httpGet('actionName', true);
-        $backView = $this->httpGet('backView');
-        $isStandalone = $this->httpGet('isStandalone');
+        $processId = $this->httpRequest->query('processId');
+        if($processId === null) {
+            throw new RequiredAttributeIsNotSetException('processId');
+        }
+        $action = $this->httpRequest->query('actionName');
+        if($action === null) {
+            throw new RequiredAttributeIsNotSetException('action');
+        }
+        $backView = $this->httpRequest->query('backView');
+        $isStandalone = $this->httpRequest->query('isStandalone');
 
         try {
             $process = $this->processManager->getProcessById($processId);

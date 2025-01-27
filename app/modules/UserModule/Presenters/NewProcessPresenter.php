@@ -3,12 +3,13 @@
 namespace App\Modules\UserModule;
 
 use App\Components\ProcessesSelect\ProcessesSelect;
-use App\Components\ProcessForm\CommonProcessForm;
+use App\Components\ProcessViewSidebar\ProcessViewSidebar;
 use App\Constants\Container\ProcessGridViews;
 use App\Constants\Container\StandaloneProcesses;
 use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
+use App\Exceptions\RequiredAttributeIsNotSetException;
 
 class NewProcessPresenter extends AUserPresenter {
     public function __construct() {
@@ -18,17 +19,7 @@ class NewProcessPresenter extends AUserPresenter {
     public function renderSelect() {}
 
     protected function createComponentProcessViewsSidebar(HttpRequest $request) {
-        $sidebar = $this->componentFactory->getSidebar();
-
-        // START NEW PROCESS
-        $sidebar->addLink('Start new process', $this->createFullURL('User:NewProcess', 'select'), true);
-
-        $sidebar->addHorizontalLine();
-
-        // VIEWS
-        foreach(ProcessGridViews::getAll() as $name => $title) {
-            $sidebar->addLink($title, $this->createFullURL('User:Processes', 'list', ['view' => $name]), false);
-        }
+        $sidebar = new ProcessViewSidebar($request);
 
         return $sidebar;
     }
@@ -41,7 +32,10 @@ class NewProcessPresenter extends AUserPresenter {
 
     public function handleStartProcess(?FormRequest $fr = null) {
         if($fr !== null) {
-            $name = $this->httpGet('name', true);
+            $name = $this->httpRequest->query('name');
+            if($name === null) {
+                throw new RequiredAttributeIsNotSetException('name');
+            }
 
             $methodName = 'start' . ucfirst($name);
 
@@ -68,7 +62,7 @@ class NewProcessPresenter extends AUserPresenter {
     }
 
     public function handleProcessForm() {
-        $process = $this->httpGet('name');
+        $process = $this->httpRequest->query('name');
         $name = StandaloneProcesses::toString($process);
 
         $this->saveToPresenterCache('processTitle', $name);
@@ -86,9 +80,9 @@ class NewProcessPresenter extends AUserPresenter {
     }
 
     protected function createComponentProcessForm(HttpRequest $request) {
-        $processForm = new CommonProcessForm($request);
-        $processForm->setProcess($request->query['name']);
-        $processForm->setBaseUrl(['page' => $request->query['page'], 'action' => 'startProcess']);
+        $processForm = $this->componentFactory->getCommonProcessForm();
+        $processForm->setProcess($request->query('name'));
+        $processForm->setBaseUrl(['page' => $request->query('page'), 'action' => 'startProcess']);
 
         return $processForm;
     }

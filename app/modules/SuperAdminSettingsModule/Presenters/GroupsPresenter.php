@@ -8,6 +8,7 @@ use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
 use App\Core\Http\JsonResponse;
 use App\Exceptions\AException;
+use App\Exceptions\RequiredAttributeIsNotSetException;
 use App\UI\GridBuilder2\Cell;
 use App\UI\GridBuilder2\Row;
 use App\UI\HTML\HTML;
@@ -82,7 +83,10 @@ class GroupsPresenter extends ASuperAdminSettingsPresenter {
     }
 
     public function handleListUsers() {
-        $groupId = $this->httpGet('groupId', true);
+        $groupId = $this->httpRequest->query('groupId');
+        if($groupId === null) {
+            throw new RequiredAttributeIsNotSetException('groupId');
+        }
 
         try {
             $group = $this->app->groupManager->getGroupById($groupId);
@@ -109,12 +113,12 @@ class GroupsPresenter extends ASuperAdminSettingsPresenter {
     protected function createComponentGroupUsersGrid(HttpRequest $request) {
         $grid = $this->componentFactory->getGridBuilder();
 
-        $grid->createDataSourceFromQueryBuilder($this->app->groupMembershipRepository->composeQueryForGroupUsers($request->query['groupId']), 'groupUserId');
+        $grid->createDataSourceFromQueryBuilder($this->app->groupMembershipRepository->composeQueryForGroupUsers($request->query('groupId')), 'groupUserId');
 
         $grid->addColumnUser('userId', 'User');
         $grid->addColumnDatetime('dateCreated', 'Member since');
 
-        $groupUsers = $this->app->groupManager->getGroupUsersForGroupId($request->query['groupId']);
+        $groupUsers = $this->app->groupManager->getGroupUsersForGroupId($request->query('groupId'));
 
         $remove = $grid->addAction('remove');
         $remove->setTitle('Remove');
@@ -125,7 +129,7 @@ class GroupsPresenter extends ASuperAdminSettingsPresenter {
             $el = HTML::el('a') 
                 ->text('Remove')
                 ->class('grid-link')
-                ->href($this->createURLString('removeUser', ['groupId' => $request->query['groupId'], 'userId' => $row->userId]));
+                ->href($this->createURLString('removeUser', ['groupId' => $request->query('groupId'), 'userId' => $row->userId]));
 
             return $el;
         };
@@ -134,7 +138,10 @@ class GroupsPresenter extends ASuperAdminSettingsPresenter {
     }
 
     public function handleAddUserForm(?FormRequest $fr = null) {
-        $groupId = $this->httpGet('groupId', true);
+        $groupId = $this->httpRequest->query('groupId');
+        if($groupId === null) {
+            throw new RequiredAttributeIsNotSetException('groupId');
+        }
 
         if($fr !== null) {
             try {
@@ -214,11 +221,11 @@ class GroupsPresenter extends ASuperAdminSettingsPresenter {
     protected function createComponentAddUserForm(HttpRequest $request) {
         $form = $this->componentFactory->getFormBuilder();
 
-        $form->setAction($this->createURL('addUserForm', ['groupId' => $request->query['groupId']]));
+        $form->setAction($this->createURL('addUserForm', ['groupId' => $request->query('groupId')]));
 
         $form->addTextInput('username', 'Search user:');
         $form->addButton('Search')
-            ->setOnClick('searchUsers(\'' . $request->query['groupId'] . '\');');
+            ->setOnClick('searchUsers(\'' . $request->query('groupId') . '\');');
 
         $form->addSelect('user', 'User:')
             ->setRequired();
@@ -230,8 +237,14 @@ class GroupsPresenter extends ASuperAdminSettingsPresenter {
     }
 
     public function actionSearchUsersForAddUserForm() {
-        $groupId = $this->httpGet('groupId', true);
-        $query = $this->httpGet('query', true);
+        $groupId = $this->httpRequest->query('groupId');
+        if($groupId === null) {
+            throw new RequiredAttributeIsNotSetException('groupId');
+        }
+        $query = $this->httpRequest->query('query');
+        if($query === null) {
+            throw new RequiredAttributeIsNotSetException('query');
+        }
 
         $groupUsers = $this->app->groupManager->getGroupUsersForGroupId($groupId);
 
@@ -249,8 +262,14 @@ class GroupsPresenter extends ASuperAdminSettingsPresenter {
     }
 
     public function handleRemoveUser() {
-        $groupId = $this->httpGet('groupId', true);
-        $userId = $this->httpGet('userId', true);
+        $groupId = $this->httpRequest->query('groupId', true);
+        if($groupId === null) {
+            throw new RequiredAttributeIsNotSetException('groupId');
+        }
+        $userId = $this->httpRequest->query('userId', true);
+        if($userId === null) {
+            throw new RequiredAttributeIsNotSetException('userId');
+        }
 
         try {
             $this->app->groupMembershipRepository->beginTransaction(__METHOD__);

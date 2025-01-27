@@ -2,7 +2,17 @@
 
 namespace App\Helpers;
 
+/**
+ * ContainerCreationHelper contains methods useful for container creation
+ * 
+ * @author Lukas Velek
+ */
 class ContainerCreationHelper {
+    /**
+     * Returns the table definitions for a container
+     * 
+     * @return array<string, array<string, string>> Container table definitions
+     */
     public static function getContainerTableDefinitions() {
         return [
             'documents' => [
@@ -111,7 +121,8 @@ class ContainerCreationHelper {
                 'currentOfficerUserId' => 'VARCHAR(256) NULL',
                 'workflowUserIds' => 'VARCHAR(256) NULL',
                 'dateCreated' => 'DATETIME NOT NULL DEFAULT current_timestamp()',
-                'status' => 'INT(4) NOT NULL DEFAULT 1'
+                'status' => 'INT(4) NOT NULL DEFAULT 1',
+                'currentOfficerSubstituteUserId' => 'VARCHAR(256) NULL'
             ],
             'process_types' => [
                 'typeId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',
@@ -156,6 +167,11 @@ class ContainerCreationHelper {
         ];
     }
 
+    /**
+     * Returns container table index definitions
+     * 
+     * @return array<string, array<int, string>> Container table index definitions
+     */
     public static function getContainerTableIndexDefinitions() {
         return [
             'documents' => [

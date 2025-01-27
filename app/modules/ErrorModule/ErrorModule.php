@@ -3,29 +3,56 @@
 namespace App\Modules\ErrorModule;
 
 use App\Components\Navbar\Navbar;
+use App\Components\Navbar\NavbarModes;
 use App\Modules\AModule;
 
 class ErrorModule extends AModule {
+    public ?Navbar $navbar;
+
     public function __construct() {
         parent::__construct('ErrorModule');
+
+        $this->navbar = null;
     }
 
-    public function renderModule() {
-        $currentUserId = null;
+    protected function createComponentSysNavbar() {
+        return $this->createNavbar();
+    }
 
-        if($this->app->currentUser !== null) {
-            $currentUserId = $this->app->currentUser->getId();
+    private function createNavbar() {
+        $mode = null;
+
+        if($this->httpRequest->query('calledPage') !== null) {
+            $page = $this->httpRequest->query('calledPage');
+            $module = explode(':', $page)[0];
+
+            switch($module) {
+                case 'AdminModule':
+                    $mode = NavbarModes::ADMINISTRATION;
+                    break;
+                case 'AnonymModule':
+                    $mode = NavbarModes::ANONYM;
+                    break;
+
+                case 'SuperAdminModule':
+                    $mode = NavbarModes::SUPERADMINISTRATION;
+                    break;
+
+                case 'SuperAdminSettingsModule':
+                    $mode = NavbarModes::SUPERADMINISTRATION_SETTINGS;
+                    break;
+
+                case 'UserModule':
+                    $mode = NavbarModes::GENERAL;
+                    break;
+            }
         }
 
-        $navbar = new Navbar($this->httpRequest, $this->app->notificationManager, $this->app->systemStatusManager, $currentUserId);
-        $navbar->hideSearchBar();
-        $navbar->setIsCurrentUserIsAdmin($this->app->currentUser?->isAdmin());
-        
-        if($this->app->currentUser === null) {
-            $navbar->setCustomLinks(['topics' => ['page' => 'AnonymModule:Home'], 'login' => ['page' => 'AnonymModule:Login', 'action' => 'loginForm'], 'register' => ['page' => 'AnonymModule:Register', 'action' => 'form']]);
+        if($this->navbar === null) {
+            $this->navbar = $this->createNavbarInstance($mode, null);
         }
 
-        $this->template->sys_navbar = $navbar;
+        return $this->navbar;
     }
 }
 

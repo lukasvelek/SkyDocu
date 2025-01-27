@@ -17,8 +17,8 @@ class BackgroundServicesHistoryPresenter extends ASuperAdminSettingsPresenter {
     public function createComponentBgServiceHistoryGrid(HttpRequest $request) {
         $grid = $this->componentFactory->getGridBuilder();
 
-        $grid->createDataSourceFromQueryBuilder($this->app->systemServicesRepository->composeQueryForServiceHistory($request->query['serviceId']), 'historyId');
-        $grid->addQueryDependency('serviceId', $request->query['serviceId']);
+        $grid->createDataSourceFromQueryBuilder($this->app->systemServicesRepository->composeQueryForServiceHistory($request->query('serviceId')), 'historyId');
+        $grid->addQueryDependency('serviceId', $request->query('serviceId'));
 
         $grid->addColumnConst('status', 'Status', SystemServiceHistoryStatus::class);
 

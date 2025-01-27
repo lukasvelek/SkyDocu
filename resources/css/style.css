@@ -52,10 +52,9 @@ body {
 }
 
 .fm-info {
-    color: blue;
-    background-color: rgb(150, 200, 255);
-
-    border: 1px solid blue;
+    color: #133c55;
+    background-color: #84d2f6;
+    border: 1px solid #133c55;
 }
 
 .fm-error {
@@ -323,6 +322,16 @@ div[class^="fm-"], div[class*="fm-"] {
     border-radius: 10px;
 
     background-color: rgba(255, 255, 255, 0.75);
+}
+
+#flashMessage {
+    width: 97.5%;
+
+    margin-left: 1.5%;
+}
+
+#grid tr {
+    line-height: 30px;
 }
 
 #grid thead th {
@@ -684,17 +693,19 @@ div [id*="user-action-history-"] {
     height: 100px;
 }
 
-.widget-title {
+p.widget-title {
     font-size: 24px;
 }
 
-.widget-title a {
+a.widget-title {
+    font-size: 24px;
+
     text-decoration: none;
 
     color: black;
 }
 
-.widget-title a:hover {
+a.widget-title:hover {
     text-decoration: underline;
 }
 
@@ -708,6 +719,10 @@ div [id*="user-action-history-"] {
     border-radius: 0;
     
     background-color: rgba(255, 255, 255, 0.75);
+}
+
+#widget tr {
+    line-height: 30px;
 }
 
 #widget thead th {

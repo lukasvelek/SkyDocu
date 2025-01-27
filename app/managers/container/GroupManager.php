@@ -13,14 +13,14 @@ use App\Repositories\Container\GroupRepository;
 use App\Repositories\UserRepository;
 
 class GroupManager extends AManager {
-    private GroupRepository $gr;
-    private UserRepository $ur;
+    private GroupRepository $groupRepository;
+    private UserRepository $userRepository;
 
-    public function __construct(Logger $logger, EntityManager $em, GroupRepository $gr, UserRepository $ur) {
-        parent::__construct($logger, $em);
+    public function __construct(Logger $logger, EntityManager $entityManager, GroupRepository $groupRepository, UserRepository $userRepository) {
+        parent::__construct($logger, $entityManager);
 
-        $this->gr = $gr;
-        $this->ur = $ur;
+        $this->groupRepository = $groupRepository;
+        $this->userRepository = $userRepository;
     }
 
     public function addUserToGroupTitle(string $groupTitle, string $userId) {
@@ -32,7 +32,7 @@ class GroupManager extends AManager {
     public function addUserToGroupId(string $groupId, string $userId) {
         $relationId = $this->createId(EntityManager::C_GROUP_USERS_RELATION);
 
-        if(!$this->gr->addUserToGroup($relationId, $groupId, $userId)) {
+        if(!$this->groupRepository->addUserToGroup($relationId, $groupId, $userId)) {
             throw new GeneralException('Database error.');
         }
 
@@ -45,7 +45,7 @@ class GroupManager extends AManager {
     }
 
     public function removeUserFromGroupId(string $groupId, string $userId) {
-        if(!$this->gr->removeUserFromGroup($groupId, $userId)) {
+        if(!$this->groupRepository->removeUserFromGroup($groupId, $userId)) {
             throw new GeneralException('Database error.');
         }
 
@@ -58,7 +58,7 @@ class GroupManager extends AManager {
     }
 
     public function getGroupByTitle(string $groupTitle) {
-        $result = $this->gr->getGroupByTitle($groupTitle);
+        $result = $this->groupRepository->getGroupByTitle($groupTitle);
 
         if($result === null){
             throw new GeneralException('Group does not exist.');
@@ -70,7 +70,7 @@ class GroupManager extends AManager {
     }
 
     public function getGroupById(string $groupId) {
-        $result = $this->gr->getGroupById($groupId);
+        $result = $this->groupRepository->getGroupById($groupId);
 
         if($result === null) {
             throw new GeneralException('Group does not exist.');
@@ -82,7 +82,7 @@ class GroupManager extends AManager {
     }
 
     private function commonGetGroupRightForStandardOperation(string $groupId, string $operationName) {
-        $rights = $this->gr->getStandardGroupRightsForGroup($groupId);
+        $rights = $this->groupRepository->getStandardGroupRightsForGroup($groupId);
 
         return $rights[$operationName];
     }
@@ -100,19 +100,19 @@ class GroupManager extends AManager {
     }
 
     public function getGroupsForUser(string $userId) {
-        return $this->gr->getGroupsForUser($userId);
+        return $this->groupRepository->getGroupsForUser($userId);
     }
 
     public function getUsersForGroupTitle(string $title) {
         $group = $this->getGroupByTitle($title);
         
-        return $this->gr->getMembersForGroup($group->groupId);
+        return $this->groupRepository->getMembersForGroup($group->groupId);
     }
 
     public function createNewGroup(string $title) {
         $groupId = $this->createId(EntityManager::C_GROUPS);
 
-        if(!$this->gr->createNewGroup($groupId, $title)) {
+        if(!$this->groupRepository->createNewGroup($groupId, $title)) {
             throw new GeneralException('Database error.');
         }
 
@@ -124,10 +124,10 @@ class GroupManager extends AManager {
     }
 
     public function composeQueryForGroupsWhereUserIsMember(string $userId) {
-        $membershipsQb = $this->gr->composeQueryForUserMemberships($userId);
+        $membershipsQb = $this->groupRepository->composeQueryForUserMemberships($userId);
         $membershipsQb->select(['groupId']);
 
-        $qb = $this->gr->composeQueryForGroups();
+        $qb = $this->groupRepository->composeQueryForGroups();
         $qb->andWhere('groupId IN (' . $membershipsQb->getSQL() . ')');
         
         return $qb;

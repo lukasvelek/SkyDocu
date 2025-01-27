@@ -13,18 +13,18 @@ use App\Managers\Container\DocumentManager;
  * @author Lukas Velek
  */
 class DocumentStatsWidget extends Widget {
-    private DocumentManager $dm;
+    private DocumentManager $documentManager;
 
     /**
      * Class constructor
      * 
      * @param HttpRequest $request HttpRequest instance
-     * @param DocumentManager $dm DocumentManager instance
+     * @param DocumentManager $documentManager DocumentManager instance
      */
-    public function __construct(HttpRequest $request, DocumentManager $dm) {
+    public function __construct(HttpRequest $request, DocumentManager $documentManager) {
         parent::__construct($request);
 
-        $this->dm = $dm;
+        $this->documentManager = $documentManager;
     }
 
     public function startup() {
@@ -80,7 +80,7 @@ class DocumentStatsWidget extends Widget {
      * @return mixed Data from the database
      */
     private function fetchTotalDocumentCountFromDb() {
-        $qb = $this->dm->dr->composeQueryForDocuments();
+        $qb = $this->documentManager->documentRepository->composeQueryForDocuments();
         $qb->select(['COUNT(*) AS cnt']);
         return $qb->execute()->fetch('cnt');
     }
@@ -91,7 +91,7 @@ class DocumentStatsWidget extends Widget {
      * @return mixed Data from the database
      */
     private function fetchNewDocumentCountFromDb() {
-        $qb = $this->dm->dr->composeQueryForDocuments();
+        $qb = $this->documentManager->documentRepository->composeQueryForDocuments();
         $qb->select(['COUNT(*) AS cnt'])
             ->where('status = ?', [DocumentStatus::NEW]);
         return $qb->execute()->fetch('cnt');
@@ -103,7 +103,7 @@ class DocumentStatsWidget extends Widget {
      * @return mixed Data from the database
      */
     private function fetchArchivedDocumentCountFromDb() {
-        $qb = $this->dm->dr->composeQueryForDocuments();
+        $qb = $this->documentManager->documentRepository->composeQueryForDocuments();
         $qb->select(['COUNT(*) AS cnt'])
             ->where('status = ?', [DocumentStatus::ARCHIVED]);
         return $qb->execute()->fetch('cnt');
@@ -115,7 +115,7 @@ class DocumentStatsWidget extends Widget {
      * @return mixed Data from the database
      */
     private function fetchShreddedDocumentCountFromDb() {
-        $qb = $this->dm->dr->composeQueryForDocuments();
+        $qb = $this->documentManager->documentRepository->composeQueryForDocuments();
         $qb->select(['COUNT(*) AS cnt'])
             ->where('status = ?', [DocumentStatus::SHREDDED]);
         return $qb->execute()->fetch('cnt');

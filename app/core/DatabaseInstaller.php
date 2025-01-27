@@ -328,7 +328,9 @@ class DatabaseInstaller {
         $services = [
             'ContainerCreation' => 'container_creation_service.php',
             'LogRotate' => 'log_rotate_service.php',
-            'ContainerUsageStatistics' => 'container_usage_statistics_service.php'
+            'ContainerUsageStatistics' => 'container_usage_statistics_service.php',
+            'ContainerStandaloneProcessChecker' => 'container_standalone_process_checker_service.php',
+            'ProcessSubstitute' => 'process_substitute_service.php'
         ];
 
         foreach($services as $title => $path) {

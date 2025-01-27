@@ -182,7 +182,7 @@ class ProcessSubstituteService extends AService {
     }
 
     private function updateProcess(ProcessRepository $processRepository, string $processId, ?string $substituteUserId): bool {
-        return $processRepository->updateProcess($processId, ['currentOfficerSubsituteUserId' => $substituteUserId]);
+        return $processRepository->updateProcess($processId, ['currentOfficerSubstituteUserId' => $substituteUserId]);
     }
 }
 

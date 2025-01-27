@@ -88,6 +88,18 @@ class UserSubstituteManager extends AManager {
             throw new GeneralException('Database error.');
         }
     }
+
+    /**
+     * Gets user's substitute or if none exists returns the user
+     * 
+     * @param string $userId User ID
+     * @return string User's substitute ID or user's ID
+     */
+    public function getUserOrTheirSubstitute(string $userId): string {
+        $substitute = $this->getUserSubstitute($userId);
+
+        return $substitute?->substituteUserId ?? $userId;
+    }
 }
 
 ?>

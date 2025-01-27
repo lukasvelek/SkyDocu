@@ -121,7 +121,8 @@ class ContainerCreationHelper {
                 'currentOfficerUserId' => 'VARCHAR(256) NULL',
                 'workflowUserIds' => 'VARCHAR(256) NULL',
                 'dateCreated' => 'DATETIME NOT NULL DEFAULT current_timestamp()',
-                'status' => 'INT(4) NOT NULL DEFAULT 1'
+                'status' => 'INT(4) NOT NULL DEFAULT 1',
+                'currentOfficerSubstituteUserId' => 'VARCHAR(256) NULL'
             ],
             'process_types' => [
                 'typeId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',

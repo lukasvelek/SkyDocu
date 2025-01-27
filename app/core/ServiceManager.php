@@ -17,7 +17,7 @@ use App\Repositories\UserRepository;
  * @author Lukas Velek
  */
 class ServiceManager {
-    private SystemServicesRepository $systemServicesRepository;
+    public SystemServicesRepository $systemServicesRepository;
     private UserRepository $userRepository;
     private EntityManager $entityManager;
 

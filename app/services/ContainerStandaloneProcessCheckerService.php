@@ -3,20 +3,22 @@
 namespace App\Services;
 
 use App\Constants\Container\StandaloneProcesses;
-use App\Constants\ContainerStatus;
 use App\Core\DB\DatabaseManager;
 use App\Core\ServiceManager;
 use App\Exceptions\AException;
-use App\Exceptions\GeneralException;
 use App\Logger\Logger;
 use App\Managers\Container\GroupManager;
 use App\Managers\Container\ProcessManager;
 use App\Managers\ContainerManager;
 use App\Managers\EntityManager;
+use App\Managers\UserAbsenceManager;
+use App\Managers\UserSubstituteManager;
 use App\Repositories\Container\GroupRepository;
 use App\Repositories\Container\ProcessRepository;
 use App\Repositories\ContentRepository;
+use App\Repositories\UserAbsenceRepository;
 use App\Repositories\UserRepository;
+use App\Repositories\UserSubstituteRepository;
 use Error;
 use Exception;
 
@@ -66,11 +68,15 @@ class ContainerStandaloneProcessCheckerService extends AService {
 
             $contentRepository = new ContentRepository($containerConnection, $this->logger);
             $entityManager = new EntityManager($this->logger, $contentRepository);
-
+            $userSubstituteRepository = new UserSubstituteRepository($this->serviceManager->systemServicesRepository->conn, $this->logger);
+            $userAbsenceRepository = new UserAbsenceRepository($this->serviceManager->systemServicesRepository->conn, $this->logger);
             $processRepository = new ProcessRepository($containerConnection, $this->logger);
             $groupRepository = new GroupRepository($containerConnection, $this->logger);
+
             $groupManager = new GroupManager($this->logger, $entityManager, $groupRepository, $this->userRepository);
-            $processManager = new ProcessManager($this->logger, $entityManager, $processRepository, $groupManager);
+            $userSubstituteManager = new UserSubstituteManager($this->logger, $this->entityManager, $userSubstituteRepository);
+            $userAbsenceManager = new UserAbsenceManager($this->logger, $this->entityManager, $userAbsenceRepository);
+            $processManager = new ProcessManager($this->logger, $entityManager, $processRepository, $groupManager, $userSubstituteManager, $userAbsenceManager);
 
             $qb = $processManager->processRepository->composeQueryForProcessTypes();
             $qb->execute();

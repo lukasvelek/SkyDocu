@@ -91,7 +91,17 @@ class FormStateListHelper {
                 $stateList->$name->isReadonly = ($request->post('state')[$name]['readonly'] == 'true');
             }
             if(isset($request->post('state')[$name]['value'])) {
-                $stateList->$name->value = ($request->post('state')[$name]['value'] != 'null' ? $request->post('state')[$name]['value'] : null);
+                if($request->post('state')[$name]['value'] != 'null' && $request->post('state')[$name]['value'] != '') {
+                    $stateList->$name->value = $request->post('state')[$name]['value'];
+                } else {
+                    $stateList->$name->value = null;
+                }
+            }
+            if(isset($request->post('state')[$name]['min'])) {
+                $stateList->$name->minimum = $request->post('state')[$name]['min'];
+            }
+            if(isset($request->post('state')[$name]['max'])) {
+                $stateList->$name->maximum = $request->post('state')[$name]['max'];
             }
         }
 

@@ -124,6 +124,15 @@ class ProcessesPresenter extends AUserPresenter {
             $currentOfficer = '-';
         }
         $createRow('Current officer', $currentOfficer);
+
+        if($process->currentOfficerSubstituteUserId !== null) {
+            try {
+                $currentOfficerSubstitute = $this->app->userManager->getUserById($process->currentOfficerSubstituteUserId)->getFullname();
+            } catch(AException $e) {
+                $currentOfficerSubstitute = '-';
+            }
+            $createRow('Current officer\'s substitute', $currentOfficerSubstitute);
+        }
         
         $workflowUsers = ProcessHelper::convertWorkflowFromDb($process);
 

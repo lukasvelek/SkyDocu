@@ -192,11 +192,6 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
             $qb = $this->documentManager->composeQueryForDocuments($this->currentUserId, $folderId, $this->allMetadata);
         }
 
-        if($this->quickSearchQuery !== null) {
-            $qb->andWhere('title LIKE :quickSearchTitle')
-                ->setParams([':quickSearchTitle' => $this->quickSearchQuery]);
-        }
-
         $this->createDataSourceFromQueryBuilder($qb, 'documentId');
     }
 
@@ -598,13 +593,13 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
         return new JsonResponse(['modal' => $modal->render()]);
     }
 
-    public function actionFilter() {
+    public function actionFilter(): JsonResponse {
         $this->prerender();
 
         return parent::actionFilter();
     }
 
-    public function actionFilterClear() {
+    public function actionFilterClear(): JsonResponse {
         $this->clearActiveFilters();
         
         $this->prerender();
@@ -612,9 +607,7 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
         return parent::actionFilterClear();
     }
 
-    public function actionQuickSearch() {
-        $this->quickSearchQuery = $this->httpRequest->post('query');
-
+    public function actionQuickSearch(): JsonResponse {
         $this->prerender();
 
         return parent::actionQuickSearch();

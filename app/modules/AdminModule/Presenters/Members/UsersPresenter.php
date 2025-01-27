@@ -36,6 +36,8 @@ class UsersPresenter extends AAdminPresenter {
         $grid->addColumnText('username', 'Username');
         $grid->addColumnText('email', 'Email');
 
+        $grid->addQuickSearch('fullname', 'Fullname');
+
         return $grid;
     }
 

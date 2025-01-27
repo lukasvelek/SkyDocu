@@ -253,6 +253,12 @@ class GridBuilder extends AComponent {
         $this->enableExport = false;
     }
 
+    /**
+     * Adds quick search
+     * 
+     * @param string $colName Database table column name
+     * @param string $placeholderText Text that will be displayed as a place holder
+     */
     public function addQuickSearch(string $colName, string $placeholderText) {
         $this->quickSearchFilter = ['colName' => $colName, 'placeholderText' => $placeholderText];
     }
@@ -529,10 +535,10 @@ class GridBuilder extends AComponent {
             }
         }
 
-        /*if(!empty($this->quickSearchFilter) && $this->quickSearchQuery !== null) {
+        if($this->quickSearchQuery !== null) {
             $qb->andWhere($this->quickSearchFilter['colName'] . ' LIKE :quickSearchQuery')
-                ->setParams([':quickSearchQuery' => $this->quickSearchQuery]);
-        }*/
+                ->setParams([':quickSearchQuery' => '%' . $this->quickSearchQuery . '%']);
+        }
 
         return $qb;
     }
@@ -548,26 +554,18 @@ class GridBuilder extends AComponent {
         }
         $this->build();
 
-        $template = null;
-        /*if($this->table === null) {
-            $template = $this->getTemplate(__DIR__ . '/grid-empty.html');
-            $template->grid = $this->createFlashMessage('info', 'No data found.', 0, false, true);
-        } else {*/
-            $template = $this->getTemplate(__DIR__ . '/grid.html');
+        $template = $this->getTemplate(__DIR__ . '/grid.html');
 
-            $template->scripts = $this->createScripts();
-            
         if($this->table !== null) {
             $template->grid = $this->table->output();
         } else {
             $template->grid = $this->createFlashMessage('info', 'No data found.', 0, false, true);
         }
 
-            $template->controls = $this->createGridControls();
-            $template->filter_modal = '';
-            $template->filters = $this->createGridFilterControls();
-        //}
-        
+        $template->scripts = $this->createScripts();
+        $template->controls = $this->createGridControls();
+        $template->filter_modal = '';
+        $template->filters = $this->createGridFilterControls();
         $template->grid_name = $this->gridName;
         
         return $template->render()->getRenderedContent();
@@ -1010,7 +1008,9 @@ class GridBuilder extends AComponent {
                             .css("width", "90%");
                     }
             ';
+        }
 
+        if(!empty($this->filters) || !empty($this->quickSearchFilter)) {
             $arb = new AjaxRequestBuilder();
 
             $fArgs = [];
@@ -1356,24 +1356,27 @@ class GridBuilder extends AComponent {
      * @return string HTML code
      */
     private function createGridFilterControls() {
-        if(empty($this->filters)) {
+        if(empty($this->filters) && empty($this->quickSearchFilter)) {
             return '';
         }
 
         $el = HTML::el('span');
 
-        $btn = HTML::el('button')
+        if(!empty($this->filters)) {
+            $btn = HTML::el('button')
                 ->addAtribute('type', 'button')
                 ->onClick($this->componentName . '_processFilterModalOpen()')
                 ->id('formSubmit')
                 ->text('Filter')
                 ->title('Filter')
-        ;
+            ;
 
-        $btns = [
-            $btn->toString()
-        ];
+            $btns = [
+                $btn->toString()
+            ];
+        }
 
+        $args = [];
         if(!empty($this->queryDependencies)) {
             foreach($this->queryDependencies as $k => $v) {
                 $args[] = '\'' . $v . '\'';
@@ -1415,8 +1418,8 @@ class GridBuilder extends AComponent {
                         ->addAtribute('type', 'button')
                         ->onClick($this->componentName . '_filterClear(' . implode(', ', $args) . ')')
                         ->id('formSubmit')
-                        ->text('Clear filter')
-                        ->title('Clear filter')
+                        ->text('Clear search')
+                        ->title('Clear search')
                 ;
 
                 $btns[] = $btn->toString();
@@ -1426,123 +1429,6 @@ class GridBuilder extends AComponent {
         $el->text(implode('&nbsp;', $btns));
 
         return $el->toString();
-    }
-
-    // GRID AJAX REQUEST HANDLERS
-
-    /**
-     * Refreshes the grid
-     * 
-     * @return JsonResponse Response
-     */
-    public function actionRefresh() {
-        foreach($this->filters as $name => $filter) {
-            if($this->httpRequest->query($name) !== null) {
-                $this->activeFilters[$name] = $this->httpRequest->query($name);
-            }
-        }
-        if(!($this instanceof IGridExtendingComponent)) {
-            $this->build();
-        }
-        return new JsonResponse(['grid' => $this->render()]);
-    }
-
-    /**
-     * Changes the grid page
-     * 
-     * @return JsonResponse Response
-     */
-    public function actionPage() {
-        foreach($this->filters as $name => $filter) {
-            if($this->httpRequest->query($name) !== null) {
-                $this->activeFilters[$name] = $this->httpRequest->query($name);
-            }
-        }
-        if(!($this instanceof IGridExtendingComponent)) {
-            $this->build();
-        }
-        return new JsonResponse(['grid' => $this->render()]);
-    }
-
-    /**
-     * Filters the grid data
-     * 
-     * @return JsonResponse Response
-     */
-    public function actionFilter() {
-        foreach($this->filters as $name => $filter) {
-            if($this->httpRequest->query($name) !== null) {
-                $this->activeFilters[$name] = $this->httpRequest->query($name);
-            }
-        }
-
-        $this->saveActiveFilters();
-
-        /**
-         * When filter is added to a class that extends this class, then it has to call its prerender() method first.
-         * After that parent::actionFilter() [this method in this class] can be called.
-         * 
-         * Before this line was available only for non extending classes but it didn't make sense because it didn't work at all.
-         * Build recreates the grid and thus it must be called because otherwise none filters can be applied.
-         */
-        $this->build();
-
-        return new JsonResponse(['grid' => $this->render()]);
-    }
-
-    /**
-     * Cleans the grid data filter
-     * 
-     * @return JsonResponse Response
-     */
-    public function actionFilterClear() {
-        if(!($this instanceof IGridExtendingComponent)) {
-            $this->build();
-        }
-
-        return new JsonResponse(['grid' => $this->render()]);
-    }
-
-    /**
-     * Exports the limited entries
-     * 
-     * @return JsonResponse Response
-     */
-    public function actionExportLimited() {
-        $ds = clone $this->dataSource;
-        $ds = $this->processQueryBuilderDataSource($ds);
-
-        $result = [];
-        try {
-            $geh = $this->createGridExportHandler($ds);
-            [$file, $hash] = $geh->exportNow();
-            $result = new JsonResponse(['file' => $file, 'hash' => $hash]);
-        } catch(AException $e) {
-            throw new GridExportException('Could not process limited export.', $e);
-        }
-
-        return $result;
-    }
-
-    /**
-     * Queues asynchronous unlimited export
-     * 
-     * @return JsonResponse Response
-     */
-    public function actionExportUnlimited() {
-        $ds = clone $this->dataSource;
-        $ds = $this->processQueryBuilderDataSource($ds);
-        
-        $result = [];
-        try {
-            $geh = $this->createGridExportHandler($ds);
-            $hash = $geh->exportAsync();
-            $result = new JsonResponse(['hash' => $hash, 'success' => 1]);
-        } catch(AException|Exception $e) {
-            throw new GridExportException('Could not process unlimited export.', $e);
-        }
-
-        return $result;
     }
 
     // FILTER MODAL COMPONENT
@@ -1663,7 +1549,117 @@ class GridBuilder extends AComponent {
         return $qb;
     }
 
-    public function actionQuickSearch() {
+    // AJAX REQUEST HANDLERS
+
+    /**
+     * Refreshes the grid
+     */
+    public function actionRefresh(): JsonResponse {
+        foreach($this->filters as $name => $filter) {
+            if($this->httpRequest->query($name) !== null) {
+                $this->activeFilters[$name] = $this->httpRequest->query($name);
+            }
+        }
+        if(!($this instanceof IGridExtendingComponent)) {
+            $this->build();
+        }
+        return new JsonResponse(['grid' => $this->render()]);
+    }
+
+    /**
+     * Changes the grid page
+     */
+    public function actionPage(): JsonResponse {
+        foreach($this->filters as $name => $filter) {
+            if($this->httpRequest->query($name) !== null) {
+                $this->activeFilters[$name] = $this->httpRequest->query($name);
+            }
+        }
+        if(!($this instanceof IGridExtendingComponent)) {
+            $this->build();
+        }
+        return new JsonResponse(['grid' => $this->render()]);
+    }
+
+    /**
+     * Filters the grid data
+     */
+    public function actionFilter(): JsonResponse {
+        foreach($this->filters as $name => $filter) {
+            if($this->httpRequest->query($name) !== null) {
+                $this->activeFilters[$name] = $this->httpRequest->query($name);
+            }
+        }
+
+        $this->saveActiveFilters();
+
+        /**
+         * When filter is added to a class that extends this class, then it has to call its prerender() method first.
+         * After that parent::actionFilter() [this method in this class] can be called.
+         * 
+         * Before this line was available only for non extending classes but it didn't make sense because it didn't work at all.
+         * Build recreates the grid and thus it must be called because otherwise none filters can be applied.
+         */
+        $this->build();
+
+        return new JsonResponse(['grid' => $this->render()]);
+    }
+
+    /**
+     * Cleans the grid data filter
+     */
+    public function actionFilterClear(): JsonResponse {
+        if(!($this instanceof IGridExtendingComponent)) {
+            $this->build();
+        }
+
+        return new JsonResponse(['grid' => $this->render()]);
+    }
+
+    /**
+     * Exports the limited entries
+     */
+    public function actionExportLimited(): JsonResponse {
+        $ds = clone $this->dataSource;
+        $ds = $this->processQueryBuilderDataSource($ds);
+
+        $result = [];
+        try {
+            $geh = $this->createGridExportHandler($ds);
+            [$file, $hash] = $geh->exportNow();
+            $result = new JsonResponse(['file' => $file, 'hash' => $hash]);
+        } catch(AException $e) {
+            throw new GridExportException('Could not process limited export.', $e);
+        }
+
+        return $result;
+    }
+
+    /**
+     * Queues asynchronous unlimited export
+     */
+    public function actionExportUnlimited(): JsonResponse {
+        $ds = clone $this->dataSource;
+        $ds = $this->processQueryBuilderDataSource($ds);
+        
+        $result = [];
+        try {
+            $geh = $this->createGridExportHandler($ds);
+            $hash = $geh->exportAsync();
+            $result = new JsonResponse(['hash' => $hash, 'success' => 1]);
+        } catch(AException|Exception $e) {
+            throw new GridExportException('Could not process unlimited export.', $e);
+        }
+
+        return $result;
+    }
+
+    /**
+     * Handles Quick Search
+     */
+    public function actionQuickSearch(): JsonResponse {
+        $this->quickSearchQuery = $this->httpRequest->post('query');
+
         if(!($this instanceof IGridExtendingComponent)) {
             $this->build();
         }

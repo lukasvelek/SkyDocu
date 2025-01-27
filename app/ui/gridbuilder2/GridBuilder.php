@@ -527,6 +527,11 @@ class GridBuilder extends AComponent {
             }
         }
 
+        if(!empty($this->quickSearchFilter) && $this->quickSearchQuery !== null) {
+            $qb->andWhere($this->quickSearchFilter['colName'] . ' LIKE :quickSearchQuery')
+                ->setParams([':quickSearchQuery', $this->quickSearchQuery]);
+        }
+
         return $qb;
     }
 

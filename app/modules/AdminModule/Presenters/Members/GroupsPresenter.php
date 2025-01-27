@@ -62,6 +62,8 @@ class GroupsPresenter extends AAdminPresenter {
             return $el;
         };
 
+        $grid->addQuickSearch('title', 'Title');
+
         return $grid;
     }
 

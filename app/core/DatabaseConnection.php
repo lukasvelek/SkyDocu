@@ -4,6 +4,8 @@ namespace App\Core;
 
 use App\Exceptions\AException;
 use App\Exceptions\DatabaseConnectionException;
+use App\Exceptions\GeneralException;
+use App\Helpers\ExceptionHelper;
 use App\Logger\Logger;
 use Exception;
 use mysqli_sql_exception;
@@ -41,7 +43,13 @@ class DatabaseConnection implements IDbQueriable {
      * @return mixed Query result
      */
     public function query(string $sql, array $params = []) {
-        return $this->conn->query($sql);
+        try {
+            return $this->conn->query($sql);
+        } catch(\mysqli_sql_exception $e) {
+            $tmp = new GeneralException('Database error: ' . $e->getMessage() . '. SQL: ' . $sql, $e);
+            ExceptionHelper::saveExceptionToFile($tmp, $tmp->getHash());
+            throw $e;
+        }
     }
 
     /**

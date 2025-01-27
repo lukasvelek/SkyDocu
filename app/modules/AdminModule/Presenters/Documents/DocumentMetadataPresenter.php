@@ -100,6 +100,9 @@ class DocumentMetadataPresenter extends AAdminPresenter {
             return $el;
         };
 
+        $grid->addQuickSearch('title', 'Title');
+        $grid->addQuickSearch('guiTitle', 'GUI title');
+
         return $grid;
     }
 

@@ -158,6 +158,7 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
     private function setup() {
         if(!$this->showShared) {
             $this->addQueryDependency('folderId', $this->getFolderId());
+            $this->addQueryDependency('query', $this->quickSearchQuery);
         }
         $this->setGridName(GridNames::DOCUMENTS_GRID);
     }

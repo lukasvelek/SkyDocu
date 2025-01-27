@@ -169,11 +169,13 @@ class GridBuilder extends AComponent {
      * Clears active filters (in cache)
      */
     protected function clearActiveFilters() {
-        $cache = $this->cacheFactory->getCache(CacheNames::GRID_FILTER_DATA);
+        /*$cache = $this->cacheFactory->getCache(CacheNames::GRID_FILTER_DATA);
 
         $cache->save($this->gridName . $this->app->currentUser?->getId(), function() {
             return [];
-        });
+        });*/
+
+        $this->cacheFactory->invalidateCacheByNamespace(CacheNames::GRID_FILTER_DATA);
 
         $this->activeFilters = [];
     }
@@ -527,10 +529,10 @@ class GridBuilder extends AComponent {
             }
         }
 
-        if(!empty($this->quickSearchFilter) && $this->quickSearchQuery !== null) {
+        /*if(!empty($this->quickSearchFilter) && $this->quickSearchQuery !== null) {
             $qb->andWhere($this->quickSearchFilter['colName'] . ' LIKE :quickSearchQuery')
-                ->setParams([':quickSearchQuery', $this->quickSearchQuery]);
-        }
+                ->setParams([':quickSearchQuery' => $this->quickSearchQuery]);
+        }*/
 
         return $qb;
     }
@@ -547,18 +549,24 @@ class GridBuilder extends AComponent {
         $this->build();
 
         $template = null;
-        if($this->table === null) {
+        /*if($this->table === null) {
             $template = $this->getTemplate(__DIR__ . '/grid-empty.html');
             $template->grid = $this->createFlashMessage('info', 'No data found.', 0, false, true);
-        } else {
+        } else {*/
             $template = $this->getTemplate(__DIR__ . '/grid.html');
 
             $template->scripts = $this->createScripts();
+            
+        if($this->table !== null) {
             $template->grid = $this->table->output();
+        } else {
+            $template->grid = $this->createFlashMessage('info', 'No data found.', 0, false, true);
+        }
+
             $template->controls = $this->createGridControls();
             $template->filter_modal = '';
             $template->filters = $this->createGridFilterControls();
-        }
+        //}
         
         $template->grid_name = $this->gridName;
         
@@ -1401,6 +1409,18 @@ class GridBuilder extends AComponent {
                         ->title('Search');
 
             $btns[] = $btn->toString();
+
+            if($this->quickSearchQuery !== null) {
+                $btn = HTML::el('button')
+                        ->addAtribute('type', 'button')
+                        ->onClick($this->componentName . '_filterClear(' . implode(', ', $args) . ')')
+                        ->id('formSubmit')
+                        ->text('Clear filter')
+                        ->title('Clear filter')
+                ;
+
+                $btns[] = $btn->toString();
+            }
         }
 
         $el->text(implode('&nbsp;', $btns));
@@ -1476,7 +1496,9 @@ class GridBuilder extends AComponent {
      * @return JsonResponse Response
      */
     public function actionFilterClear() {
-        $this->build();
+        if(!($this instanceof IGridExtendingComponent)) {
+            $this->build();
+        }
 
         return new JsonResponse(['grid' => $this->render()]);
     }

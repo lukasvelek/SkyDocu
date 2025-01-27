@@ -12,19 +12,32 @@ use App\Helpers\ProcessHelper;
 use App\Logger\Logger;
 use App\Managers\AManager;
 use App\Managers\EntityManager;
+use App\Managers\UserAbsenceManager;
+use App\Managers\UserSubstituteManager;
 use App\Repositories\Container\ProcessRepository;
 
 class ProcessManager extends AManager {
     public ProcessRepository $processRepository;
     private GroupManager $groupManager;
+    private UserSubstituteManager $userSubstituteManager;
+    private UserAbsenceManager $userAbsenceManager;
 
     private array $mProcessesCache;
     
-    public function __construct(Logger $logger, EntityManager $entityManager, ProcessRepository $processRepository, GroupManager $groupManager) {
+    public function __construct(
+        Logger $logger,
+        EntityManager $entityManager,
+        ProcessRepository $processRepository,
+        GroupManager $groupManager,
+        UserSubstituteManager $userSubstituteManager,
+        UserAbsenceManager $userAbsenceManager
+    ) {
         parent::__construct($logger, $entityManager);
         
         $this->processRepository = $processRepository;
         $this->groupManager = $groupManager;
+        $this->userSubstituteManager = $userSubstituteManager;
+        $this->userAbsenceManager = $userAbsenceManager;
 
         $this->mProcessesCache = [];
     }
@@ -44,6 +57,14 @@ class ProcessManager extends AManager {
             'currentOfficerUserId' => $currentOfficerId,
             'workflowUserIds' => $workflowConverted
         ];
+
+        if($this->userAbsenceManager->isUserAbsent($currentOfficerId)) {
+            $substitute = $this->userSubstituteManager->getUserOrTheirSubstitute($currentOfficerId);
+
+            if($substitute != $currentOfficerId) {
+                $data['currentOfficerSubstituteUserId'] = $substitute;
+            }
+        }
 
         if($documentId !== null) {
             $data['documentId'] = $documentId;
@@ -76,6 +97,16 @@ class ProcessManager extends AManager {
             'currentOfficerUserId' => $newOfficer
         ];
 
+        if($this->userAbsenceManager->isUserAbsent($newOfficer)) {
+            $substitute = $this->userSubstituteManager->getUserOrTheirSubstitute($newOfficer);
+
+            if($substitute != $newOfficer) {
+                $data['currentOfficerSubstituteUserId'] = $substitute;
+            }
+        } else {
+            $data['currentOfficerSubstituteUserId'] = null;
+        }
+
         if(!$this->processRepository->updateProcess($processId, $data)) {
             throw new GeneralException('Database error.');
         }
@@ -102,6 +133,16 @@ class ProcessManager extends AManager {
         $data = [
             'currentOfficerUserId' => $newOfficer
         ];
+
+        if($this->userAbsenceManager->isUserAbsent($newOfficer)) {
+            $substitute = $this->userSubstituteManager->getUserOrTheirSubstitute($newOfficer);
+
+            if($substitute != $newOfficer) {
+                $data['currentOfficerSubstituteUserId'] = $substitute;
+            }
+        } else {
+            $data['currentOfficerSubstituteUserId'] = null;
+        }
 
         if(!$this->processRepository->updateProcess($processId, $data)) {
             throw new GeneralException('Database error.');
@@ -130,7 +171,8 @@ class ProcessManager extends AManager {
         
         $data = [
             'status' => ProcessStatus::FINISHED,
-            'currentOfficerUserId' => null
+            'currentOfficerUserId' => null,
+            'currentOfficerSubstituteUserId' => null
         ];
 
         if(!$this->processRepository->updateProcess($processId, $data)) {

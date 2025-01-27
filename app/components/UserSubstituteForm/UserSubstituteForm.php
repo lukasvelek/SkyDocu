@@ -85,11 +85,11 @@ class UserSubstituteForm extends FormBuilder2 {
         $formOperation = new CustomOperation();
         $formOperation->addCode('if(obj.users.length == 0) {
             alert("No users found.");
-            $("#users").attr("disabled");
+            $("#user").attr("disabled");
             $("#formSubmit").attr("disabled");
         } else {
             ' . $usersOperation->build() . '
-            $("#users").removeAttr("disabled");
+            $("#user").removeAttr("disabled");
             $("#formSubmit").removeAttr("disabled");
         }');
 

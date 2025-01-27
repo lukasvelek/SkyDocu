@@ -125,7 +125,9 @@ abstract class AContainerPresenter extends APresenter {
         $managers = [
             'processManager' => [
                 'processRepository',
-                'groupManager'
+                'groupManager',
+                ':userSubstituteManager',
+                ':userAbsenceManager'
             ],
             'standaloneProcessManager' => [
                 'processManager',

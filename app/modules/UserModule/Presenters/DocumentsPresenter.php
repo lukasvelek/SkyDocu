@@ -76,6 +76,7 @@ class DocumentsPresenter extends AUserPresenter {
         $documentsGrid->showCustomMetadata();
         $documentsGrid->useCheckboxes($this);
         $documentsGrid->setCacheFactory($this->cacheFactory);
+        $documentsGrid->addQuickSearch('title', 'Title');
 
         return $documentsGrid;
     }

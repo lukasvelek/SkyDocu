@@ -9,6 +9,9 @@ use App\Core\AjaxRequestBuilder;
 use App\Core\Caching\CacheFactory;
 use App\Core\Caching\CacheNames;
 use App\Core\DB\DatabaseRow;
+use App\Core\Http\Ajax\Operations\HTMLPageOperation;
+use App\Core\Http\Ajax\Requests\AAjaxRequest;
+use App\Core\Http\Ajax\Requests\PostAjaxRequest;
 use App\Core\Http\HttpRequest;
 use App\Core\Http\JsonResponse;
 use App\Exceptions\AException;
@@ -19,6 +22,7 @@ use App\Helpers\DateTimeFormatHelper;
 use App\Helpers\GridHelper;
 use App\Modules\APresenter;
 use App\UI\AComponent;
+use App\UI\FormBuilder2\TextInput;
 use App\UI\HTML\HTML;
 use Exception;
 use QueryBuilder\QueryBuilder;
@@ -96,6 +100,9 @@ class GridBuilder extends AComponent {
     protected CacheFactory $cacheFactory;
     private int $resultLimit;
 
+    private array $quickSearchFilter;
+    protected ?string $quickSearchQuery;
+
     /**
      * Class constructor
      * 
@@ -123,6 +130,8 @@ class GridBuilder extends AComponent {
         $this->checkboxHandler = [];
         $this->resultLimit = GRID_SIZE;
         $this->isPrerendered = false;
+        $this->quickSearchFilter = [];
+        $this->quickSearchQuery = null;
     }
 
     /**
@@ -240,6 +249,10 @@ class GridBuilder extends AComponent {
      */
     public function disableExport() {
         $this->enableExport = false;
+    }
+
+    public function addQuickSearch(string $colName, string $placeholderText) {
+        $this->quickSearchFilter = ['colName' => $colName, 'placeholderText' => $placeholderText];
     }
 
     /**
@@ -867,8 +880,12 @@ class GridBuilder extends AComponent {
     private function createScripts() {
         $scripts = [];
 
-        $addScript = function(AjaxRequestBuilder $arb) use (&$scripts) {
-            $scripts[] = $arb->build();
+        $addScript = function(AjaxRequestBuilder|AAjaxRequest $arb) use (&$scripts) {
+            if($arb instanceof AjaxRequestBuilder) {
+                $scripts[] = $arb->build();
+            } else if($arb instanceof AAjaxRequest) {
+                $scripts[] = $arb->build();
+            }
         };
 
         // REFRESH
@@ -1004,6 +1021,37 @@ class GridBuilder extends AComponent {
             ;
 
             $addScript($arb);
+        }
+
+        // QUICK SEARCH
+        if(!empty($this->quickSearchFilter)) {
+            $par = new PostAjaxRequest($this->httpRequest);
+
+            $par->setComponentUrl($this, 'quickSearch')
+                ->setData(['query' => '_query'])
+                ->addArgument('_query');
+
+            $op = new HTMLPageOperation();
+            $op->setHtmlEntityId('grid')
+                ->setJsonResponseObjectName('grid');
+
+            $par->addOnFinishOperation($op);
+
+            $addScript($par);
+
+            $code = '
+                function ' . $this->componentName . '_quickSearch() {
+                    var query = $("#' . $this->componentName . '_search").val();
+
+                    if(query.length == 0) {
+                        alert("No data entered.");
+                    } else {
+                        ' . $par->getFunctionName() . '(query);
+                    }
+                }
+            ';
+
+            $scripts[] = $code;
         }
 
         // EXPORT MODAL
@@ -1331,6 +1379,25 @@ class GridBuilder extends AComponent {
             $btns[] = $btn->toString();
         }
 
+        if(!empty($this->quickSearchFilter)) {
+            $input = new TextInput($this->componentName . '_search');
+            $input->setPlaceholder($this->quickSearchFilter['placeholderText']);
+            if($this->quickSearchQuery !== null) {
+                $input->setValue($this->quickSearchQuery);
+            }
+
+            $btns[] = $input->render();
+
+            $btn = HTML::el('button')
+                        ->addAtribute('type', 'button')
+                        ->onClick($this->componentName . '_quickSearch(' . implode(', ', $args) . ')')
+                        ->id('formSubmit')
+                        ->text('Search')
+                        ->title('Search');
+
+            $btns[] = $btn->toString();
+        }
+
         $el->text(implode('&nbsp;', $btns));
 
         return $el->toString();
@@ -1567,6 +1634,14 @@ class GridBuilder extends AComponent {
             ->offset(($this->gridPage * $this->resultLimit));
 
         return $qb;
+    }
+
+    public function actionQuickSearch() {
+        if(!($this instanceof IGridExtendingComponent)) {
+            $this->build();
+        }
+
+        return new JsonResponse(['grid' => $this->render()]);
     }
 }
 

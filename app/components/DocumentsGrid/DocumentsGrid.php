@@ -9,7 +9,6 @@ use App\Constants\Container\DocumentsGridSystemMetadata;
 use App\Constants\Container\DocumentStatus;
 use App\Constants\Container\GridNames;
 use App\Core\Application;
-use App\Core\Caching\CacheFactory;
 use App\Core\DB\DatabaseRow;
 use App\Core\Http\JsonResponse;
 use App\Enums\AEnumForMetadata;
@@ -190,6 +189,11 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
         } else {
             $folderId = $this->getFolderId();
             $qb = $this->documentManager->composeQueryForDocuments($this->currentUserId, $folderId, $this->allMetadata);
+        }
+
+        if($this->quickSearchQuery !== null) {
+            $qb->andWhere('title LIKE :quickSearchTitle')
+                ->setParams([':quickSearchTitle' => $this->quickSearchQuery]);
         }
 
         $this->createDataSourceFromQueryBuilder($qb, 'documentId');
@@ -605,6 +609,14 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
         $this->prerender();
 
         return parent::actionFilterClear();
+    }
+
+    public function actionQuickSearch() {
+        $this->quickSearchQuery = $this->httpRequest->post('query');
+
+        $this->prerender();
+
+        return parent::actionQuickSearch();
     }
 }
 

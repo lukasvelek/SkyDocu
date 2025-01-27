@@ -13,12 +13,16 @@ These future plans are also in Issues list and can be distinguished by their mil
 
 Future plans include:
 - Archive (__1.3__)
-- Widget / Component skeletons (__1.3__)
+- Widget / Component skeletons (__1.4__)
     - Instead of a loading loop icon
 - New widgets (__1.3__)
     - For in-container Administration-System-Dashboard
     - For in-container Dashboard
 - Dark theme support (__1.4__)
+- Grid exporting (__1.4__)
+- Container document uploading (__1.3__)
+- Multiple database servers (__1.4__, but will probably be postponed)
+- Grid searching (__1.3__)
 
 ## Changelog
 ### 1.2 (?)
@@ -40,6 +44,7 @@ Future plans include:
     - Link hints
     - FormBuilder element hints
 - Updated information flash message design
+- User absence & substitution
 
 ### 1.1 (January 7th, 2025)
 - Document processes

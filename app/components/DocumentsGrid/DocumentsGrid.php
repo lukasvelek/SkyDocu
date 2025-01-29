@@ -70,6 +70,7 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
     ) {
         parent::__construct($grid->httpRequest);
         $this->setHelper($grid->getHelper());
+        $this->setCacheFactory($grid->cacheFactory);
 
         $this->app = $app;
         $this->documentManager = $documentManager;
@@ -159,7 +160,6 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
         if(!$this->showShared) {
             $this->addQueryDependency('folderId', $this->getFolderId());
         }
-        $this->setGridName(GridNames::DOCUMENTS_GRID);
         
         $this->addQuickSearch('title', 'Title');
     }
@@ -205,6 +205,8 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
         if($this->currentFolderId === null) {
             if($this->httpRequest->query('folderId') !== null) {
                 $this->currentFolderId = $this->httpRequest->query('folderId');
+            } else if($this->httpRequest->post('folderId') !== null) {
+                $this->currentFolderId = $this->httpRequest->post('folderId');
             } else {
                 throw new GeneralException('No folder is selected.');
             }

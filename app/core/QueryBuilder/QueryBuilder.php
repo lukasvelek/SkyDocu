@@ -543,6 +543,13 @@ class QueryBuilder
     }
 
     /**
+     * Regenerates SQL query
+     */
+    public function regenerateSQL() {
+        $this->createSQLQuery();
+    }
+
+    /**
      * Sets the SQL explicitly
      * 
      * @param string $sql SQL string

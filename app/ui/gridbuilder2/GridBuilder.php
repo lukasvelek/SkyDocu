@@ -50,6 +50,7 @@ class GridBuilder extends AComponent {
     private const COL_TYPE_USER = 'user';
 
     protected ?QueryBuilder $dataSource;
+    protected ?QueryBuilder $fullDataSource;
     protected string $primaryKeyColName;
     /**
      * @var array<string, Column> $columns
@@ -112,6 +113,7 @@ class GridBuilder extends AComponent {
         parent::__construct($request);
 
         $this->dataSource = null;
+        $this->fullDataSource = null;
         $this->columns = [];
         $this->columnLabels = [];
         $this->enablePagination = true;
@@ -144,10 +146,19 @@ class GridBuilder extends AComponent {
     }
 
     /**
+     * Returns the name of the grid filter cache namespace
+     * 
+     * @return string Cache namespace
+     */
+    private function getCacheNameForFilter(): string {
+        return CacheNames::GRID_FILTER_DATA . '\\' . $this->gridName . '\\' . $this->app->currentUser?->getId();
+    }
+
+    /**
      * Retrieves active filters from cache
      */
     private function getActiveFiltersFromCache() {
-        $cache = $this->cacheFactory->getCache(CacheNames::GRID_FILTER_DATA);
+        $cache = $this->cacheFactory->getCache($this->getCacheNameForFilter());
 
         $this->activeFilters = $cache->load($this->gridName . $this->app->currentUser?->getId(), function() {
             return $this->activeFilters;
@@ -158,7 +169,7 @@ class GridBuilder extends AComponent {
      * Saves active filters to cache
      */
     private function saveActiveFilters() {
-        $cache = $this->cacheFactory->getCache(CacheNames::GRID_FILTER_DATA);
+        $cache = $this->cacheFactory->getCache($this->getCacheNameForFilter());
 
         $cache->save($this->gridName . $this->app->currentUser?->getId(), function() {
             return $this->activeFilters;
@@ -169,11 +180,7 @@ class GridBuilder extends AComponent {
      * Clears active filters (in cache)
      */
     protected function clearActiveFilters() {
-        $cache = $this->cacheFactory->getCache(CacheNames::GRID_FILTER_DATA);
-
-        $cache->save($this->gridName . $this->app->currentUser?->getId(), function() {
-            return [];
-        });
+        $this->cacheFactory->invalidateCacheByNamespace($this->getCacheNameForFilter());
 
         $this->activeFilters = [];
     }
@@ -606,6 +613,7 @@ class GridBuilder extends AComponent {
             $dataSource = clone $this->dataSource;
     
             $this->processQueryBuilderDataSource($dataSource);
+            $this->fullDataSource = $dataSource;
     
             $this->filledDataSource = $dataSource->execute();
         }
@@ -910,102 +918,145 @@ class GridBuilder extends AComponent {
         };
 
         // REFRESH
-        $refreshHeader = ['gridPage' => '_page'];
-        $refreshArgs = ['_page'];
+        $par = new PostAjaxRequest($this->httpRequest);
+
+        $data = [
+            'gridPage' => '_page'
+        ];
+
+        $args = [
+            '_page'
+        ];
+
         if(!empty($this->activeFilters)) {
             foreach($this->activeFilters as $name => $value) {
-                $pName = '_' . $name;
+                $argName = '_' . $name;
 
-                $refreshHeader[$name] = $pName;
-                $refreshArgs[] = $pName;
+                $data[$name] = $argName;
+                $args[] = $argName;
             }
         }
 
         if(!empty($this->queryDependencies)) {
-            foreach($this->queryDependencies as $k => $v) {
-                $pK = '_' . $k;
+            foreach($this->queryDependencies as $name => $value) {
+                $argName = '_' . $name;
 
-                $refreshHeader[$k] = $pK;
-                $refreshArgs[] = $pK;
+                $data[$name] = $argName;
+                $args[] = $argName;
             }
         }
 
-        $arb = new AjaxRequestBuilder();
-        $arb->setMethod()
-            ->setComponentAction($this->presenter, $this->componentName . '-refresh')
-            ->setHeader($refreshHeader)
-            ->setFunctionName($this->componentName . '_gridRefresh')
-            ->setFunctionArguments($refreshArgs)
-            ->updateHTMLElement('grid', 'grid')
-            ->setComponent()
-        ;
+        $par->setComponentUrl($this, 'refresh')
+            ->setData($data);
 
-        $addScript($arb);
+        foreach($args as $arg) {
+            $par->addArgument($arg);
+        }
+
+        $updateOperation = new HTMLPageOperation();
+        $updateOperation->setHtmlEntityId('grid')
+            ->setJsonResponseObjectName('grid');
+
+        $par->addOnFinishOperation($updateOperation);
+
+        $addScript($par);
+        $scripts[] = '
+            function ' . $this->componentName . '_gridRefresh(' . implode(', ', $args) . ') {
+                ' . $par->getFunctionName() . '(' . implode(', ', $args) . ');
+            }
+        ';
 
         // PAGINATION
-        $paginationHeader = ['gridPage' => '_page'];
-        $paginationArgs = ['_page'];
+        $par = new PostAjaxRequest($this->httpRequest);
+
+        $data = [
+            'gridPage' => '_page'
+        ];
+
+        $args = [
+            '_page'
+        ];
+
         if(!empty($this->activeFilters)) {
             foreach($this->activeFilters as $name => $value) {
-                $pName = '_' . $name;
+                $argName = '_' . $name;
 
-                $paginationHeader[$name] = $pName;
-                $paginationArgs[] = $pName;
+                $data[$name] = $argName;
+                $args[] = $argName;
             }
         }
 
         if(!empty($this->queryDependencies)) {
-            foreach($this->queryDependencies as $k => $v) {
-                $pK = '_' . $k;
+            foreach($this->queryDependencies as $name => $value) {
+                $argName = '_' . $name;
 
-                $paginationHeader[$k] = $pK;
-                $paginationArgs[] = $pK;
+                $data[$name] = $argName;
+                $args[] = $argName;
             }
         }
 
-        $arb = new AjaxRequestBuilder();
-        $arb->setMethod()
-            ->setComponentAction($this->presenter, $this->componentName . '-page')
-            ->setHeader($paginationHeader)
-            ->setFunctionName($this->componentName . '_page')
-            ->setFunctionArguments($paginationArgs)
-            ->updateHTMLElement('grid', 'grid')
-            ->setComponent()
-        ;
+        $par->setComponentUrl($this, 'page')
+            ->setData($data);
 
-        $addScript($arb);
+        foreach($args as $arg) {
+            $par->addArgument($arg);
+        }
+
+        $updateOperation = new HTMLPageOperation();
+        $updateOperation->setHtmlEntityId('grid')
+            ->setJsonResponseObjectName('grid');
+
+        $par->addOnFinishOperation($updateOperation);
+
+        $addScript($par);
+        $scripts[] = '
+            function ' . $this->componentName . '_page(' . implode(', ', $args) . ') {
+                ' . $par->getFunctionName() . '(' . implode(', ', $args) . ');
+            }
+        ';
 
         // FILTER
         if(!empty($this->filters)) {
-            $arb = new AjaxRequestBuilder();
+            $par = new PostAjaxRequest($this->httpRequest);
 
-            $headerParams = [];
-            $fArgs = [];
-            foreach($this->filters as $name => $filter) {
-                $hName = '_' . $name;
-                $headerParams[$name] = $hName;
-                $fArgs[] = $hName;
+            $data = [];
+            $args = [];
+
+            foreach($this->filters as $name => $value) {
+                $argName = '_' . $name;
+
+                $data[$name] = $argName;
+                $args[] = $argName;
             }
-
-            if(!empty($this->queryDependencies)) {
-                foreach($this->queryDependencies as $k => $v) {
-                    $pK = '_' . $k;
     
-                    $headerParams[$k] = $pK;
-                    $fArgs[] = $pK;
+            if(!empty($this->queryDependencies)) {
+                foreach($this->queryDependencies as $name => $value) {
+                    $argName = '_' . $name;
+    
+                    $data[$name] = $argName;
+                    $args[] = $argName;
                 }
             }
 
-            $arb->setMethod()
-                ->setComponentAction($this->presenter, $this->componentName . '-filter')
-                ->setHeader($headerParams)
-                ->setFunctionName($this->componentName . '_filter')
-                ->setFunctionArguments($fArgs)
-                ->setComponent()
-                ->updateHTMLElement('grid', 'grid')
-            ;
+            $par->setComponentUrl($this, 'filter')
+                ->setData($data);
 
-            $addScript($arb);
+            foreach($args as $arg) {
+                $par->addArgument($arg);
+            }
+
+            $updateOperation = new HTMLPageOperation();
+            $updateOperation->setHtmlEntityId('grid')
+                ->setJsonResponseObjectName('grid');
+
+            $par->addOnFinishOperation($updateOperation);
+
+            $addScript($par);
+            $scripts[] = '
+                function ' . $this->componentName . '_filter(' . implode(', ', $args) . ') {
+                    ' . $par->getFunctionName() . '(' . implode(', ', $args) . ');
+                }
+            ';
         }
 
         // FILTER MODAL
@@ -1021,29 +1072,39 @@ class GridBuilder extends AComponent {
         }
 
         if(!empty($this->filters) || !empty($this->quickSearchFilter)) {
-            $arb = new AjaxRequestBuilder();
+            $par = new PostAjaxRequest($this->httpRequest);
 
-            $fArgs = [];
-            $headerArgs = [];
+            $data = [];
+            $args = [];
+    
             if(!empty($this->queryDependencies)) {
-                foreach($this->queryDependencies as $k => $v) {
-                    $pK = '_' . $k;
-
-                    $fArgs[] = $pK;
-                    $headerArgs[$k] = $pK;
+                foreach($this->queryDependencies as $name => $value) {
+                    $argName = '_' . $name;
+    
+                    $data[$name] = $argName;
+                    $args[] = $argName;
                 }
             }
 
-            $arb->setMethod()
-                ->setComponentAction($this->presenter, $this->componentName . '-filterClear')
-                ->setHeader($headerArgs)
-                ->setFunctionName($this->componentName . '_filterClear')
-                ->setFunctionArguments($fArgs)
-                ->setComponent()
-                ->updateHTMLElement('grid', 'grid')
-            ;
+            $par->setData($data)
+                ->setComponentUrl($this, 'filterClear');
 
-            $addScript($arb);
+            foreach($args as $arg) {
+                $par->addArgument($arg);
+            }
+
+            $updateOperation = new HTMLPageOperation();
+            $updateOperation->setHtmlEntityId('grid')
+                ->setJsonResponseObjectName('grid');
+
+            $par->addOnFinishOperation($updateOperation);
+
+            $addScript($par);
+            $scripts[] = '
+                function ' . $this->componentName . '_filterClear(' . implode(', ', $args) . ') {
+                    ' . $par->getFunctionName() . '(' . implode(', ', $args) . ');
+                }
+            ';
         }
 
         // QUICK SEARCH
@@ -1238,7 +1299,13 @@ class GridBuilder extends AComponent {
             $lastPageCount = $totalCount;
         }
 
-        return 'Page ' . ($this->gridPage + 1) . ' of ' . $lastPage . ' (' . ($this->resultLimit * $this->gridPage) . ' - ' . $lastPageCount . ')';
+        // If the grid is empty, no page exists
+        $displayGridPage = $this->gridPage;
+        if($lastPage > 0) {
+            $displayGridPage++;
+        }
+
+        return 'Page ' . $displayGridPage . ' of ' . $lastPage . ' (' . ($this->resultLimit * $this->gridPage) . ' - ' . $lastPageCount . ')';
     }
 
     /**
@@ -1336,6 +1403,8 @@ class GridBuilder extends AComponent {
 
         if($this->httpRequest->query('gridPage') !== null) {
             $page = $this->httpRequest->query('gridPage');
+        } else if($this->httpRequest->post('gridPage') !== null) {
+            $page = $this->httpRequest->post('gridPage');
         }
 
         $page = $this->gridHelper->getGridPage($this->gridName, $page);
@@ -1353,9 +1422,10 @@ class GridBuilder extends AComponent {
             return $this->totalCount;
         }
 
-        $dataSource = clone $this->dataSource;
-
+        $dataSource = clone $this->fullDataSource;
+        
         $dataSource->resetLimit()->resetOffset()->select(['COUNT(*) AS cnt']);
+        $dataSource->regenerateSQL();
         $this->totalCount = $dataSource->execute()->fetch('cnt');
         return $this->totalCount;
     }
@@ -1571,8 +1641,8 @@ class GridBuilder extends AComponent {
      */
     public function actionRefresh(): JsonResponse {
         foreach($this->filters as $name => $filter) {
-            if($this->httpRequest->query($name) !== null) {
-                $this->activeFilters[$name] = $this->httpRequest->query($name);
+            if($this->httpRequest->post($name) !== null) {
+                $this->activeFilters[$name] = $this->httpRequest->post($name);
             }
         }
         if(!($this instanceof IGridExtendingComponent)) {
@@ -1586,8 +1656,8 @@ class GridBuilder extends AComponent {
      */
     public function actionPage(): JsonResponse {
         foreach($this->filters as $name => $filter) {
-            if($this->httpRequest->query($name) !== null) {
-                $this->activeFilters[$name] = $this->httpRequest->query($name);
+            if($this->httpRequest->post($name) !== null) {
+                $this->activeFilters[$name] = $this->httpRequest->post($name);
             }
         }
         if(!($this instanceof IGridExtendingComponent)) {
@@ -1601,8 +1671,8 @@ class GridBuilder extends AComponent {
      */
     public function actionFilter(): JsonResponse {
         foreach($this->filters as $name => $filter) {
-            if($this->httpRequest->query($name) !== null) {
-                $this->activeFilters[$name] = $this->httpRequest->query($name);
+            if($this->httpRequest->post($name) !== null) {
+                $this->activeFilters[$name] = $this->httpRequest->post($name);
             }
         }
 

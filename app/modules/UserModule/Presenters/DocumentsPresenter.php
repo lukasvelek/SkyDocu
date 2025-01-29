@@ -7,6 +7,7 @@ use App\Components\DocumetnShareForm\DocumentShareForm;
 use App\Components\FoldersSidebar\FoldersSidebar;
 use App\Constants\Container\CustomMetadataTypes;
 use App\Constants\Container\DocumentStatus;
+use App\Constants\Container\GridNames;
 use App\Core\DB\DatabaseRow;
 use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
@@ -72,10 +73,12 @@ class DocumentsPresenter extends AUserPresenter {
             $this->processFactory
         );
 
-        $documentsGrid->setCurrentFolder($this->currentFolderId);
+        if(!$this->httpRequest->isAjax) {
+            $documentsGrid->setCurrentFolder($this->currentFolderId);
+        }
         $documentsGrid->showCustomMetadata();
         $documentsGrid->useCheckboxes($this);
-        $documentsGrid->setCacheFactory($this->cacheFactory);
+        $documentsGrid->setGridName(GridNames::DOCUMENTS_GRID);
 
         return $documentsGrid;
     }
@@ -275,7 +278,6 @@ class DocumentsPresenter extends AUserPresenter {
 
         $documentsGrid->setShowShared();
         $documentsGrid->useCheckboxes($this);
-        $documentsGrid->setCacheFactory($this->cacheFactory);
 
         return $documentsGrid;
     }

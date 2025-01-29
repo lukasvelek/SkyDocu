@@ -269,6 +269,18 @@ class CacheFactory {
      * @return bool True on success or false on failure
      */
     private function deleteCache(string $namespace, array &$messages) {
+        // An instance of the cache with given namespace might exist and contain data and so it must be destroyed
+        $tmp = null;
+        foreach($this->persistentCaches as $hash => $cache) {
+            if($cache->getNamespace() == $namespace) {
+                $tmp = $hash;
+            }
+        }
+
+        if($tmp !== null) {
+            unset($this->persistentCaches[$tmp]);
+        }
+
         $path = APP_ABSOLUTE_DIR . CACHE_DIR . $namespace . '\\';
 
         if($this->customNamespace !== null) {

@@ -104,6 +104,10 @@ class GridBuilder extends AComponent {
     private array $quickSearchFilter;
     protected ?string $quickSearchQuery;
 
+    protected bool $actionsDisabled;
+    protected bool $controlsDisabled;
+    protected bool $refreshDisabled;
+
     /**
      * Class constructor
      * 
@@ -134,6 +138,51 @@ class GridBuilder extends AComponent {
         $this->isPrerendered = false;
         $this->quickSearchFilter = [];
         $this->quickSearchQuery = null;
+        $this->actionsDisabled = false;
+        $this->controlsDisabled = false;
+        $this->refreshDisabled = false;
+    }
+
+    /**
+     * Disables grid refresh
+     */
+    public function disableRefresh() {
+        $this->refreshDisabled = true;
+    }
+
+    /**
+     * Enables grid refresh
+     */
+    public function enableRefresh() {
+        $this->refreshDisabled = false;
+    }
+
+    /**
+     * Disables grid controls
+     */
+    public function disableControls() {
+        $this->controlsDisabled = true;
+    }
+
+    /**
+     * Enables grid controls
+     */
+    public function enableControls() {
+        $this->controlsDisabled = false;
+    }
+
+    /**
+     * Disables grid actions
+     */
+    public function disableActions() {
+        $this->actionsDisabled = true;
+    }
+
+    /**
+     * Enables grid actions
+     */
+    public function enableActions() {
+        $this->actionsDisabled = false;
     }
 
     /**
@@ -722,7 +771,7 @@ class GridBuilder extends AComponent {
             $_tableRows['header']->addCell($_headerCell, true);
         }
 
-        if(!empty($this->actions)) {
+        if(!empty($this->actions) && !$this->actionsDisabled) {
             $maxCountToRender = 0;
             $canRender = [];
             
@@ -876,10 +925,6 @@ class GridBuilder extends AComponent {
      * @return string HTML code
      */
     private function createGridControls() {
-        if(!$this->enablePagination) {
-            return '';
-        }
-
         $code = '
             <div class="row">
                 <div class="col-md">
@@ -954,7 +999,7 @@ class GridBuilder extends AComponent {
         }
 
         $updateOperation = new HTMLPageOperation();
-        $updateOperation->setHtmlEntityId('grid')
+        $updateOperation->setHtmlEntityId('grid_' . $this->gridName)
             ->setJsonResponseObjectName('grid');
 
         $par->addOnFinishOperation($updateOperation);
@@ -1003,7 +1048,7 @@ class GridBuilder extends AComponent {
         }
 
         $updateOperation = new HTMLPageOperation();
-        $updateOperation->setHtmlEntityId('grid')
+        $updateOperation->setHtmlEntityId('grid' . $this->gridName)
             ->setJsonResponseObjectName('grid');
 
         $par->addOnFinishOperation($updateOperation);
@@ -1046,7 +1091,7 @@ class GridBuilder extends AComponent {
             }
 
             $updateOperation = new HTMLPageOperation();
-            $updateOperation->setHtmlEntityId('grid')
+            $updateOperation->setHtmlEntityId('grid' . $this->gridName)
                 ->setJsonResponseObjectName('grid');
 
             $par->addOnFinishOperation($updateOperation);
@@ -1094,7 +1139,7 @@ class GridBuilder extends AComponent {
             }
 
             $updateOperation = new HTMLPageOperation();
-            $updateOperation->setHtmlEntityId('grid')
+            $updateOperation->setHtmlEntityId('grid' . $this->gridName)
                 ->setJsonResponseObjectName('grid');
 
             $par->addOnFinishOperation($updateOperation);
@@ -1116,7 +1161,7 @@ class GridBuilder extends AComponent {
                 ->addArgument('_query');
 
             $op = new HTMLPageOperation();
-            $op->setHtmlEntityId('grid')
+            $op->setHtmlEntityId('grid' . $this->gridName)
                 ->setJsonResponseObjectName('grid');
 
             $par->addOnFinishOperation($op);
@@ -1291,6 +1336,10 @@ class GridBuilder extends AComponent {
      * @return string Paging information
      */
     private function createGridPageInfo() {
+        if(!$this->enablePagination) {
+            return '';
+        }
+
         $totalCount = $this->getTotalCount();
         $lastPage = (int)ceil($totalCount / $this->resultLimit);
 
@@ -1314,6 +1363,10 @@ class GridBuilder extends AComponent {
      * @return string HTML code
      */
     private function createGridRefreshControl() {
+        if($this->refreshDisabled) {
+            return '';
+        }
+
         $args = [$this->gridPage];
 
         if(!empty($this->activeFilters)) {
@@ -1337,6 +1390,10 @@ class GridBuilder extends AComponent {
      * @return string HTML code
      */
     private function createGridPagingControl() {
+        if(!$this->enablePagination) {
+            return '';
+        }
+
         $totalCount = $this->getTotalCount();
         $lastPage = (int)ceil($totalCount / $this->resultLimit) - 1;
 
@@ -1436,7 +1493,7 @@ class GridBuilder extends AComponent {
      * @return string HTML code
      */
     private function createGridFilterControls() {
-        if(empty($this->filters) && empty($this->quickSearchFilter)) {
+        if((empty($this->filters) && empty($this->quickSearchFilter)) || $this->controlsDisabled) {
             return '';
         }
 

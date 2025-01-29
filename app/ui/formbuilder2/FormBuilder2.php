@@ -38,6 +38,8 @@ class FormBuilder2 extends AComponent {
 
     public ?IFormReducer $reducer;
     private Router $router;
+
+    public array $presenterScripts;
     
     /**
      * Class constructor
@@ -61,6 +63,8 @@ class FormBuilder2 extends AComponent {
         $this->additionalLinkParams = [];
 
         $this->router = new Router();
+
+        $this->presenterScripts = [];
     }
 
     /**
@@ -246,6 +250,8 @@ class FormBuilder2 extends AComponent {
 
         $code .= '}';
 
+        $this->presenterScripts[] = $code;
+
         $this->presenter->addScript($code);
 
         $hArgs = [];
@@ -289,6 +295,8 @@ class FormBuilder2 extends AComponent {
             ')
             ->enableLoadingAnimation('form')
         ;
+
+        $this->presenterScripts[] = $arb->build();
         
         $this->presenter->addScript($arb);
 

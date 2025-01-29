@@ -22,9 +22,7 @@ class ProcessesPresenter extends AUserPresenter {
     }
 
     public function handleList() {
-        $view = $this->httpRequest->query('view');
-
-        if($view === null) {
+        if($this->httpRequest->query('view') === null && $this->httpRequest->post('view') === null) {
             $this->redirect($this->createURL('list', ['view' => ProcessGridViews::VIEW_ALL]));
         }
     }
@@ -48,7 +46,11 @@ class ProcessesPresenter extends AUserPresenter {
             $this->documentManager
         );
 
-        $grid->setView($request->query('view'));
+        if($this->httpRequest->post('view') !== null) {
+            $grid->setView($request->post('view'));
+        } else if($this->httpRequest->query('view') !== null) {
+            $grid->setView($request->query('view'));
+        }
     
         return $grid;
     }

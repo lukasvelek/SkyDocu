@@ -2,6 +2,7 @@
 
 namespace App\Components\ProcessForm\Processes;
 
+use App\Components\ProcessForm\Processes\Reducers\HomeOfficeReducer;
 use App\Constants\Container\StandaloneProcesses;
 use App\UI\AComponent;
 
@@ -11,6 +12,12 @@ use App\UI\AComponent;
  * @author Lukas Velek
  */
 class HomeOffice extends AProcessForm {
+    public function startup() {
+        parent::startup();
+
+        $this->componentName = 'HomeOfficeForm';
+    }
+
     protected function createForm() {
         $this->addTextArea('reason', 'Reason:')
             ->setRequired();
@@ -22,6 +29,9 @@ class HomeOffice extends AProcessForm {
             ->setRequired();
 
         $this->addSubmit('Start');
+
+        $this->setCallReducerOnChange();
+        $this->reducer = new HomeOfficeReducer($this->httpRequest);
     }
 
     protected function createAction() {

@@ -32,6 +32,8 @@ Future plans include:
     - In-container Documents grid
     - In-container Users grid
     - In-conatiner Groups grid
+- Cache invalidation bug fix
+- FoldersSidebar alphabetical sorting
 
 ### 1.2 (January 27th, 2025)
 - Code readability update

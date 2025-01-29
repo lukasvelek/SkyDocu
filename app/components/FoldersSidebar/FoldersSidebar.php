@@ -43,7 +43,42 @@ class FoldersSidebar extends Sidebar2 {
 
         /** END OF CUSTOM STATIC LINKS */
 
-        $this->links = $list;
+        $this->links = $this->processList($list);
+    }
+
+    /**
+     * Processes the folder link list and sorts it alphabetically
+     * 
+     * @return array Folder link list
+     */
+    private function processList(array $list) {
+        $links = [];
+
+        $titles = [];
+        foreach($list as $l) {
+            /**
+             * @var FolderLink $l
+             */
+            if(!in_array($l->getTitle(), $titles)) {
+                $titles[] = $l->getTitle();
+            }
+        }
+
+        sort($titles);
+
+        foreach($titles as $title) {
+            foreach($list as $l) {
+                /**
+                 * @var FolderLink $l
+                 */
+
+                if($l->getTitle() == $title) {
+                    $links[] = $l->getLink();
+                }
+            }
+        }
+
+        return $links;
     }
 
     public function prerender() {
@@ -88,15 +123,16 @@ class FoldersSidebar extends Sidebar2 {
         }
 
         $link = $this->createLink($title, $this->presenter->createURL($this->action, $params), $active);
+        $link = new FolderLink($folder->row->title, $link);
 
         if($level > 0) {
             $space = 5 * $level; // 5px * nesting level -> more subtle than &nbsp;&nbsp;
 
-            $link = '<span style="margin-left: ' . $space . 'px">' . $link . '</span>';
+            $link->updateLinkWithSpacing('<span style="margin-left: ' . $space . 'px">', '</span>');
         }
 
         if($isDefault === true) {
-            array_splice($list, $level, 0, $link);
+            array_unshift($list, $link);
         } else {
             $list[] = $link;
         }

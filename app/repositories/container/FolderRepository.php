@@ -147,6 +147,39 @@ class FolderRepository extends ARepository {
         return $qb->fetchBool();
     }
 
+    public function removeFolder(string $folderId) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->delete()
+            ->from('document_folders')
+            ->where('folderId = ?', [$folderId])
+            ->execute();
+
+        return $qb->fetchBool();
+    }
+
+    public function removeAllFolderRights(string $folderId) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->delete()
+            ->from('document_folder_group_relation')
+            ->where('folderId = ?', [$folderId])
+            ->execute();
+
+        return $qb->fetchBool();
+    }
+
+    public function removeAllFolderCustomMetadataRelation(string $folderId) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->delete()
+            ->from('document_folder_custom_metadata_relation')
+            ->where('folderId = ?', [$folderId])
+            ->execute();
+
+        return $qb->fetchBool();
+    }
+
     public function composeQueryForGroupRightsInFolder(string $folderId) {
         $qb = $this->qb(__METHOD__);
 

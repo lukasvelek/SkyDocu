@@ -174,6 +174,31 @@ class DocumentFoldersPresenter extends AAdminPresenter {
         return $grid;
     }
 
+    public function handleDeleteFolder() {
+        $folderId = $this->httpRequest->query('folderId');
+        $parentFolderId = $this->httpRequest->query('parentFolderId'); // for returning purposes
+
+        try {
+            $this->folderRepository->beginTransaction(__METHOD__);
+
+            $this->folderManager->deleteFolder($folderId, $this->getUserId());
+
+            $this->folderRepository->commit($this->getUserId(), __METHOD__);
+
+            $this->flashMessage('Folder deleted.', 'success');
+        } catch(AException $e) {
+            $this->folderRepository->rollback(__METHOD__);
+
+            $this->flashMessage('Could not delete folder. Reason: ' . $e->getMessage(), 'error', 10);
+        }
+
+        if($parentFolderId !== null) {
+            $this->redirect($this->createURL('list', ['folderId' => $parentFolderId]));
+        } else {
+            $this->redirect($this->createURL('list'));
+        }
+    }
+
     public function handleNewFolderForm(?FormRequest $fr = null) {
         $folderId = $this->httpRequest->query('folderId');
 
@@ -189,7 +214,7 @@ class DocumentFoldersPresenter extends AAdminPresenter {
             } catch(AException $e) {
                 $this->folderRepository->rollback(__METHOD__);
                 
-                $this->flashMessage('Could not create new folder.', 'error', 10);
+                $this->flashMessage('Could not create new folder. Reason: ' . $e->getMessage(), 'error', 10);
             }
 
             if($folderId !== null) {

@@ -81,6 +81,13 @@ class FolderManager extends AManager {
         return $qb;
     }
 
+    /**
+     * Creates a new folder
+     * 
+     * @param string $title Folder title
+     * @param string $callingUserId Calling user's ID
+     * @param ?string $parentFolderId Parent folder's ID or null
+     */
     public function createNewFolder(string $title, string $callingUserId, ?string $parentFolderId = null) {
         $folderId = $this->createId(EntityManager::C_DOCUMENT_FOLDERS);
 
@@ -232,6 +239,32 @@ class FolderManager extends AManager {
         }
 
         return $folders;
+    }
+
+    /**
+     * Deletes a document folder
+     * 
+     * @param string $folderId Folder ID
+     * @param string $callingUserId Calling user's ID
+     */
+    public function deleteFolder(string $folderId, string $callingUserId) {
+        if(!$this->folderRepository->removeFolder($folderId)) {
+            throw new GeneralException('Database error.');
+        }
+
+        if(!$this->folderRepository->removeAllFolderRights($folderId)) {
+            throw new GeneralException('Database error.');
+        }
+
+        if(!$this->folderRepository->removeAllFolderCustomMetadataRelation($folderId)) {
+            throw new GeneralException('Database error.');
+        }
+
+        if(!$this->cacheFactory->invalidateCacheByNamespace(CacheNames::VISIBLE_FOLDER_IDS_FOR_GROUP) ||
+            !$this->cacheFactory->invalidateCacheByNamespace(CacheNames::VISIBLE_FOLDERS_FOR_USER) ||
+            !$this->cacheFactory->invalidateCacheByNamespace(CacheNames::FOLDER_SUBFOLDERS_MAPPING)) {
+            throw new GeneralException('Could not invalidate cache.');
+        }
     }
 }
 

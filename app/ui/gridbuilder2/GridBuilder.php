@@ -566,7 +566,7 @@ class GridBuilder extends AComponent {
         if($this->table !== null) {
             $template->grid = $this->table->output();
         } else {
-            $template->grid = $this->createFlashMessage('info', 'No data found.', 0, false, true);
+            $template->grid = '<div style="margin: 0px 11px 0px 11px; padding: 5px 0px 5px 0px;">' . $this->createFlashMessage('info', 'No data found.', 0, false, true) . '</div>';
         }
 
         $template->scripts = $this->createScripts();

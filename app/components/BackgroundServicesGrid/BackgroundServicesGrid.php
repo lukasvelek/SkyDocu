@@ -90,7 +90,7 @@ class BackgroundServicesGrid extends GridBuilder implements IGridExtendingCompon
         $history = $this->addAction('history');
         $history->setTitle('History');
         $history->onCanRender[] = function(DatabaseRow $row, Row $_row) {
-            return true;
+            return ($row->dateStarted !== null && $row->dateEnded !== null);
         };
         $history->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
             $el = HTML::el('a')

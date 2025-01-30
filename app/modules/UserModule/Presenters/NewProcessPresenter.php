@@ -62,7 +62,13 @@ class NewProcessPresenter extends AUserPresenter {
     }
 
     public function handleProcessForm() {
-        $process = $this->httpRequest->query('name');
+        $process = null;
+        if($this->httpRequest->query('name') !== null) {
+            $process = $this->httpRequest->query('name');
+        } else if($this->httpRequest->post('name') !== null) {
+            $process = $this->httpRequest->post('name');
+        }
+
         $name = StandaloneProcesses::toString($process);
 
         $this->saveToPresenterCache('processTitle', $name);
@@ -80,11 +86,19 @@ class NewProcessPresenter extends AUserPresenter {
     }
 
     protected function createComponentProcessForm(HttpRequest $request) {
-        $processForm = $this->componentFactory->getCommonProcessForm();
-        $processForm->setProcess($request->query('name'));
-        $processForm->setBaseUrl(['page' => $request->query('page'), 'action' => 'startProcess']);
+        $process = null;
+        if($request->query('name') !== null) {
+            $process = $request->query('name');
+        } else if($request->post('name') !== null) {
+            $process = $request->post('name');
+        }
 
-        return $processForm;
+        $form = $this->componentFactory->getStandaloneProcessFormByName($process);
+
+        $form->baseUrl = ['page' => $request->query('page'), 'action' => 'startProcess'];
+        $form->setComponentName('processForm');
+
+        return $form;
     }
 }
 

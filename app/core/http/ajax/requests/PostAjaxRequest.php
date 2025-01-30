@@ -32,7 +32,13 @@ class PostAjaxRequest extends AAjaxRequest {
     }
 
     public function build(): string {
-        $code = '$.post("' . $this->processUrl() . '", ' . $this->processData() . ').done(function(data) {';
+        $code = '';
+
+        foreach($this->beforeStartOperations as $operation) {
+            $code .= $operation->build();
+        }
+
+        $code .= '$.post("' . $this->processUrl() . '", ' . $this->processData() . ').done(function(data) {';
         $code .= 'const obj = JSON.parse(data);';
         $code .= 'if(obj.error) {';
         $code .= 'alert("Request could not be completed. Reason: " + obj.errorMsg);';

@@ -3,7 +3,6 @@
 namespace App\Components\ProcessForm\Processes;
 
 use App\Core\Http\HttpRequest;
-use App\UI\AComponent;
 use App\UI\FormBuilder2\FormBuilder2;
 
 /**
@@ -18,11 +17,11 @@ abstract class AProcessForm extends FormBuilder2 {
         parent::__construct($request);
     }
 
-    public function render() {
+    public function startup() {
         $this->createAction();
         $this->createForm();
 
-        return parent::render();
+        parent::startup();
     }
 
     /**

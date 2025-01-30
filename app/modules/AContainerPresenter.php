@@ -4,6 +4,7 @@ namespace App\Modules;
 
 use App\Authorizators\DocumentBulkActionAuthorizator;
 use App\Authorizators\GroupStandardOperationsAuthorizator;
+use App\Authorizators\SupervisorAuthorizator;
 use App\Core\Caching\CacheFactory;
 use App\Core\DatabaseConnection;
 use App\Lib\Processes\ProcessFactory;
@@ -55,6 +56,7 @@ abstract class AContainerPresenter extends APresenter {
 
     protected DocumentBulkActionAuthorizator $documentBulkActionAuthorizator;
     protected GroupStandardOperationsAuthorizator $groupStandardOperationsAuthorizator;
+    protected SupervisorAuthorizator $supervisorAuthorizator;
 
     protected ProcessFactory $processFactory;
 
@@ -101,6 +103,7 @@ abstract class AContainerPresenter extends APresenter {
 
         $this->documentBulkActionAuthorizator = new DocumentBulkActionAuthorizator($containerConnection, $this->logger, $this->documentManager, $this->documentRepository, $this->app->userManager, $this->groupManager, $this->processManager);
         $this->groupStandardOperationsAuthorizator = new GroupStandardOperationsAuthorizator($containerConnection, $this->logger, $this->groupManager);
+        $this->supervisorAuthorizator = new SupervisorAuthorizator($containerConnection, $this->logger, $this->groupManager);
 
         $this->injectCacheFactoryToAuthorizators();
 

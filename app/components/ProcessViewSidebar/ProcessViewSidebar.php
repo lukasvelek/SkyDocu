@@ -2,13 +2,20 @@
 
 namespace App\Components\ProcessViewSidebar;
 
+use App\Authorizators\SupervisorAuthorizator;
 use App\Components\Sidebar\Sidebar2;
 use App\Constants\Container\ProcessGridViews;
 use App\Core\Http\HttpRequest;
 
 class ProcessViewSidebar extends Sidebar2 {
-    public function __construct(HttpRequest $request) {
+    private SupervisorAuthorizator $supervisorAuthorizator;
+    private string $currentUserId;
+
+    public function __construct(HttpRequest $request, SupervisorAuthorizator $supervisorAuthorizator, string $currentUserId) {
         parent::__construct($request);
+
+        $this->supervisorAuthorizator = $supervisorAuthorizator;
+        $this->currentUserId = $currentUserId;
 
         $this->setComponentName('processViewSidebar');
     }
@@ -17,6 +24,10 @@ class ProcessViewSidebar extends Sidebar2 {
         parent::startup();
 
         $links = ProcessGridViews::getAll();
+
+        if(!$this->supervisorAuthorizator->canUserViewAllProcesses($this->currentUserId)) {
+            unset($links[ProcessGridViews::VIEW_ALL]);
+        }
 
         foreach($links as $name => $title) {
             $this->addLink($title, $this->createFullURL('User:Processes', 'list', ['view' => $name]), $this->checkIsViewActive($name));

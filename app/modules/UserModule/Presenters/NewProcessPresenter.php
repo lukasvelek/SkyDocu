@@ -19,7 +19,7 @@ class NewProcessPresenter extends AUserPresenter {
     public function renderSelect() {}
 
     protected function createComponentProcessViewsSidebar(HttpRequest $request) {
-        $sidebar = new ProcessViewSidebar($request);
+        $sidebar = new ProcessViewSidebar($request, $this->supervisorAuthorizator, $this->getUserId());
 
         return $sidebar;
     }

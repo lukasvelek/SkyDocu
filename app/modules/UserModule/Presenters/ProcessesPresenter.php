@@ -32,7 +32,7 @@ class ProcessesPresenter extends AUserPresenter {
     }
 
     protected function createComponentProcessViewsSidebar(HttpRequest $request) {
-        $sidebar = new ProcessViewSidebar($request);
+        $sidebar = new ProcessViewSidebar($request, $this->supervisorAuthorizator, $this->getUserId());
 
         return $sidebar;
     }

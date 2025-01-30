@@ -16,14 +16,10 @@ Future plans include:
 - Archive (__1.3__)
 - Widget / Component skeletons (__1.4__)
     - Instead of a loading loop icon
-- New widgets (__1.3__)
-    - For in-container Administration-System-Dashboard
-    - For in-container Dashboard
 - Dark theme support (__1.4__)
 - Grid exporting (__1.4__)
 - Container document uploading (__1.3__)
 - Multiple database servers (__1.4__, but will probably be postponed)
-- Grid searching (__1.3__)
 
 ## Changelog
 ### 1.3 (?)
@@ -34,6 +30,8 @@ Future plans include:
     - In-conatiner Groups grid
 - Cache invalidation bug fix
 - FoldersSidebar alphabetical sorting
+- New widgets
+- All process rights update
 
 ### 1.2 (January 27th, 2025)
 - Code readability update

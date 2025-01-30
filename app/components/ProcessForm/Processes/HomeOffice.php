@@ -12,10 +12,8 @@ use App\UI\AComponent;
  * @author Lukas Velek
  */
 class HomeOffice extends AProcessForm {
-    public function startup() {
+    public function startup() {    
         parent::startup();
-
-        $this->componentName = 'HomeOfficeForm';
     }
 
     protected function createForm() {

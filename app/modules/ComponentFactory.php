@@ -3,7 +3,11 @@
 namespace App\Modules;
 
 use App\Components\ProcessForm\CommonProcessForm;
+use App\Components\ProcessForm\Processes\AProcessForm;
+use App\Components\ProcessForm\Processes\FunctionRequest;
+use App\Components\ProcessForm\Processes\HomeOffice;
 use App\Components\Sidebar\Sidebar2;
+use App\Constants\Container\StandaloneProcesses;
 use App\Core\Caching\CacheFactory;
 use App\Core\Http\HttpRequest;
 use App\Helpers\GridHelper;
@@ -88,17 +92,6 @@ class ComponentFactory {
     }
 
     /**
-     * Returns instance of CommonProcessForm
-     * 
-     * @return CommonProcessForm CommonProcessForm instance
-     */
-    public function getCommonProcessForm() {
-        $form = new CommonProcessForm($this->request);
-        $this->injectDefault($form);
-        return $form;
-    }
-
-    /**
      * Injects default variables
      * 
      * @param AComponent &$component Component
@@ -106,6 +99,28 @@ class ComponentFactory {
     private function injectDefault(AComponent &$component) {
         $component->setApplication($this->presenter->app);
         $component->setPresenter($this->presenter);
+    }
+
+    /**
+     * Returns an instance of a Standalone process by it's name
+     * 
+     * @param string $name Standalone process name
+     */
+    public function getStandaloneProcessFormByName(string $name): ?AProcessForm {
+        switch($name) {
+            case StandaloneProcesses::HOME_OFFICE:
+                $form = new HomeOffice($this->request);
+                $this->injectDefault($form);
+                return $form;
+
+            case StandaloneProcesses::FUNCTION_REQUEST:
+                $form = new FunctionRequest($this->request);
+                $this->injectDefault($form);
+                return $form;
+
+            default:
+                return null;
+        }
     }
 }
 

@@ -17,11 +17,11 @@ abstract class AProcessForm extends FormBuilder2 {
         parent::__construct($request);
     }
 
-    public function render() {
+    public function startup() {
         $this->createAction();
         $this->createForm();
 
-        return parent::render();
+        parent::startup();
     }
 
     /**

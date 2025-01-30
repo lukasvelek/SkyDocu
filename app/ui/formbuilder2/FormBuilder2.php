@@ -3,7 +3,10 @@
 namespace App\UI\FormBuilder2;
 
 use App\Core\AjaxRequestBuilder;
+use App\Core\Http\Ajax\Operations\CustomOperation;
+use App\Core\Http\Ajax\Operations\HTMLPageOperation;
 use App\Core\Http\Ajax\Requests\AAjaxRequest;
+use App\Core\Http\Ajax\Requests\PostAjaxRequest;
 use App\Core\Http\HttpRequest;
 use App\Core\Http\JsonResponse;
 use App\Core\Router;
@@ -38,8 +41,6 @@ class FormBuilder2 extends AComponent {
 
     public ?IFormReducer $reducer;
     private Router $router;
-
-    public array $presenterScripts;
     
     /**
      * Class constructor
@@ -63,8 +64,6 @@ class FormBuilder2 extends AComponent {
         $this->additionalLinkParams = [];
 
         $this->router = new Router();
-
-        $this->presenterScripts = [];
     }
 
     /**
@@ -250,55 +249,56 @@ class FormBuilder2 extends AComponent {
 
         $code .= '}';
 
-        $this->presenterScripts[] = $code;
+        $this->addScript($code);
 
-        $this->presenter->addScript($code);
-
-        $hArgs = [];
-        $fArgs = [];
-        $callArgs = [];
+        $data = [];
+        $args = [];
 
         foreach($this->httpRequest->query as $k => $v) {
             if(array_key_exists($k, $this->action)) continue;
+            if(in_array($k, ['page', 'action', 'do', 'isComponent', 'isAjax'])) continue;
 
-            $hArgs[$k] = '_' . $k;
-            $fArgs[] = '_' . $k;
-            $callArgs[] = $v;
+            $data[$k] = '_' . $k;
+            $args[] = '_' . $k;
         }
 
-        $hArgs['state'] = '_state';
-        $fArgs[] = '_state';
+        $data['state'] = '_state';
+        $args[] = '_state';
 
         foreach(array_keys($this->elements) as $name) {
             if($name == 'btn_submit') continue;
-            $hArgs['elements[]'][] = $name;
+            $data['elements'][] = $name;
         }
 
-        $actionParams = [];
         foreach($this->action as $k => $v) {
             if(in_array($k, ['page', 'action', 'do', 'isComponent', 'isAjax'])) continue;
 
-            $actionParams[$k] = $v;
+            $data[$k] = $v;
         }
 
-        $arb = new AjaxRequestBuilder();
+        $par = new PostAjaxRequest($this->httpRequest);
 
-        $arb->setMethod('POST')
-            ->setComponentAction($this->presenter, $this->componentName . '-onChange', $actionParams)
-            ->setHeader($hArgs)
-            ->setFunctionName($this->componentName . '_onChange')
-            ->setFunctionArguments($fArgs)
-            ->updateHTMLElement('form', 'form')
-            ->setComponent()
-            ->addBeforeAjaxOperation('
-                _state = getFormState();
-            ')
-            ->enableLoadingAnimation('form')
-        ;
+        $par->setComponentUrl($this, 'onChange')
+            ->setData($data);
 
-        $this->presenterScripts[] = $arb->build();
+        $updateOperation = new HTMLPageOperation();
+        $updateOperation->setHtmlEntityId('form')
+            ->setJsonResponseObjectName('form');
         
-        $this->presenter->addScript($arb);
+        $par->addOnFinishOperation($updateOperation);
+
+        $customOperation = new CustomOperation();
+        $customOperation->addCode('_state = getFormState();');
+        
+        $par->addBeforeStartOperation($customOperation);
+
+        foreach($args as $arg) {
+            $par->addArgument($arg);
+        }
+
+        $this->addScript($par);
+
+        $this->addScript('function ' . $this->componentName . '_onChange() { ' . $par->getFunctionName() . '(\'\'); }');
 
         $this->router->inject($this->presenter, new ModuleManager());
         if(!$this->router->checkEndpointExists($this->action)) {

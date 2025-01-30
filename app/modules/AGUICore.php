@@ -8,7 +8,6 @@ use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
-use App\Exceptions\RequiredAttributeIsNotSetException;
 use App\Helpers\TemplateHelper;
 use App\UI\AComponent;
 use App\UI\LinkBuilder;

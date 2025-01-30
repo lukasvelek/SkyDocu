@@ -3,6 +3,8 @@
 namespace App\Components\Widgets;
 
 use App\Core\AjaxRequestBuilder;
+use App\Core\Http\Ajax\Operations\HTMLPageOperation;
+use App\Core\Http\Ajax\Requests\PostAjaxRequest;
 use App\Core\Http\HttpRequest;
 use App\Core\Http\JsonResponse;
 use App\UI\AComponent;
@@ -175,23 +177,23 @@ class Widget extends AComponent {
     private function buildJSScripts() {
         $scripts = [];
 
-        $addScript = function(AjaxRequestBuilder $arb) use (&$scripts) {
-            $scripts[] = '<script type="text/javascript">' . $arb->build() . '</script>';
-        };
-
         // REFRESH CONTROLS
-        $arb = new AjaxRequestBuilder();
+        $par = new PostAjaxRequest($this->httpRequest);
 
-        $arb->setMethod()
-            ->setComponentAction($this->presenter, $this->componentName . '-refresh')
-            ->setFunctionName($this->componentName . '_refresh')
-            ->updateHTMLElement('widget-' . $this->componentName, 'widget')
-            ->enableLoadingAnimation('widget-' . $this->componentName)
-        ;
+        $par->setComponentUrl($this, 'refresh');
 
-        $addScript($arb);
+        $updateOperation = new HTMLPageOperation();
+        $updateOperation->setHtmlEntityId('widget-' . $this->componentName)
+            ->setJsonResponseObjectName('widget');
 
-        return implode('', $scripts);
+        $par->addOnFinishOperation($updateOperation);
+
+        $scripts[] = $par->build();
+        $scripts[] = 'function ' . $this->componentName . '_refresh() {
+            ' . $par->getFunctionName() . '();
+        }';
+
+        return '<script type="text/javascript">' . implode(' ', $scripts) . '</script>';
     }
 
     /**

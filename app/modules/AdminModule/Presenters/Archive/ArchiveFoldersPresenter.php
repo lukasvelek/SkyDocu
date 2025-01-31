@@ -2,6 +2,7 @@
 
 namespace App\Modules\AdminModule;
 
+use App\Constants\Container\ArchiveFolderStatus;
 use App\Core\DB\DatabaseRow;
 use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
@@ -64,6 +65,8 @@ class ArchiveFoldersPresenter extends AAdminPresenter {
     protected function createComponentArchiveFoldersGrid(HttpRequest $request) {
         $grid = $this->componentFactory->getGridBuilder($this->containerId);
 
+        $grid->setComponentName('archiveFolders');
+
         $qb = $this->archiveRepository->composeQueryForArchiveFolders();
 
         if($this->httpRequest->query('folderId') !== null) {
@@ -73,6 +76,34 @@ class ArchiveFoldersPresenter extends AAdminPresenter {
         $grid->createDataSourceFromQueryBuilder($qb, 'folderId');
 
         $grid->addColumnText('title', 'Title');
+
+        $finalArchive = $grid->addAction('finalArchive');
+        $finalArchive->setTitle('Close folder');
+        $finalArchive->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) {
+            if(count($this->archiveManager->getDocumentsForArchiveFolder($row->folderId)) < 1) {
+                return false;
+            }
+
+            if(!$this->archiveManager->checkStatusForSubfolders($row->folderId, ArchiveFolderStatus::ARCHIVED)) {
+                return false;
+            }
+
+            return true;
+        };
+        $finalArchive->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
+            $params = ['folderId' => $primaryKey];
+
+            if($row->parentFolderId !== null) {
+                $params['parentFolderId'] = $row->parentFolderId;
+            }
+
+            $el = HTML::el('a')
+                ->class('grid-link')
+                ->href($this->createURLString('finalArchive', $params))
+                ->text('Close folder');
+
+            return $el;
+        };
 
         $subfolders = $grid->addAction('subfolders');
         $subfolders->setTitle('Subfolders');

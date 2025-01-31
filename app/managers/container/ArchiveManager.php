@@ -126,6 +126,25 @@ class ArchiveManager extends AManager {
 
         return $documents;
     }
+
+    /**
+     * Checks a status for all folders
+     * 
+     * @param string $folderId Folder ID
+     * @param int $desiredStatus Desired status
+     */
+    public function checkStatusForSubfolders(string $folderId, int $desiredStatus): bool {
+        $folderPath = $this->getArchiveFolderPathToRoot($folderId);
+
+        $ok = true;
+        foreach($folderPath as $folder) {
+            if($folder->status != $desiredStatus) {
+                $ok = false;
+            }
+        }
+
+        return $ok;
+    }
 }
 
 ?>

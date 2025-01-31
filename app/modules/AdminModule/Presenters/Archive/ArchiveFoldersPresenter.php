@@ -2,7 +2,9 @@
 
 namespace App\Modules\AdminModule;
 
+use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
+use App\Exceptions\AException;
 use App\UI\LinkBuilder;
 
 class ArchiveFoldersPresenter extends AAdminPresenter {
@@ -69,6 +71,60 @@ class ArchiveFoldersPresenter extends AAdminPresenter {
         $grid->addColumnText('title', 'Title');
 
         return $grid;
+    }
+
+    public function handleNewFolderForm(?FormRequest $fr = null) {
+        $folderId = $this->httpRequest->query('folderId');
+
+        if($fr !== null) {
+            try {
+                $this->archiveRepository->beginTransaction(__METHOD__);
+
+                $this->archiveManager->createNewArchiveFolder($fr->title, $folderId);
+
+                $this->archiveRepository->commit($this->getUserId(), __METHOD__);
+
+                $this->flashMessage('Folder created.', 'success');
+            } catch(AException $e) {
+                $this->archiveRepository->rollback(__METHOD__);
+
+                $this->flashMessage('Could not create a new folder. Reason: ' . $e->getMessage(), 'error', 10);
+            }
+
+            if($folderId !== null) {
+                $this->redirect($this->createURL('list', ['folderId' => $folderId]));
+            } else {
+                $this->redirect($this->createURL('list'));
+            }
+        }
+    }
+
+    public function renderNewFolderForm() {
+        if($this->httpRequest->query('folderId') !== null) {
+            $this->template->links = $this->createBackUrl('list', ['folderId' => $this->httpRequest->query('folderId')]);
+        } else {
+            $this->template->links = $this->createBackUrl('list');
+        }
+    }
+
+    protected function createComponentNewArchiveFolderForm(HttpRequest $request) {
+        $form = $this->componentFactory->getFormBuilder();
+
+        $url = '';
+        if($request->query('folderId') !== null) {
+            $url = $this->createURL('newFolderForm', ['folderId' => $request->query('folderId')]);
+        } else {
+            $url = $this->createURL('newFolderForm');
+        }
+
+        $form->setAction($url);
+
+        $form->addTextInput('title', 'Title:')
+            ->setRequired();
+
+        $form->addSubmit('Create');
+
+        return $form;
     }
 }
 

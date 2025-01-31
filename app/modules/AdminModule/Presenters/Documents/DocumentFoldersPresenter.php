@@ -240,7 +240,7 @@ class DocumentFoldersPresenter extends AAdminPresenter {
 
     protected function createComponentNewDocumentFolderForm(HttpRequest $request) {
         $url = '';
-        if($this->httpRequest->query('folderId') !== null) {
+        if($request->query('folderId') !== null) {
             $url = $this->createURL('newFolderForm', ['folderId' => $request->query('folderId')]);
         } else {
             $url = $this->createURL('newFolderForm');

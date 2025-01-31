@@ -137,6 +137,22 @@ class ArchiveRepository extends ARepository {
 
         return $qb;
     }
+
+    /**
+     * Returns a row from the database about given folder
+     * 
+     * @param string $folderId Folder ID
+     */
+    public function getFolderById(string $folderId): mixed {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->select(['*'])
+            ->from('archive_folders')
+            ->where('folderId = ?', [$folderId])
+            ->execute();
+
+        return $qb->fetch();
+    }
 }
 
 ?>

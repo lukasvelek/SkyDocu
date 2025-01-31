@@ -51,6 +51,7 @@ define('APP_URL', APP_HOSTNAME . '/skydocu/');
 define('GRID_SIZE', 20);
 define('MAX_GRID_EXPORT_SIZE', 100);
 define('MAX_CONTAINER_DOCUMENT_FOLDER_NESTING_LEVEL', 5);
+define('MAX_CONTAINER_ARCHIVE_FOLDER_NESTING_LEVEL', 5);
 
 //
 //                      DATABASE

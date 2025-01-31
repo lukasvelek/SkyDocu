@@ -168,9 +168,10 @@ class ContainerCreationHelper {
                 'folderId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',
                 'title' => 'VARCHAR(256) NOT NULL',
                 'isSystem' => 'INT(2) NOT NULL DEFAULT 0',
-                'parentFolderId' => 'VARCHAR(256) NULL'
+                'parentFolderId' => 'VARCHAR(256) NULL',
+                'status' => 'INT(4) NOT NULL DEFAULT 1'
             ],
-            'archive_document_relation' => [
+            'archive_folder_document_relation' => [
                 'relationId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',
                 'folderId' => 'VARCHAR(256) NOT NULL',
                 'documentId' => 'VARCHAR(256) NOT NULL',

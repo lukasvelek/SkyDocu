@@ -142,7 +142,7 @@ class DocumentFoldersPresenter extends AAdminPresenter {
         $deleteFolder = $grid->addAction('deleteFolder');
         $deleteFolder->setTitle('Delete folder');
         $deleteFolder->onCanRender[] = function(DatabaseRow $row, Row $_row) {
-            if($row->isSystem == true) {
+            if($row->isSystem === true) {
                 return false;
             }
             
@@ -214,7 +214,7 @@ class DocumentFoldersPresenter extends AAdminPresenter {
             } catch(AException $e) {
                 $this->folderRepository->rollback(__METHOD__);
                 
-                $this->flashMessage('Could not create new folder. Reason: ' . $e->getMessage(), 'error', 10);
+                $this->flashMessage('Could not create a new folder. Reason: ' . $e->getMessage(), 'error', 10);
             }
 
             if($folderId !== null) {

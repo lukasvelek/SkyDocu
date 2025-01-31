@@ -2,9 +2,13 @@
 
 namespace App\Modules\AdminModule;
 
+use App\Core\DB\DatabaseRow;
 use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
+use App\UI\GridBuilder2\Action;
+use App\UI\GridBuilder2\Row;
+use App\UI\HTML\HTML;
 use App\UI\LinkBuilder;
 
 class ArchiveFoldersPresenter extends AAdminPresenter {
@@ -63,12 +67,64 @@ class ArchiveFoldersPresenter extends AAdminPresenter {
         $qb = $this->archiveRepository->composeQueryForArchiveFolders();
 
         if($this->httpRequest->query('folderId') !== null) {
-            $qb->andWhere('folderId = ?', [$this->httpRequest->query('folderId')]);
+            $qb->andWhere('parentFolderId = ?', [$this->httpRequest->query('folderId')]);
         }
 
         $grid->createDataSourceFromQueryBuilder($qb, 'folderId');
 
         $grid->addColumnText('title', 'Title');
+
+        $subfolders = $grid->addAction('subfolders');
+        $subfolders->setTitle('Subfolders');
+        $subfolders->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) {
+            return true;
+        };
+        $subfolders->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
+            $params = ['folderId' => $primaryKey];
+
+            if($row->parentFolderId !== null) {
+                $params['parentFolderId'] = $row->parentFolderId;
+            }
+
+            $el = HTML::el('a')
+                ->class('grid-link')
+                ->href($this->createURLString('list', $params))
+                ->text('Subfolders');
+
+            return $el;
+        };
+
+        $deleteFolder = $grid->addAction('deleteFolder');
+        $deleteFolder->setTitle('Delete folder');
+        $deleteFolder->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) {
+            if($row->isSystem === true) {
+                return false;
+            }
+
+            if(count($this->archiveManager->getDocumentsForArchiveFolder($row->folderId)) > 0) {
+                return false;
+            }
+
+            if(count($this->archiveManager->getSubfoldersForArchiveFolder($row->folderId)) > 0) {
+                return false;
+            }
+
+            return true;
+        };
+        $deleteFolder->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
+            $params = ['folderId' => $primaryKey];
+
+            if($row->parentFolderId !== null) {
+                $params['parentFolderId'] = $row->parentFolderId;
+            }
+
+            $el = HTML::el('a')
+                    ->class('grid-link')
+                    ->href($this->createURLString('deleteFolder', $params))
+                    ->text('Delete');
+
+            return $el;
+        };
 
         return $grid;
     }

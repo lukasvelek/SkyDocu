@@ -75,7 +75,12 @@ class ArchiveManager extends AManager {
         return $folders;
     }
 
-    public function getArchiveFolderById(string $folderId) {
+    /**
+     * Returns an instance of DatabaseRow for given archive folder ID
+     * 
+     * @param string $folderId Folder ID
+     */
+    public function getArchiveFolderById(string $folderId): DatabaseRow {
         $folder = $this->archiveRepository->getFolderById($folderId);
 
         if($folder === null) {
@@ -83,6 +88,43 @@ class ArchiveManager extends AManager {
         }
 
         return DatabaseRow::createFromDbRow($folder);
+    }
+
+    /**
+     * Returns an array of subfolders for given archive folder
+     * 
+     * @param string $folderId Folder ID
+     */
+    public function getSubfoldersForArchiveFolder(string $folderId): array {
+        $qb = $this->archiveRepository->composeQueryForArchiveFolders();
+        $qb->andWhere('parentFolderId = ?', [$folderId])
+            ->execute();
+
+        $subfolders = [];
+        while($row = $qb->fetchAssoc()) {
+            $row = DatabaseRow::createFromDbRow($row);
+
+            $subfolders[] = $row;
+        }
+
+        return $subfolders;
+    }
+
+    /**
+     * Returns an array of documents for given archive folder
+     * 
+     * @param string $folderId Folder ID
+     */
+    public function getDocumentsForArchiveFolder(string $folderId): array {
+        $qb = $this->archiveRepository->composeQueryForDocumentsInArchiveFolder($folderId);
+        $qb->execute();
+
+        $documents = [];
+        while($row = $qb->fetchAssoc()) {
+            $documents[] = $row['documentId'];
+        }
+
+        return $documents;
     }
 }
 

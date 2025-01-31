@@ -23,7 +23,7 @@ class ContainerCreationHelper {
                 'binaryFileHash' => 'TEXT NULL',
                 'status' => 'INT(4) NOT NULL',
                 'classId' => 'VARCHAR(256) NOT NULL',
-                'folderId' => 'VARCHAR(256) NOT NULL',
+                'folderId' => 'VARCHAR(256) NULL',
                 'dateCreated' => 'DATETIME NOT NULL DEFAULT current_timestamp()',
                 'dateModified' => 'DATETIME NULL'
             ],

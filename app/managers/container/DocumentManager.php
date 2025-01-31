@@ -327,6 +327,15 @@ class DocumentManager extends AManager {
             throw new GeneralException('Database error.', null, false);
         }
     }
+
+    /**
+     * Removes document from folder
+     * 
+     * @param string $documentId
+     */
+    public function removeDocumentFromFolder(string $documentId) {
+        $this->updateDocument($documentId, ['folderId' => null]);
+    }
 }
 
 ?>

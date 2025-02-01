@@ -146,6 +146,10 @@ class ArchiveFoldersPresenter extends AAdminPresenter {
         $subfolders = $grid->addAction('subfolders');
         $subfolders->setTitle('Subfolders');
         $subfolders->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) {
+            if($row->status != ArchiveFolderStatus::NEW) {
+                return false;
+            }
+            
             return true;
         };
         $subfolders->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {

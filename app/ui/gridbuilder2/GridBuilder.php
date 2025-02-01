@@ -829,6 +829,7 @@ class GridBuilder extends AComponent {
                     }
                 }
             } else {
+                $displayedActions = [];
                 foreach($canRender as $k => $actionData) {
                     $_row = &$_tableRows[$k];
 
@@ -841,6 +842,18 @@ class GridBuilder extends AComponent {
                             $_cell = new Cell();
                             $_cell->setName($actionName);
                             $_cell->setContent($cAction->output()->toString());
+                            $_cell->setClass('grid-cell-action');
+                            $cells[$k][$actionName] = $_cell;
+                            $displayedActions[] = $actionName;
+                        }
+                    }
+
+                    if(!array_key_exists($k, $cells)) {
+                        foreach($actionData as $actionName => $action) {
+                            if(!in_array($actionName, $displayedActions)) continue;
+                            $_cell = new Cell();
+                            $_cell->setName($actionName);
+                            $_cell->setContent('');
                             $_cell->setClass('grid-cell-action');
                             $cells[$k][$actionName] = $_cell;
                         }

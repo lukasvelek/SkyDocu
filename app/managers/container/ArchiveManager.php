@@ -193,6 +193,19 @@ class ArchiveManager extends AManager {
     }
 
     /**
+     * Removes given document from an archive folder
+     * 
+     * @param string $documentId Document ID
+     */
+    public function removeDocumentFromArchiveFolder(string $documentId) {
+        $folderId = $this->getArchiveFolderForDocument($documentId);
+
+        if(!$this->archiveRepository->removeDocumentFromArchiveFolder($documentId, $folderId)) {
+            throw new GeneralException('Database error.');
+        }
+    }
+
+    /**
      * Returns an instance of DatabaseRow of the default archive folder
      */
     public function getDefaultFolder(): DatabaseRow {
@@ -218,6 +231,17 @@ class ArchiveManager extends AManager {
         $folder = $this->archiveRepository->getArchiveFolderForDocument($documentId);
 
         return $folder !== null;
+    }
+
+    /**
+     * Returns an instance of DatabaseRow of an archive folder for given document
+     * 
+     * @param string $documentId Document ID
+     */
+    public function getArchiveFolderForDocument(string $documentId): string {
+        $folderId = $this->archiveRepository->getArchiveFolderForDocument($documentId);
+
+        return $folderId;
     }
 }
 

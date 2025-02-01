@@ -10,6 +10,7 @@ class DocumentStatus extends AConstant {
     public const ARCHIVED = 3;
     public const DELETED = 4;
     public const READY_FOR_SHREDDING = 5;
+    public const IS_BEING_MOVED_TO_ARCHIVE = 6;
 
     public static function toString($key): ?string {
         return match((int)$key) {
@@ -18,6 +19,7 @@ class DocumentStatus extends AConstant {
             self::ARCHIVED => 'Archived',
             self::DELETED => 'Deleted',
             self::READY_FOR_SHREDDING => 'Ready for shredding',
+            self::IS_BEING_MOVED_TO_ARCHIVE => 'Is being moved to archive',
             default => null
         };
     }

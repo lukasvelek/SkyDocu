@@ -121,6 +121,30 @@ class DocumentBulkActionsHelper {
             $bulkActions[] = SystemProcessTypes::ARCHIVATION;
         }
 
+        // Move to archive
+        $moveToArchive = true;
+        foreach($documentIds as $id) {
+            if(!$this->documentBulkActionAuthorizator->canExecuteMoveToArchive($this->app->currentUser->getId(), $id)) {
+                $moveToArchive = false;
+            }
+        }
+
+        if($moveToArchive) {
+            $bulkActions[] = SystemProcessTypes::MOVE_TO_ARCHIVE;
+        }
+
+        // Move from archive
+        $moveFromArchive = true;
+        foreach($documentIds as $id) {
+            if(!$this->documentBulkActionAuthorizator->canExecuteMoveFromArchive($this->app->currentUser->getId(), $id)) {
+                $moveFromArchive = false;
+            }
+        }
+
+        if($moveFromArchive) {
+            $bulkActions[] = SystemProcessTypes::MOVE_FROM_ARCHIVE;
+        }
+
         // Shredding request
         $p = $this->processFactory->createDocumentShreddingRequestProcess();
         if($p->canExecute($documentIds, null)) {

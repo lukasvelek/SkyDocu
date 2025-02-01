@@ -97,8 +97,14 @@ class DocumentBulkActionsHelper {
      */
     private function appendProcessBulkActions(array $documentIds, array &$bulkActions) {
         // Archivation
-        $p = $this->processFactory->createDocumentArchivationProcess();
-        if($p->canExecute($documentIds, null)) {
+        $archivation = true;
+        foreach($documentIds as $id) {
+            if(!$this->documentBulkActionAuthorizator->canExecuteArchivation($this->app->currentUser->getId(), $id)) {
+                $archivation = false;
+            }
+        }
+
+        if($archivation) {
             $bulkActions[] = SystemProcessTypes::ARCHIVATION;
         }
 

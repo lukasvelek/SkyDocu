@@ -194,15 +194,18 @@ class Application {
     /**
      * Redirects current page to other page using header('Location: ') method.
      * 
-     * @param array $urlParams URL params
+     * @param array|string $urlParams URL params or full URL
      */
-    public function redirect(array $urlParams) {
+    public function redirect(array|string $urlParams) {
         $url = '';
-
-        if(empty($urlParams)) {
-            $url = '?';
+        if(is_array($urlParams)) {
+            if(empty($urlParams)) {
+                $url = '?';
+            } else {
+                $url = $this->composeURL($urlParams);
+            }
         } else {
-            $url = $this->composeURL($urlParams);
+            $url = $urlParams;
         }
 
         header('Location: ' . $url);

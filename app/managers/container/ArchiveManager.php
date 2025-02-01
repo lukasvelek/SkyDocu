@@ -2,6 +2,7 @@
 
 namespace App\Managers\Container;
 
+use App\Constants\Container\ArchiveFolderStatus;
 use App\Core\DB\DatabaseRow;
 use App\Exceptions\GeneralException;
 use App\Exceptions\NonExistingEntityException;
@@ -9,6 +10,7 @@ use App\Logger\Logger;
 use App\Managers\AManager;
 use App\Managers\EntityManager;
 use App\Repositories\Container\ArchiveRepository;
+use QueryBuilder\QueryBuilder;
 
 /**
  * ArchiveManager is used for high-level archive manipulation
@@ -144,6 +146,50 @@ class ArchiveManager extends AManager {
         }
 
         return $ok;
+    }
+
+    /**
+     * Composes QueryBuilder for select for all available archive folders
+     */
+    public function composeQueryForAvailableArchiveFolders(): QueryBuilder {
+        $qb = $this->archiveRepository->composeQueryForArchiveFolders();
+        $qb->andWhere('status = ?', [ArchiveFolderStatus::NEW]);
+        return $qb;
+    }
+
+    /**
+     * Returns all available archive folders
+     * 
+     * @param bool $orderByTitle Order archive folders by title (a-z)
+     */
+    public function getAvailableArchiveFolders(bool $orderByTitle = true): array {
+        $qb = $this->composeQueryForAvailableArchiveFolders();
+        if($orderByTitle) {
+            $qb->orderBy('title', 'DESC');
+        }
+        $qb->execute();
+
+        $archiveFolders = [];
+        while($row = $qb->fetchAssoc()) {
+            $row = DatabaseRow::createFromDbRow($row);
+            $archiveFolders[] = $row;
+        }
+
+        return $archiveFolders;
+    }
+
+    /**
+     * Inserts document to archive folder
+     * 
+     * @param string $documentId Document ID
+     * @param string $folderId Folder ID
+     */
+    public function insertDocumentToArchiveFolder(string $documentId, string $folderId) {
+        $relationId = $this->createId(EntityManager::C_ARCHIVE_FOLDER_DOCUMENT_RELATION);
+
+        if(!$this->archiveRepository->insertDocumentToArchiveFolder($relationId, $documentId, $folderId)) {
+            throw new GeneralException('Database error.');
+        }
     }
 }
 

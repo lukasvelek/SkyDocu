@@ -119,7 +119,8 @@ abstract class AContainerPresenter extends APresenter {
             $this->groupManager,
             $this->app->currentUser,
             $this->containerId,
-            $this->processManager
+            $this->processManager,
+            $this->archiveManager
         );
 
         $this->componentFactory->setCacheFactory($this->getContainerCacheFactory());

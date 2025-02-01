@@ -41,9 +41,12 @@ class DocumentsPresenter extends AUserPresenter {
 
         if($folderId !== null) {
             $this->currentFolderId = $folderId;
-        } else if($folderId === null && $this->currentFolderId === null && $this->httpSessionGet('current_document_folder_id') === null) {
-            $folder = $this->folderManager->getDefaultFolder();
-            $this->redirect($this->createURL('switchFolder', ['folderId' => $folder->folderId]));
+        } else {
+            if($this->httpSessionGet('current_document_folder_id') !== null) {
+                $this->currentFolderId = $this->httpSessionGet('current_document_folder_id');
+            }
+
+            $this->redirect($this->createURL('switchFolder', ['folderId' => $this->currentFolderId]));
         }
 
         if($this->currentFolderId !== null) {

@@ -153,6 +153,22 @@ class ArchiveRepository extends ARepository {
 
         return $qb->fetch();
     }
+
+    /**
+     * Returns archive folder ID or null for given document
+     * 
+     * @param string $documentId
+     */
+    public function getArchiveFolderForDocument(string $documentId) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->select(['folderId'])
+            ->from('archive_folder_document_relation')
+            ->where('documentId = ?', [$documentId])
+            ->execute();
+
+        return $qb->fetch('folderId');
+    }
 }
 
 ?>

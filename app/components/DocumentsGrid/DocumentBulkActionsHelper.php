@@ -25,6 +25,7 @@ class DocumentBulkActionsHelper {
     private GroupStandardOperationsAuthorizator $groupStandardOperationsAuthorizator;
     private ProcessFactory $processFactory;
     private string $folderId;
+    private bool $isArchive;
 
     private HttpRequest $request;
 
@@ -43,6 +44,8 @@ class DocumentBulkActionsHelper {
         $this->processFactory = $processFactory;
 
         $this->request = $request;
+
+        $this->isArchive = false;
     }
 
     /**
@@ -52,6 +55,16 @@ class DocumentBulkActionsHelper {
      */
     public function setFolderId(string $folderId) {
         $this->folderId = $folderId;
+    }
+
+    /**
+     * Sets the current archive folder ID
+     * 
+     * @param string $folderId
+     */
+    public function setArchiveFolderId(string $folderId) {
+        $this->setFolderId($folderId);
+        $this->isArchive = true;
     }
 
     /**
@@ -202,6 +215,11 @@ class DocumentBulkActionsHelper {
      * @return bool True or false
      */
     private function checkIfDocumentsCanBeShared(array $documentIds) {
+        // document must not be in archive
+        if($this->isArchive) {
+            return false;
+        }
+
         // document must not be shared to current user
         $sharedDocuments = $this->documentManager->getSharedDocumentsForUser($this->app->currentUser->getId(), false);
 

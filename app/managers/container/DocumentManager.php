@@ -229,7 +229,7 @@ class DocumentManager extends AManager {
 
         $docuRow = DatabaseRow::createFromDbRow($docuRow);
 
-        if($allMetadata) {
+        if($allMetadata && $docuRow->folderId !== null) {
             /**
              * @var array<string, \App\Core\DB\DatabaseRow> $customMetadatas
              */

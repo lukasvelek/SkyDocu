@@ -611,7 +611,15 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
 
         $ids = $this->httpRequest->query('ids');
 
-        $this->documentBulkActionsHelper->setFolderId($this->getFolderId());
+        /*$this->documentBulkActionsHelper->setFolderId($this->getFolderId());
+        $bulkActions = $this->documentBulkActionsHelper->getBulkActions($ids, $this->currentFolderId);*/
+
+        if($this->isArchive) {
+            $this->documentBulkActionsHelper->setArchiveFolderId($this->getFolderId());
+        } else {
+            $this->documentBulkActionsHelper->setFolderId($this->getFolderId());
+        }
+
         $bulkActions = $this->documentBulkActionsHelper->getBulkActions($ids, $this->currentFolderId);
 
         $modal->setBulkActions($bulkActions);

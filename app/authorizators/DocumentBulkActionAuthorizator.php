@@ -8,6 +8,7 @@ use App\Core\DatabaseConnection;
 use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
 use App\Logger\Logger;
+use App\Managers\Container\ArchiveManager;
 use App\Managers\Container\DocumentManager;
 use App\Managers\Container\GroupManager;
 use App\Managers\Container\ProcessManager;
@@ -26,6 +27,7 @@ class DocumentBulkActionAuthorizator extends AAuthorizator {
     private UserManager $userManager;
     private GroupManager $containerGroupManager;
     private ProcessManager $processManager;
+    private ArchiveManager $archiveManager;
 
     /**
      * Class constructor
@@ -37,6 +39,7 @@ class DocumentBulkActionAuthorizator extends AAuthorizator {
      * @param UserManager $userManager
      * @param GroupManager $containerGroupManager
      * @param ProcessManager $processManager
+     * @param ArchiveManager $archiveManager
      */
     public function __construct(
         DatabaseConnection $db,
@@ -45,7 +48,8 @@ class DocumentBulkActionAuthorizator extends AAuthorizator {
         DocumentRepository $documentRepository,
         UserManager $userManager,
         GroupManager $containerGroupManager,
-        ProcessManager $processManager
+        ProcessManager $processManager,
+        ArchiveManager $archiveManager
     ) {
         parent::__construct($db, $logger);
 
@@ -54,6 +58,7 @@ class DocumentBulkActionAuthorizator extends AAuthorizator {
         $this->userManager = $userManager;
         $this->containerGroupManager = $containerGroupManager;
         $this->processManager = $processManager;
+        $this->archiveManager = $archiveManager;
     }
 
     /**
@@ -82,6 +87,10 @@ class DocumentBulkActionAuthorizator extends AAuthorizator {
 
         if($document->status != DocumentStatus::NEW) {
             throw new GeneralException(sprintf('Document\'s status must be \'%s\' but it is \'%s\'.', DocumentStatus::toString(DocumentStatus::NEW), DocumentStatus::toString($document->status)), null, false);
+        }
+
+        if($this->archiveManager->isDocumentInArchiveFolder($documentId)) {
+            throw new GeneralException('Document must not be in an archive folder.', null, false);
         }
 
         $this->checkDocumentIsInProcess($documentId);

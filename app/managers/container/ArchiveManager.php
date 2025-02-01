@@ -208,6 +208,17 @@ class ArchiveManager extends AManager {
 
         return DatabaseRow::createFromDbRow($folder);
     }
+
+    /**
+     * Checks if given document is in an archive folder
+     * 
+     * @param string $documentId Document ID
+     */
+    public function isDocumentInArchiveFolder(string $documentId): bool {
+        $folder = $this->archiveRepository->getArchiveFolderForDocument($documentId);
+
+        return $folder !== null;
+    }
 }
 
 ?>

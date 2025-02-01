@@ -41,16 +41,10 @@ class DocumentsPresenter extends AUserPresenter {
 
         if($folderId !== null) {
             $this->currentFolderId = $folderId;
+        } else if($this->httpRequest->post('folderId') !== null) {
+            $this->currentFolderId = $this->httpRequest->post('folderId');
         } else {
-            if($this->httpRequest->post('folderId') !== null) {
-                $this->currentFolderId = $this->httpRequest->post('folderId');
-            } else {
-                if($this->httpSessionGet('current_document_folder_id') !== null) {
-                    $this->currentFolderId = $this->httpSessionGet('current_document_folder_id');
-                } else {
-                    $this->redirect($this->createURL('switchFolder', ['folderId' => $this->currentFolderId]));
-                }
-            }
+            $this->redirect($this->createURL('list', ['folderId' => $this->folderManager->getDefaultFolder()->folderId]));
         }
 
         if($this->currentFolderId !== null) {
@@ -77,7 +71,8 @@ class DocumentsPresenter extends AUserPresenter {
             $this->groupStandardOperationsAuthorizator,
             $this->enumManager,
             $this->gridManager,
-            $this->processFactory
+            $this->processFactory,
+            $this->archiveManager
         );
 
         if(!$this->httpRequest->isAjax) {
@@ -280,7 +275,8 @@ class DocumentsPresenter extends AUserPresenter {
             $this->groupStandardOperationsAuthorizator,
             $this->enumManager,
             $this->gridManager,
-            $this->processFactory
+            $this->processFactory,
+            $this->archiveManager
         );
 
         $documentsGrid->setShowShared();

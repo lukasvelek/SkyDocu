@@ -20,12 +20,58 @@ class ArchivePresenter extends AUserPresenter {
         $this->currentFolderId = $this->httpSessionGet('current_archive_folder_id');
     }
 
-    public function renderList() {}
+    public function handleList() {
+        $folderId = $this->httpRequest->query('folderId');
+
+        if($folderId !== null) {
+            $this->currentFolderId = $folderId;
+        } else if($this->httpRequest->post('folderId') !== null) {
+            $this->currentFolderId = $this->httpRequest->post('folderId');
+        } else {
+            $this->redirect($this->createURL('list', ['folderId' => $this->archiveManager->getDefaultFolder()->folderId]));
+        }
+
+        if($this->currentFolderId !== null) {
+            $folder = $this->archiveManager->getArchiveFolderById($this->currentFolderId);
+
+            $this->saveToPresenterCache('folderTitle', $folder->title);
+        }
+    }
+
+    public function renderList() {
+        $this->template->sidebar = $this->loadFromPresenterCache('sidebar');
+        $this->template->links = [
+        ];
+        $this->template->folder_title = $this->loadFromPresenterCache('folderTitle');
+    }
 
     protected function createComponentFoldersSidebar(HttpRequest $request) {
         $sidebar = new ArchiveFoldersSidebar($request, $this->archiveManager, 'list');
 
         return $sidebar;
+    }
+
+    protected function createComponentDocumentsGrid(HttpRequest $request) {
+        $documentsGrid = new DocumentsGrid(
+            $this->componentFactory->getGridBuilder($this->containerId),
+            $this->app,
+            $this->documentManager,
+            $this->documentBulkActionAuthorizator,
+            $this->groupStandardOperationsAuthorizator,
+            $this->enumManager,
+            $this->gridManager,
+            $this->processFactory,
+            $this->archiveManager
+        );
+
+        if(!$this->httpRequest->isAjax) {
+            $documentsGrid->setCurrentArchiveFolder($this->currentFolderId);
+        }
+        $documentsGrid->showCustomMetadata();
+        $documentsGrid->useCheckboxes($this);
+        $documentsGrid->setGridName(GridNames::DOCUMENTS_GRID);
+
+        return $documentsGrid;
     }
 }
 

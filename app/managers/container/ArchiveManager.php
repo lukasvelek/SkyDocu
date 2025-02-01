@@ -191,6 +191,23 @@ class ArchiveManager extends AManager {
             throw new GeneralException('Database error.');
         }
     }
+
+    /**
+     * Returns an instance of DatabaseRow of the default archive folder
+     */
+    public function getDefaultFolder(): DatabaseRow {
+        $qb = $this->archiveRepository->composeQueryForArchiveFolders();
+        $folder = $qb->andWhere('isSystem = 1')
+            ->andWhere('title = ?', ['Default'])
+            ->execute()
+            ->fetch();
+
+        if($folder === null) {
+            throw new NonExistingEntityException('Default folder does not exist.');
+        }
+
+        return DatabaseRow::createFromDbRow($folder);
+    }
 }
 
 ?>

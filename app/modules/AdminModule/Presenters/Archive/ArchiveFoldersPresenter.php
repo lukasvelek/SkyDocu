@@ -79,6 +79,38 @@ class ArchiveFoldersPresenter extends AAdminPresenter {
         $grid->addColumnText('title', 'Title');
         $grid->addColumnConst('status', 'Status', ArchiveFolderStatus::class);
 
+        $shred = $grid->addAction('shred');
+        $shred->setTitle('Shred');
+        $shred->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) {
+            $documentIds = $this->archiveManager->getDocumentsForArchiveFolder($row->folderId);
+
+            foreach($documentIds as $documentId) {
+                $document = $this->documentManager->getDocumentById($documentId);
+
+                if($document->status != DocumentStatus::SHREDDED) {
+                    return false;
+                }
+            }
+
+            if(!$this->archiveManager->checkStatusForSubfolders($row->folderId, ArchiveFolderStatus::SHREDDED)) {
+                return false;
+            }
+
+            if($row->status != ArchiveFolderStatus::ARCHIVED) {
+                return false;
+            }
+
+            return true;
+        };
+        $shred->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
+            $el = HTML::el('a')
+                ->class('grid-link')
+                ->href($this->createURLString('shred', ['folderId' => $primaryKey]))
+                ->text('Shred');
+
+            return $el;
+        };
+
         $finalArchive = $grid->addAction('finalArchive');
         $finalArchive->setTitle('Close folder');
         $finalArchive->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) {
@@ -279,6 +311,28 @@ class ArchiveFoldersPresenter extends AAdminPresenter {
         $form->addSubmit('Archive folder');
 
         return $form;
+    }
+
+    public function handleShred() {
+        $folderId = $this->httpRequest->query('folderId');
+
+        try {
+            $this->archiveRepository->beginTransaction(__METHOD__);
+
+            $this->archiveManager->updateArchiveFolder($folderId, [
+                'status' => ArchiveFolderStatus::SHREDDED
+            ]);
+
+            $this->archiveRepository->commit($this->getUserId(), __METHOD__);
+
+            $this->flashMessage('Archive folder has been shredded.', 'success');
+        } catch(AException $e) {
+            $this->archiveRepository->rollback(__METHOD__);
+
+            $this->flashMessage('Could not shred archive folder.', 'error', 10);
+        }
+
+        $this->redirect($this->createURL('list'));
     }
 }
 

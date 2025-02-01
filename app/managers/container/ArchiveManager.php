@@ -18,7 +18,7 @@ use QueryBuilder\QueryBuilder;
  * @author Lukas Velek
  */
 class ArchiveManager extends AManager {
-    private ArchiveRepository $archiveRepository;
+    public ArchiveRepository $archiveRepository;
 
     public function __construct(
         Logger $logger,

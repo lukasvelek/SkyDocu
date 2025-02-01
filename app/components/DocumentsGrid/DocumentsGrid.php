@@ -134,6 +134,8 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
     }
 
     public function prerender() {
+        $this->setup();
+        
         $this->createDataSource();
 
         $this->fetchDataFromDb();
@@ -147,8 +149,6 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
         $this->appendActions();
 
         $this->appendFilters();
-
-        $this->setup();
 
         parent::prerender();
     }

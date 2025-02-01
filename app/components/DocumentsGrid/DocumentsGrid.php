@@ -182,7 +182,7 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
      * Appends grid actions
      */
     private function appendActions() {
-        if($this->showDocumentInfoLink) {
+        if($this->showDocumentInfoLink && !$this->isArchive) {
             $info = $this->addAction('info');
             $info->setTitle('Information');
             $info->onCanRender[] = function() {

@@ -2,7 +2,6 @@
 
 namespace App\Components\Widgets;
 
-use App\Core\AjaxRequestBuilder;
 use App\Core\Http\Ajax\Operations\HTMLPageOperation;
 use App\Core\Http\Ajax\Requests\PostAjaxRequest;
 use App\Core\Http\HttpRequest;

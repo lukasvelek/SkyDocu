@@ -3,6 +3,7 @@
 namespace App\Modules\AdminModule;
 
 use App\Constants\Container\ArchiveFolderStatus;
+use App\Constants\Container\DocumentStatus;
 use App\Core\DB\DatabaseRow;
 use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
@@ -76,6 +77,7 @@ class ArchiveFoldersPresenter extends AAdminPresenter {
         $grid->createDataSourceFromQueryBuilder($qb, 'folderId');
 
         $grid->addColumnText('title', 'Title');
+        $grid->addColumnConst('status', 'Status', ArchiveFolderStatus::class);
 
         $finalArchive = $grid->addAction('finalArchive');
         $finalArchive->setTitle('Close folder');
@@ -85,6 +87,10 @@ class ArchiveFoldersPresenter extends AAdminPresenter {
             }
 
             if(!$this->archiveManager->checkStatusForSubfolders($row->folderId, ArchiveFolderStatus::ARCHIVED)) {
+                return false;
+            }
+
+            if($row->status != ArchiveFolderStatus::NEW) {
                 return false;
             }
 
@@ -99,7 +105,7 @@ class ArchiveFoldersPresenter extends AAdminPresenter {
 
             $el = HTML::el('a')
                 ->class('grid-link')
-                ->href($this->createURLString('finalArchive', $params))
+                ->href($this->createURLString('finalArchiveForm', $params))
                 ->text('Close folder');
 
             return $el;
@@ -210,6 +216,67 @@ class ArchiveFoldersPresenter extends AAdminPresenter {
             ->setRequired();
 
         $form->addSubmit('Create');
+
+        return $form;
+    }
+
+    public function handleFinalArchiveForm(?FormRequest $fr = null) {
+        $folderId = $this->httpRequest->query('folderId');
+
+        if($fr !== null) {
+            try {
+                $this->archiveRepository->beginTransaction(__METHOD__);
+
+                // change archive folder status
+                // get document array for archive folder
+                // remove documents from document folder
+                // change document status
+
+                $this->archiveManager->updateArchiveFolder($folderId, [
+                    'status' => ArchiveFolderStatus::ARCHIVED
+                ]);
+                
+                $documentIds = $this->archiveManager->getDocumentsForArchiveFolder($folderId);
+
+                foreach($documentIds as $documentId) {
+                    $this->documentManager->removeDocumentFromFolder($documentId);
+                    $this->documentManager->updateDocument($documentId, [
+                        'status' => DocumentStatus::ARCHIVED
+                    ]);
+                }
+
+                $this->archiveRepository->commit($this->getUserId(), __METHOD__);
+
+                $this->flashMessage('Archive folder with all its content has been archived.', 'success');
+            } catch(AException $e) {
+                $this->archiveRepository->rollback(__METHOD__);
+
+                $this->flashMessage('Archive folder could not be archived.', 'error', 10);
+            }
+
+            $this->redirect($this->createURL('list'));
+        } else {
+            $backUrlParams = [];
+            if(!$this->archiveManager->isArchiveFolderRootFolder($folderId)) {
+                $folder = $this->archiveManager->getArchiveFolderById($folderId);
+
+                $backUrlParams['folderId'] = $folder->parentFolderId;
+            }
+
+            $this->saveToPresenterCache('links', $this->createBackUrl('list', $backUrlParams));
+        }
+    }
+
+    public function renderFinalArchiveForm() {
+        $this->template->links = $this->loadFromPresenterCache('links');
+    }
+    
+    protected function createComponentFinalArchiveFolderForm(HttpRequest $request) {
+        $form = $this->componentFactory->getFormBuilder();
+
+        $form->setAction($this->createURL('finalArchiveForm', ['folderId' => $request->query('folderId')]));
+
+        $form->addSubmit('Archive folder');
 
         return $form;
     }

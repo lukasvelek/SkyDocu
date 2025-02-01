@@ -30,7 +30,7 @@ class ArchiveFoldersSidebar extends Sidebar2 {
     public function startup() {
         parent::startup();
 
-        $folders = $this->archiveManager->getAvailableArchiveFolders();
+        $folders = $this->archiveManager->getAllArchiveFolders();
 
         $list = [];
         foreach($folders as $folder) {

@@ -138,6 +138,10 @@ class ArchiveManager extends AManager {
     public function checkStatusForSubfolders(string $folderId, int $desiredStatus): bool {
         $folderPath = $this->getArchiveFolderPathToRoot($folderId);
 
+        if(count($folderPath) == 1) {
+            return true;
+        }
+
         $ok = true;
         foreach($folderPath as $folder) {
             if($folder->status != $desiredStatus) {
@@ -164,6 +168,27 @@ class ArchiveManager extends AManager {
      */
     public function getAvailableArchiveFolders(bool $orderByTitle = true): array {
         $qb = $this->composeQueryForAvailableArchiveFolders();
+        if($orderByTitle) {
+            $qb->orderBy('title', 'DESC');
+        }
+        $qb->execute();
+
+        $archiveFolders = [];
+        while($row = $qb->fetchAssoc()) {
+            $row = DatabaseRow::createFromDbRow($row);
+            $archiveFolders[] = $row;
+        }
+
+        return $archiveFolders;
+    }
+
+    /**
+     * Gets all archive folders
+     * 
+     * @param bool $orderByTitle Order archive folder by title (a-z)
+     */
+    public function getAllArchiveFolders(bool $orderByTitle = true) {
+        $qb = $this->archiveRepository->composeQueryForArchiveFolders();
         if($orderByTitle) {
             $qb->orderBy('title', 'DESC');
         }
@@ -242,6 +267,29 @@ class ArchiveManager extends AManager {
         $folderId = $this->archiveRepository->getArchiveFolderForDocument($documentId);
 
         return $folderId;
+    }
+
+    /**
+     * Checks if given folder is root or has a parent folder
+     * 
+     * @param string $folderId Folder ID
+     */
+    public function isArchiveFolderRootFolder(string $folderId): bool {
+        $folderPath = $this->getArchiveFolderPathToRoot($folderId);
+
+        return count($folderPath) == 1;
+    }
+
+    /**
+     * Updates given archive folder with given data
+     * 
+     * @param string $folderId Folder ID
+     * @param array $data Data
+     */
+    public function updateArchiveFolder(string $folderId, array $data) {
+        if(!$this->archiveRepository->updateArchiveFolder($folderId, $data)) {
+            throw new GeneralException('Databaser error.');
+        }
     }
 }
 

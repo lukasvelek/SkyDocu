@@ -732,3 +732,24 @@ a.widget-title:hover {
     border-collapse: inherit;
     border-radius: 10px;
 }
+
+#skeletonTextAnimation {
+    animation-name: skeletonTextAnimationX;
+    animation-duration: 0.75s;
+    animation-iteration-count: infinite;
+    animation-direction: alternate;
+
+    border-radius: 10px;
+}
+
+@keyframes skeletonTextAnimationX {
+    0% {
+        color: rgb(220, 220, 220);
+        background-color: rgb(220, 220, 220);
+    }
+
+    100% {
+        color: rgb(150, 150, 150);
+        background-color: rgb(150, 150, 150);
+    }
+}

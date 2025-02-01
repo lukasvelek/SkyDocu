@@ -23,7 +23,7 @@ class ContainerCreationHelper {
                 'binaryFileHash' => 'TEXT NULL',
                 'status' => 'INT(4) NOT NULL',
                 'classId' => 'VARCHAR(256) NOT NULL',
-                'folderId' => 'VARCHAR(256) NOT NULL',
+                'folderId' => 'VARCHAR(256) NULL',
                 'dateCreated' => 'DATETIME NOT NULL DEFAULT current_timestamp()',
                 'dateModified' => 'DATETIME NULL'
             ],
@@ -163,6 +163,19 @@ class ContainerCreationHelper {
                 'entryId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',
                 'processId' => 'VARCHAR(256) NOT NULL',
                 'data' => 'TEXT NOT NULL'
+            ],
+            'archive_folders' => [
+                'folderId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',
+                'title' => 'VARCHAR(256) NOT NULL',
+                'isSystem' => 'INT(2) NOT NULL DEFAULT 0',
+                'parentFolderId' => 'VARCHAR(256) NULL',
+                'status' => 'INT(4) NOT NULL DEFAULT 1'
+            ],
+            'archive_folder_document_relation' => [
+                'relationId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',
+                'folderId' => 'VARCHAR(256) NOT NULL',
+                'documentId' => 'VARCHAR(256) NOT NULL',
+                'dateCreated' => 'DATETIME NOT NULL DEFAULT current_timestamp()'
             ]
         ];
     }

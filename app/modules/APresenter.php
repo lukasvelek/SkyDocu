@@ -321,10 +321,10 @@ abstract class APresenter extends AGUICore {
     /**
      * Redirects the current page to other page. If no parameters are provided then it just refreshes the current page.
      * 
-     * @param array $url URL params
+     * @param array|string $url URL params or full URL
      */
-    public function redirect(array $url = []) {
-        if(!empty($url)) {    
+    public function redirect(array|string $url) {
+        if(!empty($url) && is_array($url)) {    
             if(!array_key_exists('page', $url)) {
                 $url['page'] = $this->httpRequest->query('page');
             }
@@ -529,7 +529,7 @@ abstract class APresenter extends AGUICore {
                     $this->redirect(['page' => $moduleName . ':' . $this->title, 'action' => $this->defaultAction]);
                 }
 
-                $this->redirect(['page' => 'Error:E404', 'reason' => 'ActionDoesNotExist', 'calledAction' => $this->action, 'calledPage' => $moduleName . ':' . $this->title]);
+                $this->redirect(['page' => 'Error:E404', 'reason' => 'ActionDoesNotExist', 'calledAction' => $this->action, 'calledPage' => $moduleName . ':' . substr($this->name, 0, -strlen('Presenter'))]);
             }
         }
 

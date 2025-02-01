@@ -58,7 +58,7 @@ class DocumentStatsWidget extends Widget {
     /**
      * Fetches data from the database
      * 
-     * @param array Data rows
+     * @return array Data rows
      */
     private function fetchDataFromDb() {
         $totalRows = $this->fetchTotalDocumentCountFromDb();

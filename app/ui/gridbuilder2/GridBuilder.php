@@ -693,7 +693,7 @@ class GridBuilder extends AComponent {
 
         $_tableRows['header'] = $_headerRow;
 
-        $cursor = clone $this->fetchDataFromDb();
+        $cursor = $this->fetchDataFromDb();
 
         $rowIndex = 0;
         while($row = $cursor->fetchAssoc()) {
@@ -829,6 +829,7 @@ class GridBuilder extends AComponent {
                     }
                 }
             } else {
+                $displayedActions = [];
                 foreach($canRender as $k => $actionData) {
                     $_row = &$_tableRows[$k];
 
@@ -841,6 +842,18 @@ class GridBuilder extends AComponent {
                             $_cell = new Cell();
                             $_cell->setName($actionName);
                             $_cell->setContent($cAction->output()->toString());
+                            $_cell->setClass('grid-cell-action');
+                            $cells[$k][$actionName] = $_cell;
+                            $displayedActions[] = $actionName;
+                        }
+                    }
+
+                    if(!array_key_exists($k, $cells)) {
+                        foreach($actionData as $actionName => $action) {
+                            if(!in_array($actionName, $displayedActions)) continue;
+                            $_cell = new Cell();
+                            $_cell->setName($actionName);
+                            $_cell->setContent('');
                             $_cell->setClass('grid-cell-action');
                             $cells[$k][$actionName] = $_cell;
                         }
@@ -999,7 +1012,7 @@ class GridBuilder extends AComponent {
         }
 
         $updateOperation = new HTMLPageOperation();
-        $updateOperation->setHtmlEntityId('grid_' . $this->gridName)
+        $updateOperation->setHtmlEntityId($this->gridName)
             ->setJsonResponseObjectName('grid');
 
         $par->addOnFinishOperation($updateOperation);
@@ -1048,7 +1061,7 @@ class GridBuilder extends AComponent {
         }
 
         $updateOperation = new HTMLPageOperation();
-        $updateOperation->setHtmlEntityId('grid' . $this->gridName)
+        $updateOperation->setHtmlEntityId($this->gridName)
             ->setJsonResponseObjectName('grid');
 
         $par->addOnFinishOperation($updateOperation);
@@ -1091,7 +1104,7 @@ class GridBuilder extends AComponent {
             }
 
             $updateOperation = new HTMLPageOperation();
-            $updateOperation->setHtmlEntityId('grid' . $this->gridName)
+            $updateOperation->setHtmlEntityId($this->gridName)
                 ->setJsonResponseObjectName('grid');
 
             $par->addOnFinishOperation($updateOperation);
@@ -1139,7 +1152,7 @@ class GridBuilder extends AComponent {
             }
 
             $updateOperation = new HTMLPageOperation();
-            $updateOperation->setHtmlEntityId('grid' . $this->gridName)
+            $updateOperation->setHtmlEntityId($this->gridName)
                 ->setJsonResponseObjectName('grid');
 
             $par->addOnFinishOperation($updateOperation);
@@ -1156,12 +1169,18 @@ class GridBuilder extends AComponent {
         if(!empty($this->quickSearchFilter)) {
             $par = new PostAjaxRequest($this->httpRequest);
 
+            $data['query'] = '_query';
+
             $par->setComponentUrl($this, 'quickSearch')
-                ->setData(['query' => '_query'])
-                ->addArgument('_query');
+                ->setData($data);
+
+            foreach($args as $arg) {
+                $par->addArgument($arg);
+            }
+            $par->addArgument('_query');
 
             $op = new HTMLPageOperation();
-            $op->setHtmlEntityId('grid' . $this->gridName)
+            $op->setHtmlEntityId($this->gridName)
                 ->setJsonResponseObjectName('grid');
 
             $par->addOnFinishOperation($op);
@@ -1169,13 +1188,13 @@ class GridBuilder extends AComponent {
             $addScript($par);
 
             $code = '
-                function ' . $this->componentName . '_quickSearch() {
+                function ' . $this->componentName . '_quickSearch(' . implode(', ', $args) . ') {
                     var query = $("#' . $this->componentName . '_search").val();
 
                     if(query.length == 0) {
                         alert("No data entered.");
                     } else {
-                        ' . $par->getFunctionName() . '(query);
+                        ' . $par->getFunctionName() . '(' . implode(', ', $args) . (count($args) > 0 ? ', ' : '') . ' query);
                     }
                 }
             ';
@@ -1804,9 +1823,9 @@ class GridBuilder extends AComponent {
             $this->quickSearchQuery = $this->httpRequest->post('query');
         }
 
-        if(!($this instanceof IGridExtendingComponent)) {
-            $this->build();
-        }
+        //if(!($this instanceof IGridExtendingComponent)) {
+            //$this->build();
+        //}
 
         return new JsonResponse(['grid' => $this->render()]);
     }

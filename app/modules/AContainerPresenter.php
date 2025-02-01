@@ -8,6 +8,7 @@ use App\Authorizators\SupervisorAuthorizator;
 use App\Core\Caching\CacheFactory;
 use App\Core\DatabaseConnection;
 use App\Lib\Processes\ProcessFactory;
+use App\Managers\Container\ArchiveManager;
 use App\Managers\Container\DocumentManager;
 use App\Managers\Container\EnumManager;
 use App\Managers\Container\FolderManager;
@@ -17,6 +18,7 @@ use App\Managers\Container\MetadataManager;
 use App\Managers\Container\ProcessManager;
 use App\Managers\Container\StandaloneProcessManager;
 use App\Managers\EntityManager;
+use App\Repositories\Container\ArchiveRepository;
 use App\Repositories\Container\DocumentClassRepository;
 use App\Repositories\Container\DocumentRepository;
 use App\Repositories\Container\FolderRepository;
@@ -43,6 +45,7 @@ abstract class AContainerPresenter extends APresenter {
     protected TransactionLogRepository $transactionLogRepository;
     protected GridRepository $gridRepository;
     protected ProcessRepository $processRepository;
+    protected ArchiveRepository $archiveRepository;
     
     protected EntityManager $entityManager;
     protected FolderManager $folderManager;
@@ -53,6 +56,7 @@ abstract class AContainerPresenter extends APresenter {
     protected GridManager $gridManager;
     protected ProcessManager $processManager;
     protected StandaloneProcessManager $standaloneProcessManager;
+    protected ArchiveManager $archiveManager;
 
     protected DocumentBulkActionAuthorizator $documentBulkActionAuthorizator;
     protected GroupStandardOperationsAuthorizator $groupStandardOperationsAuthorizator;
@@ -101,7 +105,7 @@ abstract class AContainerPresenter extends APresenter {
 
         $this->documentManager->enumManager = $this->enumManager;
 
-        $this->documentBulkActionAuthorizator = new DocumentBulkActionAuthorizator($containerConnection, $this->logger, $this->documentManager, $this->documentRepository, $this->app->userManager, $this->groupManager, $this->processManager);
+        $this->documentBulkActionAuthorizator = new DocumentBulkActionAuthorizator($containerConnection, $this->logger, $this->documentManager, $this->documentRepository, $this->app->userManager, $this->groupManager, $this->processManager, $this->archiveManager);
         $this->groupStandardOperationsAuthorizator = new GroupStandardOperationsAuthorizator($containerConnection, $this->logger, $this->groupManager);
         $this->supervisorAuthorizator = new SupervisorAuthorizator($containerConnection, $this->logger, $this->groupManager);
 
@@ -115,7 +119,8 @@ abstract class AContainerPresenter extends APresenter {
             $this->groupManager,
             $this->app->currentUser,
             $this->containerId,
-            $this->processManager
+            $this->processManager,
+            $this->archiveManager
         );
 
         $this->componentFactory->setCacheFactory($this->getContainerCacheFactory());
@@ -136,6 +141,9 @@ abstract class AContainerPresenter extends APresenter {
                 'processManager',
                 ':currentUser',
                 ':userManager'
+            ],
+            'archiveManager' => [
+                'archiveRepository'
             ]
         ];
 

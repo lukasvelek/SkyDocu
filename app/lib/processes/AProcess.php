@@ -5,6 +5,7 @@ namespace App\Lib\Processes;
 use App\Authorizators\DocumentBulkActionAuthorizator;
 use App\Authorizators\GroupStandardOperationsAuthorizator;
 use App\Entities\UserEntity;
+use App\Managers\Container\ArchiveManager;
 use App\Managers\Container\DocumentManager;
 use App\Managers\Container\GroupManager;
 use App\Managers\Container\ProcessManager;
@@ -23,6 +24,7 @@ abstract class AProcess {
     protected GroupManager $groupManager;
     protected UserEntity $currentUser;
     protected ProcessManager $processManager;
+    protected ArchiveManager $archiveManager;
 
     protected string $containerId;
 
@@ -43,6 +45,7 @@ abstract class AProcess {
      * @param GroupManager $groupManager GroupManager instance
      * @param UserEntity $currentUser Current user UserEntity instance
      * @param ProcessManager $processManager ProcessManager instance
+     * @param ArchiveManager $archiveManager ArchiveManager instance
      */
     public function inject(
         DocumentManager $documentManager,
@@ -51,7 +54,8 @@ abstract class AProcess {
         UserManager $userManager,
         GroupManager $groupManager,
         UserEntity $currentUser,
-        ProcessManager $processManager
+        ProcessManager $processManager,
+        ArchiveManager $archiveManager
     ) {
         $this->documentManager = $documentManager;
         $this->groupStandardOperationsAuthorizator = $groupStandardOperationsAuthorizator;
@@ -60,6 +64,7 @@ abstract class AProcess {
         $this->groupManager = $groupManager;
         $this->currentUser = $currentUser;
         $this->processManager = $processManager;
+        $this->archiveManager = $archiveManager;
     }
 
     /**

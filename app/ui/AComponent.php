@@ -102,10 +102,10 @@ abstract class AComponent extends AGUICore implements IRenderable {
      */
     public function checkChecks() {
         if(!$this->startupCheck) {
-            throw new GeneralException('Method \'' . AComponent::class . '::startup()\' has not been called.', null, false);
+            throw new GeneralException('Method \'' . AComponent::class . '::startup()\' has not been called (' . $this->componentName . ').', null, false);
         }
         if(!$this->prerenderCheck) {
-            throw new GeneralException('Method \'' . AComponent::class . '::prerender()\' has not been called.', null, false);
+            throw new GeneralException('Method \'' . AComponent::class . '::prerender()\' has not been called (' . $this->componentName . ').', null, false);
         }
     }
 }

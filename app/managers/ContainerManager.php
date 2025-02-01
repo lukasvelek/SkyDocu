@@ -177,6 +177,14 @@ class ContainerManager extends AManager {
                     'canExportDocuments' => 1,
                     'canViewDocumentHistory' => 1
                 ]
+            ],
+            [
+                'table' => 'archive_folders',
+                'data' => [
+                    'folderId' => $folderIds['Default'],
+                    'title' => 'Default',
+                    'isSystem' => 1
+                ]
             ]
         ];
 

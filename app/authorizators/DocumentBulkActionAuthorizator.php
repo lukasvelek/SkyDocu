@@ -8,6 +8,7 @@ use App\Core\DatabaseConnection;
 use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
 use App\Logger\Logger;
+use App\Managers\Container\ArchiveManager;
 use App\Managers\Container\DocumentManager;
 use App\Managers\Container\GroupManager;
 use App\Managers\Container\ProcessManager;
@@ -26,6 +27,7 @@ class DocumentBulkActionAuthorizator extends AAuthorizator {
     private UserManager $userManager;
     private GroupManager $containerGroupManager;
     private ProcessManager $processManager;
+    private ArchiveManager $archiveManager;
 
     /**
      * Class constructor
@@ -37,6 +39,7 @@ class DocumentBulkActionAuthorizator extends AAuthorizator {
      * @param UserManager $userManager
      * @param GroupManager $containerGroupManager
      * @param ProcessManager $processManager
+     * @param ArchiveManager $archiveManager
      */
     public function __construct(
         DatabaseConnection $db,
@@ -45,7 +48,8 @@ class DocumentBulkActionAuthorizator extends AAuthorizator {
         DocumentRepository $documentRepository,
         UserManager $userManager,
         GroupManager $containerGroupManager,
-        ProcessManager $processManager
+        ProcessManager $processManager,
+        ArchiveManager $archiveManager
     ) {
         parent::__construct($db, $logger);
 
@@ -54,6 +58,77 @@ class DocumentBulkActionAuthorizator extends AAuthorizator {
         $this->userManager = $userManager;
         $this->containerGroupManager = $containerGroupManager;
         $this->processManager = $processManager;
+        $this->archiveManager = $archiveManager;
+    }
+
+    /**
+     * Checks if user can execute move to archive
+     * 
+     * @param string $userId
+     * @param string $documentId
+     * @return bool True if user can execute or false if not
+     */
+    public function canExecuteMoveFromArchive(string $userId, string $documentId) {
+        return $this->internalExecute('throwExceptionIfCannotExecuteMoveFromArchive', $userId, $documentId);
+    }
+
+    /**
+     * Throws exception if user cannot execute move to archive
+     * 
+     * @param string $userId
+     * @param string $documentId
+     */
+    public function throwExceptionIfCannotExecuteMoveFromArchive(string $userId, string $documentId) {
+        if(!in_array($userId, $this->containerGroupManager->getUsersForGroupTitle(SystemGroups::ARCHIVISTS))) {
+            throw new GeneralException('User is not member of the Archivists group.', null, false);
+        }
+
+        $document = $this->documentManager->getDocumentById($documentId);
+
+        if($document->status != DocumentStatus::IS_BEING_MOVED_TO_ARCHIVE) {
+            throw new GeneralException(sprintf('Document\'s status must be \'%s\' but it is \'%s\'.', DocumentStatus::toString(DocumentStatus::NEW), DocumentStatus::toString($document->status)), null, false);
+        }
+
+        if(!$this->archiveManager->isDocumentInArchiveFolder($documentId)) {
+            throw new GeneralException('Document must be in an archive folder.', null, false);
+        }
+
+        $this->checkDocumentIsInProcess($documentId);
+    }
+
+    /**
+     * Checks if user can execute move to archive
+     * 
+     * @param string $userId
+     * @param string $documentId
+     * @return bool True if user can execute or false if not
+     */
+    public function canExecuteMoveToArchive(string $userId, string $documentId) {
+        return $this->internalExecute('throwExceptionIfCannotExecuteMoveToArchive', $userId, $documentId);
+    }
+
+    /**
+     * Throws exception if user cannot execute move to archive
+     * 
+     * @param string $userId
+     * @param string $documentId
+     */
+    public function throwExceptionIfCannotExecuteMoveToArchive(string $userId, string $documentId) {
+        if(!in_array($userId, $this->containerGroupManager->getUsersForGroupTitle(SystemGroups::ARCHIVISTS))) {
+            throw new GeneralException('User is not member of the Archivists group.', null, false);
+        }
+
+        $document = $this->documentManager->getDocumentById($documentId);
+
+        if($document->status != DocumentStatus::NEW) {
+            throw new GeneralException(sprintf('Document\'s status must be \'%s\' but it is \'%s\'.', DocumentStatus::toString(DocumentStatus::NEW), DocumentStatus::toString($document->status)), null, false);
+        }
+
+        if($this->archiveManager->isDocumentInArchiveFolder($documentId)) {
+            throw new GeneralException('Document must not be in an archive folder.', null, false);
+        }
+
+        $this->checkDocumentIsInProcess($documentId);
     }
 
     /**
@@ -80,8 +155,12 @@ class DocumentBulkActionAuthorizator extends AAuthorizator {
 
         $document = $this->documentManager->getDocumentById($documentId);
 
-        if($document->status != DocumentStatus::NEW) {
+        if($document->status != DocumentStatus::IS_BEING_MOVED_TO_ARCHIVE) {
             throw new GeneralException(sprintf('Document\'s status must be \'%s\' but it is \'%s\'.', DocumentStatus::toString(DocumentStatus::NEW), DocumentStatus::toString($document->status)), null, false);
+        }
+
+        if($this->archiveManager->isDocumentInArchiveFolder($documentId)) {
+            throw new GeneralException('Document must not be in an archive folder.', null, false);
         }
 
         $this->checkDocumentIsInProcess($documentId);

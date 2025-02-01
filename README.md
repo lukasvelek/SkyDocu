@@ -32,6 +32,9 @@ Future plans include:
 - FoldersSidebar alphabetical sorting
 - New widgets
 - All process rights update
+- Archive
+    - Archive folders
+    - Document archivation
 
 ### 1.2 (January 27th, 2025)
 - Code readability update

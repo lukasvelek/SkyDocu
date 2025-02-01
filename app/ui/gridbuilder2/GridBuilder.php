@@ -1060,7 +1060,7 @@ class GridBuilder extends AComponent {
         $getSkeletonPar->addOnFinishOperation($updateOperation);
 
         $updateOperation = new HTMLPageOperation();
-        $updateOperation->setHtmlEntityId('gridbuilder-grid')
+        $updateOperation->setHtmlEntityId('grid-' . $this->gridName)
             ->setJsonResponseObjectName('grid');
 
         $getSkeletonPar->addOnFinishOperation($updateOperation);

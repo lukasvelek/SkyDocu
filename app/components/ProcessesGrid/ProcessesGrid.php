@@ -167,7 +167,7 @@ class ProcessesGrid extends GridBuilder implements IGridExtendingComponent {
 
                 $el->text($value . ' (<i title="Current officer\'s substitute">' . $username . '</i>)');
             } else {
-                $el->text($value);
+                $el->text('-');
             }
             return $el;
         };
@@ -445,6 +445,12 @@ class ProcessesGrid extends GridBuilder implements IGridExtendingComponent {
         $this->prerender();
 
         return parent::actionFilterClear();
+    }
+
+    public function actionGetSkeleton(): JsonResponse {
+        $this->prerender();
+
+        return parent::actionGetSkeleton();
     }
 }
 

@@ -163,12 +163,13 @@ class Widget extends AComponent {
         $el = HTML::el('a')
             ->href('#')
             ->text('Refresh &orarr;')
-            ->onClick($this->componentName . '_refresh()')
             ->class('link')
         ;
 
         if($isSkeleton) {
             $el->text('<div id="skeletonTextAnimation" style="width: 10%">Refresh &orarr;</div>');
+        } else {
+            $el->onClick($this->componentName . '_refresh()');
         }
 
         return $el->toString();

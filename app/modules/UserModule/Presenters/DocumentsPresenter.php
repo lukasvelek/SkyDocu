@@ -44,7 +44,11 @@ class DocumentsPresenter extends AUserPresenter {
         } else if($this->httpRequest->post('folderId') !== null) {
             $this->currentFolderId = $this->httpRequest->post('folderId');
         } else {
-            $this->redirect($this->createURL('list', ['folderId' => $this->folderManager->getDefaultFolder()->folderId]));
+            if(str_contains($this->httpRequest->query('do'), 'getSkeleton')) {
+                $this->currentFolderId = $this->folderManager->getDefaultFolder()->folderId;
+            } else {
+                $this->redirect($this->createURL('list', ['folderId' => $this->folderManager->getDefaultFolder()->folderId]));
+            }
         }
 
         if($this->currentFolderId !== null) {
@@ -75,7 +79,7 @@ class DocumentsPresenter extends AUserPresenter {
             $this->archiveManager
         );
 
-        if(!$this->httpRequest->isAjax) {
+        if(!$this->httpRequest->isAjax || str_contains($this->httpRequest->query('do'), 'getSkeleton')) {
             $documentsGrid->setCurrentFolder($this->currentFolderId);
         }
         $documentsGrid->showCustomMetadata();

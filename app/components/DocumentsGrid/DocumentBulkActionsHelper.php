@@ -109,18 +109,6 @@ class DocumentBulkActionsHelper {
      * @param array<string> Bulk actions
      */
     private function appendProcessBulkActions(array $documentIds, array &$bulkActions) {
-        // Archivation
-        $archivation = true;
-        foreach($documentIds as $id) {
-            if(!$this->documentBulkActionAuthorizator->canExecuteArchivation($this->app->currentUser->getId(), $id)) {
-                $archivation = false;
-            }
-        }
-
-        if($archivation) {
-            $bulkActions[] = SystemProcessTypes::ARCHIVATION;
-        }
-
         // Move to archive
         $moveToArchive = true;
         foreach($documentIds as $id) {

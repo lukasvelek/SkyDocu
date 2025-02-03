@@ -3,6 +3,7 @@
 namespace App\Managers\Container;
 
 use App\Constants\Container\ArchiveFolderStatus;
+use App\Core\Caching\CacheNames;
 use App\Core\DB\DatabaseRow;
 use App\Exceptions\GeneralException;
 use App\Exceptions\NonExistingEntityException;
@@ -41,6 +42,10 @@ class ArchiveManager extends AManager {
 
         if(!$this->archiveRepository->insertNewArchiveFolder($folderId, $title, $parentFolderId)) {
             throw new GeneralException('Database error.');
+        }
+
+        if(!$this->cacheFactory->invalidateCacheByNamespace(CacheNames::ARCHIVE_FOLDERS)) {
+            throw new GeneralException('Cache invalidation error.');
         }
     }
 
@@ -83,7 +88,11 @@ class ArchiveManager extends AManager {
      * @param string $folderId Folder ID
      */
     public function getArchiveFolderById(string $folderId): DatabaseRow {
-        $folder = $this->archiveRepository->getFolderById($folderId);
+        $cache = $this->cacheFactory->getCache(CacheNames::ARCHIVE_FOLDERS);
+
+        $folder = $cache->load($folderId, function() use ($folderId) {
+            return $this->archiveRepository->getFolderById($folderId);
+        });
 
         if($folder === null) {
             throw new NonExistingEntityException('Archive folder does not exist.');
@@ -188,6 +197,8 @@ class ArchiveManager extends AManager {
      * @param bool $orderByTitle Order archive folder by title (a-z)
      */
     public function getAllArchiveFolders(bool $orderByTitle = true) {
+        $cache = $this->cacheFactory->getCache(CacheNames::ARCHIVE_FOLDERS);
+
         $qb = $this->archiveRepository->composeQueryForArchiveFolders();
         if($orderByTitle) {
             $qb->orderBy('title', 'DESC');
@@ -196,6 +207,9 @@ class ArchiveManager extends AManager {
 
         $archiveFolders = [];
         while($row = $qb->fetchAssoc()) {
+            $cache->update($row['folderId'], function() use ($row) {
+                return $row;
+            });
             $row = DatabaseRow::createFromDbRow($row);
             $archiveFolders[] = $row;
         }
@@ -289,6 +303,10 @@ class ArchiveManager extends AManager {
     public function updateArchiveFolder(string $folderId, array $data) {
         if(!$this->archiveRepository->updateArchiveFolder($folderId, $data)) {
             throw new GeneralException('Databaser error.');
+        }
+
+        if(!$this->cacheFactory->invalidateCacheByNamespace(CacheNames::ARCHIVE_FOLDERS)) {
+            throw new GeneralException('Cache invalidation error.');
         }
     }
 }

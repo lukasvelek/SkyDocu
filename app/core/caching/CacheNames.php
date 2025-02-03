@@ -28,6 +28,7 @@ class CacheNames {
     public const PROCESS_TYPES = 'processTypes';
     public const FOLDER_SUBFOLDERS_MAPPING = 'folderSubfoldersMapping';
     public const GRID_FILTER_DATA = 'gridFilterData';
+    public const ARCHIVE_FOLDERS = 'archiveFolders';
 
     /**
      * Returns an array with all cache namespaces

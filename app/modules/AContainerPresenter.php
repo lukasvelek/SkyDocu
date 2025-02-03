@@ -11,6 +11,7 @@ use App\Lib\Processes\ProcessFactory;
 use App\Managers\Container\ArchiveManager;
 use App\Managers\Container\DocumentManager;
 use App\Managers\Container\EnumManager;
+use App\Managers\Container\FileStorageManager;
 use App\Managers\Container\FolderManager;
 use App\Managers\Container\GridManager;
 use App\Managers\Container\GroupManager;
@@ -21,6 +22,7 @@ use App\Managers\EntityManager;
 use App\Repositories\Container\ArchiveRepository;
 use App\Repositories\Container\DocumentClassRepository;
 use App\Repositories\Container\DocumentRepository;
+use App\Repositories\Container\FileStorageRepository;
 use App\Repositories\Container\FolderRepository;
 use App\Repositories\Container\GridRepository;
 use App\Repositories\Container\GroupRepository;
@@ -46,6 +48,7 @@ abstract class AContainerPresenter extends APresenter {
     protected GridRepository $gridRepository;
     protected ProcessRepository $processRepository;
     protected ArchiveRepository $archiveRepository;
+    protected FileStorageRepository $fileStorageRepository;
     
     protected EntityManager $entityManager;
     protected FolderManager $folderManager;
@@ -57,6 +60,7 @@ abstract class AContainerPresenter extends APresenter {
     protected ProcessManager $processManager;
     protected StandaloneProcessManager $standaloneProcessManager;
     protected ArchiveManager $archiveManager;
+    protected FileStorageManager $fileStorageManager;
 
     protected DocumentBulkActionAuthorizator $documentBulkActionAuthorizator;
     protected GroupStandardOperationsAuthorizator $groupStandardOperationsAuthorizator;
@@ -144,6 +148,9 @@ abstract class AContainerPresenter extends APresenter {
             ],
             'archiveManager' => [
                 'archiveRepository'
+            ],
+            'fileStorageManager' => [
+                'fileStorageRepository'
             ]
         ];
 

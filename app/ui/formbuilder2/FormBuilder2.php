@@ -41,6 +41,7 @@ class FormBuilder2 extends AComponent {
 
     public ?IFormReducer $reducer;
     private Router $router;
+    private bool $hasFile;
     
     /**
      * Class constructor
@@ -62,6 +63,7 @@ class FormBuilder2 extends AComponent {
         $this->callReducerOnChange = false;
         $this->isPrerendered = false;
         $this->additionalLinkParams = [];
+        $this->hasFile = false;
 
         $this->router = new Router();
     }
@@ -148,6 +150,10 @@ class FormBuilder2 extends AComponent {
         $form->setAction($this->action);
         $form->setMethod($this->method);
         $form->setAdditionalLinkParams($this->additionalLinkParams);
+
+        if($this->hasFile) {
+            $form->setFileUpload();
+        }
 
         if($this->reducer !== null && !$this->httpRequest->isAjax) {
             $stateList = $this->getStateList();
@@ -475,6 +481,24 @@ class FormBuilder2 extends AComponent {
         $this->processLabel($name, $label);
 
         return $ci;
+    }
+
+    /**
+     * Adds file input
+     * 
+     * @param string $name Element name
+     * @param ?string $label Label text or null
+     */
+    public function addFileInput(string $name, ?string $label = null): FileInput {
+        $fi = new FileInput($name);
+
+        $this->elements[$name] = &$fi;
+
+        $this->processLabel($name, $label);
+
+        $this->hasFile = true;
+
+        return $fi;
     }
     
     /**

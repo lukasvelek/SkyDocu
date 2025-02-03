@@ -49,6 +49,8 @@ class EntityManager extends AManager {
     public const C_DOCUMENT_SHARING = 'document_sharing';
     public const C_ARCHIVE_FOLDERS = 'archive_folders';
     public const C_ARCHIVE_FOLDER_DOCUMENT_RELATION = 'archive_folder_document_relation';
+    public const C_FILE_STORAGE = 'file_storage';
+    public const C_DOCUMENT_FILE_RELATION = 'document_file_relation';
 
     private const __MAX__ = 100;
 
@@ -163,7 +165,9 @@ class EntityManager extends AManager {
             self::C_PROCESS_DATA => 'entryId',
             self::C_DOCUMENT_SHARING => 'sharingId',
             self::C_ARCHIVE_FOLDERS => 'folderId',
-            self::C_ARCHIVE_FOLDER_DOCUMENT_RELATION => 'relationId'
+            self::C_ARCHIVE_FOLDER_DOCUMENT_RELATION => 'relationId',
+            self::C_FILE_STORAGE => 'fileId',
+            self::C_DOCUMENT_FILE_RELATION => 'relationId'
         };
     }
 }

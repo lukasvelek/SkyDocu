@@ -16,6 +16,7 @@ class Form extends AElement {
     private array $action;
     public array $scripts;
     private array $additionalLinkParams;
+    private bool $hasFile;
 
     /**
      * Class constructor
@@ -32,6 +33,7 @@ class Form extends AElement {
         $this->method = 'POST';
         $this->scripts = [];
         $this->additionalLinkParams = [];
+        $this->hasFile = false;
     }
 
     /**
@@ -87,6 +89,10 @@ class Form extends AElement {
         $form->id($this->name);
         $form->text($this->renderRows());
 
+        if($this->hasFile) {
+            $form->addAtribute('enctype', 'multipart/form-data');
+        }
+
         return $form;
     }
 
@@ -140,6 +146,13 @@ class Form extends AElement {
      */
     public function setAdditionalLinkParams(array $params) {
         $this->additionalLinkParams = $params;
+    }
+
+    /**
+     * Sets that the form will contain a file
+     */
+    public function setFileUpload() {
+        $this->hasFile = true;
     }
 }
 

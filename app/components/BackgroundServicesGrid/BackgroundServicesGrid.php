@@ -119,6 +119,12 @@ class BackgroundServicesGrid extends GridBuilder implements IGridExtendingCompon
 
         return parent::actionQuickSearch();
     }
+
+    public function actionGetSkeleton(): JsonResponse {
+        $this->prerender();
+
+        return parent::actionGetSkeleton();
+    }
 }
 
 ?>

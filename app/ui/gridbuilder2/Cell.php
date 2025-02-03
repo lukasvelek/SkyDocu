@@ -11,7 +11,7 @@ use Exception;
  * @author Lukas Velek
  */
 class Cell extends AElement {
-    private string|HTML $content;
+    public string|HTML $content;
     private string $name;
     public HTML $html;
     private bool $isHeader;

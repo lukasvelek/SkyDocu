@@ -35,6 +35,8 @@ Future plans include:
 - Archive
     - Archive folders
     - Document archivation
+- Component skeletons
+    - More user-friendly component loading or refreshing animation
 
 ### 1.2 (January 27th, 2025)
 - Code readability update

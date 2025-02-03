@@ -677,8 +677,10 @@ class GridBuilder extends AComponent {
      *  - creates cells
      *  - creates table
      *  - creates actions
+     * 
+     * @param bool $isSkeleton Is skeleton
      */
-    private function build() {
+    private function build(bool $isSkeleton = false) {
         $_tableRows = [];
 
         $_headerRow = new Row();
@@ -734,11 +736,35 @@ class GridBuilder extends AComponent {
                 if($content === null) {
                     $content = '-';
 
+                    if($isSkeleton) {
+                        $content = '<div id="skeletonTextAnimation">' . $content . '</div>';
+                    }
+
                     $_cell->setContent($content);
                 } else {
                     if($content instanceof Cell) {
+                        if($isSkeleton) {
+                            if($content->content instanceof HTML) {
+                                $tmp = HTML::el('div')
+                                    ->id('skeletonTextAnimation')
+                                    ->text('test');
+                                $content->content = $tmp;
+                            } else {
+                                $content->content = '<div id="skeletonTextAnimation">test</div>';
+                            }
+                        }
                         $_cell = $content;
                     } else {
+                        if($isSkeleton) {
+                            if($content instanceof HTML) {
+                                $tmp = HTML::el('div')
+                                    ->id('skeletonTextAnimation')
+                                    ->text('test');
+                                $content = $tmp;
+                            } else {
+                                $content = '<div id="skeletonTextAnimation">test</div>';
+                            }
+                        }
                         $_cell->setContent($content);
                     }
                 }
@@ -756,6 +782,7 @@ class GridBuilder extends AComponent {
 
             if($this->hasCheckboxes) {
                 $rowCheckbox = new RowCheckbox($rowId, $this->componentName . '_onCheckboxCheck(\'' . $rowId . '\')');
+                $rowCheckbox->setSkeleton($isSkeleton);
                 $_row->addCell($rowCheckbox, true);
             }
 
@@ -825,6 +852,10 @@ class GridBuilder extends AComponent {
                             $_cell->setClass('grid-cell-action');
                         }
 
+                        if($isSkeleton) {
+                            $_cell->setContent('<div id="skeletonTextAnimation">test</div>');
+                        }
+
                         $cells[$k][$actionName] = $_cell;
                     }
                 }
@@ -843,6 +874,11 @@ class GridBuilder extends AComponent {
                             $_cell->setName($actionName);
                             $_cell->setContent($cAction->output()->toString());
                             $_cell->setClass('grid-cell-action');
+
+                            if($isSkeleton) {
+                                $_cell->setContent('<div id="skeletonTextAnimation">test</div>');
+                            }
+
                             $cells[$k][$actionName] = $_cell;
                             $displayedActions[] = $actionName;
                         }
@@ -855,6 +891,11 @@ class GridBuilder extends AComponent {
                             $_cell->setName($actionName);
                             $_cell->setContent('');
                             $_cell->setClass('grid-cell-action');
+
+                            if($isSkeleton) {
+                                $_cell->setContent('<div id="skeletonTextAnimation">test</div>');
+                            }
+
                             $cells[$k][$actionName] = $_cell;
                         }
                     }
@@ -909,7 +950,7 @@ class GridBuilder extends AComponent {
             }
         }
 
-        if(count($_tableRows) == 1) {
+        if(count($_tableRows) == 1 && !$isSkeleton) {
             $this->table = null;
         } else {
             $this->table = new Table($_tableRows);
@@ -935,21 +976,22 @@ class GridBuilder extends AComponent {
     /**
      * Creates grid controls
      * 
+     * @param bool $isSkeleton Is skeleton
      * @return string HTML code
      */
-    private function createGridControls() {
+    private function createGridControls(bool $isSkeleton = false) {
         $code = '
             <div class="row">
                 <div class="col-md">
-                    ' . $this->createGridPagingControl() . '
+                    ' . $this->createGridPagingControl($isSkeleton) . '
                 </div>
                 
                 <div class="col-md">
-                    ' . $this->createGridPageInfo() . '
+                    ' . $this->createGridPageInfo($isSkeleton) . '
                 </div>
                 
                 <div class="col-md" ' . ($this->enableExport ? '' : ' id="right"') . '>
-                    ' . $this->createGridRefreshControl() . '
+                    ' . $this->createGridRefreshControl($isSkeleton) . '
                 </div>
 
                 ' . ($this->enableExport ? ('<div class="col-md-2" id="right">' . $this->createGridExportControl() . '</div>') : ('')) . '
@@ -974,9 +1016,6 @@ class GridBuilder extends AComponent {
                 $scripts[] = $arb->build();
             }
         };
-
-        // REFRESH
-        $par = new PostAjaxRequest($this->httpRequest);
 
         $data = [
             'gridPage' => '_page'
@@ -1004,6 +1043,39 @@ class GridBuilder extends AComponent {
             }
         }
 
+        // GET SKELETON
+        $getSkeletonPar = new PostAjaxRequest($this->httpRequest);
+
+        $getSkeletonPar->setComponentUrl($this, 'getSkeleton')
+            ->setData($data);
+
+        foreach($args as $arg) {
+            $getSkeletonPar->addArgument($arg);
+        }
+
+        $updateOperation = new HTMLPageOperation();
+        $updateOperation->setHtmlEntityId('grid-' . $this->gridName . '-controls')
+            ->setJsonResponseObjectName('controls');
+
+        $getSkeletonPar->addOnFinishOperation($updateOperation);
+
+        $updateOperation = new HTMLPageOperation();
+        $updateOperation->setHtmlEntityId('grid-' . $this->gridName)
+            ->setJsonResponseObjectName('grid');
+
+        $getSkeletonPar->addOnFinishOperation($updateOperation);
+
+        $updateOperation = new HTMLPageOperation();
+        $updateOperation->setHtmlEntityId('grid-' . $this->gridName . '-filters')
+            ->setJsonResponseObjectName('filters');
+
+        $getSkeletonPar->addOnFinishOperation($updateOperation);
+
+        $addScript($getSkeletonPar);
+
+        // REFRESH
+        $par = new PostAjaxRequest($this->httpRequest);
+
         $par->setComponentUrl($this, 'refresh')
             ->setData($data);
 
@@ -1019,8 +1091,10 @@ class GridBuilder extends AComponent {
 
         $addScript($par);
         $scripts[] = '
-            function ' . $this->componentName . '_gridRefresh(' . implode(', ', $args) . ') {
-                ' . $par->getFunctionName() . '(' . implode(', ', $args) . ');
+            async function ' . $this->componentName . '_gridRefresh(' . implode(', ', $args) . ') {
+                await ' . $getSkeletonPar->getFunctionName() . '(' . implode(', ', $args) . ');
+                await sleep(2500);
+                await ' . $par->getFunctionName() . '(' . implode(', ', $args) . ');
             }
         ';
 
@@ -1352,9 +1426,10 @@ class GridBuilder extends AComponent {
     /**
      * Creates grid paging information
      * 
+     * @param bool $isSkeleton Is skeleton
      * @return string Paging information
      */
-    private function createGridPageInfo() {
+    private function createGridPageInfo(bool $isSkeleton = false) {
         if(!$this->enablePagination) {
             return '';
         }
@@ -1373,15 +1448,22 @@ class GridBuilder extends AComponent {
             $displayGridPage++;
         }
 
-        return 'Page ' . $displayGridPage . ' of ' . $lastPage . ' (' . ($this->resultLimit * $this->gridPage) . ' - ' . $lastPageCount . ')';
+        $text = 'Page ' . $displayGridPage . ' of ' . $lastPage . ' (' . ($this->resultLimit * $this->gridPage) . ' - ' . $lastPageCount . ')';
+
+        if($isSkeleton) {
+            $text = '<div id="skeletonTextAnimation">' . $text . '</div>';
+        }
+
+        return $text;
     }
 
     /**
      * Creates grid refresh control
      * 
+     * @param bool $isSkeleton Is skeleton
      * @return string HTML code
      */
-    private function createGridRefreshControl() {
+    private function createGridRefreshControl(bool $isSkeleton = false) {
         if($this->refreshDisabled) {
             return '';
         }
@@ -1400,15 +1482,20 @@ class GridBuilder extends AComponent {
             }
         }
 
-        return '<a class="link" href="#" onclick="' . $this->componentName . '_gridRefresh(' . implode(', ', $args) . ')" title="Refresh grid">Refresh &orarr;</a>';
+        if($isSkeleton) {
+            return '<a class="link" href="#"><div id="skeletonTextAnimation">Refresh &orarr;</div></a>';
+        } else {
+            return '<a class="link" href="#" onclick="' . $this->componentName . '_gridRefresh(' . implode(', ', $args) . ')" title="Refresh grid">Refresh &orarr;</a>';
+        }
     }
 
     /**
      * Creates grid paging control
      * 
+     * @param bool $isSkeleton Is skeleton
      * @return string HTML code
      */
-    private function createGridPagingControl() {
+    private function createGridPagingControl(bool $isSkeleton = false) {
         if(!$this->enablePagination) {
             return '';
         }
@@ -1421,7 +1508,13 @@ class GridBuilder extends AComponent {
         $nextPageBtn = $this->createPagingButtonCode(($this->gridPage + 1), '&gt;', ($this->gridPage >= $lastPage));
         $lastPageBtn = $this->createPagingButtonCode($lastPage, '&gt;&gt;', ($this->gridPage >= $lastPage));
 
-        return implode('', [$firstPageBtn, $previousPageBtn, $nextPageBtn, $lastPageBtn]);
+        $text = implode('', [$firstPageBtn, $previousPageBtn, $nextPageBtn, $lastPageBtn]);
+
+        if($isSkeleton) {
+            $text = '<div id="skeletonTextAnimation">paging buttons</div>';
+        }
+
+        return $text;
     }
 
     /**
@@ -1509,9 +1602,10 @@ class GridBuilder extends AComponent {
     /**
      * Creates code for filter controls
      * 
+     * @param bool $isSkeleton Is skeleton
      * @return string HTML code
      */
-    private function createGridFilterControls() {
+    private function createGridFilterControls(bool $isSkeleton = false) {
         if((empty($this->filters) && empty($this->quickSearchFilter)) || $this->controlsDisabled) {
             return '';
         }
@@ -1587,7 +1681,11 @@ class GridBuilder extends AComponent {
             }
         }
 
-        $el->text(implode('&nbsp;', $btns));
+        if($isSkeleton) {
+            $el->text('<div id="skeletonTextAnimation" style="width: 35%">placeholder</div>');
+        } else {
+            $el->text(implode('&nbsp;', $btns));
+        }
 
         return $el->toString();
     }
@@ -1823,11 +1921,20 @@ class GridBuilder extends AComponent {
             $this->quickSearchQuery = $this->httpRequest->post('query');
         }
 
-        //if(!($this instanceof IGridExtendingComponent)) {
-            //$this->build();
-        //}
-
         return new JsonResponse(['grid' => $this->render()]);
+    }
+
+    /**
+     * Handles Get skeleton
+     */
+    public function actionGetSkeleton(): JsonResponse {
+        $this->build(true);
+
+        return new JsonResponse([
+            'grid' => $this->table->output()->toString(),
+            'controls' => $this->createGridControls(true),
+            'filters' => $this->createGridFilterControls(true)
+        ]);
     }
 }
 

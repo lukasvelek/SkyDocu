@@ -646,6 +646,12 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
 
         return parent::actionQuickSearch();
     }
+
+    public function actionGetSkeleton(): JsonResponse {
+        $this->prerender();
+        
+        return parent::actionGetSkeleton();
+    }
 }
 
 ?>

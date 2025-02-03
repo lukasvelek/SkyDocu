@@ -7,6 +7,7 @@ use App\Constants\Container\ProcessesGridSystemMetadata;
 use App\Constants\Container\ProcessStatus;
 use App\Core\Application;
 use App\Core\DB\DatabaseRow;
+use App\Core\Http\JsonResponse;
 use App\Managers\Container\ProcessManager;
 use App\Managers\Container\StandaloneProcessManager;
 use App\UI\GridBuilder2\GridBuilder;
@@ -139,6 +140,12 @@ class ProcessReportsGrid extends GridBuilder implements IGridExtendingComponent 
 
             return $el;
         };
+    }
+
+    public function actionGetSkeleton(): JsonResponse {
+        $this->prerender();
+
+        return parent::actionGetSkeleton();
     }
 }
 

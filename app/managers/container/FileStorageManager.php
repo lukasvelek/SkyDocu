@@ -3,6 +3,7 @@
 namespace App\Managers\Container;
 
 use App\Core\DB\DatabaseRow;
+use App\Core\Router;
 use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
 use App\Exceptions\NonExistingEntityException;
@@ -32,7 +33,7 @@ class FileStorageManager extends AManager {
      */
     public function doesDocumentHaveFile(string $documentId): bool {
         try {
-            $this->getFileForDocumentId($documentId);
+            $this->getFileRelationForDocumentId($documentId);
             return true;
         } catch(AException $e) {
             return false;
@@ -44,7 +45,7 @@ class FileStorageManager extends AManager {
      * 
      * @param string $documentId Document ID
      */
-    public function getFileForDocumentId(string $documentId): DatabaseRow {
+    public function getFileRelationForDocumentId(string $documentId): DatabaseRow {
         $row = $this->fileStorageRepository->getFileForDocumentId($documentId);
 
         if($row === null) {
@@ -69,7 +70,9 @@ class FileStorageManager extends AManager {
 
         $fileId = $this->createId(EntityManager::C_FILE_STORAGE);
 
-        if(!$this->fileStorageRepository->createNewStoredFile($fileId, $filename, $filepath, $filesize, $userId)) {
+        $hash = $this->createUniqueHashForDb(256, EntityManager::C_FILE_STORAGE, 'hash');
+
+        if(!$this->fileStorageRepository->createNewStoredFile($fileId, $filename, $filepath, $filesize, $userId, $hash)) {
             throw new GeneralException('Database error.');
         }
 
@@ -80,6 +83,37 @@ class FileStorageManager extends AManager {
         }
 
         return $fileId;
+    }
+
+    /**
+     * Returns a file
+     * 
+     * @param string $fileId File ID
+     */
+    public function getFileById(string $fileId): DatabaseRow {
+        $file = $this->fileStorageRepository->getFileById($fileId);
+
+        if($file === null) {
+            throw new NonExistingEntityException('File does not exist.');
+        }
+
+        return DatabaseRow::createFromDbRow($file);
+    }
+
+    /**
+     * Generates download link for file in document by given document ID
+     * 
+     * @param string $documentId Document ID
+     */
+    public function generateDownloadLinkForFileInDocumentByDocumentId(string $documentId): string {
+        $fileRelation = $this->getFileRelationForDocumentId($documentId);
+        $file = $this->getFileById($fileRelation->fileId);
+
+        return Router::generateUrl([
+            'page' => 'User:FileStorage',
+            'action' => 'download',
+            'hash' => $file->hash
+        ]);
     }
 }
 

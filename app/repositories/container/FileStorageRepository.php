@@ -32,11 +32,11 @@ class FileStorageRepository extends ARepository {
      * @param int $filesize File size
      * @param string $userId User ID
      */
-    public function createNewStoredFile(string $fileId, string $filename, string $filepath, int $filesize, string $userId): bool {
+    public function createNewStoredFile(string $fileId, string $filename, string $filepath, int $filesize, string $userId, string $hash): bool {
         $qb = $this->qb(__METHOD__);
 
-        $qb->insert('file_storage', ['fileId', 'filename', 'filepath', 'filesize', 'userId'])
-            ->values([$fileId, $filename, $filepath, $filesize, $userId])
+        $qb->insert('file_storage', ['fileId', 'filename', 'filepath', 'filesize', 'userId', 'hash'])
+            ->values([$fileId, $filename, $filepath, $filesize, $userId, $hash])
             ->execute();
 
         return $qb->fetchBool();
@@ -70,6 +70,22 @@ class FileStorageRepository extends ARepository {
         $qb->select(['*'])
             ->from('document_file_relation')
             ->where('documentId = ?', [$documentId])
+            ->execute();
+
+        return $qb->fetch();
+    }
+
+    /**
+     * Returns a file row
+     * 
+     * @param string $fileId File ID
+     */
+    public function getFileById(string $fileId): mixed {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->select(['*'])
+            ->from('file_storage')
+            ->where('fileId = ?', [$fileId])
             ->execute();
 
         return $qb->fetch();

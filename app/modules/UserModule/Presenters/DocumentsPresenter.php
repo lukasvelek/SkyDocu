@@ -17,6 +17,7 @@ use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
 use App\Exceptions\RequiredAttributeIsNotSetException;
 use App\Helpers\DateTimeFormatHelper;
+use App\UI\HTML\HTML;
 use App\UI\LinkBuilder;
 
 class DocumentsPresenter extends AUserPresenter {
@@ -147,6 +148,20 @@ class DocumentsPresenter extends AUserPresenter {
         $createRow('Folder', $folder);
         $createRow('Date created', DateTimeFormatHelper::formatDateToUserFriendly($document->dateCreated));
         $createRow('Date modified', ($document->dateModified !== null) ? DateTimeFormatHelper::formatDateToUserFriendly($document->dateModified) : '-');
+
+        // FILE ATTACHMENT
+        if($this->fileStorageManager->doesDocumentHaveFile($document->documentId)) {
+            $url = $this->fileStorageManager->generateDownloadLinkForFileInDocumentByDocumentId($document->documentId);
+
+            $el = HTML::el('a')
+                ->text('Download file')
+                ->class('changelog-link')
+                ->target('_blank')
+                ->href($url);
+
+            $createRow('File', $el->toString());
+        }
+        // END OF FILE ATTACHMENT
 
         $this->saveToPresenterCache('documentBasicInformation', $basicInformationCode);
 

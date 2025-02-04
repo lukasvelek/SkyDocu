@@ -170,6 +170,17 @@ class EntityManager extends AManager {
             self::C_DOCUMENT_FILE_RELATION => 'relationId'
         };
     }
+
+    /**
+     * Checks if given value is unique in given column
+     * 
+     * @param string $table Table name
+     * @param string $columnName Column name
+     * @param string $value Value
+     */
+    public function checkUniqueValueInColumn(string $table, string $columnName, string $value): bool {
+        return $this->contentRepository->checkValueIsUnique($table, $columnName, $value);
+    }
 }
 
 ?>

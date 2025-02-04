@@ -276,6 +276,17 @@ div[class^="fm-"], div[class*="fm-"] {
     font-size: 20px;
 }
 
+.changelog-link {
+    font-size: 20px;
+    text-decoration: none;
+    color: black;
+    transition: color 0.25s;
+}
+
+.changelog-link:hover {
+    color: rgb(100, 100, 100);
+}
+
 .sidebar-link {
     font-size: 20px;
 

@@ -6,7 +6,6 @@ use App\Core\DB\DatabaseRow;
 use App\Core\Http\Ajax\Operations\CustomOperation;
 use App\Core\Http\Ajax\Requests\PostAjaxRequest;
 use App\Core\Http\HttpRequest;
-use App\Core\Http\JsonResponse;
 use App\Core\Http\TextResponse;
 use App\Helpers\UnitConversionHelper;
 use App\UI\GridBuilder2\Cell;
@@ -27,9 +26,10 @@ class FileStoragePresenter extends AAdminPresenter {
         $par->setUrl($this->createURL('getFilesStats'));
         
         $op = new CustomOperation();
-        $op->addCode('alert(obj.stats);');
+        $op->addCode('alert(data);');
 
         $par->addOnFinishOperation($op);
+        $par->setResultTypeText();
 
         $this->addScript($par);
         $this->addScript('
@@ -88,10 +88,7 @@ class FileStoragePresenter extends AAdminPresenter {
         $text = 'Total file size: ' . $fileSize . "\r\n";
         $text .= 'Number of files: ' . $count;
 
-        $data = [
-            'stats' => $text
-        ];
-        return new JsonResponse($data);
+        return new TextResponse($text);
     }
 }
 

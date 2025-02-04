@@ -15,6 +15,9 @@ use App\UI\AComponent;
  * @author Lukas Velek
  */
 abstract class AAjaxRequest implements IAjaxRequest {
+    protected const RESULT_TYPE_JSON = 'json';
+    protected const RESULT_TYPE_TEXT = 'text';
+
     private HttpRequest $request;
     private bool $buildCheck;
     private string $functionName;
@@ -31,6 +34,7 @@ abstract class AAjaxRequest implements IAjaxRequest {
     protected array $beforeStartOperations;
     protected array $arguments;
     protected array $data;
+    protected string $resultType;
 
     /**
      * Abstract class constructor
@@ -45,8 +49,23 @@ abstract class AAjaxRequest implements IAjaxRequest {
         $this->buildCheck = false;
         $this->isComponent = false;
         $this->data = [];
+        $this->resultType = self::RESULT_TYPE_JSON;
 
         $this->functionName = $this->generateFunctionName();
+    }
+
+    /**
+     * Sets the result type to JSON
+     */
+    public function setResultTypeJson() {
+        $this->resultType = self::RESULT_TYPE_JSON;
+    }
+
+    /**
+     * Sets the result type to text
+     */
+    public function setResultTypeText() {
+        $this->resultType = self::RESULT_TYPE_TEXT;
     }
 
     /**

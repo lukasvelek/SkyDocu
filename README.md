@@ -13,12 +13,8 @@ The web application is written purely in PHP with a few JS scripts. These JS scr
 These future plans are also in Issues list and can be distinguished by their milestone.
 
 Future plans include:
-- Archive (__1.3__)
-- Widget / Component skeletons (__1.4__)
-    - Instead of a loading loop icon
 - Dark theme support (__1.4__)
 - Grid exporting (__1.4__)
-- Container document uploading (__1.3__)
 - Multiple database servers (__1.4__, but will probably be postponed)
 
 ## Changelog
@@ -38,6 +34,7 @@ Future plans include:
 - Component skeletons
     - More user-friendly component loading or refreshing animation
 - Document file uploading
+    - Uploaded file overview (in grid) + stats in in-container administration
 
 ### 1.2 (January 27th, 2025)
 - Code readability update

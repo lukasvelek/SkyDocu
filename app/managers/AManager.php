@@ -4,6 +4,8 @@ namespace App\Managers;
 
 use App\Core\Caching\CacheFactory;
 use App\Core\DatabaseConnection;
+use App\Core\HashManager;
+use App\Exceptions\GeneralException;
 use App\Logger\Logger;
 
 /**
@@ -82,6 +84,32 @@ abstract class AManager {
         }
 
         return null;
+    }
+
+    /**
+     * Generates a unique hash for column in given table
+     * 
+     * @param int $hashLength Hash length
+     * @param string $category Table name
+     * @param string $columnName Column name
+     */
+    public function createUniqueHashForDb(int $hashLength, string $category, string $columnName): string {
+        if($this->entityManager === null) {
+            throw new GeneralException('EntityManager is not set.');
+        }
+
+        $run = true;
+
+        $hash = null;
+        do {
+            $hash = HashManager::createHash($hashLength, false);
+
+            if($this->entityManager->checkUniqueValueInColumn($category, $columnName, $hash)) {
+                $run = false;
+            }
+        } while($run);
+
+        return $hash;
     }
 }
 

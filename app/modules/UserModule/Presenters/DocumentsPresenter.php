@@ -9,12 +9,15 @@ use App\Constants\Container\CustomMetadataTypes;
 use App\Constants\Container\DocumentStatus;
 use App\Constants\Container\GridNames;
 use App\Core\DB\DatabaseRow;
+use App\Core\FileUploadManager;
 use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
 use App\Enums\AEnumForMetadata;
 use App\Exceptions\AException;
+use App\Exceptions\GeneralException;
 use App\Exceptions\RequiredAttributeIsNotSetException;
 use App\Helpers\DateTimeFormatHelper;
+use App\UI\HTML\HTML;
 use App\UI\LinkBuilder;
 
 class DocumentsPresenter extends AUserPresenter {
@@ -146,6 +149,20 @@ class DocumentsPresenter extends AUserPresenter {
         $createRow('Date created', DateTimeFormatHelper::formatDateToUserFriendly($document->dateCreated));
         $createRow('Date modified', ($document->dateModified !== null) ? DateTimeFormatHelper::formatDateToUserFriendly($document->dateModified) : '-');
 
+        // FILE ATTACHMENT
+        if($this->fileStorageManager->doesDocumentHaveFile($document->documentId)) {
+            $url = $this->fileStorageManager->generateDownloadLinkForFileInDocumentByDocumentId($document->documentId);
+
+            $el = HTML::el('a')
+                ->text('Download file')
+                ->class('changelog-link')
+                ->target('_blank')
+                ->href($url);
+
+            $createRow('File', $el->toString());
+        }
+        // END OF FILE ATTACHMENT
+
         $this->saveToPresenterCache('documentBasicInformation', $basicInformationCode);
 
         // CUSTOM METADATA
@@ -220,13 +237,23 @@ class DocumentsPresenter extends AUserPresenter {
         }
 
         $this->saveToPresenterCache('customMetadataCode', $customMetadataCode);
+
+        $links = [
+            $this->createBackUrl('list')
+        ];
+
+        if(!$this->fileStorageManager->doesDocumentHaveFile($document->documentId)) {
+            $links[] = LinkBuilder::createSimpleLink('Upload a file', $this->createURL('fileUploadForm', ['documentId' => $document->documentId]), 'link');
+        }
+
+        $this->saveToPresenterCache('links', implode('&nbsp;&nbsp;', $links));
     }
 
     public function renderInfo() {
         $this->template->document_basic_information = $this->loadFromPresenterCache('documentBasicInformation');
         $this->template->document_custom_metadata = $this->loadFromPresenterCache('customMetadataCode');
 
-        $this->template->links = $this->createBackUrl('list');
+        $this->template->links = $this->loadFromPresenterCache('links');
     }
 
     public function handleShareForm(?FormRequest $fr = null) {
@@ -287,6 +314,55 @@ class DocumentsPresenter extends AUserPresenter {
         $documentsGrid->useCheckboxes($this);
 
         return $documentsGrid;
+    }
+
+    public function handleFileUploadForm(?FormRequest $fr = null) {
+        if($fr !== null) {
+            try {
+                $this->fileStorageRepository->beginTransaction(__METHOD__);
+
+                $fum = new FileUploadManager();
+                $data = $fum->uploadFile($_FILES['file'], $this->httpRequest->query('documentId'), $this->getUserId());
+
+                if(empty($data)) {
+                    throw new GeneralException('Could not upload file.');
+                }
+
+                $this->fileStorageManager->createNewFile(
+                    $this->httpRequest->query('documentId'),
+                    $this->getUserId(),
+                    $data[FileUploadManager::FILE_FILENAME],
+                    $data[FileUploadManager::FILE_FILEPATH],
+                    $data[FileUploadManager::FILE_FILESIZE]
+                );
+
+                $this->fileStorageRepository->commit($this->getUserId(), __METHOD__);
+
+                $this->flashMessage('File uploaded successfully.', 'success');
+            } catch(AException $e) {
+                $this->fileStorageRepository->rollback(__METHOD__);
+
+                $this->flashMessage('Could not upload file.', 'error', 10);
+            }
+
+            $this->redirect($this->createURL('info', ['documentId' => $this->httpRequest->query('documentId')]));
+        }
+    }
+
+    public function renderFileUploadForm() {
+        $this->template->links = $this->createBackUrl('info', ['documentId' => $this->httpRequest->query('documentId')]);
+    }
+
+    protected function createComponentUploadFileForm(HttpRequest $request) {
+        $form = $this->componentFactory->getFormBuilder();
+
+        $form->setAction($this->createURL('fileUploadForm', ['documentId' => $request->query['documentId']]));
+
+        $form->addFileInput('file', 'File:');
+
+        $form->addSubmit('Upload');
+
+        return $form;
     }
 }
 

@@ -176,6 +176,20 @@ class ContainerCreationHelper {
                 'folderId' => 'VARCHAR(256) NOT NULL',
                 'documentId' => 'VARCHAR(256) NOT NULL',
                 'dateCreated' => 'DATETIME NOT NULL DEFAULT current_timestamp()'
+            ],
+            'file_storage' => [
+                'fileId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',
+                'filename' => 'VARCHAR(256) NOT NULL',
+                'filepath' => 'TEXT NOT NULL',
+                'filesize' => 'INT(32) NOT NULL',
+                'userId' => 'VARCHAR(256) NOT NULL',
+                'hash' => 'VARCHAR(256) NOT NULL',
+                'dateCreated' => 'DATETIME NOT NULL DEFAULT current_timestamp()'
+            ],
+            'document_file_relation' => [
+                'relationId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',
+                'documentId' => 'VARCHAR(256) NOT NULL',
+                'fileId' => 'VARCHAR(256) NOT NULL'
             ]
         ];
     }

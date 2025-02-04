@@ -213,6 +213,19 @@ class Application {
     }
 
     /**
+     * Forces file download
+     * 
+     * @param string $filepath File path
+     */
+    public function forceDownloadFile(string $filepath) {
+        header('Content-Type: application/octet-stream');
+        header('Content-Transfer-Encoding: Binary');
+        header('Content-disposition: attachment; filename="' . basename($filepath . '"'));
+        readfile($filepath);
+        exit;
+    }
+
+    /**
      * Refreshes current page with the same parameters
      * 
      * @param array $customParams Additional parameters

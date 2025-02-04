@@ -101,6 +101,21 @@ class FileStorageManager extends AManager {
     }
 
     /**
+     * Returns a file
+     * 
+     * @param string $hash File hash
+     */
+    public function getFileByHash(string $hash): DatabaseRow {
+        $file = $this->fileStorageRepository->getFileByHash($hash);
+
+        if($file === null) {
+            throw new NonExistingEntityException('File does not exist.');
+        }
+
+        return DatabaseRow::createFromDbRow($file);
+    }
+
+    /**
      * Generates download link for file in document by given document ID
      * 
      * @param string $documentId Document ID

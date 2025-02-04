@@ -90,6 +90,22 @@ class FileStorageRepository extends ARepository {
 
         return $qb->fetch();
     }
+
+    /**
+     * Returns a file row
+     * 
+     * @param string $hash File hash
+     */
+    public function getFileByHash(string $hash): mixed {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->select(['*'])
+            ->from('file_storage')
+            ->where('hash = ?', [$hash])
+            ->execute();
+
+        return $qb->fetch();
+    }
 }
 
 ?>

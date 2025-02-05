@@ -7,6 +7,7 @@ use App\Core\Http\Ajax\Operations\CustomOperation;
 use App\Core\Http\Ajax\Requests\PostAjaxRequest;
 use App\Core\Http\HttpRequest;
 use App\Core\Http\TextResponse;
+use App\Exceptions\GeneralException;
 use App\Helpers\UnitConversionHelper;
 use App\UI\GridBuilder2\Cell;
 use App\UI\GridBuilder2\Row;
@@ -68,6 +69,23 @@ class FileStoragePresenter extends AAdminPresenter {
             return $el;
         };
 
+        $download = $grid->addAction('download');
+        $download->setTitle('Download');
+        $download->onCanRender[] = function() {
+            return true;
+        };
+        $download->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
+            $url = $this->createURLString('download', ['hash' => $row->hash]);
+
+            $el = HTML::el('a')
+                ->class('grid-link')
+                ->href($url)
+                ->target('_blank')
+                ->text('Download');
+
+            return $el;
+        };
+
         return $grid;
     }
 
@@ -89,6 +107,18 @@ class FileStoragePresenter extends AAdminPresenter {
         $text .= 'Number of files: ' . $count;
 
         return new TextResponse($text);
+    }
+
+    public function handleDownload() {
+        $hash = $this->httpRequest->query('hash');
+
+        if($hash === null) {
+            throw new GeneralException('No hash is given.');
+        }
+
+        $file = $this->fileStorageManager->getFileByHash($hash);
+
+        $this->app->forceDownloadFile($file->filepath);
     }
 }
 

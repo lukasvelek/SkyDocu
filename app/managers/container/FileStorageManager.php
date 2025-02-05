@@ -2,6 +2,8 @@
 
 namespace App\Managers\Container;
 
+use App\Core\Caching\CacheNames;
+use App\Core\Datetypes\DateTime;
 use App\Core\DB\DatabaseRow;
 use App\Core\Router;
 use App\Exceptions\AException;
@@ -46,7 +48,13 @@ class FileStorageManager extends AManager {
      * @param string $documentId Document ID
      */
     public function getFileRelationForDocumentId(string $documentId): DatabaseRow {
-        $row = $this->fileStorageRepository->getFileForDocumentId($documentId);
+        $exp = new DateTime();
+        $exp->modify('+1h');
+        $cache = $this->cacheFactory->getCache(CacheNames::DOCUMENT_FILE_MAPPING, $exp);
+
+        $row = $cache->load($documentId, function() use ($documentId) {
+            return $this->fileStorageRepository->getFileForDocumentId($documentId);
+        });
 
         if($row === null) {
             throw new NonExistingEntityException('File does not exist.', null, false);
@@ -91,7 +99,13 @@ class FileStorageManager extends AManager {
      * @param string $fileId File ID
      */
     public function getFileById(string $fileId): DatabaseRow {
-        $file = $this->fileStorageRepository->getFileById($fileId);
+        $exp = new DateTime();
+        $exp->modify('+1h');
+        $cache = $this->cacheFactory->getCache(CacheNames::FILES);
+
+        $file = $cache->load($fileId, function() use ($fileId) {
+            return $this->fileStorageRepository->getFileById($fileId);
+        });
 
         if($file === null) {
             throw new NonExistingEntityException('File does not exist.');
@@ -106,13 +120,25 @@ class FileStorageManager extends AManager {
      * @param string $hash File hash
      */
     public function getFileByHash(string $hash): DatabaseRow {
-        $file = $this->fileStorageRepository->getFileByHash($hash);
+        $exp = new DateTime();
+        $exp->modify('+1h');
+        $cache = $this->cacheFactory->getCache(CacheNames::FILE_HASH_TO_ID_MAPPING);
 
-        if($file === null) {
+        $fileId = $cache->load($hash, function() use ($hash) {
+            $file = $this->fileStorageRepository->getFileByHash($hash);
+
+            if($file !== null) {
+                return $file['fileId'];
+            }
+
+            return null;
+        });
+
+        if($fileId === null) {
             throw new NonExistingEntityException('File does not exist.');
         }
 
-        return DatabaseRow::createFromDbRow($file);
+        return $this->getFileById($fileId);
     }
 
     /**

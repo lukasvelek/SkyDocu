@@ -15,7 +15,7 @@ These future plans are also in Issues list and can be distinguished by their mil
 Future plans include:
 - Dark theme support (__1.4__)
 - Grid exporting (__1.4__)
-- Multiple database servers (__1.4__, but will probably be postponed)
+- Multiple database servers (__1.4__, may be postponed)
 
 ## Changelog
 ### 1.3 (?)

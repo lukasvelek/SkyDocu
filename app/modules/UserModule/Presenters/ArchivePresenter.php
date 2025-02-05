@@ -21,21 +21,14 @@ class ArchivePresenter extends AUserPresenter {
     }
 
     public function handleList() {
-        $folderId = $this->httpRequest->query('folderId');
-
-        if($folderId !== null) {
-            $this->currentFolderId = $folderId;
-        } else if($this->httpRequest->post('folderId') !== null) {
-            $this->currentFolderId = $this->httpRequest->post('folderId');
+        if($this->httpRequest->get('folderId') !== null) {
+            $this->currentFolderId = $this->httpRequest->get('folderId');
         } else {
             $this->redirect($this->createURL('list', ['folderId' => $this->archiveManager->getDefaultFolder()->folderId]));
         }
 
-        if($this->currentFolderId !== null) {
-            $folder = $this->archiveManager->getArchiveFolderById($this->currentFolderId);
-
-            $this->saveToPresenterCache('folderTitle', $folder->title);
-        }
+        $folder = $this->archiveManager->getArchiveFolderById($this->currentFolderId);
+        $this->saveToPresenterCache('folderTitle', $folder->title);
     }
 
     public function renderList() {

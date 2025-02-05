@@ -223,10 +223,8 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
      */
     private function getFolderId() {
         if($this->currentFolderId === null) {
-            if($this->httpRequest->query('folderId') !== null) {
-                $this->currentFolderId = $this->httpRequest->query('folderId');
-            } else if($this->httpRequest->post('folderId') !== null) {
-                $this->currentFolderId = $this->httpRequest->post('folderId');
+            if($this->httpRequest->get('folderId') !== null) {
+                $this->currentFolderId = $this->httpRequest->get('folderId');
             } else {
                 throw new GeneralException('No folder is selected.');
             }

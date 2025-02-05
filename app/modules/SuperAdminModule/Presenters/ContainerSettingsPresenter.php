@@ -408,7 +408,7 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
     }
 
     protected function createComponentFileStorageStatsWidget(HttpRequest $request) {
-        $containerId = $request->query('containerId') ?? $request->post('containerId');
+        $containerId = $request->get('containerId');
         $container = $this->app->containerManager->getContainerById($containerId);
         $containerConnection = $this->app->dbManager->getConnectionToDatabase($container->databaseName);
 

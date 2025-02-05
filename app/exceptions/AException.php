@@ -31,7 +31,7 @@ abstract class AException extends Exception {
     }
 
     public function saveToFile(bool $explicit = false) {
-        if(FileManager::folderExists(LOG_DIR) && ($this->getPrevious() === null || $explicit === true)) {
+        if(FileManager::folderExists(LOG_DIR) && ($this->getPrevious() === null || $explicit === true) && !in_array($this->name, ['ServiceException'])) {
             ExceptionHelper::saveExceptionToFile($this, $this->hash);
         }
     }

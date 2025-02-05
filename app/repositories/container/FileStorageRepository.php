@@ -24,6 +24,18 @@ class FileStorageRepository extends ARepository {
     }
 
     /**
+     * Composes a QueryBuilder isntance for document file relations
+     */
+    public function composeQueryForFileDocumentRelations(): QueryBuilder {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->select(['*'])
+            ->from('document_file_relation');
+
+        return $qb;
+    }
+
+    /**
      * Inserts a new stored file
      * 
      * @param string $fileId File ID
@@ -105,6 +117,40 @@ class FileStorageRepository extends ARepository {
             ->execute();
 
         return $qb->fetch();
+    }
+
+    /**
+     * Deletes a document-file relation
+     * 
+     * @param string $documentId Document ID
+     * @param string $fileId File ID
+     */
+    public function deleteDocumentFileRelation(string $documentId, string $fileId): bool {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->delete()
+            ->from('document_file_relation')
+            ->where('documentId = ?', [$documentId])
+            ->andWhere('fileId = ?', [$fileId])
+            ->execute();
+
+        return $qb->fetchBool();
+    }
+
+    /**
+     * Deletes a stored file
+     * 
+     * @param string $fileId File ID
+     */
+    public function deleteStoredFile(string $fileId): bool {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->delete()
+            ->from('file_storage')
+            ->where('fileId = ?', [$fileId])
+            ->execute();
+
+        return $qb->fetchBool();
     }
 }
 

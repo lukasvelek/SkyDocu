@@ -114,6 +114,12 @@ abstract class AGUICore {
         $components = TemplateHelper::loadComponentsFromTemplateContent($template->getTemplateContent());
 
         foreach($components as $componentName => $componentAction) {
+            if($this->httpRequest->query('do') !== null) {
+                $doComponentName = explode('-', $this->httpRequest->query('do'))[0];
+                if($doComponentName !== $componentName) {
+                    continue;
+                }
+            }
             if(method_exists($this, $componentAction)) {
                 if(isset($_GET['isFormSubmit']) && $_GET['isFormSubmit'] == '1') {
                     $fr = $this->createFormRequest();

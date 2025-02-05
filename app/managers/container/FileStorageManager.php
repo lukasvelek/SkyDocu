@@ -20,7 +20,7 @@ use App\Repositories\Container\FileStorageRepository;
  * @author Lukas Velek
  */
 class FileStorageManager extends AManager {
-    private FileStorageRepository $fileStorageRepository;
+    public FileStorageRepository $fileStorageRepository;
 
     public function __construct(Logger $logger, EntityManager $entityManager, FileStorageRepository $fileStorageRepository) {
         parent::__construct($logger, $entityManager);

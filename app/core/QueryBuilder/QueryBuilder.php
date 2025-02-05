@@ -545,8 +545,10 @@ class QueryBuilder
     /**
      * Regenerates SQL query
      */
-    public function regenerateSQL() {
+    public function regenerateSQL(): static {
         $this->createSQLQuery();
+
+        return $this;
     }
 
     /**

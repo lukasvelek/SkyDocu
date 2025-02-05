@@ -5,6 +5,7 @@ namespace App\Modules\SuperAdminModule;
 use App\Components\ContainerUsageAverageResponseTimeGraph\ContainerUsageAverageResponseTimeGraph;
 use App\Components\ContainerUsageStatsGraph\ContainerUsageStatsGraph;
 use App\Components\ContainerUsageTotalResponseTimeGraph\ContainerUsageTotalResponseTimeGraph;
+use App\Components\Widgets\FileStorageStatsForContainerWidget\FileStorageStatsForContainerWidget;
 use App\Constants\ContainerEnvironments;
 use App\Constants\ContainerInviteUsageStatus;
 use App\Constants\ContainerStatus;
@@ -16,6 +17,10 @@ use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
 use App\Exceptions\RequiredAttributeIsNotSetException;
 use App\Helpers\DateTimeFormatHelper;
+use App\Managers\Container\FileStorageManager;
+use App\Managers\EntityManager;
+use App\Repositories\Container\FileStorageRepository;
+use App\Repositories\ContentRepository;
 use App\UI\GridBuilder2\Action;
 use App\UI\GridBuilder2\Cell;
 use App\UI\GridBuilder2\Row;
@@ -400,6 +405,23 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
         $graph->setCanvasWidth(400);
 
         return $graph;
+    }
+
+    protected function createComponentFileStorageStatsWidget(HttpRequest $request) {
+        $containerId = $request->query('containerId') ?? $request->post('containerId');
+        $container = $this->app->containerManager->getContainerById($containerId);
+        $containerConnection = $this->app->dbManager->getConnectionToDatabase($container->databaseName);
+
+        $contentRepository = new ContentRepository($containerConnection, $this->logger);
+        $fileStorageRepository = new FileStorageRepository($containerConnection, $this->logger);
+
+        $entityManager = new EntityManager($this->logger, $contentRepository);
+        $fileStorageManager = new FileStorageManager($this->logger, $entityManager, $fileStorageRepository);
+
+        $widget = new FileStorageStatsForContainerWidget($request, $fileStorageManager);
+        $widget->addQueryDependency('containerId', $containerId);
+
+        return $widget;
     }
 
     public function handleClearUsageStatistics(?FormRequest $fr = null) {

@@ -23,6 +23,7 @@ class Widget extends AComponent {
     private bool $hasRefresh;
     private ?array $titleLink;
     private bool $titleHidden;
+    private array $queryDependencies;
 
     /**
      * Class constructor
@@ -38,6 +39,17 @@ class Widget extends AComponent {
         $this->componentName = 'widget';
         $this->titleLink = null;
         $this->titleHidden = false;
+        $this->queryDependencies = [];
+    }
+
+    /**
+     * Adds a query dependency
+     * 
+     * @param string $key Dependency key
+     * @param mixed $value Dependency value
+     */
+    public function addQueryDependency(string $key, mixed $value) {
+        $this->queryDependencies[$key] = $value;
     }
 
     /**
@@ -167,9 +179,17 @@ class Widget extends AComponent {
         ;
 
         if($isSkeleton) {
-            $el->text('<div id="skeletonTextAnimation" style="width: 10%">Refresh &orarr;</div>');
+            $el->text('<div id="skeletonTextAnimation" style="width: 25%">Refresh &orarr;</div>');
         } else {
-            $el->onClick($this->componentName . '_refresh()');
+            $data = [];
+            foreach($this->queryDependencies as $key => $value) {
+                $data[] = $value;
+            }
+            if(!empty($data)) {
+                $el->onClick($this->componentName . '_refresh(\'' . implode('\', \'', $data) . '\')');
+            } else {
+                $el->onClick($this->componentName . '_refresh()');
+            }
         }
 
         return $el->toString();
@@ -187,6 +207,22 @@ class Widget extends AComponent {
         $getSkeletonPar = new PostAjaxRequest($this->httpRequest);
 
         $getSkeletonPar->setComponentUrl($this, 'getSkeleton');
+        
+        $data = [];
+        $args = [];
+        foreach($this->queryDependencies as $key => $value) {
+            $args[] = '_' . $key;
+            $data[$key] = '_' . $key;
+        }
+
+        if(!empty($data)) {
+            $getSkeletonPar->setData($data);
+        }
+        if(!empty($args)) {
+            foreach($args as $arg) {
+                $getSkeletonPar->addArgument($arg);
+            }
+        }
 
         $updateOperation = new HTMLPageOperation();
         $updateOperation->setHtmlEntityId('widget-' . $this->componentName)
@@ -194,11 +230,11 @@ class Widget extends AComponent {
 
         $getSkeletonPar->addOnFinishOperation($updateOperation);
 
-        $updateOperation = new HTMLPageOperation();
-        $updateOperation->setHtmlEntityId('widget-' . $this->componentName . '-controls')
+        $updateOperation2 = new HTMLPageOperation();
+        $updateOperation2->setHtmlEntityId('widget-' . $this->componentName . '-controls')
             ->setJsonResponseObjectName('controls');
 
-        $getSkeletonPar->addOnFinishOperation($updateOperation);
+        $getSkeletonPar->addOnFinishOperation($updateOperation2);
 
         $scripts[] = $getSkeletonPar->build();
 
@@ -206,6 +242,15 @@ class Widget extends AComponent {
         $par = new PostAjaxRequest($this->httpRequest);
 
         $par->setComponentUrl($this, 'refresh');
+
+        if(!empty($data)) {
+            $par->setData($data);
+        }
+        if(!empty($args)) {
+            foreach($args as $arg) {
+                $par->addArgument($arg);
+            }
+        }
 
         $updateOperation = new HTMLPageOperation();
         $updateOperation->setHtmlEntityId('widget-' . $this->componentName)
@@ -220,10 +265,10 @@ class Widget extends AComponent {
         $par->addOnFinishOperation($updateOperation);
 
         $scripts[] = $par->build();
-        $scripts[] = 'async function ' . $this->componentName . '_refresh() {
-            await ' . $getSkeletonPar->getFunctionName() . '();
+        $scripts[] = 'async function ' . $this->componentName . '_refresh(' . implode(', ', $args) . ') {
+            await ' . $getSkeletonPar->getFunctionName() . '(' . implode(', ', $args) . ');
             await sleep(2500);
-            await ' . $par->getFunctionName() . '();
+            await ' . $par->getFunctionName() . '(' . implode(', ', $args) . ');
         }';
 
         return '<script type="text/javascript">' . implode(' ', $scripts) . '</script>';

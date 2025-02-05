@@ -115,8 +115,7 @@ abstract class AGUICore {
 
         foreach($components as $componentName => $componentAction) {
             /**
-             * If this is an ajax request and the query parameter "do" is not null, then only the requested component should be called and processed
-             * Others are not needed
+             * If this is an ajax request and the query parameter "do" is not null, then only the requested component should be called and processed because other components are not needed
              */
             if($this->httpRequest->query('do') !== null && $this->httpRequest->isAjax) {
                 $doComponentName = explode('-', $this->httpRequest->query('do'))[0];

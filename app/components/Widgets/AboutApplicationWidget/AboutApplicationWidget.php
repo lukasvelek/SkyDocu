@@ -71,7 +71,7 @@ class AboutApplicationWidget extends Widget {
     private function processData() {
         $data = [
             'Application version' => Application::APP_VERSION,
-            'Version release date' => '27.1.2025'
+            'Version release date' => $this->getAppVersionReleaseDate()
         ];
 
         if(!$this->disableGithubLink) {
@@ -82,6 +82,20 @@ class AboutApplicationWidget extends Widget {
         }
 
         return $data;
+    }
+
+    /**
+     * Returns application version release date
+     * 
+     * @return string Link
+     */
+    private function getAppVersionReleaseDate(): string {
+        if(Application::APP_VERSION_RELEASE_DATE == '-') {
+            // not released yet
+            return '<span title="This version has not been released yet.">' . Application::APP_VERSION_RELEASE_DATE . '</span>';
+        } else {
+            return Application::APP_VERSION_RELEASE_DATE;
+        }
     }
 
     /**

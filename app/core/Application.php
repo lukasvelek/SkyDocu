@@ -43,6 +43,7 @@ use ReflectionClass;
  */
 class Application {
     public const APP_VERSION = '1.3-dev';
+    public const APP_VERSION_RELEASE_DATE = '-';
 
     private array $modules;
     public ?UserEntity $currentUser;

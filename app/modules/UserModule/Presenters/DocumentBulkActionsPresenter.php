@@ -15,19 +15,19 @@ class DocumentBulkActionsPresenter extends AUserPresenter {
     }
 
     public function handleStartProcess() {
-        $process = $this->httpRequest->query('process');
+        $process = $this->httpRequest->get('process');
         if($process === null) {
             throw new RequiredAttributeIsNotSetException('process');
         }
-        $documentIds = $this->httpRequest->query('documentId');
+        $documentIds = $this->httpRequest->get('documentId');
 
         $exceptions = [];
 
         switch($process) {
             case DocumentBulkActions::MOVE_TO_ARCHIVE:
-                $backPage = $this->httpRequest->query('backPage');
-                $backAction = $this->httpRequest->query('backAction');
-                $folderId = $this->httpRequest->query('backFolderId');
+                $backPage = $this->httpRequest->get('backPage');
+                $backAction = $this->httpRequest->get('backAction');
+                $folderId = $this->httpRequest->get('backFolderId');
 
                 $url = $this->createURLString('moveToArchiveForm');
 
@@ -50,9 +50,9 @@ class DocumentBulkActionsPresenter extends AUserPresenter {
                 break;
 
             case DocumentBulkActions::MOVE_FROM_ARCHIVE:
-                $backPage = $this->httpRequest->query('backPage');
-                $backAction = $this->httpRequest->query('backAction');
-                $folderId = $this->httpRequest->query('backFolderId');
+                $backPage = $this->httpRequest->get('backPage');
+                $backAction = $this->httpRequest->get('backAction');
+                $folderId = $this->httpRequest->get('backFolderId');
 
                 $url = $this->createURLString('moveFromArchive');
 
@@ -98,20 +98,20 @@ class DocumentBulkActionsPresenter extends AUserPresenter {
                 break;
         }
 
-        $backPage = $this->httpRequest->query('backPage');
-        $backAction = $this->httpRequest->query('backAction');
+        $backPage = $this->httpRequest->get('backPage');
+        $backAction = $this->httpRequest->get('backAction');
 
         $backUrl = [];
         if($backPage !== null && $backAction !== null) {
             $backUrl = ['page' => $backPage, 'action' => $backAction];
 
-            $folderId = $this->httpRequest->query('folderId');
+            $folderId = $this->httpRequest->get('folderId');
             if($folderId !== null) {
                 $backUrl['folderId'] = $folderId;
             }
         } else {
             $backUrl = $this->createFullURL('User:Documents', 'list');
-            $folderId = $this->httpRequest->query('folderId');
+            $folderId = $this->httpRequest->get('folderId');
             if($folderId !== null) {
                 $backUrl['folderId'] = $folderId;
             }
@@ -141,22 +141,22 @@ class DocumentBulkActionsPresenter extends AUserPresenter {
                 $this->flashMessage('Could not move documents to archive. Reason: ' . $e->getMessage(), 'error', 10);
             }
 
-            if($this->httpRequest->query('backPage') !== null && $this->httpRequest->query('backAction') !== null) {
-                $params['page'] = $this->httpRequest->query('backPage');
-                $params['action'] = $this->httpRequest->query('backAction');
+            if($this->httpRequest->get('backPage') !== null && $this->httpRequest->get('backAction') !== null) {
+                $params['page'] = $this->httpRequest->get('backPage');
+                $params['action'] = $this->httpRequest->get('backAction');
             }
-            if($this->httpRequest->query('folderId') !== null) {
-                $params['folderId'] = $this->httpRequest->query('folderId');
+            if($this->httpRequest->get('folderId') !== null) {
+                $params['folderId'] = $this->httpRequest->get('folderId');
             }
             $this->redirect($params);
         } else {
             $params = [];
-            if($this->httpRequest->query('backPage') !== null && $this->httpRequest->query('backAction') !== null) {
-                $params['page'] = $this->httpRequest->query('backPage');
-                $params['action'] = $this->httpRequest->query('backAction');
+            if($this->httpRequest->get('backPage') !== null && $this->httpRequest->get('backAction') !== null) {
+                $params['page'] = $this->httpRequest->get('backPage');
+                $params['action'] = $this->httpRequest->get('backAction');
             }
-            if($this->httpRequest->query('folderId') !== null) {
-                $params['folderId'] = $this->httpRequest->query('folderId');
+            if($this->httpRequest->get('folderId') !== null) {
+                $params['folderId'] = $this->httpRequest->get('folderId');
             }
             $this->saveToPresenterCache('link', $this->createBackFullUrl($params['page'], $params['action'], ['folderId' => $params['folderId']]));
         }
@@ -178,14 +178,14 @@ class DocumentBulkActionsPresenter extends AUserPresenter {
         }
 
         $params = [];
-        if($request->query('backPage') !== null && $request->query('backAction') !== null) {
-            $params['backPage'] = $request->query('backPage');
-            $params['backAction'] = $request->query('backAction');
+        if($request->get('backPage') !== null && $request->get('backAction') !== null) {
+            $params['backPage'] = $request->get('backPage');
+            $params['backAction'] = $request->get('backAction');
         }
-        if($request->query('folderId') !== null) {
-            $params['folderId'] = $request->query('folderId');
+        if($request->get('folderId') !== null) {
+            $params['folderId'] = $request->get('folderId');
         }
-        $documentIds = $request->query('documentIds') ?? [];
+        $documentIds = $request->get('documentIds') ?? [];
 
         $form = $this->componentFactory->getFormBuilder();
 
@@ -208,7 +208,7 @@ class DocumentBulkActionsPresenter extends AUserPresenter {
         try {
             $this->archiveRepository->beginTransaction(__METHOD__);
 
-            $documentIds = $this->httpRequest->query('documentIds') ?? [];
+            $documentIds = $this->httpRequest->get('documentIds') ?? [];
 
             foreach($documentIds as $documentId) {
                 $this->documentManager->updateDocument($documentId, ['status' => DocumentStatus::NEW]);
@@ -224,12 +224,12 @@ class DocumentBulkActionsPresenter extends AUserPresenter {
             $this->flashMessage('Could not archive documents. Reason: ' . $e->getMessage(), 'error', 10);
         }
 
-        if($this->httpRequest->query('backPage') !== null && $this->httpRequest->query('backAction') !== null) {
-            $params['page'] = $this->httpRequest->query('backPage');
-            $params['action'] = $this->httpRequest->query('backAction');
+        if($this->httpRequest->get('backPage') !== null && $this->httpRequest->get('backAction') !== null) {
+            $params['page'] = $this->httpRequest->get('backPage');
+            $params['action'] = $this->httpRequest->get('backAction');
         }
-        if($this->httpRequest->query('folderId') !== null) {
-            $params['folderId'] = $this->httpRequest->query('folderId');
+        if($this->httpRequest->get('folderId') !== null) {
+            $params['folderId'] = $this->httpRequest->get('folderId');
         }
         $this->redirect($params);
     }

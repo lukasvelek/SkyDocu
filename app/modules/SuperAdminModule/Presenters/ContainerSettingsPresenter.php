@@ -620,7 +620,7 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
         if($containerId === null) {
             throw new RequiredAttributeIsNotSetException('containerId');
         }
-        $regenerate = $this->httpRequest->query('regenerate') !== null;
+        $regenerate = $this->httpRequest->get('regenerate') !== null;
 
         $dateValid = new DateTime();
         $dateValid->modify('+1m');
@@ -630,7 +630,7 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
             $this->app->containerInviteRepository->beginTransaction(__METHOD__);
 
             if($regenerate) {
-                $inviteId = $this->httpRequest->query('oldInviteId');
+                $inviteId = $this->httpRequest->get('oldInviteId');
 
                 $this->app->containerInviteManager->disableContainerInvite($inviteId);
             }
@@ -658,7 +658,7 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
     }
 
     public function handleAcceptInvite() {
-        $entryId = $this->httpRequest->query('entryId');
+        $entryId = $this->httpRequest->get('entryId');
         if($entryId === null) {
             throw new RequiredAttributeIsNotSetException('entryId');
         }
@@ -695,7 +695,7 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
     }
 
     public function handleRejectInvite() {
-        $entryId = $this->httpRequest->query('entryId');
+        $entryId = $this->httpRequest->get('entryId');
         if($entryId === null) {
             throw new RequiredAttributeIsNotSetException('entryId');
         }
@@ -726,7 +726,7 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
     }
 
     public function handleDeleteInvite() {
-        $entryId = $this->httpRequest->query('entryId');
+        $entryId = $this->httpRequest->get('entryId');
         if($entryId === null) {
             throw new RequiredAttributeIsNotSetException('entryId');
         }

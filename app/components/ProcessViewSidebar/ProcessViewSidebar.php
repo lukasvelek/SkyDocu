@@ -59,8 +59,8 @@ class ProcessViewSidebar extends Sidebar2 {
      * @return bool True if active or false if not
      */
     private function checkIsViewActive(string $view) {
-        if($this->httpRequest->query('view') !== null) {
-            return $this->httpRequest->query('view') == $view;
+        if($this->httpRequest->get('view') !== null) {
+            return $this->httpRequest->get('view') == $view;
         }
 
         return false;

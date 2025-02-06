@@ -110,9 +110,9 @@ class ArchiveFoldersSidebar extends Sidebar2 {
         }
 
         $active = false;
-        if($this->httpRequest->query('folderId') !== null && $this->httpRequest->query('folderId') == $folder->folderId) {
+        if($this->httpRequest->get('folderId') !== null && $this->httpRequest->get('folderId') == $folder->folderId) {
             $active = true;
-        } else if($this->httpRequest->query('folderId') === null && $folder->row->title == 'Default' && $this->httpRequest->query('action') == 'list') {
+        } else if($this->httpRequest->get('folderId') === null && $folder->row->title == 'Default' && $this->httpRequest->get('action') == 'list') {
             $active = true;
         }
 

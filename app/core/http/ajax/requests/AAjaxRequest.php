@@ -160,8 +160,8 @@ abstract class AAjaxRequest implements IAjaxRequest {
      */
     public function setComponentUrl(AComponent $component, string $actionName): static {
         $this->url = [
-            'page' => $this->request->query('page'),
-            'action' => $this->request->query('action'),
+            'page' => $this->request->get('page'),
+            'action' => $this->request->get('action'),
             'do' => $component->getComponentName() . '-' . $actionName
         ];
         $this->isComponent = true;

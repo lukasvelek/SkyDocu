@@ -13,7 +13,7 @@ abstract class ASuperAdminPresenter extends APresenter {
     }
 
     private function checkAction(string ...$actions) {
-        if(in_array($this->httpRequest->query('action'), $actions)) {
+        if(in_array($this->httpRequest->get('action'), $actions)) {
             return true;
         } else {
             return false;

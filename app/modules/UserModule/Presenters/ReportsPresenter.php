@@ -22,11 +22,11 @@ class ReportsPresenter extends AUserPresenter {
     }
 
     public function handleShowReport() {
-        $name = $this->httpRequest->query('name') ?? $this->httpRequest->post('name');
+        $name = $this->httpRequest->get('name') ?? $this->httpRequest->post('name');
         if($name === null) {
             throw new RequiredAttributeIsNotSetException('name');
         }
-        $view = $this->httpRequest->query('view') ?? $this->httpRequest->post('view');
+        $view = $this->httpRequest->get('view') ?? $this->httpRequest->post('view');
         if($view === null) {
             throw new RequiredAttributeIsNotSetException('view');
         }
@@ -55,8 +55,8 @@ class ReportsPresenter extends AUserPresenter {
             $this->standaloneProcessManager
         );
 
-        $grid->setView($request->query('view') ?? $request->post('view'));
-        $grid->setProcessType($request->query('name') ?? $request->post('name'));
+        $grid->setView($request->get('view') ?? $request->post('view'));
+        $grid->setProcessType($request->get('name') ?? $request->post('name'));
 
         return $grid;
     }

@@ -67,11 +67,11 @@ class ProcessListPresenter extends AAdminPresenter {
     }
 
     public function handleSwitch() {
-        $type = $this->httpRequest->query('type');
+        $type = $this->httpRequest->get('type');
         if($type === null) {
             throw new RequiredAttributeIsNotSetException('type');
         }
-        $operation = $this->httpRequest->query('operation');
+        $operation = $this->httpRequest->get('operation');
         if($operation === null) {
             throw new RequiredAttributeIsNotSetException('operation');
         }

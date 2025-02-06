@@ -8,7 +8,7 @@ class AutoLoginPresenter extends AAnonymPresenter {
     }
 
     public function handleCheckLogin() {
-        $fm = $this->httpRequest->query('_fm');
+        $fm = $this->httpRequest->get('_fm');
 
         if($this->httpSessionGet('userId') === null) {
             $url = ['page' => 'Anonym:Login', 'action' => 'loginForm'];

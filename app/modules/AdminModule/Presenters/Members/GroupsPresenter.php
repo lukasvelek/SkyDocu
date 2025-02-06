@@ -68,7 +68,7 @@ class GroupsPresenter extends AAdminPresenter {
     }
 
     public function handleListMembers() {
-        $groupId = $this->httpRequest->query('groupId');
+        $groupId = $this->httpRequest->get('groupId');
         $group = $this->groupRepository->getGroupById($groupId);
 
         $links = [
@@ -89,10 +89,10 @@ class GroupsPresenter extends AAdminPresenter {
     protected function createComponentGroupMembersGrid(HttpRequest $request) {
         $grid = $this->componentFactory->getGridBuilder($this->containerId);
 
-        $group = $this->groupRepository->getGroupById($request->query('groupId'));
+        $group = $this->groupRepository->getGroupById($request->get('groupId'));
 
-        $grid->createDataSourceFromQueryBuilder($this->groupRepository->composeQueryForGroupMembers($request->query('groupId')), 'relationId');
-        $grid->addQueryDependency('groupId', $request->query('groupId'));
+        $grid->createDataSourceFromQueryBuilder($this->groupRepository->composeQueryForGroupMembers($request->get('groupId')), 'relationId');
+        $grid->addQueryDependency('groupId', $request->get('groupId'));
 
         $grid->addColumnUser('userId', 'User');
 
@@ -109,7 +109,7 @@ class GroupsPresenter extends AAdminPresenter {
                 $el = HTML::el('a')
                     ->title('Remove')
                     ->text('Remove')
-                    ->href($this->createURLString('removeGroupMember', ['groupId' => $request->query('groupId'), 'userId' => $row->userId]))
+                    ->href($this->createURLString('removeGroupMember', ['groupId' => $request->get('groupId'), 'userId' => $row->userId]))
                     ->class('grid-link')
                 ;
 
@@ -122,7 +122,7 @@ class GroupsPresenter extends AAdminPresenter {
 
     public function handleAddMemberForm(?FormRequest $fr = null) {
         if($fr !== null) {
-            $groupId = $this->httpRequest->query('groupId');
+            $groupId = $this->httpRequest->get('groupId');
             if($groupId === null) {
                 throw new RequiredAttributeIsNotSetException('groupId');
             }
@@ -146,14 +146,14 @@ class GroupsPresenter extends AAdminPresenter {
     }
 
     public function renderAddMemberForm() {
-        $this->template->links = $this->createBackUrl('listMembers', ['groupId' => $this->httpRequest->query('groupId')]);
+        $this->template->links = $this->createBackUrl('listMembers', ['groupId' => $this->httpRequest->get('groupId')]);
     }
 
     protected function createComponentNewMemberForm(HttpRequest $request) {
         $container = $this->app->containerManager->getContainerById($this->httpSessionGet('container'));
 
         $containerUsers = $this->app->groupManager->getGroupUsersForGroupTitle($container->title . ' - users');
-        $groupUsers = $this->groupRepository->getMembersForGroup($request->query('groupId'));
+        $groupUsers = $this->groupRepository->getMembersForGroup($request->get('groupId'));
 
         $users = [];
         foreach($containerUsers as $user) {
@@ -167,7 +167,7 @@ class GroupsPresenter extends AAdminPresenter {
 
         $form = $this->componentFactory->getFormBuilder();
 
-        $form->setAction($this->createURL('addMemberForm', ['groupId' => $request->query('groupId')]));
+        $form->setAction($this->createURL('addMemberForm', ['groupId' => $request->get('groupId')]));
 
         $select = $form->addSelect('user', 'User:')
             ->setRequired()
@@ -186,11 +186,11 @@ class GroupsPresenter extends AAdminPresenter {
     }
 
     public function handleRemoveGroupMember() {
-        $groupId = $this->httpRequest->query('groupId');
+        $groupId = $this->httpRequest->get('groupId');
         if($groupId === null) {
             throw new RequiredAttributeIsNotSetException('groupId');
         }
-        $userId = $this->httpRequest->query('userId');
+        $userId = $this->httpRequest->get('userId');
         if($userId === null) {
             throw new RequiredAttributeIsNotSetException('userId');
         }

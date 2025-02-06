@@ -1570,10 +1570,8 @@ class GridBuilder extends AComponent {
     private function getGridPage() {
         $page = 0;
 
-        if($this->httpRequest->query('gridPage') !== null) {
-            $page = $this->httpRequest->query('gridPage');
-        } else if($this->httpRequest->post('gridPage') !== null) {
-            $page = $this->httpRequest->post('gridPage');
+        if($this->httpRequest->get('gridPage') !== null) {
+            $page = $this->httpRequest->get('gridPage');
         }
 
         $page = $this->gridHelper->getGridPage($this->gridName, $page);

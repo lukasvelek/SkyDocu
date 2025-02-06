@@ -28,8 +28,8 @@ class ArchiveFoldersPresenter extends AAdminPresenter {
             LinkBuilder::createSimpleLink('Home', $this->createURL('list'), 'link')
         ];
 
-        if($this->httpRequest->query('folderId') !== null) {
-            $folderId = $this->httpRequest->query('folderId');
+        if($this->httpRequest->get('folderId') !== null) {
+            $folderId = $this->httpRequest->get('folderId');
 
             $newFolderLink = LinkBuilder::createSimpleLink('New folder', $this->createURL('newFolderForm', ['folderId' => $folderId]), 'link');
 
@@ -70,8 +70,8 @@ class ArchiveFoldersPresenter extends AAdminPresenter {
 
         $qb = $this->archiveRepository->composeQueryForArchiveFolders();
 
-        if($this->httpRequest->query('folderId') !== null) {
-            $qb->andWhere('parentFolderId = ?', [$this->httpRequest->query('folderId')]);
+        if($this->httpRequest->get('folderId') !== null) {
+            $qb->andWhere('parentFolderId = ?', [$this->httpRequest->get('folderId')]);
         }
 
         $grid->createDataSourceFromQueryBuilder($qb, 'folderId');
@@ -203,7 +203,7 @@ class ArchiveFoldersPresenter extends AAdminPresenter {
     }
 
     public function handleNewFolderForm(?FormRequest $fr = null) {
-        $folderId = $this->httpRequest->query('folderId');
+        $folderId = $this->httpRequest->get('folderId');
 
         if($fr !== null) {
             try {
@@ -229,8 +229,8 @@ class ArchiveFoldersPresenter extends AAdminPresenter {
     }
 
     public function renderNewFolderForm() {
-        if($this->httpRequest->query('folderId') !== null) {
-            $this->template->links = $this->createBackUrl('list', ['folderId' => $this->httpRequest->query('folderId')]);
+        if($this->httpRequest->get('folderId') !== null) {
+            $this->template->links = $this->createBackUrl('list', ['folderId' => $this->httpRequest->get('folderId')]);
         } else {
             $this->template->links = $this->createBackUrl('list');
         }
@@ -240,8 +240,8 @@ class ArchiveFoldersPresenter extends AAdminPresenter {
         $form = $this->componentFactory->getFormBuilder();
 
         $url = '';
-        if($request->query('folderId') !== null) {
-            $url = $this->createURL('newFolderForm', ['folderId' => $request->query('folderId')]);
+        if($request->get('folderId') !== null) {
+            $url = $this->createURL('newFolderForm', ['folderId' => $request->get('folderId')]);
         } else {
             $url = $this->createURL('newFolderForm');
         }
@@ -257,7 +257,7 @@ class ArchiveFoldersPresenter extends AAdminPresenter {
     }
 
     public function handleFinalArchiveForm(?FormRequest $fr = null) {
-        $folderId = $this->httpRequest->query('folderId');
+        $folderId = $this->httpRequest->get('folderId');
 
         if($fr !== null) {
             try {
@@ -310,7 +310,7 @@ class ArchiveFoldersPresenter extends AAdminPresenter {
     protected function createComponentFinalArchiveFolderForm(HttpRequest $request) {
         $form = $this->componentFactory->getFormBuilder();
 
-        $form->setAction($this->createURL('finalArchiveForm', ['folderId' => $request->query('folderId')]));
+        $form->setAction($this->createURL('finalArchiveForm', ['folderId' => $request->get('folderId')]));
 
         $form->addSubmit('Archive folder');
 
@@ -318,7 +318,7 @@ class ArchiveFoldersPresenter extends AAdminPresenter {
     }
 
     public function handleShred() {
-        $folderId = $this->httpRequest->query('folderId');
+        $folderId = $this->httpRequest->get('folderId');
 
         try {
             $this->archiveRepository->beginTransaction(__METHOD__);

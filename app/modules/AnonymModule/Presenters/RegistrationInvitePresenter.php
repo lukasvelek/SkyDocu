@@ -19,7 +19,7 @@ class RegistrationInvitePresenter extends AAnonymPresenter {
     public function handleForm(?FormRequest $fr = null) {
         if($fr !== null) {
             $containerId = $this->httpRequest->get('containerId');
-            $inviteId = $this->httpRequest->query('inviteId');
+            $inviteId = $this->httpRequest->get('inviteId');
 
             try {
                 $data = [
@@ -49,7 +49,7 @@ class RegistrationInvitePresenter extends AAnonymPresenter {
         } else {
             $this->httpSessionSet('is_registering', '1');
 
-            $inviteId = $this->httpRequest->query('inviteId');
+            $inviteId = $this->httpRequest->get('inviteId');
             if($inviteId === null) {
                 throw new RequiredAttributeIsNotSetException('inviteId');
             }
@@ -116,7 +116,7 @@ class RegistrationInvitePresenter extends AAnonymPresenter {
     protected function createComponentRegistrationForm(HttpRequest $request) {
         $form = $this->componentFactory->getFormBuilder();
 
-        $form->setAction($this->createURL('form', ['inviteId' => $request->query('inviteId'), 'containerId' => $this->containerId]));
+        $form->setAction($this->createURL('form', ['inviteId' => $request->get('inviteId'), 'containerId' => $this->containerId]));
 
         $form->addTextInput('username', 'Username:')
             ->setRequired();
@@ -137,7 +137,7 @@ class RegistrationInvitePresenter extends AAnonymPresenter {
     public function renderSuccess() {}
 
     public function renderError() {
-        $this->template->hash = $this->httpRequest->query('hash');
+        $this->template->hash = $this->httpRequest->get('hash');
     }
 }
 

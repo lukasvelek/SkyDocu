@@ -27,7 +27,7 @@ class BackgroundServicesPresenter extends ASuperAdminSettingsPresenter {
     }
 
     public function handleRun() {
-        $serviceId = $this->httpRequest->query('serviceId');
+        $serviceId = $this->httpRequest->get('serviceId');
         if($serviceId === null) {
             throw new RequiredAttributeIsNotSetException('serviceId');
         }

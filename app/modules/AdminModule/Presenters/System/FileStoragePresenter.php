@@ -110,7 +110,7 @@ class FileStoragePresenter extends AAdminPresenter {
     }
 
     public function handleDownload() {
-        $hash = $this->httpRequest->query('hash');
+        $hash = $this->httpRequest->get('hash');
 
         if($hash === null) {
             throw new GeneralException('No hash is given.');

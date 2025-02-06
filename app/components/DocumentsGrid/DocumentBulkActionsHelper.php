@@ -154,8 +154,8 @@ class DocumentBulkActionsHelper {
      */
     private function createBulkActionUrlForProcess(array $documentIds, string $bulkAction) {
         $urlParams = [
-            'backPage=' . $this->request->query('page'),
-            'backAction=' . $this->request->query('action'),
+            'backPage=' . $this->request->get('page'),
+            'backAction=' . $this->request->get('action'),
             'process=' . $bulkAction
         ];
 
@@ -181,8 +181,8 @@ class DocumentBulkActionsHelper {
      */
     private function createBulkActionUrl(array $documentIds, string $bulkAction) {
         $urlParams = [
-            'backPage=' . $this->request->query('page'),
-            'backAction=' . $this->request->query('action')
+            'backPage=' . $this->request->get('page'),
+            'backAction=' . $this->request->get('action')
         ];
 
         $urlParams[] = 'backFolderId=' . $this->folderId;

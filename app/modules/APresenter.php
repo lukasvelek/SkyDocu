@@ -326,11 +326,11 @@ abstract class APresenter extends AGUICore {
     public function redirect(array|string $url) {
         if(!empty($url) && is_array($url)) {    
             if(!array_key_exists('page', $url)) {
-                $url['page'] = $this->httpRequest->query('page');
+                $url['page'] = $this->httpRequest->get('page');
             }
 
             if(!array_key_exists('_fm', $this->specialRedirectUrlParams)) {
-                $_fm = $this->httpRequest->query('_fm');
+                $_fm = $this->httpRequest->get('_fm');
                 if($_fm !== null) {
                     $this->specialRedirectUrlParams['_fm'] = $_fm;
                 }
@@ -534,7 +534,7 @@ abstract class APresenter extends AGUICore {
         }
 
         // Process component action
-        if($this->httpRequest->query('do') !== null) {
+        if($this->httpRequest->get('do') !== null) {
             $templateContent2 = $this->processComponentAction($templateContent);
 
             if($templateContent2 !== null) {
@@ -555,7 +555,7 @@ abstract class APresenter extends AGUICore {
      */
     private function processComponentAction(TemplateObject $templateContent) {
         // Split the component action parameter
-        $do = $this->httpRequest->query('do');
+        $do = $this->httpRequest->get('do');
         $doParts = explode('-', $do);
 
         if(count($doParts) < 2) {
@@ -586,7 +586,7 @@ abstract class APresenter extends AGUICore {
             if(method_exists($component, $methodName)) {
                 $result = $this->logger->stopwatch(function() use ($component, $methodName) {
                     try {
-                        if($this->httpRequest->query('isFormSubmit') == '1') { // it is a form
+                        if($this->httpRequest->get('isFormSubmit') == '1') { // it is a form
                             $fr = $this->createFormRequest();
                             $result = $component->processMethod($methodName, [$this->httpRequest, $fr]);
                         } else {

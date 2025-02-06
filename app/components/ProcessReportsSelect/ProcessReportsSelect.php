@@ -56,7 +56,7 @@ class ProcessReportsSelect extends AComponent {
                 'view' => 'my'
             ];
 
-            $link = $this->createFullURLString($this->httpRequest->query('page'), 'showReport', $params);
+            $link = $this->createFullURLString($this->httpRequest->get('page'), 'showReport', $params);
 
             $widget = new ReportWidget($this->httpRequest, $key, 'My ' . $row->title . ' requests', $link);
             $widget->startup();
@@ -64,7 +64,7 @@ class ProcessReportsSelect extends AComponent {
 
             $params['view'] = 'all';
 
-            $link = $this->createFullURLString($this->httpRequest->query('page'), 'showReport', $params);
+            $link = $this->createFullURLString($this->httpRequest->get('page'), 'showReport', $params);
 
             $widget = new ReportWidget($this->httpRequest, $key, 'All ' . $row->title . ' requests', $link);
             $widget->startup();

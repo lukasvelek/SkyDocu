@@ -97,7 +97,7 @@ class GridConfigurationForm extends FormBuilder2 {
      * @return JsonResponse
      */
     protected function actionLoadColumns() {
-        $gridName = $this->httpRequest->query('gridName');
+        $gridName = $this->httpRequest->get('gridName');
 
         switch($gridName) {
             case GridNames::DOCUMENTS_GRID:

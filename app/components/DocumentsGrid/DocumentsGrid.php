@@ -553,8 +553,8 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
      */
     public function useCheckboxes(APresenter $presenter) {
         $params = [];
-        if($this->httpRequest->query('folderId') !== null) {
-            $params['folderId'] = $this->httpRequest->query('folderId');
+        if($this->httpRequest->get('folderId') !== null) {
+            $params['folderId'] = $this->httpRequest->get('folderId');
         }
 
         $this->addCheckboxes2($presenter, 'bulkAction', $params);
@@ -607,7 +607,7 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
     public function actionBulkAction() {
         $modal = new BulkActionsModal($this);
 
-        $ids = $this->httpRequest->query('ids');
+        $ids = $this->httpRequest->get('ids');
 
         if($this->isArchive) {
             $this->documentBulkActionsHelper->setArchiveFolderId($this->getFolderId());

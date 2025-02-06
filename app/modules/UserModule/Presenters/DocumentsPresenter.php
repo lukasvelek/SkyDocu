@@ -40,14 +40,14 @@ class DocumentsPresenter extends AUserPresenter {
     }
     
     public function handleList() {
-        $folderId = $this->httpRequest->query('folderId');
+        $folderId = $this->httpRequest->get('folderId');
 
         if($folderId !== null) {
             $this->currentFolderId = $folderId;
         } else if($this->httpRequest->post('folderId') !== null) {
             $this->currentFolderId = $this->httpRequest->post('folderId');
         } else {
-            if(str_contains($this->httpRequest->query('do'), 'getSkeleton')) {
+            if(str_contains($this->httpRequest->get('do'), 'getSkeleton')) {
                 $this->currentFolderId = $this->folderManager->getDefaultFolder()->folderId;
             } else {
                 $this->redirect($this->createURL('list', ['folderId' => $this->folderManager->getDefaultFolder()->folderId]));
@@ -82,7 +82,7 @@ class DocumentsPresenter extends AUserPresenter {
             $this->archiveManager
         );
 
-        if(!$this->httpRequest->isAjax || str_contains($this->httpRequest->query('do'), 'getSkeleton')) {
+        if(!$this->httpRequest->isAjax || str_contains($this->httpRequest->get('do'), 'getSkeleton')) {
             $documentsGrid->setCurrentFolder($this->currentFolderId);
         }
         $documentsGrid->showCustomMetadata();
@@ -93,7 +93,7 @@ class DocumentsPresenter extends AUserPresenter {
     }
 
     public function handleSwitchFolder() {
-        $folderId = $this->httpRequest->query('folderId');
+        $folderId = $this->httpRequest->get('folderId');
         if($folderId === null) {
             throw new RequiredAttributeIsNotSetException('folderId');
         }
@@ -102,7 +102,7 @@ class DocumentsPresenter extends AUserPresenter {
     }
 
     public function handleInfo() {
-        $documentId = $this->httpRequest->query('documentId');
+        $documentId = $this->httpRequest->get('documentId');
         if($documentId === null) {
             throw new RequiredAttributeIsNotSetException('documentId');
         }
@@ -263,33 +263,33 @@ class DocumentsPresenter extends AUserPresenter {
             try {
                 $this->documentRepository->beginTransaction(__METHOD__);
 
-                foreach($this->httpRequest->query('documentId') as $documentId) {
+                foreach($this->httpRequest->get('documentId') as $documentId) {
                     $this->documentManager->shareDocument($documentId, $this->getUserId(), $data['user']);
                 }
 
                 $this->documentRepository->commit($this->getUserId(), __METHOD__);
 
-                $this->flashMessage(sprintf('Successfully shared %d %s.', count($this->httpRequest->query('documentId')), (count($this->httpRequest->query('documentId')) > 1 ? 'documents' : 'document')), 'success');
+                $this->flashMessage(sprintf('Successfully shared %d %s.', count($this->httpRequest->get('documentId')), (count($this->httpRequest->get('documentId')) > 1 ? 'documents' : 'document')), 'success');
             } catch(AException $e) {
                 $this->documentRepository->rollback(__METHOD__);
                 
-                $this->flashMessage('Could not share document' . (count($this->httpRequest->query('documentId')) > 1 ? 's' : '') . '. Reason: ' . $e->getMessage(), 'error');
+                $this->flashMessage('Could not share document' . (count($this->httpRequest->get('documentId')) > 1 ? 's' : '') . '. Reason: ' . $e->getMessage(), 'error');
             }
 
-            $this->redirect($this->createURL('list', ['folderId' => $this->httpRequest->query('folderId')]));
+            $this->redirect($this->createURL('list', ['folderId' => $this->httpRequest->get('folderId')]));
         }
     }
 
     public function renderShareForm() {
-        $this->template->links = $this->createBackUrl('list', ['folderId' => $this->httpRequest->query('backFolderId')]);
+        $this->template->links = $this->createBackUrl('list', ['folderId' => $this->httpRequest->get('backFolderId')]);
     }
 
     protected function createComponentShareDocumentForm(HttpRequest $request) {
         $form = new DocumentShareForm($request, $this->app->userRepository, $this->documentManager);
 
         if(!$request->isAjax) {
-            $form->setAction($this->createURL('shareForm', ['folderId' => $request->query('backFolderId')]));
-            $form->setDocumentIds($request->query('documentId'));
+            $form->setAction($this->createURL('shareForm', ['folderId' => $request->get('backFolderId')]));
+            $form->setDocumentIds($request->get('documentId'));
         }
 
         return $form;
@@ -322,14 +322,14 @@ class DocumentsPresenter extends AUserPresenter {
                 $this->fileStorageRepository->beginTransaction(__METHOD__);
 
                 $fum = new FileUploadManager();
-                $data = $fum->uploadFile($_FILES['file'], $this->httpRequest->query('documentId'), $this->getUserId());
+                $data = $fum->uploadFile($_FILES['file'], $this->httpRequest->get('documentId'), $this->getUserId());
 
                 if(empty($data)) {
                     throw new GeneralException('Could not upload file.');
                 }
 
                 $this->fileStorageManager->createNewFile(
-                    $this->httpRequest->query('documentId'),
+                    $this->httpRequest->get('documentId'),
                     $this->getUserId(),
                     $data[FileUploadManager::FILE_FILENAME],
                     $data[FileUploadManager::FILE_FILEPATH],
@@ -345,12 +345,12 @@ class DocumentsPresenter extends AUserPresenter {
                 $this->flashMessage('Could not upload file.', 'error', 10);
             }
 
-            $this->redirect($this->createURL('info', ['documentId' => $this->httpRequest->query('documentId')]));
+            $this->redirect($this->createURL('info', ['documentId' => $this->httpRequest->get('documentId')]));
         }
     }
 
     public function renderFileUploadForm() {
-        $this->template->links = $this->createBackUrl('info', ['documentId' => $this->httpRequest->query('documentId')]);
+        $this->template->links = $this->createBackUrl('info', ['documentId' => $this->httpRequest->get('documentId')]);
     }
 
     protected function createComponentUploadFileForm(HttpRequest $request) {

@@ -32,7 +32,7 @@ class NewProcessPresenter extends AUserPresenter {
 
     public function handleStartProcess(?FormRequest $fr = null) {
         if($fr !== null) {
-            $name = $this->httpRequest->query('name');
+            $name = $this->httpRequest->get('name');
             if($name === null) {
                 throw new RequiredAttributeIsNotSetException('name');
             }
@@ -63,8 +63,8 @@ class NewProcessPresenter extends AUserPresenter {
 
     public function handleProcessForm() {
         $process = null;
-        if($this->httpRequest->query('name') !== null) {
-            $process = $this->httpRequest->query('name');
+        if($this->httpRequest->get('name') !== null) {
+            $process = $this->httpRequest->get('name');
         } else if($this->httpRequest->post('name') !== null) {
             $process = $this->httpRequest->post('name');
         }
@@ -87,15 +87,15 @@ class NewProcessPresenter extends AUserPresenter {
 
     protected function createComponentProcessForm(HttpRequest $request) {
         $process = null;
-        if($request->query('name') !== null) {
-            $process = $request->query('name');
+        if($request->get('name') !== null) {
+            $process = $request->get('name');
         } else if($request->post('name') !== null) {
             $process = $request->post('name');
         }
 
         $form = $this->componentFactory->getStandaloneProcessFormByName($process);
 
-        $form->baseUrl = ['page' => $request->query('page'), 'action' => 'startProcess'];
+        $form->baseUrl = ['page' => $request->get('page'), 'action' => 'startProcess'];
         $form->setComponentName('processForm');
 
         return $form;

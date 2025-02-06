@@ -10,11 +10,24 @@ use App\Logger\Logger;
 use App\Managers\ContainerManager;
 use App\Repositories\Container\FileStorageRepository;
 
+/**
+ * FileStorageStatsWidget display statistics for application file storage
+ * 
+ * @author Lukas Velek
+ */
 class FileStorageStatsWidget extends Widget {
     private ContainerManager $containerManager;
     private DatabaseManager $dbManager;
     private Logger $logger;
 
+    /**
+     * Class constructor
+     * 
+     * @param HttpRequest $request
+     * @param ContainerManager $containerManager
+     * @param DatabaseManager $dbManageer
+     * @param Logger $logger
+     */
     public function __construct(
         HttpRequest $request,
         ContainerManager $containerManager,
@@ -36,7 +49,10 @@ class FileStorageStatsWidget extends Widget {
         $this->enableRefresh();
     }
 
-    private function processData() {
+    /**
+     * Processes widget data
+     */
+    private function processData(): array {
         $data = $this->fetchDataFromDb();
 
         $rows = [
@@ -48,7 +64,10 @@ class FileStorageStatsWidget extends Widget {
         return $rows;
     }
 
-    private function fetchDataFromDb() {
+    /**
+     * Fetches data from database
+     */
+    private function fetchDataFromDb(): array {
         $totalFiles = $this->fetchTotalFileCountFromDb();
         $totalFileSize = $this->fetchTotalFileSizeFromDb();
         $avgFileCountForContainers = $this->fetchAverageFileCountForContainersFromDb();
@@ -60,7 +79,10 @@ class FileStorageStatsWidget extends Widget {
         ];
     }
 
-    private function fetchAverageFileCountForContainersFromDb() {
+    /**
+     * Fetches average file count for container from database
+     */
+    private function fetchAverageFileCountForContainersFromDb(): int {
         $containers = $this->getAllContainers();
 
         $storedFiles = 0;
@@ -82,7 +104,10 @@ class FileStorageStatsWidget extends Widget {
         return ceil($storedFiles / count($containers));
     }
 
-    private function fetchTotalFileCountFromDb() {
+    /**
+     * Fetches total file count from database
+     */
+    private function fetchTotalFileCountFromDb(): int {
         $containers = $this->getAllContainers();
 
         $storedFiles = 0;
@@ -104,7 +129,10 @@ class FileStorageStatsWidget extends Widget {
         return $storedFiles;
     }
 
-    private function fetchTotalFileSizeFromDb() {
+    /**
+     * Fetches total file size from database
+     */
+    private function fetchTotalFileSizeFromDb(): string {
         $containers = $this->getAllContainers();
 
         $filesize = 0;
@@ -124,7 +152,10 @@ class FileStorageStatsWidget extends Widget {
         return UnitConversionHelper::convertBytesToUserFriendly($filesize);
     }
 
-    private function getAllContainers() {
+    /**
+     * Returns an array with all containers
+     */
+    private function getAllContainers(): array {
         $qb = $this->containerManager->containerRepository->composeQueryForContainers();
         $qb->execute();
 

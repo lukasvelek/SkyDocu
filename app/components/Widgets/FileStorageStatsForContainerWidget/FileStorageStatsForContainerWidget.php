@@ -7,9 +7,20 @@ use App\Core\Http\HttpRequest;
 use App\Helpers\UnitConversionHelper;
 use App\Managers\Container\FileStorageManager;
 
+/**
+ * FileStorageStatsForContainerWidget display statistics for container file storage
+ * 
+ * @author Lukas Velek
+ */
 class FileStorageStatsForContainerWidget extends Widget {
     private FileStorageManager $fileStorageManager;
 
+    /**
+     * Class constructor
+     * 
+     * @param HttpRequest $request
+     * @param FileStorageManager $fileStorageManager
+     */
     public function __construct(HttpRequest $request, FileStorageManager $fileStorageManager) {
         parent::__construct($request);
 
@@ -26,7 +37,10 @@ class FileStorageStatsForContainerWidget extends Widget {
         $this->enableRefresh();
     }
 
-    private function processData() {
+    /**
+     * Processes widget data
+     */
+    private function processData(): array {
         $data = $this->fetchDataFromDb();
 
         $rows = [
@@ -37,7 +51,10 @@ class FileStorageStatsForContainerWidget extends Widget {
         return $rows;
     }
 
-    private function fetchDataFromDb() {
+    /**
+     * Fetches data from database
+     */
+    private function fetchDataFromDb(): array {
         $totalFiles = $this->fetchTotalFileCountFromDb();
         $totalFileSize = $this->processTotalFileSize();
 
@@ -47,7 +64,10 @@ class FileStorageStatsForContainerWidget extends Widget {
         ];
     }
 
-    private function fetchTotalFileCountFromDb() {
+    /**
+     * Fetches total file count from database
+     */
+    private function fetchTotalFileCountFromDb(): mixed {
         $qb = $this->fileStorageManager->fileStorageRepository->composeQueryForStoredFiles();
         $qb->select(['COUNT(*) AS cnt'])
             ->regenerateSQL()
@@ -55,7 +75,10 @@ class FileStorageStatsForContainerWidget extends Widget {
         return $qb->fetch('cnt');
     }
 
-    private function processTotalFileSize() {
+    /**
+     * Processes total file size
+     */
+    private function processTotalFileSize(): string {
         $qb = $this->fileStorageManager->fileStorageRepository->composeQueryForStoredFiles();
         $qb->execute();
         $size = 0;

@@ -18,7 +18,7 @@ class RegistrationInvitePresenter extends AAnonymPresenter {
 
     public function handleForm(?FormRequest $fr = null) {
         if($fr !== null) {
-            $containerId = $this->httpRequest->query('containerId');
+            $containerId = $this->httpRequest->get('containerId');
             $inviteId = $this->httpRequest->query('inviteId');
 
             try {

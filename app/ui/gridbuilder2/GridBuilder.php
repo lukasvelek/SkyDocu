@@ -950,11 +950,24 @@ class GridBuilder extends AComponent {
             }
         }
 
-        if(count($_tableRows) == 1 && !$isSkeleton) {
-            $this->table = null;
-        } else {
-            $this->table = new Table($_tableRows);
+        if(count($_tableRows) == 1) {
+            $content = 'No data found';
+            if($isSkeleton) {
+                $content = '<div id="skeletonTextAnimation">' . $content . '</div>';
+            }
+
+            $_cell = new Cell();
+            $_cell->setName('NoDataCell');
+            $_cell->setContent($content);
+            $_cell->setSpan(count($this->columns));
+            
+            $_row = new Row();
+            $_row->addCell($_cell);
+
+            $_tableRows['nodatacell'] = $_row;
         }
+
+        $this->table = new Table($_tableRows);
     }
 
     /**

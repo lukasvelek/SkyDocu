@@ -73,6 +73,10 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
             ->setDisabled()
             ->setValue(ContainerEnvironments::toString($container->environment));
 
+        $form->addTextInput('containerDbSchema', 'Database schema:')
+            ->setDisabled()
+            ->setValue($container->dbSchema);
+
         return $form;
     }
     

@@ -78,7 +78,8 @@ class DatabaseInstaller {
                 'dateCreated' => 'DATETIME NOT NULL DEFAULT current_timestamp()',
                 'environment' => 'INT(4) NOT NULL',
                 'canShowContainerReferent' => 'INT(2) NOT NULL DEFAULT 1',
-                'permanentFlashMessage' => 'TEXT NULL'
+                'permanentFlashMessage' => 'TEXT NULL',
+                'dbSchema' => 'INT(32) NOT NULL DEFAULT 0'
             ],
             'container_creation_status' => [
                 'statusId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',

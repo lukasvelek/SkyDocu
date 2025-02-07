@@ -93,7 +93,8 @@ class CacheFactory {
         $namespaces = CacheNames::getAll();
 
         foreach($namespaces as $namespace) {
-            FileManager::deleteFolderRecursively(APP_ABSOLUTE_DIR . CACHE_DIR . $namespace . '\\', false);
+            //FileManager::deleteFolderRecursively(APP_ABSOLUTE_DIR . CACHE_DIR . $namespace . '\\', false);
+            $this->invalidateCacheByNamespace($namespace);
         }
 
         return true;

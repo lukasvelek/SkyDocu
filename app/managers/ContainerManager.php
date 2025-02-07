@@ -5,8 +5,10 @@ namespace App\Managers;
 use App\Constants\Container\StandaloneProcesses;
 use App\Constants\Container\SystemGroups;
 use App\Core\Caching\CacheNames;
+use App\Core\DatabaseConnection;
 use App\Core\DB\DatabaseManager;
 use App\Core\DB\DatabaseRow;
+use App\Core\FileManager;
 use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
 use App\Exceptions\NonExistingEntityException;
@@ -16,18 +18,21 @@ use App\Repositories\Container\GroupRepository;
 use App\Repositories\ContainerRepository;
 use App\Repositories\ContentRepository;
 use App\Repositories\UserRepository;
+use Throwable;
 
 class ContainerManager extends AManager {
     public ContainerRepository $containerRepository;
     private DatabaseManager $dbManager;
     private GroupManager $groupManager;
+    private DatabaseConnection $masterConn;
 
-    public function __construct(Logger $logger, EntityManager $entityManager, ContainerRepository $containerRepository, DatabaseManager $dbManager, GroupManager $groupManager) {
+    public function __construct(Logger $logger, EntityManager $entityManager, ContainerRepository $containerRepository, DatabaseManager $dbManager, GroupManager $groupManager, DatabaseConnection $masterConn) {
         parent::__construct($logger, $entityManager);
 
         $this->containerRepository = $containerRepository;
         $this->dbManager = $dbManager;
         $this->groupManager = $groupManager;
+        $this->masterConn = $masterConn;
     }
 
     public function createNewContainer(string $title, string $description, string $callingUserId, int $environment, bool $canShowReferent) {
@@ -78,6 +83,7 @@ class ContainerManager extends AManager {
 
             $this->createNewContainerTables($container->databaseName);
             $this->createContainerTablesIndexes($container->databaseName);
+            $this->updateContainerDbSchema($container->databaseName, $containerId);
             
             $exceptions = [];
             $this->insertNewContainerDefaultDataAsync($containerId, $container, $container->databaseName, $exceptions);
@@ -237,8 +243,12 @@ class ContainerManager extends AManager {
         }
     }
 
-    private function createNewContainerTables(string $dbName) {
-        $tables = ContainerCreationHelper::getContainerTableDefinitions();
+    private function createNewContainerTables(string $dbName, array $tableDefinitions = []) {
+        if(empty($tableDefinitions)) {
+            $tables = ContainerCreationHelper::getContainerTableDefinitions();
+        } else {
+            $tables = $tableDefinitions;
+        }
 
         foreach($tables as $name => $definition) {
             if(!$this->dbManager->createTable($name, $definition, $dbName)) {
@@ -247,8 +257,12 @@ class ContainerManager extends AManager {
         }
     }
 
-    private function createContainerTablesIndexes(string $dbName) {
-        $indexes = ContainerCreationHelper::getContainerTableIndexDefinitions();
+    private function createContainerTablesIndexes(string $dbName, array $indexDefinitions = []) {
+        if(empty($indexDefinitions)) {
+            $indexes = ContainerCreationHelper::getContainerTableIndexDefinitions();
+        } else {
+            $indexes = $indexDefinitions;
+        }
 
         $count = 1;
         foreach($indexes as $tableName => $columns) {
@@ -263,6 +277,64 @@ class ContainerManager extends AManager {
 
             $count++;
         }
+    }
+
+    private function updateContainerDbSchema(string $dbName, string $containerId) {
+        try {
+            $conn = $this->dbManager->getConnectionToDatabase($dbName);
+        } catch(AException $e) {
+            throw new GeneralException('Could not establish connection to the container database.');
+        }
+
+        $sqlScripts = [];
+        $files = FileManager::getFilesInFolder(APP_ABSOLUTE_DIR . 'data\\db\\schema');
+        foreach($files as $file => $fileFullpath) {
+            if($file != "." && $file != "..") {
+                if(str_starts_with($file, 'u') && str_ends_with($file, '.php')) {
+                    $sqlScripts[$file] = $fileFullpath;
+                }
+            }
+        }
+
+        $this->logger->info('Found ' . count($sqlScripts) . ' DB schema updates.', __METHOD__);
+
+        foreach($sqlScripts as $scriptName => $script) {
+            $php = file_get_contents($script);
+
+            $schema = (int)(substr($scriptName, 1, -strlen('.php')));
+
+            $php = substr($php, strlen('<?php'));
+            $php = substr($php, 0, -strlen('?>'));
+
+            $result = eval($php);
+
+            if(!empty($result['tables'])) {
+                $this->createNewContainerTables($dbName, $result['tables']);
+            }
+            if(!empty($result['indexes'])) {
+                $this->createContainerTablesIndexes($dbName, $result['indexes']);
+            }
+            if(!empty($result['data'])) {
+                foreach($result['data'] as $tableName => $contents) {
+                    foreach($contents as $content) {
+                        $sql = 'INSERT INTO ' . $tableName . '(' . implode(', ', array_keys($content)) . ')';
+                        $sql .= ' VALUES (\'' . implode('\', \'', $content) . '\')';
+
+                        $conn->query($sql);
+                    }
+                }
+            }
+
+            $this->updateDbSchema($containerId, $schema);
+
+            $this->logger->info('Updated container database schema to ' . $schema . '.', __METHOD__);
+        }
+    }
+
+    private function updateDbSchema(string $containerId, int $schema) {
+        $sql = "UPDATE containers SET dbSchema = " . $schema . " WHERE containerId = '" . $containerId . "';";
+
+        $this->masterConn->query($sql);
     }
 
     public function checkContainerTitleExists(string $title) {
@@ -322,16 +394,24 @@ class ContainerManager extends AManager {
         $container = $this->getContainerById($containerId);
         
         // Drop container database with all data
-        $this->dbManager->dropDatabase($container->databaseName);
+        try {
+            $this->dbManager->dropDatabase($container->databaseName);
+        } catch(AException $e) {}
 
         // Remove group and memberships
-        $group = $this->groupManager->getGroupByTitle($container->title . ' - users');
+        $group = null;
+        try {
+            $group = $this->groupManager->getGroupByTitle($container->title . ' - users');
 
-        $exceptions = [];
-        $this->groupManager->removeAllUsersFromGroup($group->groupId, $exceptions);
+        } catch(AException $e) {}
 
-        $this->groupManager->removeGroup($group->groupId);
+        if($group !== null) {
+            $exceptions = [];
+            $this->groupManager->removeAllUsersFromGroup($group->groupId, $exceptions);
 
+            $this->groupManager->removeGroup($group->groupId);
+        }
+        
         // Delete container and all history data
         if(!$this->containerRepository->deleteContainer($containerId)) {
             throw new GeneralException('Could not delete container.');
@@ -341,13 +421,6 @@ class ContainerManager extends AManager {
         }
         if(!$this->containerRepository->deleteContainerStatusHistory($containerId)) {
             throw new GeneralException('COuld not delete container status history entries.');
-        }
-
-        // Invalidate container cache
-        $result = $this->cacheFactory->invalidateAllCache();
-
-        if(!$result) {
-            throw new GeneralException('Could not invalidate cache.');
         }
     }
 

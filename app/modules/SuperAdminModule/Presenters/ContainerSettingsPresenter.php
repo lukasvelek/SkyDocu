@@ -37,7 +37,11 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
     protected function createComponentContainerInfoForm(HttpRequest $request) {
         $container = $this->app->containerManager->getContainerById($request->get('containerId'));
 
-        $groupUsers = $this->app->groupManager->getGroupUsersForGroupTitle($container->title . ' - users');
+        try {
+            $groupUsers = $this->app->groupManager->getGroupUsersForGroupTitle($container->title . ' - users');
+        } catch(AException $e) {
+            $groupUsers = [];
+        }
 
         $form = $this->componentFactory->getFormBuilder();
 

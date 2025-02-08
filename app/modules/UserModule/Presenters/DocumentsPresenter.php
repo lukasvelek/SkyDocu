@@ -368,7 +368,8 @@ class DocumentsPresenter extends AUserPresenter {
 
         $form->setAction($this->createURL('fileUploadForm', ['documentId' => $request->query['documentId']]));
 
-        $form->addFileInput('file', 'File:');
+        $form->addFileInput('file', 'File:')
+            ->setRequired();
 
         $form->addSubmit('Upload');
 

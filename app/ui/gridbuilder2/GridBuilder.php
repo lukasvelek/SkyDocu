@@ -790,7 +790,7 @@ class GridBuilder extends AComponent {
             $rowIndex++;
         }
 
-        if($this->hasCheckboxes) {
+        if($this->hasCheckboxes && count($_tableRows) > 1) {
             $_headerCell = new Cell();
             $_headerCell->setName('checkboxes');
             $_headerCell->setHeader();

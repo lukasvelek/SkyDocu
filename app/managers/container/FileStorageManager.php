@@ -43,6 +43,22 @@ class FileStorageManager extends AManager {
     }
 
     /**
+     * Checks if documents in given document ID array have files and returns a document ID array of those with a file
+     * 
+     * @param array $documentIds Document ID array
+     */
+    public function doDocumentsHaveFile(array $documentIds): array {
+        $documentsWithFile = [];
+        foreach($documentIds as $documentId) {
+            if($this->doesDocumentHaveFile($documentId)) {
+                $documentsWithFile[] = $documentId;
+            }
+        }
+
+        return $documentsWithFile;
+    }
+
+    /**
      * Returns an instance of DatabaseRow with file for given document
      * 
      * @param string $documentId Document ID

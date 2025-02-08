@@ -9,6 +9,7 @@ class DocumentsGridSystemMetadata extends AConstant {
     public const AUTHOR_USER_ID = 'authorUserId';
     public const STATUS = 'status';
     public const IS_IN_PROCESS = 'isInProcess';
+    public const HAS_FILE = 'hasFile';
 
     public static function toString($key): ?string {
         return match($key) {
@@ -16,6 +17,7 @@ class DocumentsGridSystemMetadata extends AConstant {
             self::AUTHOR_USER_ID => 'Author',
             self::STATUS => 'Status',
             self::IS_IN_PROCESS => 'In process',
+            self::HAS_FILE => 'Has file',
             default => null
         };
     }

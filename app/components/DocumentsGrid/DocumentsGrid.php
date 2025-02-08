@@ -18,6 +18,7 @@ use App\Lib\Processes\ProcessFactory;
 use App\Managers\Container\ArchiveManager;
 use App\Managers\Container\DocumentManager;
 use App\Managers\Container\EnumManager;
+use App\Managers\Container\FileStorageManager;
 use App\Managers\Container\GridManager;
 use App\Modules\APresenter;
 use App\UI\GridBuilder2\Cell;
@@ -41,6 +42,7 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
     private GridManager $gridManager;
     private ProcessFactory $processFactory;
     private ArchiveManager $archiveManager;
+    private FileStorageManager $fileStorageManager;
 
     private bool $allMetadata;
     private ?string $currentFolderId;
@@ -60,6 +62,7 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
      * @param GridManager $gridManager
      * @param ProcessFactory $processFactory
      * @param ArchiveManager $archiveManager
+     * @param FileStorageManager $fileStorageManager
      */
     public function __construct(
         GridBuilder $grid,
@@ -70,7 +73,8 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
         EnumManager $enumManager,
         GridManager $gridManager,
         ProcessFactory $processFactory,
-        ArchiveManager $archiveManager
+        ArchiveManager $archiveManager,
+        FileStorageManager $fileStorageManager
     ) {
         parent::__construct($grid->httpRequest);
         $this->setHelper($grid->getHelper());
@@ -85,6 +89,7 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
         $this->gridManager = $gridManager;
         $this->processFactory = $processFactory;
         $this->archiveManager = $archiveManager;
+        $this->fileStorageManager = $fileStorageManager;
 
         $this->documentBulkActionsHelper = new DocumentBulkActionsHelper($this->app, $this->documentManager, $this->httpRequest, $this->documentBulkActionAuthorizator, $this->groupStandardOperationsAuthorizator, $this->processFactory);
 
@@ -247,6 +252,13 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
             $config = array_keys(DocumentsGridSystemMetadata::getAll());
         }
 
+        $dataSource = clone $this->filledDataSource;
+
+        $documentIds = [];
+        while($row = $dataSource->fetchAssoc()) {
+            $documentIds[] = $row['documentId'];
+        }
+
         foreach($config as $column) {
             switch($column) {
                 case DocumentsGridSystemMetadata::TITLE:
@@ -262,18 +274,20 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
                     break;
 
                 case DocumentsGridSystemMetadata::IS_IN_PROCESS:
-                    $dataSource = clone $this->filledDataSource;
-
-                    $documentIds = [];
-                    while($row = $dataSource->fetchAssoc()) {
-                        $documentIds[] = $row['documentId'];
-                    }
-
                     $documentsInProcess = $this->processFactory->processManager->areDocumentsInProcesses($documentIds);
 
                     $col = $this->addColumnBoolean(DocumentsGridSystemMetadata::IS_IN_PROCESS, DocumentsGridSystemMetadata::toString(DocumentsGridSystemMetadata::IS_IN_PROCESS));
                     array_unshift($col->onRenderColumn, function(DatabaseRow $row, Row $_row, Cell $cell, HTML $html, mixed $value) use ($documentsInProcess) {
                         return array_key_exists($row->documentId, $documentsInProcess);
+                    });
+                    break;
+
+                case DocumentsGridSystemMetadata::HAS_FILE:
+                    $documentsWithFile = $this->fileStorageManager->doDocumentsHaveFile($documentIds);
+
+                    $col = $this->addColumnBoolean(DocumentsGridSystemMetadata::HAS_FILE, DocumentsGridSystemMetadata::toString(DocumentsGridSystemMetadata::HAS_FILE));
+                    array_unshift($col->onRenderColumn, function(DatabaseRow $row, Row $_row, Cell $cell, HTML $html, mixed $value) use ($documentsWithFile) {
+                        return in_array($row->documentId, $documentsWithFile);
                     });
                     break;
             }

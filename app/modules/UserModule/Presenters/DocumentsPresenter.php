@@ -8,6 +8,7 @@ use App\Components\FoldersSidebar\FoldersSidebar;
 use App\Constants\Container\CustomMetadataTypes;
 use App\Constants\Container\DocumentStatus;
 use App\Constants\Container\GridNames;
+use App\Core\Caching\CacheNames;
 use App\Core\DB\DatabaseRow;
 use App\Core\FileUploadManager;
 use App\Core\Http\FormRequest;
@@ -17,6 +18,7 @@ use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
 use App\Exceptions\RequiredAttributeIsNotSetException;
 use App\Helpers\DateTimeFormatHelper;
+use App\Helpers\UnitConversionHelper;
 use App\UI\HTML\HTML;
 use App\UI\LinkBuilder;
 
@@ -153,8 +155,12 @@ class DocumentsPresenter extends AUserPresenter {
         if($this->fileStorageManager->doesDocumentHaveFile($document->documentId)) {
             $url = $this->fileStorageManager->generateDownloadLinkForFileInDocumentByDocumentId($document->documentId);
 
+            $relation = $this->fileStorageManager->getFileRelationForDocumentId($document->documentId);
+            $file = $this->fileStorageManager->getFileById($relation->fileId);
+            $fileSize = UnitConversionHelper::convertBytesToUserFriendly($file->filesize);
+
             $el = HTML::el('a')
-                ->text('Download file')
+                ->text('Download file (' . $fileSize . ')')
                 ->class('changelog-link')
                 ->target('_blank')
                 ->href($url);
@@ -335,6 +341,10 @@ class DocumentsPresenter extends AUserPresenter {
                     $data[FileUploadManager::FILE_FILEPATH],
                     $data[FileUploadManager::FILE_FILESIZE]
                 );
+
+                if(!$this->cacheFactory->invalidateCacheByNamespace(CacheNames::DOCUMENT_FILE_MAPPING)) {
+                    throw new GeneralException('Could not invalidate cache.');
+                }
 
                 $this->fileStorageRepository->commit($this->getUserId(), __METHOD__);
 

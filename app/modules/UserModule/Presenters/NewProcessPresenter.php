@@ -65,8 +65,6 @@ class NewProcessPresenter extends AUserPresenter {
         $process = null;
         if($this->httpRequest->get('name') !== null) {
             $process = $this->httpRequest->get('name');
-        } else if($this->httpRequest->post('name') !== null) {
-            $process = $this->httpRequest->post('name');
         }
 
         $name = StandaloneProcesses::toString($process);
@@ -93,7 +91,7 @@ class NewProcessPresenter extends AUserPresenter {
             $process = $request->post('name');
         }
 
-        $form = $this->componentFactory->getStandaloneProcessFormByName($process);
+        $form = $this->componentFactory->getStandaloneProcessFormByName($process, $this->standaloneProcessManager);
 
         $form->baseUrl = ['page' => $request->get('page'), 'action' => 'startProcess'];
         $form->setComponentName('processForm');

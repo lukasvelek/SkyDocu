@@ -190,6 +190,21 @@ class ContainerCreationHelper {
                 'relationId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',
                 'documentId' => 'VARCHAR(256) NOT NULL',
                 'fileId' => 'VARCHAR(256) NOT NULL'
+            ],
+            'process_metadata' => [
+                'metadataId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',
+                'typeId' => 'VARCHAR(256) NOT NULL',
+                'title' => 'VARCHAR(256) NOT NULL',
+                'guiTitle' => 'VARCHAR(256) NOT NULL',
+                'type' => 'INT(4) NOT NULL',
+                'defaultValue' => 'TEXT NULL',
+                'isRequired' => 'INT(2) NOT NULL DEFAULT 0'
+            ],
+            'process_metadata_list_values' => [
+                'valueId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',
+                'metadataId' => 'VARCHAR(256) NOT NULL',
+                'metadataKey' => 'INT(32) NOT NULL',
+                'title' => 'TEXT NOT NULL'
             ]
         ];
     }

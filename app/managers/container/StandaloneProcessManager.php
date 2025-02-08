@@ -96,6 +96,80 @@ class StandaloneProcessManager extends AManager {
         $qb->andWhere('type = ?', [$processType]);
         return $qb;
     }
+
+    public function composeQueryForProcessMetadataForProcess(string $typeId) {
+        $qb = $this->processManager->processRepository->composeQueryForProcessMetadata();
+        $qb->where('typeId = ?', [$typeId]);
+        return $qb;
+    }
+
+    public function getProcessMetadataForProcess(string $typeId) {
+        $qb = $this->processManager->processRepository->composeQueryForProcessMetadata();
+        $qb->where('typeId = ?', [$typeId])
+            ->execute();
+
+        $metadata = [];
+        while($row = $qb->fetchAssoc()) {
+            $row = DatabaseRow::createFromDbRow($row);
+
+            $metadata[] = $row;
+        }
+
+        return $metadata;
+    }
+
+    public function composeQueryForProcessMetadataEnumForMetadata(string $metadataId) {
+        $qb = $this->processManager->processRepository->composeQueryForProcessMetadataListValues();
+        $qb->where('metadataId = ?', [$metadataId]);
+        return $qb;
+    }
+
+    public function getProcessMetadataEnumValues(string $processTitle, string $metadataTitle) {
+        $qb = $this->processManager->processRepository->composeQueryForProcessTypes();
+        $qb->where('typeKey = ?', [$processTitle])
+            ->execute();
+
+        $type = DatabaseRow::createFromDbRow($qb->fetch());
+
+        $qb = $this->composeQueryForProcessMetadataForProcess($type->typeId);
+        $qb->andWhere('title = ?', [$metadataTitle])
+            ->execute();
+
+        $metadata = DatabaseRow::createFromDbRow($qb->fetch());
+
+        $qb = $this->composeQueryForProcessMetadataEnumForMetadata($metadata->metadataId);
+        $qb->execute();
+
+        $values = [];
+        while($row = $qb->fetchAssoc()) {
+            $row = DatabaseRow::createFromDbRow($row);
+
+            $values[] = $row;
+        }
+
+        return $values;
+    }
+
+    public function createMetadataEnumValue(string $metadataId, string $title) {
+        $valueId = $this->createId(EntityManager::C_PROCESS_CUSTOM_METADATA_LIST_VALUES);
+
+        $data = [
+            'valueId' => $valueId,
+            'metadataId' => $metadataId,
+            'title' => $title
+        ];
+
+        $lastKey = $this->processManager->processRepository->getLastMetadataEnumValueKey($metadataId);
+        if($lastKey !== null) {
+            $data['metadataKey'] = ((int)$lastKey) + 1;
+        } else {
+            $data['metadataKey'] = 1;
+        }
+
+        if(!$this->processManager->processRepository->createNewMetadataEnumValue($data)) {
+            throw new GeneralException('Database error.');
+        }
+    }
 }
 
 ?>

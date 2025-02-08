@@ -2,6 +2,7 @@
 
 namespace App\Managers;
 
+use App\Constants\Container\CustomMetadataTypes;
 use App\Constants\Container\StandaloneProcesses;
 use App\Constants\Container\SystemGroups;
 use App\Core\Caching\CacheNames;
@@ -194,17 +195,32 @@ class ContainerManager extends AManager {
             ]
         ];
 
+        $standaloneProcessIds = [];
         foreach(StandaloneProcesses::getAll() as $key => $title) {
+            $standaloneProcessIds[$key] = $this->createIdCustomDb(EntityManager::C_PROCESS_TYPES, $conn);
+
             $data[] = [
                 'table' => 'process_types',
                 'data' => [
-                    'typeId' => $this->createIdCustomDb(EntityManager::C_PROCESS_TYPES, $conn),
+                    'typeId' => $standaloneProcessIds[$key],
                     'typeKey' => $key,
                     'title' => $title,
                     'description' => StandaloneProcesses::getDescription($key)
                 ]
             ];
         }
+
+        $data[] = [
+            'table' => 'process_metadata',
+            'data' => [
+                'metadataId' => $this->createIdCustomDb(EntityManager::C_PROCESS_CUSTOM_METADATA, $conn),
+                'typeId' => $standaloneProcessIds[StandaloneProcesses::INVOICE],
+                'title' => 'companies',
+                'guiTitle' => 'Companies',
+                'type' => CustomMetadataTypes::ENUM,
+                'isRequired' => '1'
+            ]
+        ];
 
         foreach($groupIds as $value => $groupId) {
             $data[] = [

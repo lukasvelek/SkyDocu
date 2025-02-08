@@ -5,6 +5,7 @@ namespace App\Modules\AdminModule;
 use App\Constants\ContainerEnvironments;
 use App\Core\Datetypes\DateTime;
 use App\Core\Http\HttpRequest;
+use App\Helpers\ColorHelper;
 
 class HomePresenter extends AAdminPresenter {
     public function __construct() {
@@ -52,6 +53,11 @@ class HomePresenter extends AAdminPresenter {
             ->setValue(ContainerEnvironments::toString($container->environment));
 
         return $form;
+    }
+
+    public function renderColorCombo() {
+        [$fgColor, $bgColor] = ColorHelper::createColorCombination();
+        $this->template->color_combo = '<div style="color: ' . $fgColor . '; background-color: ' . $bgColor . '; width: 1000px; height: 100px; text-align: center; font-size: 20px; border: 1px solid ' . $fgColor . '">Lorem ipsum (FG: ' . $fgColor . ', BG: ' . $bgColor . ')</div>';
     }
 }
 

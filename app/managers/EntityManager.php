@@ -51,6 +51,8 @@ class EntityManager extends AManager {
     public const C_ARCHIVE_FOLDER_DOCUMENT_RELATION = 'archive_folder_document_relation';
     public const C_FILE_STORAGE = 'file_storage';
     public const C_DOCUMENT_FILE_RELATION = 'document_file_relation';
+    public const C_PROCESS_CUSTOM_METADATA_LIST_VALUES = 'process_metadata_list_values';
+    public const C_PROCESS_CUSTOM_METADATA = 'process_metadata';
 
     private const __MAX__ = 100;
 
@@ -167,7 +169,9 @@ class EntityManager extends AManager {
             self::C_ARCHIVE_FOLDERS => 'folderId',
             self::C_ARCHIVE_FOLDER_DOCUMENT_RELATION => 'relationId',
             self::C_FILE_STORAGE => 'fileId',
-            self::C_DOCUMENT_FILE_RELATION => 'relationId'
+            self::C_DOCUMENT_FILE_RELATION => 'relationId',
+            self::C_PROCESS_CUSTOM_METADATA_LIST_VALUES => 'valueId',
+            self::C_PROCESS_CUSTOM_METADATA => 'metadataId'
         };
     }
 

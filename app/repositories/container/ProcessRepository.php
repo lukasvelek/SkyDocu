@@ -236,6 +236,54 @@ class ProcessRepository extends ARepository {
 
         return $qb->fetchBool();
     }
+
+    public function composeQueryForProcessMetadata() {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->select(['*'])
+            ->from('process_metadata');
+
+        return $qb;
+    }
+
+    public function composeQueryForProcessMetadataListValues() {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->select(['*'])
+            ->from('process_metadata_list_values');
+
+        return $qb;
+    }
+
+    public function getLastMetadataEnumValueKey(string $metadataId) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->select(['metadataKey'])
+            ->from('process_metadata_list_values')
+            ->where('metadataId = ?', [$metadataId])
+            ->orderBy('metadataKey', 'DESC')
+            ->limit(1)
+            ->execute();
+
+        return $qb->fetch('metadataKey');
+    }
+
+    public function createNewMetadataEnumValue(array $data) {
+        $keys = [];
+        $values = [];
+        foreach($data as $k => $v) {
+            $keys[] = $k;
+            $values[] = $v;
+        }
+
+        $qb = $this->qb(__METHOD__);
+
+        $qb->insert('process_metadata_list_values', $keys)
+            ->values($values)
+            ->execute();
+
+        return $qb->fetchBool();
+    }
 }
 
 ?>

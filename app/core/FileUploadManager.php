@@ -86,7 +86,7 @@ class FileUploadManager {
     private function checkFileSize(array $fileData) {
         $size = $this->getFileSize($fileData);
 
-        return $size <= 500_000;
+        return $size <= 500_000_000;
     }
 
     /**

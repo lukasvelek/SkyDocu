@@ -20,6 +20,7 @@ use App\Helpers\DateTimeFormatHelper;
 use App\Managers\Container\FileStorageManager;
 use App\Managers\EntityManager;
 use App\Repositories\Container\FileStorageRepository;
+use App\Repositories\Container\TransactionLogRepository;
 use App\Repositories\ContentRepository;
 use App\UI\GridBuilder2\Action;
 use App\UI\GridBuilder2\Cell;
@@ -758,6 +759,27 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
         }
 
         $this->redirect($this->createURL('invites', ['containerId' => $containerId]));
+    }
+
+    public function renderTransactionLog() {}
+
+    protected function createComponentContainerTransactionLogGrid(HttpRequest $request) {
+        $grid = $this->componentFactory->getGridBuilder($request->get('containerId'));
+        
+        $container = $this->app->containerManager->getContainerById($request->get('containerId'));
+
+        $containerConn = $this->app->dbManager->getConnectionToDatabase($container->databaseName);
+
+        $transactionLogRepository = new TransactionLogRepository($containerConn, $this->logger);
+
+        $grid->createDataSourceFromQueryBuilder($transactionLogRepository->composeQueryForTransactionLog(), 'transactionId');
+        $grid->addQueryDependency('containerId', $request->get('containerId'));
+
+        $grid->addColumnUser('userId', 'User');
+        $grid->addColumnText('callingMethod', 'Method');
+        $grid->addColumnDatetime('dateCreated', 'Date');
+
+        return $grid;
     }
 }
 

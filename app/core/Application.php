@@ -304,8 +304,7 @@ class Application {
         try {
             $moduleObject = $this->moduleManager->createModule($this->currentModule);
         } catch(Exception $e) {
-            $fmHash = $this->flashMessage('Container created successfully.');
-            $this->refreshPage(['_fm' => $fmHash]);
+            $this->refreshPage();
         }
         $moduleObject->setLogger($this->logger);
         $moduleObject->setHttpRequest($this->getRequest());

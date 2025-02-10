@@ -26,6 +26,8 @@ class CustomMetadataTypes extends AConstant {
             self::BOOL => 'Boolean',
             self::DATE => 'Date',
             self::SYSTEM_USER => 'User',
+            self::SYSTEM_INVOICE_SUM_CURRENCY => 'Invoice - Sum currency',
+            self::SYSTEM_INVOICE_COMPANIES => 'Invoice - Companies',
             default => null
         };
     }

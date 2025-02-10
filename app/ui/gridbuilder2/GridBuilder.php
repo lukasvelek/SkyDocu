@@ -373,7 +373,7 @@ class GridBuilder extends AComponent {
                         $result = $constClass::toString($value);
 
                         $el = HTML::el('span');
-                        $el->text($result);
+                        $el->text($result ?? '-');
 
                         if(in_array(IColorable::class, class_implements($constClass))) {
                             $color = $constClass::getColor($value);

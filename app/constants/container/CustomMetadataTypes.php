@@ -14,6 +14,8 @@ class CustomMetadataTypes extends AConstant {
 
     // Numbers bigger than 100 are system enums
     public const SYSTEM_USER = 100;
+    public const SYSTEM_INVOICE_SUM_CURRENCY = 101;
+    public const SYSTEM_INVOICE_COMPANIES = 102;
 
     public static function toString($key): ?string {
         return match((int)$key) {

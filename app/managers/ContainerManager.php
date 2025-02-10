@@ -3,6 +3,7 @@
 namespace App\Managers;
 
 use App\Constants\Container\CustomMetadataTypes;
+use App\Constants\Container\Processes\InvoiceCustomMetadata;
 use App\Constants\Container\StandaloneProcesses;
 use App\Constants\Container\SystemGroups;
 use App\Core\Caching\CacheNames;
@@ -108,11 +109,20 @@ class ContainerManager extends AManager {
         }
 
         $folderIds = [
-            'Default' => $this->createIdCustomDb(EntityManager::C_DOCUMENT_FOLDERS, $conn)
+            'Default' => $this->createIdCustomDb(EntityManager::C_DOCUMENT_FOLDERS, $conn),
+            'Invoices' => $this->createIdCustomDb(EntityManager::C_DOCUMENT_FOLDERS, $conn)
         ];
 
         $classIds = [
-            'Default' => $this->createIdCustomDb(EntityManager::C_DOCUMENT_CLASSES, $conn)
+            'Default' => $this->createIdCustomDb(EntityManager::C_DOCUMENT_CLASSES, $conn),
+            'Invoices' => $this->createIdCustomDb(EntityManager::C_DOCUMENT_CLASSES, $conn)
+        ];
+
+        $metadataIds = [
+            InvoiceCustomMetadata::COMPANY => $this->createIdCustomDb(EntityManager::C_CUSTOM_METADATA, $conn),
+            InvoiceCustomMetadata::SUM => $this->createIdCustomDb(EntityManager::C_CUSTOM_METADATA, $conn),
+            InvoiceCustomMetadata::INVOICE_NO => $this->createIdCustomDb(EntityManager::C_CUSTOM_METADATA, $conn),
+            InvoiceCustomMetadata::SUM_CURRENCY => $this->createIdCustomDb(EntityManager::C_CUSTOM_METADATA, $conn)
         ];
         
         $data = [
@@ -121,6 +131,24 @@ class ContainerManager extends AManager {
                 'data' => [
                     'classId' => $classIds['Default'],
                     'title' => 'Default'
+                ]
+            ],
+            [
+                'table' => 'document_classes',
+                'data' => [
+                    'classId' => $classIds['Invoices'],
+                    'title' => 'Invoices'
+                ]
+            ],
+            [
+                'table' => 'document_class_group_rights',
+                'data' => [
+                    'rightId' => $this->createIdCustomDb(EntityManager::C_DOCUMENT_CLASS_GROUP_RIGHTS, $conn),
+                    'groupId' => $groupIds[SystemGroups::ACCOUNTANTS],
+                    'classId' => $classIds['Invoices'],
+                    'canView' => 1,
+                    'canCreate' => 1,
+                    'canEdit' => 1
                 ]
             ],
             [
@@ -154,6 +182,14 @@ class ContainerManager extends AManager {
                 ]
             ],
             [
+                'table' => 'document_folders',
+                'data' => [
+                    'folderId' => $folderIds['Invoices'],
+                    'title' => 'Invoices',
+                    'isSystem' => 1
+                ]
+            ],
+            [
                 'table' => 'document_folder_group_relation',
                 'data' => [
                     'relationId' => $this->createIdCustomDb(EntityManager::C_DOCUMENT_FOLDER_GROUP_RELATION, $conn),
@@ -176,6 +212,17 @@ class ContainerManager extends AManager {
                 ]
             ],
             [
+                'table' => 'document_folder_group_relation',
+                'data' => [
+                    'relationId' => $this->createIdCustomDb(EntityManager::C_DOCUMENT_FOLDER_GROUP_RELATION, $conn),
+                    'folderId' => $folderIds['Invoices'],
+                    'groupId' => $groupIds[SystemGroups::ACCOUNTANTS],
+                    'canView' => 1,
+                    'canCreate' => 1,
+                    'canEdit' => 1
+                ]
+            ],
+            [
                 'table' => 'group_rights_standard_operations',
                 'data' => [
                     'rightId' => $this->createIdCustomDb(EntityManager::C_GROUP_STANDARD_OPERATION_RIGHTS, $conn),
@@ -192,8 +239,59 @@ class ContainerManager extends AManager {
                     'title' => 'Default',
                     'isSystem' => 1
                 ]
-            ]
+            ],
+            [
+                'table' => 'custom_metadata',
+                'data' => [
+                    'metadataId' => $metadataIds['Invoices_SumCurrency'],
+                    'title' => InvoiceCustomMetadata::SUM_CURRENCY,
+                    'guiTitle' => InvoiceCustomMetadata::toString(InvoiceCustomMetadata::SUM_CURRENCY),
+                    'type' => CustomMetadataTypes::SYSTEM_INVOICE_SUM_CURRENCY,
+                    'isRequired' => 1
+                ]
+            ],
+            [
+                'table' => 'custom_metadata',
+                'data' => [
+                    'metadataId' => $metadataIds['Invoices_Sum'],
+                    'title' => InvoiceCustomMetadata::SUM,
+                    'guiTitle' => InvoiceCustomMetadata::toString(InvoiceCustomMetadata::SUM),
+                    'type' => CustomMetadataTypes::NUMBER,
+                    'isRequired' => 1
+                ]
+            ],
+            [
+                'table' => 'custom_metadata',
+                'data' => [
+                    'metadataId' => $metadataIds['Invoices_InvoiceNo'],
+                    'title' => InvoiceCustomMetadata::INVOICE_NO,
+                    'guiTitle' => InvoiceCustomMetadata::toString(InvoiceCustomMetadata::INVOICE_NO),
+                    'type' => CustomMetadataTypes::TEXT,
+                    'isRequired' => 1
+                ]
+            ],
+            [
+                'table' => 'custom_metadata',
+                'data' => [
+                    'metadataId' => $metadataIds['Invoices_Company'],
+                    'title' => InvoiceCustomMetadata::COMPANY,
+                    'guiTitle' => InvoiceCustomMetadata::toString(InvoiceCustomMetadata::COMPANY),
+                    'type' => CustomMetadataTypes::SYSTEM_INVOICE_COMPANIES,
+                    'isRequired' => 1
+                ]
+            ],
         ];
+
+        foreach($metadataIds as $title => $id) {
+            $data[] = [
+                'table' => 'document_folder_custom_metadata_relation',
+                'data' => [
+                    'relationId' => $this->createIdCustomDb(EntityManager::C_CUSTOM_METADATA_FOLDER_RELATION, $conn),
+                    'customMetadataId' => $id,
+                    'folderId' => $folderIds['Invoices']
+                ]
+            ];
+        }
 
         $standaloneProcessIds = [];
         foreach(StandaloneProcesses::getAll() as $key => $title) {

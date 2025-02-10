@@ -9,6 +9,7 @@ class SystemGroups extends AConstant {
     public const ADMINISTRATORS = 'administrators';
     public const ARCHIVISTS = 'archivists';
     public const PROCESS_SUPERVISOR = 'processSupervisor';
+    public const ACCOUNTANTS = 'accountants';
 
     public static function toString($key): ?string {
         return match($key) {
@@ -16,6 +17,7 @@ class SystemGroups extends AConstant {
             self::ADMINISTRATORS => 'Administrators',
             self::ARCHIVISTS => 'Archivists',
             self::PROCESS_SUPERVISOR => 'Process supervisor',
+            self::ACCOUNTANTS => 'Accountants',
             default => null
         };
     }

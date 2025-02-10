@@ -18,7 +18,7 @@ use App\UI\FormBuilder2\SelectOption;
  * @author Lukas Velek
  */
 class Invoice extends AProcessForm {
-    private const COMPANY_LIMIT_FOR_SEARCH = 5;
+    private const COMPANY_LIMIT_FOR_SEARCH = 10;
 
     private StandaloneProcessManager $standaloneProcessManager;
     private array $mCompaniesCache;
@@ -64,7 +64,9 @@ class Invoice extends AProcessForm {
 
     protected function createForm() {
         $this->addTextInput('invoiceNo', 'Invoice No.:')
-            ->setRequired();
+            ->setRequired()
+            ->setValue($this->generateInvoiceNo())
+            ->setReadonly();
 
         if($this->isCompanySearch) {
             $this->addTextInput('companySearch', 'Search companies:')
@@ -87,6 +89,9 @@ class Invoice extends AProcessForm {
         $this->addSelect('sumCurrency', 'Sum currency:')
             ->setRequired()
             ->addRawOptions($this->getCurrencyOptionsForSelect());
+
+        $this->addFileInput('file', 'Invoice file:')
+            ->setRequired();
         
         $this->addSubmit('Create');
     }
@@ -131,6 +136,39 @@ class Invoice extends AProcessForm {
         }
 
         return $this->mCompaniesCache;
+    }
+
+    private function generateInvoiceNo() {
+        $qb = $this->standaloneProcessManager->composeQueryForProcessData();
+        $qb->andWhere('data LIKE :data')
+            ->setParams([':data' => '%invoiceNo%'])
+            ->execute();
+
+        // YYYY/XXXX - Y = Year; X = number
+        $maxNumber = 0;
+        while($row = $qb->fetchAssoc()) {
+            $data = unserialize($row['data']);
+            $invoiceNo = $data['invoiceNo'];
+            $year = explode('/', $invoiceNo)[0];
+            $number = explode('/', $invoiceNo)[1];
+
+            if($year != date('Y')) {
+                continue;
+            }
+
+            if($number > $maxNumber) {
+                $maxNumber = $number;
+            }
+        }
+
+        $number = $maxNumber + 1;
+
+        $numberText = $number;
+        while(strlen($numberText) < 4) {
+            $numberText = '0' . $numberText;
+        }
+
+        return date('Y') . '/' . $numberText;
     }
 
     protected function createAction() {

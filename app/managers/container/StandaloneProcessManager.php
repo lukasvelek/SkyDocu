@@ -2,7 +2,10 @@
 
 namespace App\Managers\Container;
 
+use App\Constants\Container\DocumentStatus;
+use App\Constants\Container\Processes\InvoiceCustomMetadata;
 use App\Constants\Container\StandaloneProcesses;
+use App\Constants\Container\SystemGroups;
 use App\Core\DB\DatabaseRow;
 use App\Entities\UserEntity;
 use App\Exceptions\GeneralException;
@@ -16,20 +19,36 @@ class StandaloneProcessManager extends AManager {
     public ProcessManager $processManager;
     private UserEntity $currentUser;
     private UserManager $userManager;
+    private DocumentManager $documentManager;
+    private FileStorageManager $fileStorageManager;
+    private GroupManager $groupManager;
+    private FolderManager $folderManager;
 
     public function __construct(
         Logger $logger,
         ?EntityManager $entityManager,
         ProcessManager $processManager,
         UserEntity $currentUser,
-        UserManager $userManager
+        UserManager $userManager,
+        DocumentManager $documentManager,
+        FileStorageManager $fileStorageManager,
+        GroupManager $groupManager,
+        FolderManager $folderManager
     ) {
         parent::__construct($logger, $entityManager);
 
         $this->processManager = $processManager;
         $this->currentUser = $currentUser;
         $this->userManager = $userManager;
+        $this->documentManager = $documentManager;
+        $this->fileStorageManager = $fileStorageManager;
+        $this->groupManager = $groupManager;
+        $this->folderManager = $folderManager;
     }
+
+    /**
+     *                  PROCESSES
+     */
 
     public function startHomeOffice(array $data) {
         $admin = $this->userManager->getUserByUsername('admin');
@@ -56,6 +75,79 @@ class StandaloneProcessManager extends AManager {
 
         $this->saveProcessData($processId, $data);
     }
+
+    public function startInvoice(array $data) {
+        $accountantId = $this->groupManager->getFirstGroupMemberForGroupTitle(SystemGroups::ACCOUNTANTS)?->userId;
+        if($accountantId === null) {
+            $accountantId = $this->userManager->getUserByUsername('admin')->getId();
+        }
+
+        $currentOfficerId = $accountantId;
+        $workflow = [
+            $accountantId
+        ];
+
+        $processId = $this->processManager->startProcess(null, StandaloneProcesses::INVOICE, $this->currentUser->getId(), $currentOfficerId, $workflow);
+
+        $this->saveProcessData($processId, $data);
+    }
+
+    public function finishInvoice(string $processId) {
+        // create document
+        // create document-file relation
+        // create document-process relation
+
+        $processData = $this->getProcessData($processId);
+        $process = $this->processManager->getProcessById($processId);
+
+        //$file = $this->fileStorageManager->getFileById($processData['fileId']);
+
+        $class = $this->documentManager->documentClassRepository->getDocumentClassByTitle('Invoices');
+        $folder = $this->folderManager->getFolderByTitle('Invoices');
+
+        $documentMetadata = [
+            'title' => 'Invoice ' . $processData['invoiceNo'],
+            'authorUserId' => $process->authorUserId,
+            'description' => '', // todo: implement description
+            'status' => DocumentStatus::NEW,
+            'classId' => $class->classId,
+            'folderId' => $folder->folderId
+        ];
+
+        $documentCustomMetadata = [
+            InvoiceCustomMetadata::COMPANY => $processData['company'],
+            InvoiceCustomMetadata::INVOICE_NO => $processData['invoiceNo'],
+            InvoiceCustomMetadata::SUM => $processData['sum'],
+            InvoiceCustomMetadata::SUM_CURRENCY => $processData['sumCurrency']
+        ];
+
+        $folderMetadata = $this->documentManager->getCustomMetadataForFolder($folder->folderId);
+
+        $tmp = [];
+        foreach($documentCustomMetadata as $metadataTitle => $value) {
+            foreach($folderMetadata as $metadataId => $metadataRow) {
+                if($metadataRow->title == $metadataTitle) {
+                    $tmp[$metadataId] = $value;
+                }
+            }
+        }
+
+        $documentCustomMetadata = $tmp;
+
+        $documentId = $this->documentManager->createNewDocument($documentMetadata, $documentCustomMetadata);
+
+        $this->fileStorageManager->createNewFileDocumentRelation($documentId, $processData['fileId']);
+
+        if(!$this->processManager->processRepository->updateProcess($processId, [
+            'documentId' => $documentId
+        ])) {
+            throw new GeneralException('Database error.');
+        }
+    }
+
+    /**
+     *                  END OF PROCESSSES
+     */
 
     private function saveProcessData(string $processId, array $data) {
         $entryId = $this->createId(EntityManager::C_PROCESS_DATA);
@@ -193,6 +285,10 @@ class StandaloneProcessManager extends AManager {
         if(!$this->processManager->processRepository->updateMetadataEnumValue($valueId, $title)) {
             throw new GeneralException('Database error.');
         }
+    }
+
+    public function composeQueryForProcessData() {
+        return $this->processManager->processRepository->composeQueryForProcessData();
     }
 }
 

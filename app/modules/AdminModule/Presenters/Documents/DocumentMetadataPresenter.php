@@ -4,6 +4,7 @@ namespace App\Modules\AdminModule;
 
 use App\Components\DocumentMetadataForm\DocumentMetadataForm;
 use App\Constants\Container\CustomMetadataTypes;
+use App\Constants\Container\Processes\InvoiceCustomMetadata;
 use App\Core\DB\DatabaseRow;
 use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
@@ -60,8 +61,8 @@ class DocumentMetadataPresenter extends AAdminPresenter {
 
         $folderRights = $grid->addAction('folderRights');
         $folderRights->setTitle('Folders');
-        $folderRights->onCanRender[] = function() {
-            return true;
+        $folderRights->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) {
+            return !in_array($row->title, InvoiceCustomMetadata::getAllConstants());
         };
         $folderRights->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
             $el = HTML::el('a')
@@ -74,8 +75,8 @@ class DocumentMetadataPresenter extends AAdminPresenter {
 
         $edit = $grid->addAction('edit');
         $edit->setTitle('Edit');
-        $edit->onCanRender[] = function() {
-            return true;
+        $edit->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) {
+            return !in_array($row->title, InvoiceCustomMetadata::getAllConstants());
         };
         $edit->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
             $el = HTML::el('a')
@@ -88,8 +89,8 @@ class DocumentMetadataPresenter extends AAdminPresenter {
 
         $delete = $grid->addAction('delete');
         $delete->setTitle('Delete');
-        $delete->onCanRender[] = function() {
-            return true;
+        $delete->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) {
+            return !in_array($row->title, InvoiceCustomMetadata::getAllConstants());
         };
         $delete->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
             $el = HTML::el('a')

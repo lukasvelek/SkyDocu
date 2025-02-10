@@ -137,6 +137,15 @@ class ProcessRepository extends ARepository {
         return $qb->fetchBool();
     }
 
+    public function composeQueryForProcessData() {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->select(['*'])
+            ->from('process_data');
+
+        return $qb;
+    }
+
     public function getProcessDataForProcess(string $processId) {
         $qb = $this->qb(__METHOD__);
 

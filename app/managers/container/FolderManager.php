@@ -170,6 +170,16 @@ class FolderManager extends AManager {
         return DatabaseRow::createFromDbRow($folder);
     }
 
+    public function getFolderByTitle(string $title) {
+        $folder = $this->folderRepository->getFolderByTitle($title);
+
+        if($folder === null) {
+            throw new NonExistingEntityException('Folder does not exist.');
+        }
+
+        return DatabaseRow::createFromDbRow($folder);
+    }
+
     public function getDefaultFolder() {
         $qb = $this->folderRepository->composeQueryForFolders();
         $folder = $qb->andWhere('isSystem = 1')

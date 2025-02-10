@@ -6,9 +6,11 @@ use App\Components\ProcessesSelect\ProcessesSelect;
 use App\Components\ProcessViewSidebar\ProcessViewSidebar;
 use App\Constants\Container\ProcessGridViews;
 use App\Constants\Container\StandaloneProcesses;
+use App\Core\FileUploadManager;
 use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
+use App\Exceptions\GeneralException;
 use App\Exceptions\RequiredAttributeIsNotSetException;
 
 class NewProcessPresenter extends AUserPresenter {
@@ -43,7 +45,28 @@ class NewProcessPresenter extends AUserPresenter {
                 try {
                     $this->processRepository->beginTransaction(__METHOD__);
 
-                    $this->standaloneProcessManager->$methodName($fr->getData());
+                    $_data = $fr->getData();
+
+                    if(!empty($_FILES)) {
+                        $fum = new FileUploadManager();
+                        $data = $fum->uploadFile($_FILES['file'], null, $this->getUserId());
+
+                        if(empty($data)) {
+                            throw new GeneralException('Could not upload file.');
+                        }
+
+                        $fileId = $this->fileStorageManager->createNewFile(
+                            null,
+                            $this->getUserId(),
+                            $data[FileUploadManager::FILE_FILENAME],
+                            $data[FileUploadManager::FILE_FILEPATH],
+                            $data[FileUploadManager::FILE_FILESIZE]
+                        );
+
+                        $_data['fileId'] = $fileId;
+                    }
+
+                    $this->standaloneProcessManager->$methodName($_data);
 
                     $this->processRepository->commit($this->getUserId(), __METHOD__);
 

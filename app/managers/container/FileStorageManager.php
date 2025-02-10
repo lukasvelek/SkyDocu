@@ -89,7 +89,7 @@ class FileStorageManager extends AManager {
      * @param int $filesize Filesize
      * @return string File ID
      */
-    public function createNewFile(string $documentId, string $userId, string $filename, string $filepath, int $filesize): string {
+    public function createNewFile(?string $documentId, string $userId, string $filename, string $filepath, int $filesize): string {
         $filepath = str_replace('\\', '\\\\', $filepath);
 
         $fileId = $this->createId(EntityManager::C_FILE_STORAGE);
@@ -100,13 +100,25 @@ class FileStorageManager extends AManager {
             throw new GeneralException('Database error.');
         }
 
+        if($documentId !== null) {
+            $this->createNewFileDocumentRelation($documentId, $fileId);
+        }
+
+        return $fileId;
+    }
+
+    /**
+     * Creates a new file-document relation
+     * 
+     * @param string $documentId Document ID
+     * @param string $fileId File ID
+     */
+    public function createNewFileDocumentRelation(string $documentId, string $fileId) {
         $relationId = $this->createId(EntityManager::C_DOCUMENT_FILE_RELATION);
 
         if(!$this->fileStorageRepository->createNewFileDocumentRelation($relationId, $documentId, $fileId)) {
             throw new GeneralException('Database error.');
         }
-
-        return $fileId;
     }
 
     /**

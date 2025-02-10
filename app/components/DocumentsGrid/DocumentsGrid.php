@@ -540,7 +540,7 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
      * @return array Entity IDs
      */
     private function getEntityIdsInGrid() {
-        $ds = clone $this->fetchDataFromDb();
+        $ds = clone $this->fetchDataFromDb(true);
 
         $ids = [];
         while($row = $ds->fetchAssoc()) {

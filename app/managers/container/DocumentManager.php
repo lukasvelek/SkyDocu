@@ -17,7 +17,7 @@ use App\Repositories\Container\GroupRepository;
 
 class DocumentManager extends AManager {
     public DocumentRepository $documentRepository;
-    private DocumentClassRepository $documentClassRepository;
+    public DocumentClassRepository $documentClassRepository;
     private GroupRepository $groupRepository;
     private FolderRepository $folderRepository;
     public EnumManager $enumManager;
@@ -185,6 +185,8 @@ class DocumentManager extends AManager {
                 throw new GeneralException('Database error.');
             }
         }
+
+        return $documentId;
     }
 
     public function getDocumentCountForFolder(string $folderId) {

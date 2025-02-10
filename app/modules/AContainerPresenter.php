@@ -107,6 +107,8 @@ abstract class AContainerPresenter extends APresenter {
         $this->initManagers();
         $this->injectCacheFactoryToManagers();
 
+        $this->enumManager->standaloneProcessManager = $this->standaloneProcessManager;
+
         $this->documentManager->enumManager = $this->enumManager;
 
         $this->documentBulkActionAuthorizator = new DocumentBulkActionAuthorizator($containerConnection, $this->logger, $this->documentManager, $this->documentRepository, $this->app->userManager, $this->groupManager, $this->processManager, $this->archiveManager);
@@ -141,17 +143,21 @@ abstract class AContainerPresenter extends APresenter {
                 ':userSubstituteManager',
                 ':userAbsenceManager'
             ],
-            'standaloneProcessManager' => [
-                'processManager',
-                ':currentUser',
-                ':userManager'
-            ],
             'archiveManager' => [
                 'archiveRepository'
             ],
             'fileStorageManager' => [
                 'fileStorageRepository'
-            ]
+            ],
+            'standaloneProcessManager' => [
+                'processManager',
+                ':currentUser',
+                ':userManager',
+                'documentManager',
+                'fileStorageManager',
+                'groupManager',
+                'folderManager'
+            ],
         ];
 
         $notFound = [];

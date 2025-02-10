@@ -295,6 +295,14 @@ class ProcessesPresenter extends AUserPresenter {
                     }
 
                     $this->processManager->finishProcess($processId, $this->getUserId());
+
+                    if($isStandalone !== null) {
+                        switch($process->type) {
+                            case StandaloneProcesses::INVOICE:
+                                $this->standaloneProcessManager->finishInvoice($processId);
+                                break;
+                        }
+                    }
     
                     $this->flashMessage('Process finished.', 'success');
                     break;

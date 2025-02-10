@@ -30,9 +30,9 @@ class FileUploadManager {
      * @param string $documentId Document ID
      * @param string $userId User ID
      */
-    public function uploadFile(array $fileData, string $documentId, string $userId): array {
+    public function uploadFile(array $fileData, ?string $documentId, string $userId): array {
         $dirpath = $this->generateFolderPath($documentId, $userId);
-        $filepath = $dirpath . $this->generateFilename($fileData['name'], $documentId, $userId); /*basename($fileData['name']);*/
+        $filepath = $dirpath . $this->generateFilename($fileData['name'], $documentId, $userId);
 
         // CHECKS
         if(!$this->checkType($filepath)) {
@@ -95,8 +95,14 @@ class FileUploadManager {
      * @param string $documentId Document ID
      * @param string $userId User ID
      */
-    private function generateFolderPath(string $documentId, string $userId): string {
-        return APP_ABSOLUTE_DIR . CONTAINERS_DIR . 'uploads\\' . $userId . '\\' . $documentId . '\\';
+    private function generateFolderPath(?string $documentId, string $userId): string {
+        $path = APP_ABSOLUTE_DIR . CONTAINERS_DIR . 'uploads\\' . $userId . '\\';
+
+        if($documentId !== null) {
+            $path .= $documentId . '\\';
+        }
+
+        return $path;
     }
 
     /**
@@ -115,9 +121,13 @@ class FileUploadManager {
      * @param string $documentId Document ID
      * @param string $userId User ID
      */
-    private function generateFilename(string $filename, string $documentId, string $userId) {
+    private function generateFilename(string $filename, ?string $documentId, string $userId) {
         $hash = HashManager::createHash(8, false);
-        return md5($hash . $filename . $documentId . $userId) . '.' . strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+        $text = $hash . $filename . $userId;
+        if($documentId !== null) {
+            $text .= $documentId;
+        }
+        return md5($text) . '.' . strtolower(pathinfo($filename, PATHINFO_EXTENSION));
     }
 }
 

@@ -45,6 +45,14 @@ class FolderRepository extends ARepository {
         return $qb->fetch();
     }
 
+    public function getFolderByTitle(string $title) {
+        $qb = $this->composeQueryForFolders();
+        $qb->andWhere('title = ?', [$title])
+            ->execute();
+
+        return $qb->fetch();
+    }
+
     public function getVisibleCustomMetadataIdForFolder(string $folderId) {
         $qb = $this->qb(__METHOD__);
 

@@ -12,10 +12,6 @@ use App\UI\AComponent;
  * @author Lukas Velek
  */
 class HomeOffice extends AProcessForm {
-    public function startup() {    
-        parent::startup();
-    }
-
     protected function createForm() {
         $this->addTextArea('reason', 'Reason:')
             ->setRequired();

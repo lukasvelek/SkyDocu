@@ -125,7 +125,7 @@ class StandaloneProcessManager extends AManager {
         return $qb;
     }
 
-    public function getProcessMetadataEnumValues(string $processTitle, string $metadataTitle) {
+    public function getProcessMetadataEnumValues(string $processTitle, string $metadataTitle, ?string $searchQuery = null) {
         $qb = $this->processManager->processRepository->composeQueryForProcessTypes();
         $qb->where('typeKey = ?', [$processTitle])
             ->execute();
@@ -139,7 +139,14 @@ class StandaloneProcessManager extends AManager {
         $metadata = DatabaseRow::createFromDbRow($qb->fetch());
 
         $qb = $this->composeQueryForProcessMetadataEnumForMetadata($metadata->metadataId);
-        $qb->execute();
+
+        if($searchQuery !== null) {
+            $qb->andWhere('title LIKE :title')
+                ->setParams([':title' => '%' . $searchQuery . '%']);
+        }
+
+        $qb->orderBy('title')
+            ->execute();
 
         $values = [];
         while($row = $qb->fetchAssoc()) {

@@ -98,9 +98,12 @@ class ComponentFactory {
      * 
      * @param AComponent &$component Component
      */
-    private function injectDefault(AComponent &$component) {
+    private function injectDefault(AComponent &$component, ?string $processName = null) {
         $component->setApplication($this->presenter->app);
         $component->setPresenter($this->presenter);
+        if($processName !== null) {
+            $component->setComponentName('ProcessForm-' . $processName);
+        }
     }
 
     /**
@@ -115,17 +118,17 @@ class ComponentFactory {
         switch($name) {
             case StandaloneProcesses::HOME_OFFICE:
                 $form = new HomeOffice($this->request);
-                $this->injectDefault($form);
+                $this->injectDefault($form, $name);
                 return $form;
 
             case StandaloneProcesses::FUNCTION_REQUEST:
                 $form = new FunctionRequest($this->request);
-                $this->injectDefault($form);
+                $this->injectDefault($form, $name);
                 return $form;
 
             case StandaloneProcesses::INVOICE:
                 $form = new Invoice($this->request, $standaloneProcessManager);
-                $this->injectDefault($form);
+                $this->injectDefault($form, $name);
                 return $form;
 
             default:

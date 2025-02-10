@@ -35,6 +35,7 @@ Future plans include:
     - More user-friendly component loading or refreshing animation
 - Document file uploading
     - Uploaded file overview (in grid) + stats in in-container administration
+- Invoice Process
 
 ### 1.2 (January 27th, 2025)
 - Code readability update

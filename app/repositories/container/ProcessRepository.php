@@ -284,6 +284,28 @@ class ProcessRepository extends ARepository {
 
         return $qb->fetchBool();
     }
+
+    public function getMetadataEnumValueById(string $valueId) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->select(['*'])
+            ->from('process_metadata_list_values')
+            ->where('valueId = ?', [$valueId])
+            ->execute();
+
+        return $qb->fetch();
+    }
+
+    public function updateMetadataEnumValue(string $valueId, string $title) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->update('process_metadata_list_values')
+            ->set(['title' => $title])
+            ->where('valueId = ?', [$valueId])
+            ->execute();
+
+        return $qb->fetchBool();
+    }
 }
 
 ?>

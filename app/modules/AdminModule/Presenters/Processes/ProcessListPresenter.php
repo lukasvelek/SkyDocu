@@ -177,9 +177,22 @@ class ProcessListPresenter extends AAdminPresenter {
 
         $grid->createDataSourceFromQueryBuilder($this->standaloneProcessManager->composeQueryForProcessMetadataEnumForMetadata($metadataId), 'valueId');
         $grid->addQueryDependency('metadataId', $metadataId);
-        //$grid->addQueryDependency('typeId', $typeId);
 
         $grid->addColumnText('title', 'Title');
+
+        $edit = $grid->addAction('edit');
+        $edit->setTitle('Edit');
+        $edit->onCanRender[] = function() {
+            return true;
+        };
+        $edit->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) use ($metadataId, $typeId) {
+            $el = HTML::el('a')
+                ->class('grid-link')
+                ->href($this->createURLString('editEnumValueForm', ['valueId' => $primaryKey, 'metadataId' => $metadataId, 'typeId' => $typeId]))
+                ->text('Edit');
+
+            return $el;
+        };
 
         return $grid;
     }
@@ -205,7 +218,6 @@ class ProcessListPresenter extends AAdminPresenter {
 
             $this->redirect($this->createURL('metadataEnumList', ['metadataId' => $metadataId, 'typeId' => $typeId]));
         }
-
     }
 
     public function renderNewEnumValueForm() {
@@ -221,6 +233,50 @@ class ProcessListPresenter extends AAdminPresenter {
             ->setRequired();
 
         $form->addSubmit('Create');
+
+        return $form;
+    }
+
+    public function handleEditEnumValueForm(?FormRequest $fr = null) {
+        $metadataId = $this->httpRequest->get('metadataId');
+        $typeId = $this->httpRequest->get('typeId');
+        $valueId = $this->httpRequest->get('valueId');
+
+        if($fr !== null) {
+            try {
+                $this->processRepository->beginTransaction(__METHOD__);
+
+                $this->standaloneProcessManager->updateMetadataEnumValue($valueId, $fr->title);
+
+                $this->processRepository->commit($this->getUserId(), __METHOD__);
+
+                $this->flashMessage('Metadata enum value updated.', 'success');
+            } catch(AException $e) {
+                $this->processRepository->rollback(__METHOD__);
+
+                $this->flashMessage('Could not update metadata enum value. Reason: ' . $e->getMessage(), 'error', 10);
+            }
+
+            $this->redirect($this->createURL('metadataEnumList', ['metadataId' => $metadataId, 'typeId' => $typeId]));
+        }
+    }
+
+    public function renderEditEnumValueForm() {
+        $this->template->links = $this->createBackUrl('metadataEnumList', ['metadataId' => $this->httpRequest->get('metadataId'), 'typeId' => $this->httpRequest->get('typeId')], 'link');
+    }
+
+    protected function createComponentEditMetadataEnumValueForm(HttpRequest $request) {
+        $value = $this->standaloneProcessManager->getMetadataEnumValueById($request->get('valueId'));
+
+        $form = $this->componentFactory->getFormBuilder();
+
+        $form->setAction($this->createURL('editEnumValueForm', ['metadataId' => $request->get('metadataId'), 'typeId' => $request->get('typeId'), 'valueId' => $request->get('valueId')]));
+
+        $form->addTextInput('title', 'Title:')
+            ->setRequired()
+            ->setValue($value->title);
+
+        $form->addSubmit('Save');
 
         return $form;
     }

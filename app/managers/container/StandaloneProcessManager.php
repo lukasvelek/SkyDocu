@@ -6,6 +6,7 @@ use App\Constants\Container\StandaloneProcesses;
 use App\Core\DB\DatabaseRow;
 use App\Entities\UserEntity;
 use App\Exceptions\GeneralException;
+use App\Exceptions\NonExistingEntityException;
 use App\Logger\Logger;
 use App\Managers\AManager;
 use App\Managers\EntityManager;
@@ -167,6 +168,22 @@ class StandaloneProcessManager extends AManager {
         }
 
         if(!$this->processManager->processRepository->createNewMetadataEnumValue($data)) {
+            throw new GeneralException('Database error.');
+        }
+    }
+
+    public function getMetadataEnumValueById(string $valueId) {
+        $row = $this->processManager->processRepository->getMetadataEnumValueById($valueId);
+
+        if($row === null) {
+            throw new NonExistingEntityException('Metadata enum value does not exist.');
+        }
+
+        return DatabaseRow::createFromDbRow($row);
+    }
+
+    public function updateMetadataEnumValue(string $valueId, string $title) {
+        if(!$this->processManager->processRepository->updateMetadataEnumValue($valueId, $title)) {
             throw new GeneralException('Database error.');
         }
     }

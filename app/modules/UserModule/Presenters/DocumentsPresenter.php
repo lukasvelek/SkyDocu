@@ -246,7 +246,7 @@ class DocumentsPresenter extends AUserPresenter {
         $this->saveToPresenterCache('customMetadataCode', $customMetadataCode);
 
         $links = [
-            $this->createBackUrl('list')
+            $this->createBackUrl('list', ['folderId' => $document->folderId])
         ];
 
         if(!$this->fileStorageManager->doesDocumentHaveFile($document->documentId)) {

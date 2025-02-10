@@ -195,7 +195,7 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
             };
             $info->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
                 $el = HTML::el('a');
-                $el->href($this->createFullURLString('User:Documents', 'info', ['documentId' => $primaryKey]))
+                $el->href($this->createFullURLString('User:Documents', 'info', ['documentId' => $primaryKey, 'folderId' => $row->folderId]))
                     ->text('Information')
                     ->class('grid-link');
 

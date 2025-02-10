@@ -278,7 +278,7 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
 
                     $col = $this->addColumnBoolean(DocumentsGridSystemMetadata::IS_IN_PROCESS, DocumentsGridSystemMetadata::toString(DocumentsGridSystemMetadata::IS_IN_PROCESS));
                     array_unshift($col->onRenderColumn, function(DatabaseRow $row, Row $_row, Cell $cell, HTML $html, mixed $value) use ($documentsInProcess) {
-                        return array_key_exists($row->documentId, $documentsInProcess);
+                        return in_array($row->documentId, $documentsInProcess);
                     });
                     break;
 

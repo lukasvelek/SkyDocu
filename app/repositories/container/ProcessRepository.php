@@ -81,10 +81,12 @@ class ProcessRepository extends ARepository {
     public function getActiveProcessCountForDocuments(array $documentIds) {
         $qb = $this->qb(__METHOD__);
 
+        $types = StandaloneProcesses::getAllConstants();
+
         $qb->select(['documentId', 'COUNT(processId) AS cnt'])
             ->from('processes')
             ->where($qb->getColumnInValues('documentId', $documentIds))
-            ->andWhere($qb->getColumnNotInValues('status', [ProcessStatus::FINISHED, ProcessStatus::CANCELED]));
+            ->andWhere($qb->getColumnNotInValues('status', [ProcessStatus::FINISHED, ProcessStatus::CANCELED]) . ' OR ' . $qb->getColumnInValues('type', $types));
 
         $qb->execute();
 

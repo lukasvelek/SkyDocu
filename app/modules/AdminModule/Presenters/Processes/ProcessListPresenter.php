@@ -175,7 +175,10 @@ class ProcessListPresenter extends AAdminPresenter {
 
         $grid = $this->componentFactory->getGridBuilder($this->containerId);
 
-        $grid->createDataSourceFromQueryBuilder($this->standaloneProcessManager->composeQueryForProcessMetadataEnumForMetadata($metadataId), 'valueId');
+        $qb = $this->standaloneProcessManager->composeQueryForProcessMetadataEnumForMetadata($metadataId)
+            ->orderBy('title');
+
+        $grid->createDataSourceFromQueryBuilder($qb, 'valueId');
         $grid->addQueryDependency('metadataId', $metadataId);
 
         $grid->addColumnText('title', 'Title');

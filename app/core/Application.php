@@ -181,7 +181,10 @@ class Application {
             }
         }
 
-        if(isset($_GET['isAjax']) && $_GET['isAjax'] == '1') {
+        /**
+         * Instead of query parameter isAjax, it can be easily determined with the request header.
+         */
+        if(array_key_exists('HTTP_X_REQUESTED_WITH', $_SERVER) && $_SERVER['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest') {
             $this->isAjaxRequest = true;
         }
 
@@ -329,12 +332,10 @@ class Application {
         $request = new HttpRequest();
 
         foreach($_GET as $k => $v) {
-            if($k == 'isAjax') {
-                $request->isAjax = true;
-            } else {
-                $request->query[$k] = $v;
-            }
+            $request->query[$k] = $v;
         }
+
+        $request->isAjax = $this->isAjaxRequest;
 
         if(!empty($_POST)) {
             foreach($_POST as $k => $v) {
@@ -373,13 +374,7 @@ class Application {
             $this->currentAction = 'default';
         }
 
-        $isAjax = '0';
-
-        if(isset($_GET['isAjax'])) {
-            $isAjax = htmlspecialchars($_GET['isAjax']);
-        }
-
-        if ($log) $this->logger->info('Current URL: [module => ' . $this->currentModule . ', presenter => ' . $this->currentPresenter . ', action => ' . $this->currentAction . ', isAjax => ' . $isAjax . ']', __METHOD__);
+        if ($log) $this->logger->info('Current URL: [module => ' . $this->currentModule . ', presenter => ' . $this->currentPresenter . ', action => ' . $this->currentAction . ']', __METHOD__);
     }
 }
 

@@ -1792,8 +1792,7 @@ class GridBuilder extends AComponent {
         $this->hasCheckboxes = true;
         $this->checkboxHandler = [
             'presenter' => $presenter,
-            'action' => $componentAction,
-            'isComponent' => true
+            'action' => $componentAction
         ];
 
         if(!empty($params)) {

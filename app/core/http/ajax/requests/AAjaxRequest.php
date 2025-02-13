@@ -21,7 +21,6 @@ abstract class AAjaxRequest implements IAjaxRequest {
     private HttpRequest $request;
     private bool $buildCheck;
     private string $functionName;
-    private bool $isComponent;
 
     protected array $url;
     /**
@@ -47,7 +46,6 @@ abstract class AAjaxRequest implements IAjaxRequest {
         $this->beforeStartOperations = [];
         $this->arguments = [];
         $this->buildCheck = false;
-        $this->isComponent = false;
         $this->data = [];
         $this->resultType = self::RESULT_TYPE_JSON;
 
@@ -121,12 +119,6 @@ abstract class AAjaxRequest implements IAjaxRequest {
      * Converts URL array to string
      */
     protected function processUrl(): string {
-        if(!array_key_exists('isAjax', $this->url)) {
-            $this->url['isAjax'] = '1';
-        }
-        if($this->isComponent && !array_key_exists('isComponent', $this->url)) {
-            $this->url['isComponent'] = '1';
-        }
         return Router::generateUrl($this->url);
     }
 
@@ -164,7 +156,6 @@ abstract class AAjaxRequest implements IAjaxRequest {
             'action' => $this->request->get('action'),
             'do' => $component->getComponentName() . '-' . $actionName
         ];
-        $this->isComponent = true;
         return $this;
     }
 

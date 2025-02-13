@@ -177,7 +177,7 @@ class FormBuilder2 extends AComponent {
             $callArgs = [];
 
             foreach($this->httpRequest->query as $k => $v) {
-                if(in_array($k, ['page', 'action', 'do', 'isComponent', 'isAjax', 'state', 'elements'])) continue;
+                if(in_array($k, ['page', 'action', 'do', 'state', 'elements'])) continue;
 
                 $callArgs[] = $v;
             }
@@ -262,7 +262,7 @@ class FormBuilder2 extends AComponent {
 
         foreach($this->httpRequest->query as $k => $v) {
             if(array_key_exists($k, $this->action)) continue;
-            if(in_array($k, ['page', 'action', 'do', 'isComponent', 'isAjax'])) continue;
+            if(in_array($k, ['page', 'action', 'do'])) continue;
 
             $data[$k] = '_' . $k;
             $args[] = '_' . $k;
@@ -277,7 +277,7 @@ class FormBuilder2 extends AComponent {
         }
 
         foreach($this->action as $k => $v) {
-            if(in_array($k, ['page', 'action', 'do', 'isComponent', 'isAjax'])) continue;
+            if(in_array($k, ['page', 'action', 'do'])) continue;
 
             $data[$k] = $v;
         }

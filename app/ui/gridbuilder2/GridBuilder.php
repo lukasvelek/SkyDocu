@@ -5,20 +5,14 @@ namespace App\UI\GridBuilder2;
 use App\Constants\AConstant;
 use App\Constants\IBackgroundColorable;
 use App\Constants\IColorable;
-use App\Core\AjaxRequestBuilder;
 use App\Core\Caching\CacheFactory;
 use App\Core\Caching\CacheNames;
 use App\Core\DB\DatabaseRow;
-use App\Core\Http\Ajax\Operations\HTMLPageOperation;
-use App\Core\Http\Ajax\Requests\AAjaxRequest;
-use App\Core\Http\Ajax\Requests\PostAjaxRequest;
 use App\Core\Http\HttpRequest;
 use App\Core\Http\JsonResponse;
 use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
 use App\Exceptions\GridExportException;
-use App\Helpers\ArrayHelper;
-use App\Helpers\DateTimeFormatHelper;
 use App\Helpers\GridHelper;
 use App\Modules\APresenter;
 use App\UI\AComponent;
@@ -44,19 +38,9 @@ use QueryBuilder\QueryBuilder;
  * @version 2.0
  */
 class GridBuilder extends AComponent {
-    private const COL_TYPE_TEXT = 'text';
-    private const COL_TYPE_DATETIME = 'datetime';
-    private const COL_TYPE_BOOLEAN = 'boolean';
-    private const COL_TYPE_USER = 'user';
-
     protected ?QueryBuilder $dataSource;
     protected ?QueryBuilder $fullDataSource;
     protected string $primaryKeyColName;
-    /**
-     * @var array<string, Column> $columns
-     */
-    private array $columns;
-    private array $columnLabels;
     private ?Table $table;
     private bool $enablePagination;
     private bool $enableExport;
@@ -108,6 +92,8 @@ class GridBuilder extends AComponent {
     protected bool $controlsDisabled;
     protected bool $refreshDisabled;
 
+    private GridBuilderHelper $helper;
+
     /**
      * Class constructor
      * 
@@ -118,8 +104,6 @@ class GridBuilder extends AComponent {
 
         $this->dataSource = null;
         $this->fullDataSource = null;
-        $this->columns = [];
-        $this->columnLabels = [];
         $this->enablePagination = true;
         $this->enableExport = false;
         $this->gridPage = 0;
@@ -141,6 +125,8 @@ class GridBuilder extends AComponent {
         $this->actionsDisabled = false;
         $this->controlsDisabled = false;
         $this->refreshDisabled = false;
+
+        $this->helper = new GridBuilderHelper($request);
     }
 
     /**
@@ -191,6 +177,9 @@ class GridBuilder extends AComponent {
     public function startup() {
         parent::startup();
 
+        $this->helper->setApplication($this->app);
+        $this->helper->setComponentName($this->componentName);
+        $this->helper->setPresenter($this->presenter);
         $this->gridPage = $this->getGridPage();
     }
 
@@ -364,7 +353,7 @@ class GridBuilder extends AComponent {
      * @return Column Column instance
      */
     public function addColumnConst(string $name, ?string $label = null, string $constClass = '') {
-        $col = $this->addColumn($name, self::COL_TYPE_TEXT, $label);
+        $col = $this->addColumn($name, GridColumnTypes::COL_TYPE_TEXT, $label);
         $col->onRenderColumn[] = function(DatabaseRow $row, Row $_row, Cell $cell, HTML $html, mixed $value) use ($constClass) {
             $result = null;
             try {
@@ -422,7 +411,7 @@ class GridBuilder extends AComponent {
      * @return Column Column instance
      */
     public function addColumnUser(string $name, ?string $label = null) {
-        return $this->addColumn($name, self::COL_TYPE_USER, $label);
+        return $this->addColumn($name, GridColumnTypes::COL_TYPE_USER, $label);
     }
 
     /**
@@ -433,7 +422,7 @@ class GridBuilder extends AComponent {
      * @return Column Column instance
      */
     public function addColumnBoolean(string $name, ?string $label = null) {
-        return $this->addColumn($name, self::COL_TYPE_BOOLEAN, $label);
+        return $this->addColumn($name, GridColumnTypes::COL_TYPE_BOOLEAN, $label);
     }
 
     /**
@@ -444,7 +433,7 @@ class GridBuilder extends AComponent {
      * @return Column Column instance
      */
     public function addColumnDatetime(string $name, ?string $label = null) {
-        return $this->addColumn($name, self::COL_TYPE_DATETIME, $label);
+        return $this->addColumn($name, GridColumnTypes::COL_TYPE_DATETIME, $label);
     }
 
     /**
@@ -455,7 +444,7 @@ class GridBuilder extends AComponent {
      * @return Column Column instance
      */
     public function addColumnText(string $name, ?string $label = null) {
-        return $this->addColumn($name, self::COL_TYPE_TEXT, $label);
+        return $this->addColumn($name, GridColumnTypes::COL_TYPE_TEXT, $label);
     }
 
     /**
@@ -467,84 +456,7 @@ class GridBuilder extends AComponent {
      * @return Column Column instance
      */
     private function addColumn(string $name, string $type, ?string $label = null) {
-        $col = new Column($name);
-        $this->columns[$name] = &$col;
-        if($label !== null) {
-            $this->columnLabels[$name] = $label;
-        } else {
-            $this->columnLabels[$name] = $name;
-        }
-
-        if($type == self::COL_TYPE_DATETIME) {
-            $col->onRenderColumn[] = function(DatabaseRow $row, Row $_row, Cell $cell, HTML $html, mixed $value) {
-                if($value === null) {
-                    return '-';
-                }
-
-                $html->title(DateTimeFormatHelper::formatDateToUserFriendly($value, DateTimeFormatHelper::ATOM_FORMAT));
-                return DateTimeFormatHelper::formatDateToUserFriendly($value);
-            };
-
-            $col->onExportColumn[] = function(DatabaseRow $row, mixed $value) {
-                return DateTimeFormatHelper::formatDateToUserFriendly($value);
-            };
-        } else if($type == self::COL_TYPE_USER) {
-            $col->onRenderColumn[] = function(DatabaseRow $row, Row $_row, Cell $cell, HTML $html, mixed $value) {
-                if($value === null) {
-                    return $value;
-                }
-                $user = $this->app->userManager->getUserById($value);
-                if($user === null) {
-                    return $value;
-                } else {
-                    return $user->getFullname();
-                }
-            };
-
-            $col->onExportColumn[] = function(DatabaseRow $row, mixed $value) {
-                if($value === null) {
-                    return $value;
-                }
-                $user = $this->app->userManager->getUserById($value);
-                if($user === null) {
-                    return $value;
-                } else {
-                    return $user->getUsername();
-                }
-            };
-        } else if($type == self::COL_TYPE_BOOLEAN) {
-            $col->onRenderColumn[] = function(DatabaseRow $row, Row $_row, Cell $cell, HTML $html, mixed $value) {
-                if($value === true || $value == 1) {
-                    $el = HTML::el('span')
-                            ->style('color', 'green')
-                            ->style('background-color', 'lightgreen')
-                            ->style('border-radius', '10px')
-                            ->style('padding', '5px')
-                            ->text('&check;');
-                    $cell->setContent($el);
-                } else {
-                    $el = HTML::el('span')
-                            ->style('color', 'red')
-                            ->style('background-color', 'pink')
-                            ->style('border-radius', '10px')
-                            ->style('padding', '5px')
-                            ->text('&times;');
-                    $cell->setContent($el);
-                }
-
-                return $cell;
-            };
-
-            $col->onExportColumn[] = function(DatabaseRow $row, mixed $value) {
-                if($value === true) {
-                    return 'True';
-                } else {
-                    return 'False';
-                }
-            };
-        }
-
-        return $col;
+        return $this->helper->addColumn($name, $type, $label);
     }
 
     /**
@@ -672,318 +584,19 @@ class GridBuilder extends AComponent {
 
     /**
      * Builds the grid
-     *  - creates columns
-     *  - creates rows
-     *  - creates cells
-     *  - creates table
-     *  - creates actions
      * 
      * @param bool $isSkeleton Is skeleton
      */
     private function build(bool $isSkeleton = false) {
-        $_tableRows = [];
-
-        $_headerRow = new Row();
-        $_headerRow->setPrimaryKey('header');
-        foreach($this->columns as $colName => $colEntity) {
-            $_headerCell = new Cell();
-            $_headerCell->setName($colName);
-            $_headerCell->setContent($this->columnLabels[$colName]);
-            $_headerCell->setHeader();
-            $_headerRow->addCell($_headerCell);
-        }
-
-        $_tableRows['header'] = $_headerRow;
-
-        $cursor = $this->fetchDataFromDb();
-
-        $rowIndex = 0;
-        while($row = $cursor->fetchAssoc()) {
-            $row = $this->createDatabaseRow($row);
-            $rowId = $row->{$this->primaryKeyColName};
-
-            $_row = new Row();
-            $_row->setPrimaryKey($rowId);
-            $_row->index = $rowIndex;
-            $_row->rowData = $row;
-
-            foreach($this->columns as $name => $col) {
-                $_cell = new Cell();
-                $_cell->setName($name);
-
-                if(in_array($name, $row->getKeys())) {
-                    $content = $row->$name;
-
-                    if(!empty($this->columns[$name]->onRenderColumn)) {
-                        foreach($this->columns[$name]->onRenderColumn as $render) {
-                            try {
-                                $content = $render($row, $_row, $_cell, $_cell->html, $content);
-                            } catch(Exception $e) {}
-                        }
-                    }
-                } else {
-                    $content = '-';
-
-                    if(!empty($this->columns[$name]->onRenderColumn)) {
-                        foreach($this->columns[$name]->onRenderColumn as $render) {
-                            try {
-                                $content = $render($row, $_row, $_cell, $_cell->html, $content);
-                            } catch(Exception $e) {}
-                        }
-                    }
-                }
-
-                if($content === null) {
-                    $content = '-';
-
-                    if($isSkeleton) {
-                        $content = '<div id="skeletonTextAnimation">' . $content . '</div>';
-                    }
-
-                    $_cell->setContent($content);
-                } else {
-                    if($content instanceof Cell) {
-                        if($isSkeleton) {
-                            if($content->content instanceof HTML) {
-                                $tmp = HTML::el('div')
-                                    ->id('skeletonTextAnimation')
-                                    ->text('test');
-                                $content->content = $tmp;
-                            } else {
-                                $content->content = '<div id="skeletonTextAnimation">test</div>';
-                            }
-                        }
-                        $_cell = $content;
-                    } else {
-                        if($isSkeleton) {
-                            if($content instanceof HTML) {
-                                $tmp = HTML::el('div')
-                                    ->id('skeletonTextAnimation')
-                                    ->text('test');
-                                $content = $tmp;
-                            } else {
-                                $content = '<div id="skeletonTextAnimation">test</div>';
-                            }
-                        }
-                        $_cell->setContent($content);
-                    }
-                }
-
-                $_row->addCell($_cell);
-            }
-
-            if(!empty($this->onRowRender)) {
-                foreach($this->onRowRender as $render) {
-                    try {
-                        $render($row, $_row, $_row->html);
-                    } catch(Exception $e) {}
-                }
-            }
-
-            if($this->hasCheckboxes) {
-                $rowCheckbox = new RowCheckbox($rowId, $this->componentName . '_onCheckboxCheck(\'' . $rowId . '\')');
-                $rowCheckbox->setSkeleton($isSkeleton);
-                $_row->addCell($rowCheckbox, true);
-            }
-
-            $_tableRows[] = $_row;
-            $rowIndex++;
-        }
-
-        if($this->hasCheckboxes && count($_tableRows) > 1) {
-            $_headerCell = new Cell();
-            $_headerCell->setName('checkboxes');
-            $_headerCell->setHeader();
-            $_headerCell->setContent('');
-            $_tableRows['header']->addCell($_headerCell, true);
-        }
-
-        if(!empty($this->actions) && !$this->actionsDisabled) {
-            $maxCountToRender = 0;
-            $canRender = [];
-            
-            foreach($_tableRows as $k => $_row) {
-                if($k == 'header') continue;
-
-                $i = 0;
-                foreach($this->actions as $actionName => $action) {
-                    $cAction = clone $action;
-
-                    foreach($cAction->onCanRender as $render) {
-                        try {
-                            $result = $render($_row->rowData, $_row, $cAction);
-
-                            if($result == true) {
-                                $canRender[$k][$actionName] = $cAction;
-                                $i++;
-                            } else {
-                                $canRender[$k][$actionName] = null;
-                            }
-                        } catch(Exception $e) {
-                            $canRender[$k][$actionName] = null;
-                        }
-                    }
-
-                    if($i > $maxCountToRender) {
-                        $maxCountToRender = $i;
-                    }
-                }
-            }
-
-            $cells = [];
-            if(count($this->actions) == $maxCountToRender) {
-                foreach($canRender as $k => $actionData) {
-                    $_row = &$_tableRows[$k];
-
-                    $actionData = ArrayHelper::reverseArray($actionData);
-                    
-                    foreach($actionData as $actionName => $action) {
-                        if($action instanceof Action) {
-                            $cAction = clone $action;
-                            $cAction->inject($_row->rowData, $_row, $_row->primaryKey);
-                            $_cell = new Cell();
-                            $_cell->setName($actionName);
-                            $_cell->setContent($cAction->output()->toString());
-                            $_cell->setClass('grid-cell-action');
-                        } else {
-                            $_cell = new Cell();
-                            $_cell->setName($actionName);
-                            $_cell->setContent('');
-                            $_cell->setClass('grid-cell-action');
-                        }
-
-                        if($isSkeleton) {
-                            $_cell->setContent('<div id="skeletonTextAnimation">test</div>');
-                        }
-
-                        $cells[$k][$actionName] = $_cell;
-                    }
-                }
-            } else {
-                $displayedActions = [];
-                foreach($canRender as $k => $actionData) {
-                    $_row = &$_tableRows[$k];
-
-                    $actionData = ArrayHelper::reverseArray($actionData);
-                    
-                    foreach($actionData as $actionName => $action) {
-                        if($action instanceof Action) {
-                            $cAction = clone $action;
-                            $cAction->inject($_row->rowData, $_row, $_row->primaryKey);
-                            $_cell = new Cell();
-                            $_cell->setName($actionName);
-                            $_cell->setContent($cAction->output()->toString());
-                            $_cell->setClass('grid-cell-action');
-
-                            if($isSkeleton) {
-                                $_cell->setContent('<div id="skeletonTextAnimation">test</div>');
-                            }
-
-                            $cells[$k][$actionName] = $_cell;
-                            $displayedActions[] = $actionName;
-                        }
-                    }
-
-                    if(!array_key_exists($k, $cells)) {
-                        foreach($actionData as $actionName => $action) {
-                            if(!in_array($actionName, $displayedActions)) continue;
-                            $_cell = new Cell();
-                            $_cell->setName($actionName);
-                            $_cell->setContent('');
-                            $_cell->setClass('grid-cell-action');
-
-                            if($isSkeleton) {
-                                $_cell->setContent('<div id="skeletonTextAnimation">test</div>');
-                            }
-
-                            $cells[$k][$actionName] = $_cell;
-                        }
-                    }
-                }
-            }
-
-            /**
-             * All action names that should be displayed
-             */
-            $tmp = [];
-            foreach($cells as $k => $c) {
-                foreach($c as $cell) {
-                    if(!in_array($cell->getName(), $tmp)) {
-                        $tmp[] = $cell->getName();
-                    }
-                }
-            }
-
-            if(count($tmp) > 0) {
-                $_headerCell = new Cell();
-                $_headerCell->setName('actions');
-                $_headerCell->setContent('Actions');
-                $_headerCell->setHeader();
-                $_headerCell->setSpan(count($tmp));
-                $_tableRows['header']->addCell($_headerCell, true);
-            }
-
-            foreach(array_keys($_tableRows) as $k) {
-                if($k == 'header') continue;
-                if(!array_key_exists($k, $cells)) continue;
-                
-                $_cells = $cells[$k];
-
-                foreach($tmp as $name) {
-                    if(array_key_exists($name, $_cells)) {
-                        /**
-                         * Action with this name on this row should exist
-                         */
-                        $_tableRows[$k]->addCell($_cells[$name], true);
-                    } else {
-                        /**
-                         * Action with this name on this row should not exist
-                         */
-                        $_cell = new Cell();
-                        $_cell->setName($name);
-                        $_cell->setContent('');
-                        $_cell->setClass('grid-cell-action');
-
-                        $_tableRows[$k]->addCell($_cell, true);
-                    }
-                }
-            }
-        }
-
-        if(count($_tableRows) == 1) {
-            $content = 'No data found';
-            if($isSkeleton) {
-                $content = '<div id="skeletonTextAnimation">' . $content . '</div>';
-            }
-
-            $_cell = new Cell();
-            $_cell->setName('NoDataCell');
-            $_cell->setContent($content);
-            $_cell->setSpan(count($this->columns));
-            
-            $_row = new Row();
-            $_row->addCell($_cell);
-
-            $_tableRows['nodatacell'] = $_row;
-        }
-
-        $this->table = new Table($_tableRows);
-    }
-
-    /**
-     * Creates a DatabaseRow instance from $row
-     * 
-     * @param mixed $row mysqli_result
-     * @return DatabaseRow DatabaseRow instance
-     */
-    protected function createDatabaseRow(mixed $row) {
-        $r = new DatabaseRow();
-
-        foreach($row as $k => $v) {
-            $r->$k = $v;
-        }
-
-        return $r;
+        $this->table = $this->helper->buildGrid(
+            $this->onRowRender,
+            $this->actions,
+            $this->fetchDataFromDb(),
+            $this->primaryKeyColName,
+            $this->actionsDisabled,
+            $this->hasCheckboxes,
+            $isSkeleton
+        );
     }
 
     /**
@@ -1020,411 +633,17 @@ class GridBuilder extends AComponent {
      * @return string HTML code
      */
     private function createScripts() {
-        $scripts = [];
-
-        $addScript = function(AjaxRequestBuilder|AAjaxRequest $arb) use (&$scripts) {
-            if($arb instanceof AjaxRequestBuilder) {
-                $scripts[] = $arb->build();
-            } else if($arb instanceof AAjaxRequest) {
-                $scripts[] = $arb->build();
-            }
-        };
-
-        $data = [
-            'gridPage' => '_page'
-        ];
-
-        $args = [
-            '_page'
-        ];
-
-        if(!empty($this->activeFilters)) {
-            foreach($this->activeFilters as $name => $value) {
-                $argName = '_' . $name;
-
-                $data[$name] = $argName;
-                $args[] = $argName;
-            }
-        }
-
-        if(!empty($this->queryDependencies)) {
-            foreach($this->queryDependencies as $name => $value) {
-                $argName = '_' . $name;
-
-                $data[$name] = $argName;
-                $args[] = $argName;
-            }
-        }
-
-        // GET SKELETON
-        $getSkeletonPar = new PostAjaxRequest($this->httpRequest);
-
-        $getSkeletonPar->setComponentUrl($this, 'getSkeleton')
-            ->setData($data);
-
-        foreach($args as $arg) {
-            $getSkeletonPar->addArgument($arg);
-        }
-
-        $updateOperation = new HTMLPageOperation();
-        $updateOperation->setHtmlEntityId('grid-' . $this->gridName . '-controls')
-            ->setJsonResponseObjectName('controls');
-
-        $getSkeletonPar->addOnFinishOperation($updateOperation);
-
-        $updateOperation = new HTMLPageOperation();
-        $updateOperation->setHtmlEntityId('grid-' . $this->gridName)
-            ->setJsonResponseObjectName('grid');
-
-        $getSkeletonPar->addOnFinishOperation($updateOperation);
-
-        $updateOperation = new HTMLPageOperation();
-        $updateOperation->setHtmlEntityId('grid-' . $this->gridName . '-filters')
-            ->setJsonResponseObjectName('filters');
-
-        $getSkeletonPar->addOnFinishOperation($updateOperation);
-
-        $addScript($getSkeletonPar);
-
-        // REFRESH
-        $par = new PostAjaxRequest($this->httpRequest);
-
-        $par->setComponentUrl($this, 'refresh')
-            ->setData($data);
-
-        foreach($args as $arg) {
-            $par->addArgument($arg);
-        }
-
-        $updateOperation = new HTMLPageOperation();
-        $updateOperation->setHtmlEntityId($this->gridName)
-            ->setJsonResponseObjectName('grid');
-
-        $par->addOnFinishOperation($updateOperation);
-
-        $addScript($par);
-        $scripts[] = '
-            async function ' . $this->componentName . '_gridRefresh(' . implode(', ', $args) . ') {
-                await ' . $getSkeletonPar->getFunctionName() . '(' . implode(', ', $args) . ');
-                await sleep(2500);
-                await ' . $par->getFunctionName() . '(' . implode(', ', $args) . ');
-            }
-        ';
-
-        // PAGINATION
-        $par = new PostAjaxRequest($this->httpRequest);
-
-        $data = [
-            'gridPage' => '_page'
-        ];
-
-        $args = [
-            '_page'
-        ];
-
-        if(!empty($this->activeFilters)) {
-            foreach($this->activeFilters as $name => $value) {
-                $argName = '_' . $name;
-
-                $data[$name] = $argName;
-                $args[] = $argName;
-            }
-        }
-
-        if(!empty($this->queryDependencies)) {
-            foreach($this->queryDependencies as $name => $value) {
-                $argName = '_' . $name;
-
-                $data[$name] = $argName;
-                $args[] = $argName;
-            }
-        }
-
-        $par->setComponentUrl($this, 'page')
-            ->setData($data);
-
-        foreach($args as $arg) {
-            $par->addArgument($arg);
-        }
-
-        $updateOperation = new HTMLPageOperation();
-        $updateOperation->setHtmlEntityId($this->gridName)
-            ->setJsonResponseObjectName('grid');
-
-        $par->addOnFinishOperation($updateOperation);
-
-        $addScript($par);
-        $scripts[] = '
-            function ' . $this->componentName . '_page(' . implode(', ', $args) . ') {
-                ' . $par->getFunctionName() . '(' . implode(', ', $args) . ');
-            }
-        ';
-
-        // FILTER
-        if(!empty($this->filters)) {
-            $par = new PostAjaxRequest($this->httpRequest);
-
-            $data = [];
-            $args = [];
-
-            foreach($this->filters as $name => $value) {
-                $argName = '_' . $name;
-
-                $data[$name] = $argName;
-                $args[] = $argName;
-            }
-    
-            if(!empty($this->queryDependencies)) {
-                foreach($this->queryDependencies as $name => $value) {
-                    $argName = '_' . $name;
-    
-                    $data[$name] = $argName;
-                    $args[] = $argName;
-                }
-            }
-
-            $par->setComponentUrl($this, 'filter')
-                ->setData($data);
-
-            foreach($args as $arg) {
-                $par->addArgument($arg);
-            }
-
-            $updateOperation = new HTMLPageOperation();
-            $updateOperation->setHtmlEntityId($this->gridName)
-                ->setJsonResponseObjectName('grid');
-
-            $par->addOnFinishOperation($updateOperation);
-
-            $addScript($par);
-            $scripts[] = '
-                function ' . $this->componentName . '_filter(' . implode(', ', $args) . ') {
-                    ' . $par->getFunctionName() . '(' . implode(', ', $args) . ');
-                }
-            ';
-        }
-
-        // FILTER MODAL
-        if(!empty($this->filters)) {
-            $scripts[] = '
-                    async function ' . $this->componentName . '_processFilterModalOpen() {
-                        $("#grid-filter-modal-inner")
-                            .css("height", "90%")
-                            .css("visibility", "visible")
-                            .css("width", "90%");
-                    }
-            ';
-        }
-
-        if(!empty($this->filters) || !empty($this->quickSearchFilter)) {
-            $par = new PostAjaxRequest($this->httpRequest);
-
-            $data = [];
-            $args = [];
-    
-            if(!empty($this->queryDependencies)) {
-                foreach($this->queryDependencies as $name => $value) {
-                    $argName = '_' . $name;
-    
-                    $data[$name] = $argName;
-                    $args[] = $argName;
-                }
-            }
-
-            $par->setData($data)
-                ->setComponentUrl($this, 'filterClear');
-
-            foreach($args as $arg) {
-                $par->addArgument($arg);
-            }
-
-            $updateOperation = new HTMLPageOperation();
-            $updateOperation->setHtmlEntityId($this->gridName)
-                ->setJsonResponseObjectName('grid');
-
-            $par->addOnFinishOperation($updateOperation);
-
-            $addScript($par);
-            $scripts[] = '
-                function ' . $this->componentName . '_filterClear(' . implode(', ', $args) . ') {
-                    ' . $par->getFunctionName() . '(' . implode(', ', $args) . ');
-                }
-            ';
-        }
-
-        // QUICK SEARCH
-        if(!empty($this->quickSearchFilter)) {
-            $par = new PostAjaxRequest($this->httpRequest);
-
-            $data['query'] = '_query';
-
-            $par->setComponentUrl($this, 'quickSearch')
-                ->setData($data);
-
-            foreach($args as $arg) {
-                $par->addArgument($arg);
-            }
-            $par->addArgument('_query');
-
-            $op = new HTMLPageOperation();
-            $op->setHtmlEntityId($this->gridName)
-                ->setJsonResponseObjectName('grid');
-
-            $par->addOnFinishOperation($op);
-
-            $addScript($par);
-
-            $code = '
-                function ' . $this->componentName . '_quickSearch(' . implode(', ', $args) . ') {
-                    var query = $("#' . $this->componentName . '_search").val();
-
-                    if(query.length == 0) {
-                        alert("No data entered.");
-                    } else {
-                        ' . $par->getFunctionName() . '(' . implode(', ', $args) . (count($args) > 0 ? ', ' : '') . ' query);
-                    }
-                }
-            ';
-
-            $scripts[] = $code;
-        }
-
-        // EXPORT MODAL
-        if($this->enableExport) {
-            $scripts[] = '
-                    async function ' . $this->componentName . '_processExportModalOpen() {
-                        $("#grid-export-modal-inner")
-                            .css("height", "90%")
-                            .css("visibility", "visible")
-                            .css("width", "90%");
-                    }
-            ';
-        }
-
-        // EXPORT
-        if($this->enableExport) {
-            $arb = new AjaxRequestBuilder();
-
-            $headerParams = [];
-            $fArgs = [];
-            foreach($this->filters as $name => $filter) {
-                $hName = '_' . $name;
-                $headerParams[$name] = $hName;
-                $fArgs[] = $hName;
-            }
-
-            if(!empty($this->queryDependencies)) {
-                foreach($this->queryDependencies as $k => $v) {
-                    $pK = '_' . $k;
-    
-                    $headerParams[$k] = $pK;
-                    $fArgs[] = $pK;
-                }
-            }
-
-            $arb->setMethod()
-                ->setComponentAction($this->presenter, $this->componentName . '-exportLimited')
-                ->setHeader($headerParams)
-                ->setFunctionName($this->componentName . '_exportLimited')
-                ->setFunctionArguments($fArgs)
-                ->addWhenDoneOperation('if(obj.file) {
-                    window.open(obj.file, "_blank");
-                }')
-            ;
-
-            $addScript($arb);
-
-            $arb->setMethod()
-                ->setComponentAction($this->presenter, $this->componentName . '-exportUnlimited')
-                ->setHeader($headerParams)
-                ->setFunctionName($this->componentName . '_exportUnlimited')
-                ->setFunctionArguments($fArgs)
-                ->addWhenDoneOperation('if(obj.success) { alert("Your export will be created asynchronously. You can find it in Grid export management section."); }')
-            ;
-
-            $addScript($arb);
-        }
-
-        // CHECKBOXES
-        if($this->hasCheckboxes) {
-            $arb = new AjaxRequestBuilder();
-
-            $headerParams = [
-                'ids[]' => '_ids'
-            ];
-
-            if(array_key_exists('params', $this->checkboxHandler)) {
-                foreach($this->checkboxHandler['params'] as $paramName => $paramKey) {
-                    $headerParams[$paramName] = $paramKey;
-                }
-            }
-
-            if(!array_key_exists('isComponent', $this->checkboxHandler)) {
-                $arb->setAction($this->checkboxHandler['presenter'], $this->checkboxHandler['action']);
-            } else {
-                $arb->setComponentAction($this->checkboxHandler['presenter'], $this->componentName . '-' . $this->checkboxHandler['action']);
-            }
-
-            $arb->setMethod()
-                ->setHeader($headerParams)
-                ->setFunctionName($this->componentName . '_onCheckboxCheck')
-                ->addBeforeAjaxOperation('
-                    const _now = Date.now();
-                    _checkboxHandlerTimestamp = _now;
-
-                    const _ids = $("input[type=checkbox]:checked").map(function(_, el) {
-                        return $(el).attr("value[]");
-                    }).get();
-
-                    if(_ids.length == 0) {
-                        ' . $this->componentName . '_processBulkActionsModalClose();
-                        return;
-                    }
-
-                    $("#modal").show(); ' . $this->componentName . '_processBulkActionsModalOpen(true);
-
-                    await sleep(2000);
-
-                    if(_checkboxHandlerTimestamp != _now) {
-                        return;
-                    };
-
-                    if(_ids.length == 0) {
-                        ' . $this->componentName . '_processBulkActionsModalClose();
-                        return;
-                    }
-                ')
-                ->updateHTMLElement('modal', 'modal')
-                ->addWhenDoneOperation('_checkboxHandlerTimestamp = null;')
-                ->addWhenDoneOperation('
-                    $("#modal").show(); ' . $this->componentName . '_processBulkActionsModalOpen(false);
-                ')
-                ->addCustomArg('_ids')
-            ;
-
-            $addScript($arb);
-
-            $scripts[] = '
-                    function ' . $this->componentName . '_processBulkActionsModalOpen(_showLoading) {
-                        if(_showLoading) {
-                            $("#modal").html(\'<div id="bulk-actions-modal-inner" style="visibility: hidden; height: 0px; position: absolute; top: 5%; left: 5%; background-color: rgba(225, 225, 225, 1); z-index: 9999; border-radius: 5px;"></div>\');
-                            $("#bulk-actions-modal-inner").html(\'<div id="center" style="margin-top: 20px"><img src="resources/loading.gif" width="64"><br>Loading...</div>\');
-                        }
-
-                        $("#bulk-actions-modal-inner")
-                            .css("height", "15%")
-                            .css("visibility", "visible")
-                            .css("width", "90%");
-                    }
-
-                    function ' . $this->componentName . '_processBulkActionsModalClose() {
-                        $("#modal").html(\'\');
-                        $("#modal").hide();
-                    }
-            ';
-        }
-
-        return '<script type="text/javascript">' . implode("\r\n\r\n", $scripts) . '</script>';
+        return $this->helper->createScripts(
+            $this->filters,
+            $this->activeFilters,
+            $this->queryDependencies,
+            $this->quickSearchFilter,
+            $this,
+            $this->gridName,
+            $this->enableExport,
+            $this->hasCheckboxes,
+            $this->checkboxHandler
+        );
     }
 
     /**
@@ -1711,7 +930,7 @@ class GridBuilder extends AComponent {
         $filter = GridFilter::createFromComponent($this);
         $filter->setFilters($this->filters);
         $filter->setGridComponentName($this->componentName);
-        $filter->setGridColumns($this->columnLabels);
+        $filter->setGridColumns($this->helper->columnLabels);
         $filter->setActiveFilters($this->activeFilters);
         $filter->setQueryDependencies($this->queryDependencies);
 
@@ -1759,8 +978,8 @@ class GridBuilder extends AComponent {
         return new GridExportHandler(
             $dataSource,
             $this->primaryKeyColName,
-            $this->columns,
-            $this->columnLabels,
+            $this->helper->columns,
+            $this->helper->columnLabels,
             $this->presenter->getUserId(),
             $this->app,
             $this->gridName

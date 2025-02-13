@@ -214,6 +214,8 @@ abstract class APresenter extends AGUICore {
         if(Configuration::getAppBranch() == 'TEST') {
             $this->router->checkEndpointExists($result, true);
         }
+
+        return $result;
     }
 
     /**

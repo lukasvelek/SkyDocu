@@ -61,16 +61,17 @@ class Router {
      * Checks if given endpoint (internal URL address) exists
      * 
      * @param array $parts URL parameter array
+     * @param bool $throwException True if exception should be thrown or false if a boolean should be returned
      * @return bool True if exists or false if not
      */
-    public function checkEndpointExists(array $parts) {
+    public function checkEndpointExists(array $parts, bool $throwException = false) {
         $moduleName = self::getModuleNameFromArrayUrl($parts);
         $presenterName = self::getPresenterNameFromArrayUrl($parts);
         $actionName = self::getActionNameFromArrayUrl($parts);
 
         try {
             if($moduleName === null || $presenterName === null || $actionName === null) {
-                throw new RouterException('Given endpoint does not exist.', null);
+                throw new RouterException('No parameters entered.', null);
             }
 
             /**
@@ -79,7 +80,7 @@ class Router {
             $module = $this->getModuleInstance($moduleName);
             $module->loadPresenters();
             if(!$module->checkPresenterExists($presenterName)) {
-                throw new RouterException('Given presenter does not exist.');
+                throw new RouterException(sprintf('Presenter \'%s\' does not exist.', $presenterName));
             }
 
             $presenter = $this->getPresenterInstance($presenterName, $module);
@@ -88,9 +89,12 @@ class Router {
             $renderActionName = 'render' . ucfirst($actionName);
 
             if(!method_exists($presenter, $handleActionName) && !method_exists($presenter, $renderActionName)) {
-                throw new RouterException('Given action in the presenter does not exist.');
+                throw new RouterException(sprintf('Page \'%s:%s\' does not exist.', $presenterName, $actionName));
             }
         } catch(AException|Exception $e) {
+            if($throwException) {
+                throw $e;
+            }
             return false;
         }
 

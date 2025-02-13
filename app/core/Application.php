@@ -31,6 +31,7 @@ use App\Repositories\TransactionLogRepository;
 use App\Repositories\UserAbsenceRepository;
 use App\Repositories\UserRepository;
 use App\Repositories\UserSubstituteRepository;
+use App\UI\ExceptionPage\ExceptionPage;
 use App\UI\LinkBuilder;
 use Exception;
 use ReflectionClass;
@@ -319,7 +320,13 @@ class Application {
         try {
             return $re->render();
         } catch(AException|Exception $e) {
-            throw $e;
+            try {
+                $ep = new ExceptionPage($this, $this->getRequest());
+                $ep->setException($e);
+                return $ep->render();
+            } catch(Exception $e) {
+                throw $e;
+            }
         }
     }
 

@@ -6,6 +6,7 @@ use App\Core\AjaxRequestBuilder;
 use App\Core\Application;
 use App\Core\Caching\CacheFactory;
 use App\Core\Caching\CacheNames;
+use App\Core\Configuration;
 use App\Core\Datatypes\ArrayList;
 use App\Core\Datetypes\DateTime;
 use App\Core\HashManager;
@@ -208,7 +209,11 @@ abstract class APresenter extends AGUICore {
 
         $url = ['page' => $module . ':' . $presenter, 'action' => $action];
 
-        return array_merge($url, $params);
+        $result = array_merge($url, $params);
+
+        if(Configuration::getAppBranch() == 'TEST') {
+            $this->router->checkEndpointExists($result, true);
+        }
     }
 
     /**

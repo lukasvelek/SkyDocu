@@ -11,6 +11,7 @@ use App\Core\DatabaseConnection;
 use App\Core\DB\DatabaseManager;
 use App\Core\DB\DatabaseRow;
 use App\Core\FileManager;
+use App\Core\HashManager;
 use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
 use App\Exceptions\NonExistingEntityException;
@@ -39,7 +40,7 @@ class ContainerManager extends AManager {
 
     public function createNewContainer(string $title, string $description, string $callingUserId, int $environment, bool $canShowReferent) {
         $containerId = $this->createId(EntityManager::CONTAINERS);
-        $databaseName = 'sd_db_' . $containerId;
+        $databaseName = 'sd_db_' . $containerId . '_' . HashManager::createHash(8, false);
 
         $data = [
             'containerId' => $containerId,

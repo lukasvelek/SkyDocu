@@ -128,9 +128,7 @@ class ContainerStatsWidget extends Widget {
         $data = $this->processData();
         $this->setData($data);
 
-        $widget = $this->build();
-
-        return new JsonResponse(['widget' => $widget]);
+        return parent::actionRefresh();
     }
 }
 

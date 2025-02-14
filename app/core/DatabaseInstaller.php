@@ -280,6 +280,9 @@ class DatabaseInstaller {
         $groups = [
             SystemGroups::SUPERADMINISTRATORS => [
                 'admin'
+            ],
+            SystemGroups::CONTAINER_MANAGERS => [
+                'admin'
             ]
         ];
 

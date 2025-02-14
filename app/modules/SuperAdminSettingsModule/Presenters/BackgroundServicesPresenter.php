@@ -43,7 +43,7 @@ class BackgroundServicesPresenter extends ASuperAdminSettingsPresenter {
                 throw new GeneralException('Could not run service.');
             }
 
-            sleep(2);
+            sleep(1);
 
             $this->flashMessage('Service run.', 'success');
         } catch(AException $e) {

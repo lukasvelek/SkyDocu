@@ -8,6 +8,7 @@ class ContainerStatus extends AConstant implements IColorable, IBackgroundColora
     public const RUNNING = 3;
     public const NOT_RUNNING = 4;
     public const ERROR_DURING_CREATION = 5;
+    public const REQUESTED = 6;
 
     public static function toString(mixed $key): string {
         return match((int)$key) {
@@ -15,7 +16,8 @@ class ContainerStatus extends AConstant implements IColorable, IBackgroundColora
             self::IS_BEING_CREATED => 'Being created',
             self::RUNNING => 'Running',
             self::NOT_RUNNING => 'Not running',
-            self::ERROR_DURING_CREATION => 'Error during creation'
+            self::ERROR_DURING_CREATION => 'Error during creation',
+            self::REQUESTED => 'Requested'
         };
     }
 
@@ -26,7 +28,8 @@ class ContainerStatus extends AConstant implements IColorable, IBackgroundColora
             self::RUNNING => 'green',
             self::NOT_RUNNING => 'red',
             self::ERROR_DURING_CREATION => 'red',
-            default => 'black'
+            self::REQUESTED => 'blue',
+            default => 'black',
         };
     }
 
@@ -37,7 +40,8 @@ class ContainerStatus extends AConstant implements IColorable, IBackgroundColora
             self::RUNNING => 'lightgreen',
             self::NOT_RUNNING => 'pink',
             self::ERROR_DURING_CREATION => 'pink',
-            default => null
+            self::REQUESTED => 'lightblue',
+            default => null,
         };
     }
 }

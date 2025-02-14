@@ -2,6 +2,7 @@
 
 namespace App\Modules\SuperAdminSettingsModule;
 
+use App\Constants\SystemGroups;
 use App\Core\AjaxRequestBuilder;
 use App\Core\DB\DatabaseRow;
 use App\Core\Http\FormRequest;
@@ -28,7 +29,7 @@ class GroupsPresenter extends ASuperAdminSettingsPresenter {
 
         $grid->createDataSourceFromQueryBuilder($this->app->groupRepository->composeQueryForGroups(), 'groupId');
 
-        $grid->addColumnText('title', 'Title');
+        $grid->addColumnConst('title', 'Title', SystemGroups::class);
         $col = $grid->addColumnText('containerId', 'Container');
         $col->onRenderColumn[] = function(DatabaseRow $row, Row $_row, Cell $cell, HTML $html, mixed $value) {
             $el = HTML::el('span');
@@ -95,7 +96,7 @@ class GroupsPresenter extends ASuperAdminSettingsPresenter {
             $this->redirect($this->createURL('list'));
         }
 
-        $this->saveToPresenterCache('groupName', $group->title);
+        $this->saveToPresenterCache('groupName', SystemGroups::toString($group->title));
 
         $links = [
             LinkBuilder::createSimpleLink('&larr; Back', $this->createURL('list'), 'link'),

@@ -77,9 +77,9 @@ class ContainerCreationService extends AService {
 
                     $this->containerRepository->commit($this->serviceManager->getServiceUserId(), __METHOD__);
 
-                    $this->containerManager->changeContainerStatus($containerId, ContainerStatus::NOT_RUNNING, $this->serviceManager->getServiceUserId(), 'Status change due to background container creation. Container is created and not running.');
+                    $this->containerManager->changeContainerStatus($containerId, ContainerStatus::RUNNING, $this->serviceManager->getServiceUserId(), 'Status change due to background container creation. Container is created and running.');
                     $this->containerManager->changeContainerCreationStatus($containerId, 100, null);
-                    $this->logInfo('Changed container status to \'' . ContainerStatus::toString(ContainerStatus::NOT_RUNNING) . '\'.');
+                    $this->logInfo('Changed container status to \'' . ContainerStatus::toString(ContainerStatus::RUNNING) . '\'.');
                 } catch(AException|Exception|Error $e) {
                     $this->containerRepository->rollback(__METHOD__);
 

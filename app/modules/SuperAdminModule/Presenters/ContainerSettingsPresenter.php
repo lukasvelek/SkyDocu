@@ -140,13 +140,21 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
             }
 
             $this->redirect($this->createURL('status', ['containerId' => $containerId]));
+        } else {
+            $links = [];
+
+            $container = $this->app->containerManager->getContainerById($containerId);
+
+            if($container->status != ContainerStatus::REQUESTED) {
+                $links[] = LinkBuilder::createSimpleLink('Show history', $this->createURL('listStatusHistory', ['containerId' => $this->httpRequest->get('containerId')]), 'link');
+            }
+
+            $this->saveToPresenterCache('links', $links);
         }
     }
 
     public function renderStatus() {
-        $this->template->links = [
-            LinkBuilder::createSimpleLink('Show history', $this->createURL('listStatusHistory', ['containerId' => $this->httpRequest->get('containerId')]), 'link')
-        ];
+        $this->template->links = $this->loadFromPresenterCache('links');
     }
 
     protected function createComponentContainerStatusForm(HttpRequest $request) {
@@ -159,7 +167,7 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
         $disabled = false;
         $statuses = [];
         foreach(ContainerStatus::getAll() as $key => $value) {
-            if(in_array($container->status, [ContainerStatus::NEW, ContainerStatus::IS_BEING_CREATED, ContainerStatus::ERROR_DURING_CREATION])) {
+            if(in_array($container->status, [ContainerStatus::NEW, ContainerStatus::IS_BEING_CREATED, ContainerStatus::ERROR_DURING_CREATION, ContainerStatus::REQUESTED])) {
                 $status = [
                     'text' => $value,
                     'value' => $key
@@ -172,7 +180,7 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
                 $statuses[] = $status;
                 $disabled = true;
             } else {
-                if(in_array($key, [ContainerStatus::IS_BEING_CREATED, ContainerStatus::NEW, ContainerStatus::ERROR_DURING_CREATION])){
+                if(in_array($key, [ContainerStatus::IS_BEING_CREATED, ContainerStatus::NEW, ContainerStatus::ERROR_DURING_CREATION, ContainerStatus::REQUESTED])){
                     continue;
                 }
 
@@ -194,7 +202,8 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
             ->setDisabled($disabled);
 
         $form->addTextArea('description', 'Description:')
-            ->setRequired();
+            ->setRequired()
+            ->setDisabled($disabled);
 
         $submit = $form->addSubmit('Save')
             ->setDisabled($disabled);
@@ -208,19 +217,27 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
 
     protected function createComponentContainerPermanentFlashMessageForm(HttpRequest $request) {
         $container = $this->app->containerManager->getContainerById($request->get('containerId'));
+        $disabled = false;
+
+        if($container->status == ContainerStatus::REQUESTED) {
+            $disabled = true;
+        }
 
         $form = $this->componentFactory->getFormBuilder();
 
         $form->setAction($this->createURL('statusPermanentFlashMessage', ['containerId' => $request->get('containerId')]));
 
         $permanentFlashMessage = $form->addTextArea('permanentFlashMessage', 'Flash message text:')
-            ->setRequired();
+            ->setRequired()
+            ->setDisabled($disabled);
 
         $permanentFlashMessage->setContent($container->permanentFlashMessage);
 
-        $form->addSubmit('Save');
+        $form->addSubmit('Save')
+            ->setDisabled($disabled);
         $form->addButton('Clear')
-            ->setOnClick('location.href = \'' . $this->createURLString('statusClearPermanentFlashMessage', ['containerId' => $container->containerId]) . '\';');
+            ->setOnClick('location.href = \'' . $this->createURLString('statusClearPermanentFlashMessage', ['containerId' => $container->containerId]) . '\';')
+            ->setDisabled($disabled);
 
         return $form;
     }

@@ -31,6 +31,14 @@ class GroupManager extends AManager {
         return in_array($userId, $members);
     }
 
+    public function isUserMemberOfContainerManagers(string $userId) {
+        $group = $this->getGroupByTitle(SystemGroups::CONTAINER_MANAGERS);
+        
+        $members = $this->groupMembershipRepository->getMemberUserIdsForGroupId($group->groupId);
+
+        return in_array($userId, $members);
+    }
+
     public function createNewGroup(string $title, array $userIdsToAdd = [], ?string $containerId = null) {
         $groupId = $this->createId(EntityManager::GROUPS);
 
@@ -79,6 +87,7 @@ class GroupManager extends AManager {
         }
 
         if(!$this->cacheFactory->invalidateCacheByNamespace(CacheNames::GROUP_MEMBERSHIPS) ||
+           !$this->cacheFactory->invalidateCacheByNamespace(CacheNames::USER_GROUP_MEMBERSHIPS) ||
            !$this->cacheFactory->invalidateCacheByNamespace(CacheNames::VISIBLE_FOLDERS_FOR_USER) ||
            !$this->cacheFactory->invalidateCacheByNamespace(CacheNames::USER_GROUP_MEMBERSHIPS)) {
             throw new GeneralException('Could not invalidate cache.');
@@ -91,6 +100,7 @@ class GroupManager extends AManager {
         }
 
         if(!$this->cacheFactory->invalidateCacheByNamespace(CacheNames::GROUP_MEMBERSHIPS) ||
+            !$this->cacheFactory->invalidateCacheByNamespace(CacheNames::USER_GROUP_MEMBERSHIPS) ||
             !$this->cacheFactory->invalidateCacheByNamespace(CacheNames::VISIBLE_FOLDERS_FOR_USER) ||
             !$this->cacheFactory->invalidateCacheByNamespace(CacheNames::USER_GROUP_MEMBERSHIPS)) {
             throw new GeneralException('Could not invalidate cache.');

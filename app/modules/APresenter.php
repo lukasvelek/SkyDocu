@@ -201,9 +201,10 @@ abstract class APresenter extends AGUICore {
      * 
      * @param string $action Action name
      * @param array $params Custom URL params
+     * @param bool $throwException Throw exception
      * @return array URL
      */
-    public function createURL(string $action, array $params = []) {
+    public function createURL(string $action, array $params = [], bool $throwException = true) {
         $module = $this->moduleName;
         $presenter = $this->getCleanName();
 
@@ -212,7 +213,7 @@ abstract class APresenter extends AGUICore {
         $result = array_merge($url, $params);
 
         if(Configuration::getAppBranch() == 'TEST') {
-            $this->router->checkEndpointExists($result, true);
+            $this->router->checkEndpointExists($result, $throwException);
         }
 
         return $result;

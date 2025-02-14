@@ -6,6 +6,7 @@ use App\Constants\Container\CustomMetadataTypes;
 use App\Constants\Container\Processes\InvoiceCustomMetadata;
 use App\Constants\Container\StandaloneProcesses;
 use App\Constants\Container\SystemGroups;
+use App\Constants\ContainerStatus;
 use App\Core\Caching\CacheNames;
 use App\Core\DatabaseConnection;
 use App\Core\DB\DatabaseManager;
@@ -21,7 +22,6 @@ use App\Repositories\Container\GroupRepository;
 use App\Repositories\ContainerRepository;
 use App\Repositories\ContentRepository;
 use App\Repositories\UserRepository;
-use Throwable;
 
 class ContainerManager extends AManager {
     public ContainerRepository $containerRepository;
@@ -38,7 +38,7 @@ class ContainerManager extends AManager {
         $this->masterConn = $masterConn;
     }
 
-    public function createNewContainer(string $title, string $description, string $callingUserId, int $environment, bool $canShowReferent) {
+    public function createNewContainer(string $title, string $description, string $callingUserId, int $environment, bool $canShowReferent, int $status = ContainerStatus::NEW) {
         $containerId = $this->createId(EntityManager::CONTAINERS);
         $databaseName = 'sd_db_' . $containerId . '_' . HashManager::createHash(8, false);
 
@@ -49,24 +49,27 @@ class ContainerManager extends AManager {
             'description' => $description,
             'databaseName' => $databaseName,
             'environment' => $environment,
-            'canShowContainerReferent' => ($canShowReferent ? 1 : 0)
+            'canShowContainerReferent' => ($canShowReferent ? 1 : 0),
+            'status' => $status
         ];
 
         if(!$this->containerRepository->createNewContainer($data)) {
             throw new GeneralException('Could not create a new container.');
         }
 
-        $statusId = $this->createId(EntityManager::CONTAINER_CREATION_STATUS);
-        if(!$this->containerRepository->createNewCreationStatusEntry($statusId, $containerId)) {
-            throw new GeneralException('Could not queue container for background creation.');
-        }
+        if($status != ContainerStatus::REQUESTED) {
+            $statusId = $this->createId(EntityManager::CONTAINER_CREATION_STATUS);
+            if(!$this->containerRepository->createNewCreationStatusEntry($statusId, $containerId)) {
+                throw new GeneralException('Could not queue container for background creation.');
+            }
 
-        $this->groupManager->createNewGroup($title . ' - users', [$callingUserId], $containerId);
+            $this->groupManager->createNewGroup($title . ' - users', [$callingUserId], $containerId);
 
-        if(!$this->cacheFactory->invalidateCacheByNamespace(CacheNames::GROUP_MEMBERSHIPS) ||
-            !$this->cacheFactory->invalidateCacheByNamespace(CacheNames::USER_GROUP_MEMBERSHIPS) ||
-            !$this->cacheFactory->invalidateCacheByNamespace(CacheNames::NAVBAR_CONTAINER_SWITCH_USER_MEMBERSHIPS)) {
-            throw new GeneralException('Could not invalidate cache.');
+            if(!$this->cacheFactory->invalidateCacheByNamespace(CacheNames::GROUP_MEMBERSHIPS) ||
+                !$this->cacheFactory->invalidateCacheByNamespace(CacheNames::USER_GROUP_MEMBERSHIPS) ||
+                !$this->cacheFactory->invalidateCacheByNamespace(CacheNames::NAVBAR_CONTAINER_SWITCH_USER_MEMBERSHIPS)) {
+                throw new GeneralException('Could not invalidate cache.');
+            }
         }
 
         return $containerId;
@@ -505,37 +508,42 @@ class ContainerManager extends AManager {
         return DatabaseRow::createFromDbRow($container);
     }
 
-    public function deleteContainer(string $containerId) {
+    public function deleteContainer(string $containerId, bool $isRequest = false) {
         $container = $this->getContainerById($containerId);
         
-        // Drop container database with all data
-        try {
-            $this->dbManager->dropDatabase($container->databaseName);
-        } catch(AException $e) {}
+        if(!$isRequest) {
+            // Drop container database with all data
+            try {
+                $this->dbManager->dropDatabase($container->databaseName);
+            } catch(AException $e) {}
 
-        // Remove group and memberships
-        $group = null;
-        try {
-            $group = $this->groupManager->getGroupByTitle($container->title . ' - users');
+            // Remove group and memberships
+            $group = null;
+            try {
+                $group = $this->groupManager->getGroupByTitle($container->title . ' - users');
+            } catch(AException $e) {}
 
-        } catch(AException $e) {}
-
-        if($group !== null) {
-            $exceptions = [];
-            $this->groupManager->removeAllUsersFromGroup($group->groupId, $exceptions);
-
-            $this->groupManager->removeGroup($group->groupId);
+            if($group !== null) {
+                $exceptions = [];
+                $this->groupManager->removeAllUsersFromGroup($group->groupId, $exceptions);
+    
+                $this->groupManager->removeGroup($group->groupId);
+            }
         }
         
-        // Delete container and all history data
+        // Delete container
         if(!$this->containerRepository->deleteContainer($containerId)) {
             throw new GeneralException('Could not delete container.');
         }
-        if(!$this->containerRepository->deleteContainerCreationStatus($containerId)) {
-            throw new GeneralException('Could not delete container creation status entry.');
-        }
-        if(!$this->containerRepository->deleteContainerStatusHistory($containerId)) {
-            throw new GeneralException('COuld not delete container status history entries.');
+
+        if(!$isRequest) {
+            // Delete container history data
+            if(!$this->containerRepository->deleteContainerCreationStatus($containerId)) {
+                throw new GeneralException('Could not delete container creation status entry.');
+            }
+            if(!$this->containerRepository->deleteContainerStatusHistory($containerId)) {
+                throw new GeneralException('COuld not delete container status history entries.');
+            }
         }
     }
 
@@ -590,6 +598,31 @@ class ContainerManager extends AManager {
 
         if(!$this->containerRepository->deleteContainerUsageStatistics($containerId, $entries)) {
             throw new GeneralException('Database error.');
+        }
+    }
+
+    public function declineContainerRequest(string $containerId) {
+        $this->deleteContainer($containerId, true);
+    }
+
+    public function approveContainerRequest(string $containerId, string $callingUserId) {
+        $container = $this->getContainerById($containerId);
+
+        $this->updateContainer($containerId, [
+            'status' => ContainerStatus::NEW
+        ]);
+
+        $statusId = $this->createId(EntityManager::CONTAINER_CREATION_STATUS);
+        if(!$this->containerRepository->createNewCreationStatusEntry($statusId, $containerId)) {
+            throw new GeneralException('Could not queue container for background creation.');
+        }
+
+        $this->groupManager->createNewGroup($container->title . ' - users', [$callingUserId], $containerId);
+
+        if(!$this->cacheFactory->invalidateCacheByNamespace(CacheNames::GROUP_MEMBERSHIPS) ||
+            !$this->cacheFactory->invalidateCacheByNamespace(CacheNames::USER_GROUP_MEMBERSHIPS) ||
+            !$this->cacheFactory->invalidateCacheByNamespace(CacheNames::NAVBAR_CONTAINER_SWITCH_USER_MEMBERSHIPS)) {
+            throw new GeneralException('Could not invalidate cache.');
         }
     }
 }

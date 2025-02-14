@@ -750,7 +750,7 @@ class GridBuilderHelper {
         }
 
         // QUICK SEARCH
-        if(!empty($this->quickSearchFilter)) {
+        if(!empty($quickSearchFilter)) {
             $par = new PostAjaxRequest($this->request);
 
             $data['query'] = '_query';

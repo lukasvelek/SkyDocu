@@ -658,7 +658,7 @@ class GridBuilderHelper {
         ';
 
         // FILTER
-        if(!empty($this->filters)) {
+        if(!empty($filters)) {
             $par = new PostAjaxRequest($this->request);
 
             $data = [];
@@ -688,7 +688,7 @@ class GridBuilderHelper {
             }
 
             $updateOperation = new HTMLPageOperation();
-            $updateOperation->setHtmlEntityId($gridName)
+            $updateOperation->setHtmlEntityId('grid')
                 ->setJsonResponseObjectName('grid');
 
             $par->addOnFinishOperation($updateOperation);
@@ -736,15 +736,15 @@ class GridBuilderHelper {
             }
 
             $updateOperation = new HTMLPageOperation();
-            $updateOperation->setHtmlEntityId($gridName)
+            $updateOperation->setHtmlEntityId('grid')
                 ->setJsonResponseObjectName('grid');
 
             $par->addOnFinishOperation($updateOperation);
 
             $addScript($par);
             $scripts[] = '
-                function ' . $this->componentName . '_filterClear(' . implode(', ', $args) . ') {
-                    ' . $par->getFunctionName() . '(' . implode(', ', $args) . ');
+                async function ' . $this->componentName . '_filterClear(' . implode(', ', $args) . ') {
+                    await ' . $par->getFunctionName() . '(' . implode(', ', $args) . ');
                 }
             ';
         }

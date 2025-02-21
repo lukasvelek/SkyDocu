@@ -638,6 +638,8 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
     }
 
     public function actionFilter(): JsonResponse {
+        $this->getActiveFiltersFromCache();
+
         $this->prerender();
 
         return parent::actionFilter();

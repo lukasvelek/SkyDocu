@@ -51,6 +51,7 @@ class ComponentFactory {
         $helper = new GridHelper($this->presenter->logger, $this->presenter->getUserId(), $containerId);
         $grid->setHelper($helper);
         $grid->setCacheFactory($this->getCacheFactory());
+        $grid->setContainerId($containerId);
         return $grid;
     }
     

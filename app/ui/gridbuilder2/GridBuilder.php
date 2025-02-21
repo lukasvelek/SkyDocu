@@ -93,6 +93,7 @@ class GridBuilder extends AComponent {
     protected bool $refreshDisabled;
 
     private GridBuilderHelper $helper;
+    private ?string $containerId;
 
     /**
      * Class constructor
@@ -125,6 +126,7 @@ class GridBuilder extends AComponent {
         $this->actionsDisabled = false;
         $this->controlsDisabled = false;
         $this->refreshDisabled = false;
+        $this->containerId = null;
 
         $this->helper = new GridBuilderHelper($request);
     }
@@ -184,18 +186,27 @@ class GridBuilder extends AComponent {
     }
 
     /**
+     * Sets container ID
+     * 
+     * @param ?string $containerId Container ID
+     */
+    public function setContainerId(?string $containerId) {
+        $this->containerId = $containerId;
+    }
+
+    /**
      * Returns the name of the grid filter cache namespace
      * 
      * @return string Cache namespace
      */
     private function getCacheNameForFilter(): string {
-        return CacheNames::GRID_FILTER_DATA . '\\' . $this->gridName . '\\' . $this->app->currentUser?->getId();
+        return CacheNames::GRID_FILTER_DATA . '\\' . $this->gridName . '\\' . $this->app->currentUser?->getId() . '\\' . $this->containerId;
     }
 
     /**
      * Retrieves active filters from cache
      */
-    private function getActiveFiltersFromCache() {
+    protected function getActiveFiltersFromCache() {
         $cache = $this->cacheFactory->getCache($this->getCacheNameForFilter());
 
         $this->activeFilters = $cache->load($this->gridName . $this->app->currentUser?->getId(), function() {
@@ -208,9 +219,11 @@ class GridBuilder extends AComponent {
      */
     private function saveActiveFilters() {
         $cache = $this->cacheFactory->getCache($this->getCacheNameForFilter());
+        
+        $activeFilters = $this->activeFilters;
 
-        $cache->save($this->gridName . $this->app->currentUser?->getId(), function() {
-            return $this->activeFilters;
+        $cache->save($this->gridName . $this->app->currentUser?->getId(), function() use ($activeFilters) {
+            return $activeFilters;
         });
     }
 
@@ -221,6 +234,8 @@ class GridBuilder extends AComponent {
         $this->cacheFactory->invalidateCacheByNamespace($this->getCacheNameForFilter());
 
         $this->activeFilters = [];
+
+        $this->saveActiveFilters();
     }
 
     /**
@@ -554,7 +569,9 @@ class GridBuilder extends AComponent {
         if($this->quickSearchQuery !== null) {
             $this->addQueryDependency('query', $this->quickSearchQuery);
         }
-        $this->getActiveFiltersFromCache();
+        if(empty($this->activeFilters)) {
+            $this->getActiveFiltersFromCache();
+        }
         $this->fetchDataFromDb(true);
         $this->isPrerendered = true;
     }
@@ -586,12 +603,15 @@ class GridBuilder extends AComponent {
      * Builds the grid
      * 
      * @param bool $isSkeleton Is skeleton
+     * @param bool $explicit Explicit fetch from DB
      */
-    private function build(bool $isSkeleton = false) {
+    private function build(bool $isSkeleton = false, bool $explicit = false) {
+        $data = $this->fetchDataFromDb($explicit);
+
         $this->table = $this->helper->buildGrid(
             $this->onRowRender,
             $this->actions,
-            $this->fetchDataFromDb(),
+            $data,
             $this->primaryKeyColName,
             $this->actionsDisabled,
             $this->hasCheckboxes,
@@ -1074,8 +1094,8 @@ class GridBuilder extends AComponent {
      */
     public function actionFilter(): JsonResponse {
         foreach($this->filters as $name => $filter) {
-            if($this->httpRequest->post($name) !== null) {
-                $this->activeFilters[$name] = $this->httpRequest->post($name);
+            if($this->httpRequest->get($name) !== null) {
+                $this->activeFilters[$name] = $this->httpRequest->get($name);
             }
         }
 
@@ -1088,7 +1108,7 @@ class GridBuilder extends AComponent {
          * Before this line was available only for non extending classes but it didn't make sense because it didn't work at all.
          * Build recreates the grid and thus it must be called because otherwise none filters can be applied.
          */
-        $this->build();
+        $this->build(false, true);
 
         return new JsonResponse(['grid' => $this->render()]);
     }
@@ -1097,9 +1117,9 @@ class GridBuilder extends AComponent {
      * Cleans the grid data filter
      */
     public function actionFilterClear(): JsonResponse {
-        if(!($this instanceof IGridExtendingComponent)) {
-            $this->build();
-        }
+        $this->clearActiveFilters();
+
+        $this->build();
 
         return new JsonResponse(['grid' => $this->render()]);
     }

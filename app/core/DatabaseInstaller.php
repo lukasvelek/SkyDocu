@@ -260,8 +260,8 @@ class DatabaseInstaller {
             $userId = HashManager::createEntityId();
             $fullname = ucfirst($username);
 
-            $sql = 'INSERT INTO `users` (`userId`, `username`, `password`, `fullname`)
-                    SELECT \'' . $userId . '\', \'' . $username . '\', \'' . $password . '\', \'' . $fullname . '\'
+            $sql = 'INSERT INTO `users` (`userId`, `username`, `password`, `fullname`, `isTechnical`)
+                    SELECT \'' . $userId . '\', \'' . $username . '\', \'' . $password . '\', \'' . $fullname . '\', 1
                     WHERE NOT EXISTS (SELECT 1 FROM `users` WHERE `username` = \'' . $username . '\')';
 
             $this->db->query($sql);

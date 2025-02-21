@@ -141,7 +141,7 @@ class LoginPresenter extends AAnonymPresenter {
                 ];
 
                 array_unshift($containers, $c);
-            } else {
+            } else if(str_ends_with($group->title, ' - users')) {
                 $environment = ContainerEnvironments::toString($container->environment) ?? '-';
                 $title = substr($group->title, 0, (strlen($group->title) - 8)) . ' (' . $environment . ')';
 

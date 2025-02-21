@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Constants\ContainerStatus;
+use App\Core\Caching\CacheNames;
 use App\Core\ServiceManager;
 use App\Exceptions\AException;
 use App\Logger\Logger;
@@ -80,6 +81,10 @@ class ContainerCreationService extends AService {
                     $this->containerManager->changeContainerStatus($containerId, ContainerStatus::RUNNING, $this->serviceManager->getServiceUserId(), 'Status change due to background container creation. Container is created and running.');
                     $this->containerManager->changeContainerCreationStatus($containerId, 100, null);
                     $this->logInfo('Changed container status to \'' . ContainerStatus::toString(ContainerStatus::RUNNING) . '\'.');
+
+                    $this->cacheFactory->invalidateCacheByNamespace(CacheNames::GROUP_MEMBERSHIPS);
+                    $this->cacheFactory->invalidateCacheByNamespace(CacheNames::USER_GROUP_MEMBERSHIPS);
+                    $this->cacheFactory->invalidateCacheByNamespace(CacheNames::NAVBAR_CONTAINER_SWITCH_USER_MEMBERSHIPS);
                 } catch(AException|Exception|Error $e) {
                     $this->containerRepository->rollback(__METHOD__);
 

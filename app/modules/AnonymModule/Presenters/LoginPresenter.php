@@ -142,7 +142,8 @@ class LoginPresenter extends AAnonymPresenter {
 
                 array_unshift($containers, $c);
             } else {
-                $title = substr($group->title, 0, (strlen($group->title) - 8)) . ' (' . ContainerEnvironments::toString($container->environment) . ')';
+                $environment = ContainerEnvironments::toString($container->environment) ?? '-';
+                $title = substr($group->title, 0, (strlen($group->title) - 8)) . ' (' . $environment . ')';
 
                 $c = [
                     'value' => $group->containerId,

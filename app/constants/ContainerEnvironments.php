@@ -7,11 +7,12 @@ class ContainerEnvironments extends AConstant implements IColorable, IBackground
     public const TEST = 2;
     public const PROD = 3;
 
-    public static function toString($key): string {
+    public static function toString($key): ?string {
         return match((int)$key) {
             //self::DEV => 'Dev',
             self::TEST => 'Test',
-            self::PROD => 'Prod'
+            self::PROD => 'Prod',
+            default => '-'
         };
     }
 

@@ -101,7 +101,11 @@ class FileStorageStatsWidget extends Widget {
             }
         }
 
-        return ceil($storedFiles / count($containers));
+        if(count($containers) == 0) {
+            return 0;
+        } else {
+            return ceil($storedFiles / count($containers));
+        }
     }
 
     /**

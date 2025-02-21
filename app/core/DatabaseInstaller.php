@@ -54,7 +54,8 @@ class DatabaseInstaller {
                 'fullname' => 'VARCHAR(256) NOT NULL',
                 'loginHash' => 'VARCHAR(256) NULL',
                 'dateCreated' => 'DATETIME NOT NULL DEFAULT current_timestamp()',
-                'email' => 'VARCHAR(256) NULL'
+                'email' => 'VARCHAR(256) NULL',
+                'isTechnical' => 'INT(2) NOT NULL DEFAULT 0'
             ],
             'groups' => [
                 'groupId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',

@@ -167,7 +167,7 @@ class ProcessesGrid extends GridBuilder implements IGridExtendingComponent {
 
                 $el->text($value . ' (<i title="Current officer\'s substitute">' . $username . '</i>)');
             } else {
-                $el->text('-');
+                $el->text($value);
             }
             return $el;
         };
@@ -189,7 +189,6 @@ class ProcessesGrid extends GridBuilder implements IGridExtendingComponent {
 
                 case ProcessesGridSystemMetadata::CURRENT_OFFICER_USER_ID:
                     $this->appendCurrentOfficer($name, $text);
-
                     break;
 
                 case ProcessesGridSystemMetadata::DATE_CREATED:

@@ -317,6 +317,16 @@ class ProcessRepository extends ARepository {
 
         return $qb->fetchBool();
     }
+
+    public function composeQueryForProcessComments(string $processId) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->select(['*'])
+            ->from('process_comments')
+            ->where('processId = ?', [$processId]);
+
+        return $qb;
+    }
 }
 
 ?>

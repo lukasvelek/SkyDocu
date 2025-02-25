@@ -63,6 +63,18 @@ class StandaloneProcesses extends AConstant implements IColorable, IBackgroundCo
             self::CONTAINER_REQUEST => true
         };
     }
+
+    /**
+     * Checks if commenting is enabled for given process
+     * 
+     * @param mixed $key
+     */
+    public static function isCommentingEnabled($key): bool {
+        return match($key) {
+            default => false,
+            self::CONTAINER_REQUEST => true
+        };
+    }
 }
 
 ?>

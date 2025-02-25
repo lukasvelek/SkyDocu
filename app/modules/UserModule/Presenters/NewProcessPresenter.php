@@ -116,6 +116,10 @@ class NewProcessPresenter extends AUserPresenter {
 
         $form = $this->componentFactory->getStandaloneProcessFormByName($process, $this->standaloneProcessManager);
 
+        if($form === null) {
+            throw new GeneralException('No definition for process type "' . StandaloneProcesses::toString($process) . '" found in ComponentFactory.');
+        }
+
         $form->baseUrl = ['page' => $request->get('page'), 'action' => 'startProcess'];
         $form->setComponentName('processForm');
 

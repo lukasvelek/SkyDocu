@@ -76,6 +76,22 @@ class StandaloneProcessManager extends AManager {
         $this->saveProcessData($processId, $data);
     }
 
+    public function startContainerRequest(array $data) {
+        $containerManagerId = $this->groupManager->getFirstGroupMemberForGroupTitle(SystemGroups::CONTAINER_MANAGERS);
+        if($containerManagerId === null) {
+            $containerManagerId = $this->userManager->getUserByUsername('admin')->getId();
+        }
+
+        $currentOfficerId = $containerManagerId;
+        $workflow = [
+            $containerManagerId
+        ];
+
+        $processId = $this->processManager->startProcess(null, StandaloneProcesses::CONTAINER_REQUEST, $this->currentUser->getId(), $currentOfficerId, $workflow);
+
+        $this->saveProcessData($processId, $data);
+    }
+
     public function startInvoice(array $data) {
         $accountantId = $this->groupManager->getFirstGroupMemberForGroupTitle(SystemGroups::ACCOUNTANTS)?->userId;
         if($accountantId === null) {

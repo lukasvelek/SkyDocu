@@ -4,6 +4,7 @@ namespace App\Modules;
 
 use App\Components\ProcessForm\CommonProcessForm;
 use App\Components\ProcessForm\Processes\AProcessForm;
+use App\Components\ProcessForm\Processes\ContainerRequest;
 use App\Components\ProcessForm\Processes\FunctionRequest;
 use App\Components\ProcessForm\Processes\HomeOffice;
 use App\Components\ProcessForm\Processes\Invoice;
@@ -129,6 +130,11 @@ class ComponentFactory {
 
             case StandaloneProcesses::INVOICE:
                 $form = new Invoice($this->request, $standaloneProcessManager);
+                $this->injectDefault($form, $name);
+                return $form;
+
+            case StandaloneProcesses::CONTAINER_REQUEST:
+                $form = new ContainerRequest($this->request);
                 $this->injectDefault($form, $name);
                 return $form;
 

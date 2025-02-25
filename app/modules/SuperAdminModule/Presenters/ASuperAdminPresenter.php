@@ -33,6 +33,7 @@ abstract class ASuperAdminPresenter extends APresenter {
         $usageStatistics = $this->checkAction('usageStatistics', 'clearUsageStatistics');
         $invites = $this->checkAction('invites', 'invitesWithoutGrid');
         $transactionLog = $this->checkAction('transactionLog');
+        $processes = $this->checkAction('processes', 'addProcessForm');
 
         $sidebar->addLink('&larr; Back', $this->createFullURL('SuperAdmin:Containers', 'list'));
         $sidebar->addLink('Home', $this->createURL('home', ['containerId' => $containerId]), $home);
@@ -42,6 +43,7 @@ abstract class ASuperAdminPresenter extends APresenter {
             $sidebar->addLink('Invites', $this->createURL('invites', ['containerId' => $containerId]), $invites);
             $sidebar->addLink('Advanced', $this->createURL('advanced', ['containerId' => $containerId]), $advanced);
             $sidebar->addLink('Transaction log', $this->createURL('transactionLog', ['containerId' => $containerId]), $transactionLog);
+            $sidebar->addLink('Processes', $this->createURL('processes', ['containerId' => $containerId]), $processes);
         }
 
         return $sidebar;

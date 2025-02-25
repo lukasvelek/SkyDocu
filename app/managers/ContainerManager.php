@@ -299,6 +299,8 @@ class ContainerManager extends AManager {
 
         $standaloneProcessIds = [];
         foreach(StandaloneProcesses::getAll() as $key => $title) {
+            if(StandaloneProcesses::isDisabled($key)) continue;
+
             $standaloneProcessIds[$key] = $this->createIdCustomDb(EntityManager::C_PROCESS_TYPES, $conn);
 
             $data[] = [

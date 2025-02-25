@@ -6,9 +6,11 @@ use App\Components\ContainerUsageAverageResponseTimeGraph\ContainerUsageAverageR
 use App\Components\ContainerUsageStatsGraph\ContainerUsageStatsGraph;
 use App\Components\ContainerUsageTotalResponseTimeGraph\ContainerUsageTotalResponseTimeGraph;
 use App\Components\Widgets\FileStorageStatsForContainerWidget\FileStorageStatsForContainerWidget;
+use App\Constants\Container\StandaloneProcesses;
 use App\Constants\ContainerEnvironments;
 use App\Constants\ContainerInviteUsageStatus;
 use App\Constants\ContainerStatus;
+use App\Core\Caching\CacheNames;
 use App\Core\Datetypes\DateTime;
 use App\Core\DB\DatabaseRow;
 use App\Core\Http\FormRequest;
@@ -18,8 +20,10 @@ use App\Exceptions\GeneralException;
 use App\Exceptions\RequiredAttributeIsNotSetException;
 use App\Helpers\DateTimeFormatHelper;
 use App\Managers\Container\FileStorageManager;
+use App\Managers\Container\StandaloneProcessManager;
 use App\Managers\EntityManager;
 use App\Repositories\Container\FileStorageRepository;
+use App\Repositories\Container\ProcessRepository;
 use App\Repositories\Container\TransactionLogRepository;
 use App\Repositories\ContentRepository;
 use App\UI\GridBuilder2\Action;
@@ -797,6 +801,177 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
         $grid->addColumnDatetime('dateCreated', 'Date');
 
         return $grid;
+    }
+
+    public function handleProcesses() {
+        $links = [
+            LinkBuilder::createSimpleLink('Add process', $this->createURL('addProcessForm', ['containerId' => $this->httpRequest->get('containerId')]), 'link')
+        ];
+        $this->saveToPresenterCache('links', $links);
+    }
+
+    public function renderProcesses() {
+        $this->template->links = $this->loadFromPresenterCache('links');
+    }
+
+    protected function createComponentContainerProcessesGrid(HttpRequest $request) {
+        $grid = $this->componentFactory->getGridBuilder($request->get('containerId'));
+
+        $container = $this->app->containerManager->getContainerById($request->get('containerId'));
+        $containerConn = $this->app->dbManager->getConnectionToDatabase($container->databaseName);
+
+        $processRepository = new ProcessRepository($containerConn, $this->logger);
+        $qb = $processRepository->composeQueryForProcessTypes();
+
+        $grid->createDataSourceFromQueryBuilder($qb, 'typeId');
+
+        $grid->addColumnText('title', 'Title');
+        $grid->addColumnBoolean('isEnabled', 'Enabled');
+
+        $enable = $grid->addAction('enable');
+        $enable->setTitle('Enable');
+        $enable->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) {
+            return $row->isEnabled == false;
+        };
+        $enable->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) use ($request) {
+            $el = HTML::el('a');
+            $el->text('Enable')
+                ->class('grid-link')
+                ->href($this->createURLString('modifyContainerProcess', ['containerId' => $request->get('containerId'), 'type' => $row->typeKey, 'param' => 'enable']));
+
+            return $el;
+        };
+
+        $disable = $grid->addAction('disable');
+        $disable->setTitle('Disable');
+        $disable->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) {
+            return $row->isEnabled == true;
+        };
+        $disable->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) use ($request) {
+            $el = HTML::el('a');
+            $el->text('Disable')
+                ->class('grid-link')
+                ->href($this->createURLString('modifyContainerProcess', ['containerId' => $request->get('containerId'), 'type' => $row->typeKey, 'param' => 'disable']));
+
+            return $el;
+        };
+
+        return $grid;
+    }
+
+    public function handleModifyContainerProcess() {
+        $action = $this->httpRequest->get('param');
+        $type = $this->httpRequest->get('type');
+
+        $data = [];
+        if($action == 'enable') {
+            $data['isEnabled'] = 1;
+        } else {
+            $data['isEnabled'] = 0;
+        }
+
+        $container = $this->app->containerManager->getContainerById($this->httpRequest->get('containerId'));
+        $containerConn = $this->app->dbManager->getConnectionToDatabase($container->databaseName);
+
+        $processRepository = new ProcessRepository($containerConn, $this->logger);
+        
+        try {
+            $processRepository->beginTransaction(__METHOD__);
+
+            if(!$processRepository->updateProcessType($type, $data)) {
+                throw new GeneralException('Database error.');
+            }
+
+            $processRepository->commit($this->getUserId(), __METHOD__);
+
+            $this->flashMessage('Process ' . ($action == 'enable' ? 'enabled' : 'disabled') . '.', 'success');
+        } catch(AException $e) {
+            $processRepository->rollback(__METHOD__);
+
+            $this->flashMessage('Process could not be ' . ($action == 'enable' ? 'enabled' : 'disabled') . '. Reason: ' . $e->getMessage(), 'error');
+        }
+
+        $this->redirect($this->createURL('processes', ['containerId' => $this->httpRequest->get('containerId')]));
+    }
+
+    public function handleAddProcessForm(?FormRequest $fr = null) {
+        if($fr !== null) {
+            $container = $this->app->containerManager->getContainerById($this->httpRequest->get('containerId'));
+            $containerConn = $this->app->dbManager->getConnectionToDatabase($container->databaseName);
+
+            $processRepository = new ProcessRepository($containerConn, $this->logger);
+            $contentRepository = new ContentRepository($containerConn, $this->logger);
+            $entityManager = new EntityManager($this->logger, $contentRepository);
+
+            try {
+                $processRepository->beginTransaction(__METHOD__);
+                
+                $typeId = $entityManager->generateEntityId(EntityManager::C_PROCESS_TYPES);
+
+                $result = $processRepository->insertNewProcessType(
+                    $typeId,
+                    $fr->process,
+                    StandaloneProcesses::toString($fr->process),
+                    StandaloneProcesses::getDescription($fr->process)
+                );
+
+                if($result === false) {
+                    throw new GeneralException('Database error.');
+                }
+
+                $this->cacheFactory->invalidateCacheByNamespace(CacheNames::PROCESS_TYPES);
+
+                $processRepository->commit($this->getUserId(), __METHOD__);
+
+                $this->flashMessage('Process added to container.', 'success');
+            } catch(AException $e) {
+                $processRepository->rollback(__METHOD__);
+
+                $this->flashMessage('Could not add new process. Reason: ' . $e->getMessage(), 'error');
+            }
+
+            $this->redirect($this->createURL('processes', ['containerId' => $this->httpRequest->get('containerId')]));
+        }
+    }
+
+    public function renderAddProcessForm() {
+        $this->template->links = $this->createBackUrl('processes', ['containerId' => $this->httpRequest->get('containerId')]);
+    }
+
+    protected function createComponentContainerAddProcessForm(HttpRequest $request) {
+        $form = $this->componentFactory->getFormBuilder();
+
+        $form->setAction($this->createURL('addProcessForm', ['containerId' => $request->get('containerId')]));
+
+        $container = $this->app->containerManager->getContainerById($request->get('containerId'));
+        $containerConn = $this->app->dbManager->getConnectionToDatabase($container->databaseName);
+
+        $processRepository = new ProcessRepository($containerConn, $this->logger);
+        $qb = $processRepository->composeQueryForProcessTypes()
+            ->execute();
+
+        $processesDb = [];
+        while($row = $qb->fetchAssoc()) {
+            $processesDb[] = $row['typeKey'];
+        }
+
+        $processes = StandaloneProcesses::getAll();
+        $processSelect = [];
+        foreach($processes as $key => $title) {
+            if(in_array($key, $processesDb)) continue;
+            $processSelect[] = [
+                'value' => $key,
+                'text' => $title
+            ];
+        }
+
+        $form->addSelect('process', 'Process:')
+            ->addRawOptions($processSelect)
+            ->setRequired();
+
+        $form->addSubmit('Add');
+
+        return $form;
     }
 }
 

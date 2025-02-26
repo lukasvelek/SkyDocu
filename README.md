@@ -36,6 +36,16 @@ Future plans include:
 - Document file uploading
     - Uploaded file overview (in grid) + stats in in-container administration
 - Invoice Process
+- CotnainerRequest Process
+- Bugfixes
+- Exception page
+- Process metadata
+- Process comments
+- File storing
+    - Upload files and associate them with documents
+    - Download files
+    - File storage overview
+- Process profile page design update
 
 ### 1.2 (January 27th, 2025)
 - Code readability update

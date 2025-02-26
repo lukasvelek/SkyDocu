@@ -72,15 +72,15 @@ class ContainerCreationService extends AService {
                     
                     $this->containerRepository->beginTransaction(__METHOD__);
 
-                    $this->logInfo('Creating container');
+                    $this->logInfo('Creating container.');
                     $this->processContainerCreation($containerId);
                     $this->logInfo('Container created.');
 
                     $this->containerRepository->commit($this->serviceManager->getServiceUserId(), __METHOD__);
 
-                    $this->containerManager->changeContainerStatus($containerId, ContainerStatus::RUNNING, $this->serviceManager->getServiceUserId(), 'Status change due to background container creation. Container is created and running.');
+                    $this->containerManager->changeContainerStatus($containerId, ContainerStatus::NOT_RUNNING, $this->serviceManager->getServiceUserId(), 'Status change due to background container creation. Container is created and not running.');
                     $this->containerManager->changeContainerCreationStatus($containerId, 100, null);
-                    $this->logInfo('Changed container status to \'' . ContainerStatus::toString(ContainerStatus::RUNNING) . '\'.');
+                    $this->logInfo('Changed container status to \'' . ContainerStatus::toString(ContainerStatus::NOT_RUNNING) . '\'.');
 
                     $this->cacheFactory->invalidateCacheByNamespace(CacheNames::GROUP_MEMBERSHIPS);
                     $this->cacheFactory->invalidateCacheByNamespace(CacheNames::USER_GROUP_MEMBERSHIPS);

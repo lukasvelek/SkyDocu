@@ -5,6 +5,7 @@ namespace App\Components\Widgets\AboutApplicationWidget;
 use App\Components\Widgets\Widget;
 use App\Core\Application;
 use App\Core\Http\HttpRequest;
+use App\Helpers\DateTimeFormatHelper;
 use App\UI\HTML\HTML;
 
 /**
@@ -94,7 +95,7 @@ class AboutApplicationWidget extends Widget {
             // not released yet
             return '<span title="This version has not been released yet.">' . APP_VERSION_RELEASE_DATE . '</span>';
         } else {
-            return APP_VERSION_RELEASE_DATE;
+            return DateTimeFormatHelper::formatDateToUserFriendly(APP_VERSION_RELEASE_DATE, 'd.m.Y');
         }
     }
 

@@ -82,6 +82,11 @@ class DatabaseInstaller {
                 'permanentFlashMessage' => 'TEXT NULL',
                 'dbSchema' => 'INT(32) NOT NULL DEFAULT 0'
             ],
+            'container_databases' => [
+                'entryId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',
+                'containerId' => 'VARCHAR(256) NOT NULL',
+                'name' => 'VARCHAR(256) NOT NULL'
+            ],
             'container_creation_status' => [
                 'statusId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',
                 'containerId' => 'VARCHAR(256) NOT NULL',

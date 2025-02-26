@@ -43,13 +43,22 @@ class ContainerManager extends AManager {
         $this->containerDatabaseRepository = $containerDatabaseRepository;
     }
 
+    /**
+     * Returns generated database name for given containerId
+     * 
+     * @param string $containerId
+     */
+    public function generateContainerDatabaseName(string $containerId): string {
+        return 'sd_db_' . $containerId . '_' . HashManager::createHash(8, false);
+    }
+
     public function createNewContainer(string $title, string $description, string $callingUserId, int $environment, bool $canShowReferent, int $status = ContainerStatus::NEW) {
         $containerId = $this->createId(EntityManager::CONTAINERS);
-        $databaseName = 'sd_db_' . $containerId . '_' . HashManager::createHash(8, false);
+        $databaseName = $this->generateContainerDatabaseName($containerId);
 
         $containerDatabaseEntryId = $this->createId(EntityManager::CONTAINER_DATABASES);
 
-        if(!$this->containerDatabaseRepository->insertNewContainerDatabase($containerDatabaseEntryId, $containerId, $databaseName, true)) {
+        if(!$this->containerDatabaseRepository->insertNewContainerDatabase($containerDatabaseEntryId, $containerId, $databaseName, 'SkyDocu Database', 'Default SkyDocu database', true)) {
             throw new GeneralException('Database error.');
         }
 

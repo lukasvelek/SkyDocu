@@ -12,6 +12,8 @@ class ContainerDatabaseEntity extends AEntity {
     private string $containerId;
     private string $name;
     private bool $isDefault;
+    private string $title;
+    private string $description;
 
     /**
      * Class constructor
@@ -20,12 +22,16 @@ class ContainerDatabaseEntity extends AEntity {
      * @param string $containerId
      * @param string $name
      * @param bool $isDefault
+     * @param string $title
+     * @param string $description
      */
-    public function __construct(string $entryId, string $containerId, string $name, bool $isDefault) {
+    public function __construct(string $entryId, string $containerId, string $name, bool $isDefault, string $title, string $description) {
         $this->entryId = $entryId;
         $this->containerId = $containerId;
         $this->name = $name;
         $this->isDefault = $isDefault;
+        $this->title = $title;
+        $this->description = $description;
     }
 
     /**
@@ -56,6 +62,20 @@ class ContainerDatabaseEntity extends AEntity {
         return $this->isDefault;
     }
 
+    /**
+     * Returns database's title
+     */
+    public function getTitle(): string {
+        return $this->title;
+    }
+
+    /**
+     * Returns database's description
+     */
+    public function getDescription(): string {
+        return $this->description;
+    }
+
     public static function createEntityFromDbRow(mixed $row): static {
         if($row === null) {
             return null;
@@ -66,10 +86,12 @@ class ContainerDatabaseEntity extends AEntity {
             'entryId' => 'string',
             'containerId' => 'string',
             'name' => 'string',
-            'isDefault' => 'bool'
+            'isDefault' => 'bool',
+            'title' => 'string',
+            'description' => 'string'
         ]);
 
-        return new self($row->entryId, $row->containerId, $row->name, $row->isDefault);
+        return new self($row->entryId, $row->containerId, $row->name, $row->isDefault, $row->title, $row->description);
     }
 }
 

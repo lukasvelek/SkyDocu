@@ -86,7 +86,9 @@ class DatabaseInstaller {
                 'entryId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',
                 'containerId' => 'VARCHAR(256) NOT NULL',
                 'name' => 'VARCHAR(256) NOT NULL',
-                'isDefault' => 'INT(2) NOT NULL DEFAULT 0'
+                'isDefault' => 'INT(2) NOT NULL DEFAULT 0',
+                'title' => 'VARCHAR(256) NOT NULL',
+                'description' => 'TEXT NOT NULL'
             ],
             'container_creation_status' => [
                 'statusId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',

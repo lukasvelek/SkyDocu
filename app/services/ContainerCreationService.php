@@ -72,7 +72,7 @@ class ContainerCreationService extends AService {
                     
                     $this->containerRepository->beginTransaction(__METHOD__);
 
-                    $this->logInfo('Creating container');
+                    $this->logInfo('Creating container.');
                     $this->processContainerCreation($containerId);
                     $this->logInfo('Container created.');
 

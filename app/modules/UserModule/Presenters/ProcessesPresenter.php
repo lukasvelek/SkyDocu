@@ -220,27 +220,9 @@ class ProcessesPresenter extends AUserPresenter {
 
                 $el = HTML::el('a')
                     ->text($title)
-                    ->href($this->createURLString('process', $params));
-
-                switch($action) {
-                    case 'finish':
-                        $el->style('color', ProcessStatus::getColor(ProcessStatus::FINISHED))
-                            ->style('background-color', ProcessStatus::getBackgroundColor(ProcessStatus::FINISHED));
-                        break;
-
-                    case 'accept':
-                        $el->style('color', ProcessStatus::getColor(ProcessStatus::IN_PROGRESS))
-                            ->style('background-color', ProcessStatus::getBackgroundColor(ProcessStatus::IN_PROGRESS));
-                        break;
-
-                    case 'cancel':
-                        $el->style('color', ProcessStatus::getColor(ProcessStatus::CANCELED))
-                            ->style('background-color', ProcessStatus::getBackgroundColor(ProcessStatus::CANCELED));
-                        break;
-                }
-
-                $el->class('process-action-link')
-                    ->title($title);
+                    ->href($this->createURLString('process', $params))
+                    ->title($title)
+                    ->class('process-action-link-' . $action);
 
                 $tmp[] = $el->toString();
             }

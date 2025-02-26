@@ -765,8 +765,37 @@ a.widget-title:hover {
     }
 }
 
-.process-action-link {
+.process-action-link-finish, .process-action-link-accept, .process-action-link-cancel {
     padding: 5px;
     border-radius: 10px;
     font-size: 20px; /* inherited from .changelog-item */
+    text-decoration: none;
+    transition: color 0.25s;
+}
+
+.process-action-link-finish {
+    color: green;
+    background-color: lightgreen;
+}
+
+.process-action-link-finish:hover {
+    color: darkgreen;
+}
+
+.process-action-link-accept {
+    color: blue;
+    background-color: lightblue;
+}
+
+.process-action-link-accept:hover {
+    color: darkblue;
+}
+
+.process-action-link-cancel {
+    color: red;
+    background-color: pink;
+}
+
+.process-action-link-cancel:hover {
+    color: darkred;
 }

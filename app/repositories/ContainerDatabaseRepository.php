@@ -41,6 +41,20 @@ class ContainerDatabaseRepository extends ARepository {
 
         return $qb->fetchBool();
     }
+
+    /**
+     * Returns a database entry by entry ID
+     * 
+     * @param string $entryId Entry ID
+     */
+    public function getDatabaseByEntryId(string $entryId): mixed {
+        $qb = $this->composeQueryForContainerDatabases();
+
+        $qb->andWhere('entryId = ?', [$entryId])
+            ->execute();
+
+        return $qb->fetch();
+    }
 }
 
 ?>

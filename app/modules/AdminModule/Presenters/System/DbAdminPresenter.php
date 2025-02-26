@@ -5,6 +5,7 @@ namespace App\Modules\AdminModule;
 use App\Core\DB\DatabaseRow;
 use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
+use App\Entities\ContainerDatabaseEntity;
 use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
 use App\Managers\EntityManager;
@@ -73,8 +74,48 @@ class DbAdminPresenter extends AAdminPresenter {
         return $grid;
     }
 
-    public function handleDropDatabaseForm() {
-        // todo: implement confirmation form
+    public function handleDropDatabaseForm(?FormRequest $fr = null) {
+        if($fr !== null) {
+            try {
+                $this->app->containerDatabaseRepository->beginTransaction(__METHOD__);
+
+                
+
+                $this->app->containerDatabaseRepository->commit($this->getUserId(), __METHOD__);
+
+                $this->flashMessage('Database dropped.', 'success');
+            } catch(AException $e) {
+                $this->app->containerDatabaseRepository->rollback(__METHOD__);
+
+                $this->flashMessage('Could not drop database. Reason: ' . $e->getMessage(), 'error');
+            }
+
+            $this->redirect($this->createURL('list'));
+        }
+    }
+
+    public function renderDropDatabaseForm() {
+        $this->template->links = $this->createBackUrl('list');
+    }
+
+    protected function createComponentDropDatabaseForm(HttpRequest $request) {
+        $database = $this->app->containerDatabaseRepository->getDatabaseByEntryId($request->get('entryId'));
+        $database = ContainerDatabaseEntity::createEntityFromDbRow($database);
+
+        $form = $this->componentFactory->getFormBuilder();
+
+        $form->setAction($this->createURL('dropDatabaseForm', ['entryId' => $database->getId()]));
+
+        $form->addLabel('lbl_requirement1', 'Type in database title: \'' . $database->getTitle() . '\'.');
+        $form->addTextInput('title', 'Title:')
+            ->setRequired();
+
+        $form->addPasswordInput('password', 'Your password:')
+            ->setRequired();
+
+        $form->addSubmit('Drop');
+
+        return $form;
     }
 
     public function handleDeleteDatabaseForm() {

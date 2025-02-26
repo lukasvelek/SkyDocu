@@ -116,15 +116,20 @@ class StandaloneProcessManager extends AManager {
         $processData = $this->getProcessData($processId);
         $process = $this->processManager->getProcessById($processId);
 
-        //$file = $this->fileStorageManager->getFileById($processData['fileId']);
-
         $class = $this->documentManager->documentClassRepository->getDocumentClassByTitle('Invoices');
+
+        if($class === null) {
+            throw new GeneralException('Document class does not exist.');
+        }
+
+        $class = DatabaseRow::createFromDbRow($class);
+
         $folder = $this->folderManager->getFolderByTitle('Invoices');
 
         $documentMetadata = [
             'title' => 'Invoice ' . $processData['invoiceNo'],
             'authorUserId' => $process->authorUserId,
-            'description' => '', // todo: implement description
+            'description' => 'Document for Invoice ' . $processData['invoiceNo'], // todo: implement description
             'status' => DocumentStatus::NEW,
             'classId' => $class->classId,
             'folderId' => $folder->folderId

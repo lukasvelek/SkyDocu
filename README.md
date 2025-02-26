@@ -2,9 +2,9 @@
 SkyDocu is a web DMS that has been created to be run in a cloud. It has a superadministration where the superadministrator can manage containers.
 Containers are instances of DMS applications for customers.
 
-Current version: ___1.3.1-dev___
+Current version: ___1.3.1___
 
-Latest version: ___1.3___ (February 26th, 2025)
+Latest version: ___1.3.1___ (February 26th, 2025)
 
 ## Tech stack
 The web application is written purely in PHP with a few JS scripts. These JS scripts are mostly used for AJAX and other dynamic behavior functions.
@@ -18,9 +18,10 @@ Future plans include:
 - Multiple database servers (__1.4__, may be postponed)
 
 ## Changelog
-### 1.3.1 (?)
+### 1.3.1 (February 26th, 2025)
 - About application widget update
     - Version release date formatting
+- Code comments update
 
 ### 1.3 (February 26th, 2025)
 - Grid searching

@@ -16,6 +16,7 @@ use App\Exceptions\AException;
 use App\Exceptions\RequiredAttributeIsNotSetException;
 use App\Helpers\DateTimeFormatHelper;
 use App\Helpers\ProcessHelper;
+use App\UI\HTML\HTML;
 use App\UI\LinkBuilder;
 
 class ProcessesPresenter extends AUserPresenter {
@@ -217,10 +218,34 @@ class ProcessesPresenter extends AUserPresenter {
                     $params['isStandalone'] = '1';
                 }
 
-                $tmp[] = LinkBuilder::createSimpleLink($title, $this->createURL('process', $params), 'link');
+                $el = HTML::el('a')
+                    ->text($title)
+                    ->href($this->createURLString('process', $params));
+
+                switch($action) {
+                    case 'finish':
+                        $el->style('color', ProcessStatus::getColor(ProcessStatus::FINISHED))
+                            ->style('background-color', ProcessStatus::getBackgroundColor(ProcessStatus::FINISHED));
+                        break;
+
+                    case 'accept':
+                        $el->style('color', ProcessStatus::getColor(ProcessStatus::IN_PROGRESS))
+                            ->style('background-color', ProcessStatus::getBackgroundColor(ProcessStatus::IN_PROGRESS));
+                        break;
+
+                    case 'cancel':
+                        $el->style('color', ProcessStatus::getColor(ProcessStatus::CANCELED))
+                            ->style('background-color', ProcessStatus::getBackgroundColor(ProcessStatus::CANCELED));
+                        break;
+                }
+
+                $el->class('process-action-link')
+                    ->title($title);
+
+                $tmp[] = $el->toString();
             }
 
-            $processActionsCode = implode('<br>', $tmp);
+            $processActionsCode = implode('<br><br>', $tmp);
         } else {
             if($process->status == ProcessStatus::FINISHED) {
                 $processActionsCode = 'Process has been finished.';

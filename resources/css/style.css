@@ -764,3 +764,9 @@ a.widget-title:hover {
         background-color: rgb(150, 150, 150);
     }
 }
+
+.process-action-link {
+    padding: 5px;
+    border-radius: 10px;
+    font-size: 20px; /* inherited from .changelog-item */
+}

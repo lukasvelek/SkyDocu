@@ -329,7 +329,8 @@ class ProcessesPresenter extends AUserPresenter {
 
         $form->addTextArea('text', 'Text:')
             ->setRequired($disabled)
-            ->setDisabled(!$disabled);
+            ->setDisabled(!$disabled)
+            ->setPlaceholder('Write a comment text here...');
 
         $form->addSubmit('Create')
             ->setDisabled(!$disabled);

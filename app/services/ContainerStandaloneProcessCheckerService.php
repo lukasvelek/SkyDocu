@@ -74,8 +74,8 @@ class ContainerStandaloneProcessCheckerService extends AService {
             $groupRepository = new GroupRepository($containerConnection, $this->logger);
 
             $groupManager = new GroupManager($this->logger, $entityManager, $groupRepository, $this->userRepository);
-            $userSubstituteManager = new UserSubstituteManager($this->logger, $this->entityManager, $userSubstituteRepository);
-            $userAbsenceManager = new UserAbsenceManager($this->logger, $this->entityManager, $userAbsenceRepository);
+            $userSubstituteManager = new UserSubstituteManager($this->logger, $entityManager, $userSubstituteRepository);
+            $userAbsenceManager = new UserAbsenceManager($this->logger, $entityManager, $userAbsenceRepository);
             $processManager = new ProcessManager($this->logger, $entityManager, $processRepository, $groupManager, $userSubstituteManager, $userAbsenceManager);
 
             $qb = $processManager->processRepository->composeQueryForProcessTypes();

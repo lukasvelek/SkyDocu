@@ -76,8 +76,8 @@ class ContainerSelectionForm extends FormBuilder2 {
      */
     private function createSearchForm() {
         $lastContainer = 'null';
-        if($this->httpRequest->query('lastContainer') !== null) {
-            $lastContainer = $this->httpRequest->query('lastContainer');
+        if($this->httpRequest->get('lastContainer') !== null) {
+            $lastContainer = $this->httpRequest->get('lastContainer');
         }
 
         $this->addTextInput('containerSearch', 'Search container:')
@@ -139,7 +139,7 @@ class ContainerSelectionForm extends FormBuilder2 {
      * @return JsonResponse Return value
      */
     protected function actionSearchContainers() {
-        $query = $this->httpRequest->query('query');
+        $query = $this->httpRequest->get('query');
 
         $containers = $this->getContainers($query);
 
@@ -200,8 +200,8 @@ class ContainerSelectionForm extends FormBuilder2 {
                     'text' => $title
                 ];
 
-                if($this->httpRequest->query('lastContainer') !== null) {
-                    if($group->containerId == $this->httpRequest->query('lastContainer')) {
+                if($this->httpRequest->get('lastContainer') !== null) {
+                    if($group->containerId == $this->httpRequest->get('lastContainer')) {
                         $c['selected'] = 'selected';
                     }
                 }

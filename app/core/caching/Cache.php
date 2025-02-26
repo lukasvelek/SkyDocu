@@ -91,6 +91,40 @@ class Cache {
     }
 
     /**
+     * Updates data in cache
+     * 
+     * Method checks if given key exists in cache and is different. The data is saved to cache only if the does not exist or exists but is different.
+     * 
+     * @param mixed $key Data key
+     * @param callback $generator Data generator
+     * @param array $generatorDependencies Data generator dependencies (arguments)
+     */
+    public function update(mixed $key, callable $generator, array $generatorDependencies = []) {
+        try {
+            $result = $generator(...$generatorDependencies);
+        } catch(Exception $e) {
+            throw new CacheException('Could not save data to cache.', $this->namespace, $e);
+        }
+
+        $isSave = false;
+
+        if(array_key_exists($key, $this->data)) {
+            if($this->data[$key] != $result) {
+                // key exists and data is different
+                $isSave = true;
+            }
+        } else {
+            // key does not exist
+            $isSave = true;
+        }
+
+        if($isSave) {
+            $this->data[$key] = $result;
+            $this->lastWriteDate = new DateTime();
+        }
+    }
+
+    /**
      * Invalidates cache
      */
     public function invalidate() {

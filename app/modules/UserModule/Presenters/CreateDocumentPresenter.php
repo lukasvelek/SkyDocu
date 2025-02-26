@@ -83,7 +83,7 @@ class CreateDocumentPresenter extends AUserPresenter {
 
     public function handleForm(?FormRequest $fr = null) {
         if($fr !== null) {
-            $folderId = $this->httpRequest->query('folderId');
+            $folderId = $this->httpRequest->get('folderId');
             if($folderId === null) {
                 throw new RequiredAttributeIsNotSetException('folderId');
             }
@@ -130,11 +130,11 @@ class CreateDocumentPresenter extends AUserPresenter {
     }
 
     public function renderForm() {
-        $this->template->links = $this->createBackFullUrl('User:Documents', 'list', ['folderId' => $this->httpRequest->query('folderId')]);
+        $this->template->links = $this->createBackFullUrl('User:Documents', 'list', ['folderId' => $this->httpRequest->get('folderId')]);
     }
 
     protected function createComponentCreateDocumentForm(HttpRequest $request) {
-        $folderId = $request->query('folderId') ?? ($request->post('folderId') ?? null);
+        $folderId = $request->get('folderId');
 
         $classesDb = $this->documentManager->getDocumentClassesForDocumentCreateForUser($this->getUserId());
 

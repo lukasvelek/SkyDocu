@@ -65,7 +65,7 @@ class HttpRequest {
     }
 
     /**
-     * Returns the given key from the query. If the key is not found, then null is returned instead.
+     * Returns the given key from the query. If the key is not found, null is then returned instead.
      * 
      * @param string $key Searched key
      * @return mixed Data from query or null
@@ -79,7 +79,7 @@ class HttpRequest {
     }
 
     /**
-     * Returns the given key from the POST. If the key is not found, the null is returned instead.
+     * Returns the given key from the POST. If the key is not found, null is then returned instead.
      * 
      * @param string $key Searched key
      * @return mixed Data from POST or null
@@ -90,6 +90,17 @@ class HttpRequest {
         } else {
             return null;
         }
+    }
+
+    /**
+     * Return the given key from either the query or the POST. If the key is not found in any of them, null is then returned instead.
+     * 
+     * @param string $key Searched key
+     * @return mixed Data from query or POST or null
+     */
+    public function get(string $key): mixed {
+        $result = $this->query($key) ?? $this->post($key);
+        return $result;
     }
 }
 

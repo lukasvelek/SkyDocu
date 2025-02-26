@@ -7,13 +7,19 @@ use App\Components\DocumetnShareForm\DocumentShareForm;
 use App\Components\FoldersSidebar\FoldersSidebar;
 use App\Constants\Container\CustomMetadataTypes;
 use App\Constants\Container\DocumentStatus;
+use App\Constants\Container\GridNames;
+use App\Core\Caching\CacheNames;
 use App\Core\DB\DatabaseRow;
+use App\Core\FileUploadManager;
 use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
 use App\Enums\AEnumForMetadata;
 use App\Exceptions\AException;
+use App\Exceptions\GeneralException;
 use App\Exceptions\RequiredAttributeIsNotSetException;
 use App\Helpers\DateTimeFormatHelper;
+use App\Helpers\UnitConversionHelper;
+use App\UI\HTML\HTML;
 use App\UI\LinkBuilder;
 
 class DocumentsPresenter extends AUserPresenter {
@@ -36,13 +42,18 @@ class DocumentsPresenter extends AUserPresenter {
     }
     
     public function handleList() {
-        $folderId = $this->httpRequest->query('folderId');
+        $folderId = $this->httpRequest->get('folderId');
 
         if($folderId !== null) {
             $this->currentFolderId = $folderId;
-        } else if($folderId === null && $this->currentFolderId === null && $this->httpSessionGet('current_document_folder_id') === null) {
-            $folder = $this->folderManager->getDefaultFolder();
-            $this->redirect($this->createURL('switchFolder', ['folderId' => $folder->folderId]));
+        } else if($this->httpRequest->post('folderId') !== null) {
+            $this->currentFolderId = $this->httpRequest->post('folderId');
+        } else {
+            if(str_contains($this->httpRequest->get('do'), 'getSkeleton')) {
+                $this->currentFolderId = $this->folderManager->getDefaultFolder()->folderId;
+            } else {
+                $this->redirect($this->createURL('list', ['folderId' => $this->folderManager->getDefaultFolder()->folderId]));
+            }
         }
 
         if($this->currentFolderId !== null) {
@@ -69,19 +80,23 @@ class DocumentsPresenter extends AUserPresenter {
             $this->groupStandardOperationsAuthorizator,
             $this->enumManager,
             $this->gridManager,
-            $this->processFactory
+            $this->processFactory,
+            $this->archiveManager,
+            $this->fileStorageManager
         );
 
-        $documentsGrid->setCurrentFolder($this->currentFolderId);
+        if(!$this->httpRequest->isAjax || str_contains($this->httpRequest->get('do'), 'getSkeleton')) {
+            $documentsGrid->setCurrentFolder($this->currentFolderId);
+        }
         $documentsGrid->showCustomMetadata();
         $documentsGrid->useCheckboxes($this);
-        $documentsGrid->setCacheFactory($this->cacheFactory);
+        $documentsGrid->setGridName(GridNames::DOCUMENTS_GRID);
 
         return $documentsGrid;
     }
 
     public function handleSwitchFolder() {
-        $folderId = $this->httpRequest->query('folderId');
+        $folderId = $this->httpRequest->get('folderId');
         if($folderId === null) {
             throw new RequiredAttributeIsNotSetException('folderId');
         }
@@ -90,7 +105,7 @@ class DocumentsPresenter extends AUserPresenter {
     }
 
     public function handleInfo() {
-        $documentId = $this->httpRequest->query('documentId');
+        $documentId = $this->httpRequest->get('documentId');
         if($documentId === null) {
             throw new RequiredAttributeIsNotSetException('documentId');
         }
@@ -136,6 +151,24 @@ class DocumentsPresenter extends AUserPresenter {
         $createRow('Folder', $folder);
         $createRow('Date created', DateTimeFormatHelper::formatDateToUserFriendly($document->dateCreated));
         $createRow('Date modified', ($document->dateModified !== null) ? DateTimeFormatHelper::formatDateToUserFriendly($document->dateModified) : '-');
+
+        // FILE ATTACHMENT
+        if($this->fileStorageManager->doesDocumentHaveFile($document->documentId)) {
+            $url = $this->fileStorageManager->generateDownloadLinkForFileInDocumentByDocumentId($document->documentId);
+
+            $relation = $this->fileStorageManager->getFileRelationForDocumentId($document->documentId);
+            $file = $this->fileStorageManager->getFileById($relation->fileId);
+            $fileSize = UnitConversionHelper::convertBytesToUserFriendly($file->filesize);
+
+            $el = HTML::el('a')
+                ->text('Download file (' . $fileSize . ')')
+                ->class('changelog-link')
+                ->target('_blank')
+                ->href($url);
+
+            $createRow('File', $el->toString());
+        }
+        // END OF FILE ATTACHMENT
 
         $this->saveToPresenterCache('documentBasicInformation', $basicInformationCode);
 
@@ -211,13 +244,23 @@ class DocumentsPresenter extends AUserPresenter {
         }
 
         $this->saveToPresenterCache('customMetadataCode', $customMetadataCode);
+
+        $links = [
+            $this->createBackUrl('list', ['folderId' => $document->folderId])
+        ];
+
+        if(!$this->fileStorageManager->doesDocumentHaveFile($document->documentId)) {
+            $links[] = LinkBuilder::createSimpleLink('Upload a file', $this->createURL('fileUploadForm', ['documentId' => $document->documentId]), 'link');
+        }
+
+        $this->saveToPresenterCache('links', implode('&nbsp;&nbsp;', $links));
     }
 
     public function renderInfo() {
         $this->template->document_basic_information = $this->loadFromPresenterCache('documentBasicInformation');
         $this->template->document_custom_metadata = $this->loadFromPresenterCache('customMetadataCode');
 
-        $this->template->links = $this->createBackUrl('list');
+        $this->template->links = $this->loadFromPresenterCache('links');
     }
 
     public function handleShareForm(?FormRequest $fr = null) {
@@ -227,33 +270,33 @@ class DocumentsPresenter extends AUserPresenter {
             try {
                 $this->documentRepository->beginTransaction(__METHOD__);
 
-                foreach($this->httpRequest->query('documentId') as $documentId) {
+                foreach($this->httpRequest->get('documentId') as $documentId) {
                     $this->documentManager->shareDocument($documentId, $this->getUserId(), $data['user']);
                 }
 
                 $this->documentRepository->commit($this->getUserId(), __METHOD__);
 
-                $this->flashMessage(sprintf('Successfully shared %d %s.', count($this->httpRequest->query('documentId')), (count($this->httpRequest->query('documentId')) > 1 ? 'documents' : 'document')), 'success');
+                $this->flashMessage(sprintf('Successfully shared %d %s.', count($this->httpRequest->get('documentId')), (count($this->httpRequest->get('documentId')) > 1 ? 'documents' : 'document')), 'success');
             } catch(AException $e) {
                 $this->documentRepository->rollback(__METHOD__);
                 
-                $this->flashMessage('Could not share document' . (count($this->httpRequest->query('documentId')) > 1 ? 's' : '') . '. Reason: ' . $e->getMessage(), 'error');
+                $this->flashMessage('Could not share document' . (count($this->httpRequest->get('documentId')) > 1 ? 's' : '') . '. Reason: ' . $e->getMessage(), 'error');
             }
 
-            $this->redirect($this->createURL('list', ['folderId' => $this->httpRequest->query('folderId')]));
+            $this->redirect($this->createURL('list', ['folderId' => $this->httpRequest->get('folderId')]));
         }
     }
 
     public function renderShareForm() {
-        $this->template->links = $this->createBackUrl('list', ['folderId' => $this->httpRequest->query('backFolderId')]);
+        $this->template->links = $this->createBackUrl('list', ['folderId' => $this->httpRequest->get('backFolderId')]);
     }
 
     protected function createComponentShareDocumentForm(HttpRequest $request) {
         $form = new DocumentShareForm($request, $this->app->userRepository, $this->documentManager);
 
         if(!$request->isAjax) {
-            $form->setAction($this->createURL('shareForm', ['folderId' => $request->query('backFolderId')]));
-            $form->setDocumentIds($request->query('documentId'));
+            $form->setAction($this->createURL('shareForm', ['folderId' => $request->get('backFolderId')]));
+            $form->setDocumentIds($request->get('documentId'));
         }
 
         return $form;
@@ -270,14 +313,69 @@ class DocumentsPresenter extends AUserPresenter {
             $this->groupStandardOperationsAuthorizator,
             $this->enumManager,
             $this->gridManager,
-            $this->processFactory
+            $this->processFactory,
+            $this->archiveManager,
+            $this->fileStorageManager
         );
 
         $documentsGrid->setShowShared();
         $documentsGrid->useCheckboxes($this);
-        $documentsGrid->setCacheFactory($this->cacheFactory);
 
         return $documentsGrid;
+    }
+
+    public function handleFileUploadForm(?FormRequest $fr = null) {
+        if($fr !== null) {
+            try {
+                $this->fileStorageRepository->beginTransaction(__METHOD__);
+
+                $fum = new FileUploadManager();
+                $data = $fum->uploadFile($_FILES['file'], $this->httpRequest->get('documentId'), $this->getUserId());
+
+                if(empty($data)) {
+                    throw new GeneralException('Could not upload file.');
+                }
+
+                $this->fileStorageManager->createNewFile(
+                    $this->httpRequest->get('documentId'),
+                    $this->getUserId(),
+                    $data[FileUploadManager::FILE_FILENAME],
+                    $data[FileUploadManager::FILE_FILEPATH],
+                    $data[FileUploadManager::FILE_FILESIZE]
+                );
+
+                if(!$this->cacheFactory->invalidateCacheByNamespace(CacheNames::DOCUMENT_FILE_MAPPING)) {
+                    throw new GeneralException('Could not invalidate cache.');
+                }
+
+                $this->fileStorageRepository->commit($this->getUserId(), __METHOD__);
+
+                $this->flashMessage('File uploaded successfully.', 'success');
+            } catch(AException $e) {
+                $this->fileStorageRepository->rollback(__METHOD__);
+
+                $this->flashMessage('Could not upload file.', 'error', 10);
+            }
+
+            $this->redirect($this->createURL('info', ['documentId' => $this->httpRequest->get('documentId')]));
+        }
+    }
+
+    public function renderFileUploadForm() {
+        $this->template->links = $this->createBackUrl('info', ['documentId' => $this->httpRequest->get('documentId')]);
+    }
+
+    protected function createComponentUploadFileForm(HttpRequest $request) {
+        $form = $this->componentFactory->getFormBuilder();
+
+        $form->setAction($this->createURL('fileUploadForm', ['documentId' => $request->query['documentId']]));
+
+        $form->addFileInput('file', 'File:')
+            ->setRequired();
+
+        $form->addSubmit('Upload');
+
+        return $form;
     }
 }
 

@@ -13,10 +13,16 @@ use App\UI\HTML\HTML;
  * @author Lukas Velek
  */
 class AboutApplicationWidget extends Widget {
+    private bool $disableGithubLink;
+    private bool $disablePHPVersion;
+
     public function __construct(HttpRequest $request) {
         parent::__construct($request);
 
         $this->componentName = 'AboutApplicationWidget';
+
+        $this->disableGithubLink = false;
+        $this->disablePHPVersion = false;
     }
 
     public function startup() {
@@ -30,17 +36,66 @@ class AboutApplicationWidget extends Widget {
     }
 
     /**
+     * Disables Github link
+     */
+    public function disableGithubLink() {
+        $this->disableGithubLink = true;
+    }
+
+    /**
+     * Enables Github link
+     */
+    public function enableGithubLink() {
+        $this->disableGithubLink = false;
+    }
+
+    /**
+     * Disables PHP version
+     */
+    public function disablePHPVersion() {
+        $this->disablePHPVersion = true;
+    }
+
+    /**
+     * Enables PHP version
+     */
+    public function enablePHPVersion() {
+        $this->disablePHPVersion = false;
+    }
+
+    /**
      * Processes widget data
      * 
      * @return array Widget rows
      */
     private function processData() {
-        return [
-            'Application version' => Application::APP_VERSION,
-            'Version release date' => '27.1.2025',
-            'Project github link' => $this->getGithubLink(),
-            'PHP version' => $this->getPHPVersion()
+        $data = [
+            'Application version' => APP_VERSION,
+            'Version release date' => $this->getAppVersionReleaseDate()
         ];
+
+        if(!$this->disableGithubLink) {
+            $data['Project github link'] = $this->getGithubLink();
+        }
+        if(!$this->disablePHPVersion) {
+            $data['PHP version'] = $this->getPHPVersion();
+        }
+
+        return $data;
+    }
+
+    /**
+     * Returns application version release date
+     * 
+     * @return string Link
+     */
+    private function getAppVersionReleaseDate(): string {
+        if(APP_VERSION_RELEASE_DATE == '-') {
+            // not released yet
+            return '<span title="This version has not been released yet.">' . APP_VERSION_RELEASE_DATE . '</span>';
+        } else {
+            return APP_VERSION_RELEASE_DATE;
+        }
     }
 
     /**

@@ -27,6 +27,24 @@ abstract class AConstant implements IToStringConstant {
 
         return $result;
     }
+
+    /**
+     * Returns all the constants in the constant. The array is formatted like:
+     * constant key => constant value
+     * 
+     * @return array All constant constants
+     */
+    public static function getAllConstants() {
+        $rc = new ReflectionClass(static::class);
+        $constants = $rc->getConstants();
+
+        $result = [];
+        foreach($constants as $name => $value) {
+            $result[$name] = $value;
+        }
+
+        return $result;
+    }
 }
 
 ?>

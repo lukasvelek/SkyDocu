@@ -17,7 +17,7 @@ use App\Repositories\Container\GroupRepository;
 
 class DocumentManager extends AManager {
     public DocumentRepository $documentRepository;
-    private DocumentClassRepository $documentClassRepository;
+    public DocumentClassRepository $documentClassRepository;
     private GroupRepository $groupRepository;
     private FolderRepository $folderRepository;
     public EnumManager $enumManager;
@@ -185,6 +185,8 @@ class DocumentManager extends AManager {
                 throw new GeneralException('Database error.');
             }
         }
+
+        return $documentId;
     }
 
     public function getDocumentCountForFolder(string $folderId) {
@@ -229,7 +231,7 @@ class DocumentManager extends AManager {
 
         $docuRow = DatabaseRow::createFromDbRow($docuRow);
 
-        if($allMetadata) {
+        if($allMetadata && $docuRow->folderId !== null) {
             /**
              * @var array<string, \App\Core\DB\DatabaseRow> $customMetadatas
              */
@@ -326,6 +328,15 @@ class DocumentManager extends AManager {
         if(!$this->documentRepository->createNewDocumentSharing($sharingId, $documentId, $sharedByUserId, $sharedToUserId, $sharedUntil)) {
             throw new GeneralException('Database error.', null, false);
         }
+    }
+
+    /**
+     * Removes document from folder
+     * 
+     * @param string $documentId
+     */
+    public function removeDocumentFromFolder(string $documentId) {
+        $this->updateDocument($documentId, ['folderId' => null]);
     }
 }
 

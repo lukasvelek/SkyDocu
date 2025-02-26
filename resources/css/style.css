@@ -276,6 +276,17 @@ div[class^="fm-"], div[class*="fm-"] {
     font-size: 20px;
 }
 
+.changelog-link {
+    font-size: 20px;
+    text-decoration: none;
+    color: black;
+    transition: color 0.25s;
+}
+
+.changelog-link:hover {
+    color: rgb(100, 100, 100);
+}
+
 .sidebar-link {
     font-size: 20px;
 
@@ -499,7 +510,7 @@ button #formSubmit {
 }
 
 #form #formSubmit, #form #formButton {
-    width: 100%;
+    width: 50%;
 
     height: 40px;
 }
@@ -731,4 +742,60 @@ a.widget-title:hover {
     border: 0;
     border-collapse: inherit;
     border-radius: 10px;
+}
+
+#skeletonTextAnimation {
+    animation-name: skeletonTextAnimationX;
+    animation-duration: 0.75s;
+    animation-iteration-count: infinite;
+    animation-direction: alternate;
+
+    border-radius: 10px;
+}
+
+@keyframes skeletonTextAnimationX {
+    0% {
+        color: rgb(220, 220, 220);
+        background-color: rgb(220, 220, 220);
+    }
+
+    100% {
+        color: rgb(150, 150, 150);
+        background-color: rgb(150, 150, 150);
+    }
+}
+
+.process-action-link-finish, .process-action-link-accept, .process-action-link-cancel {
+    padding: 5px;
+    border-radius: 10px;
+    font-size: 20px; /* inherited from .changelog-item */
+    text-decoration: none;
+    transition: color 0.25s;
+}
+
+.process-action-link-finish {
+    color: green;
+    background-color: lightgreen;
+}
+
+.process-action-link-finish:hover {
+    color: darkgreen;
+}
+
+.process-action-link-accept {
+    color: blue;
+    background-color: lightblue;
+}
+
+.process-action-link-accept:hover {
+    color: darkblue;
+}
+
+.process-action-link-cancel {
+    color: red;
+    background-color: pink;
+}
+
+.process-action-link-cancel:hover {
+    color: darkred;
 }

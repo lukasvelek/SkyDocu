@@ -2,7 +2,8 @@
 
 namespace App\Components\Widgets;
 
-use App\Core\AjaxRequestBuilder;
+use App\Core\Http\Ajax\Operations\HTMLPageOperation;
+use App\Core\Http\Ajax\Requests\PostAjaxRequest;
 use App\Core\Http\HttpRequest;
 use App\Core\Http\JsonResponse;
 use App\UI\AComponent;
@@ -22,6 +23,7 @@ class Widget extends AComponent {
     private bool $hasRefresh;
     private ?array $titleLink;
     private bool $titleHidden;
+    private array $queryDependencies;
 
     /**
      * Class constructor
@@ -37,6 +39,17 @@ class Widget extends AComponent {
         $this->componentName = 'widget';
         $this->titleLink = null;
         $this->titleHidden = false;
+        $this->queryDependencies = [];
+    }
+
+    /**
+     * Adds a query dependency
+     * 
+     * @param string $key Dependency key
+     * @param mixed $value Dependency value
+     */
+    public function addQueryDependency(string $key, mixed $value) {
+        $this->queryDependencies[$key] = $value;
     }
 
     /**
@@ -137,14 +150,15 @@ class Widget extends AComponent {
     /**
      * Creates HTML code for widget controls
      * 
+     * @param bool $isSkeleton Is skeleton
      * @return string HTML code
      */
-    private function buildControls() {
+    private function buildControls(bool $isSkeleton = false) {
         $code = '';
 
         if($this->hasRefresh) {
             $code .= '<div class="row"><div class="col-md">';
-            $code .= $this->createRefreshButton();
+            $code .= $this->createRefreshButton($isSkeleton);
             $code .= '</div></div>';
         }
         
@@ -154,15 +168,29 @@ class Widget extends AComponent {
     /**
      * Creates refresh button HTML code
      * 
+     * @param bool $isSkeleton Is skeleton
      * @return string HTML code
      */
-    private function createRefreshButton() {
+    private function createRefreshButton(bool $isSkeleton = false) {
         $el = HTML::el('a')
             ->href('#')
             ->text('Refresh &orarr;')
-            ->onClick($this->componentName . '_refresh()')
             ->class('link')
         ;
+
+        if($isSkeleton) {
+            $el->text('<div id="skeletonTextAnimation" style="width: 25%">Refresh &orarr;</div>');
+        } else {
+            $data = [];
+            foreach($this->queryDependencies as $key => $value) {
+                $data[] = $value;
+            }
+            if(!empty($data)) {
+                $el->onClick($this->componentName . '_refresh(\'' . implode('\', \'', $data) . '\')');
+            } else {
+                $el->onClick($this->componentName . '_refresh()');
+            }
+        }
 
         return $el->toString();
     }
@@ -175,32 +203,85 @@ class Widget extends AComponent {
     private function buildJSScripts() {
         $scripts = [];
 
-        $addScript = function(AjaxRequestBuilder $arb) use (&$scripts) {
-            $scripts[] = '<script type="text/javascript">' . $arb->build() . '</script>';
-        };
+        // GET SKELETON
+        $getSkeletonPar = new PostAjaxRequest($this->httpRequest);
+
+        $getSkeletonPar->setComponentUrl($this, 'getSkeleton');
+        
+        $data = [];
+        $args = [];
+        foreach($this->queryDependencies as $key => $value) {
+            $args[] = '_' . $key;
+            $data[$key] = '_' . $key;
+        }
+
+        if(!empty($data)) {
+            $getSkeletonPar->setData($data);
+        }
+        if(!empty($args)) {
+            foreach($args as $arg) {
+                $getSkeletonPar->addArgument($arg);
+            }
+        }
+
+        $updateOperation = new HTMLPageOperation();
+        $updateOperation->setHtmlEntityId('widget-' . $this->componentName)
+            ->setJsonResponseObjectName('widget');
+
+        $getSkeletonPar->addOnFinishOperation($updateOperation);
+
+        $updateOperation2 = new HTMLPageOperation();
+        $updateOperation2->setHtmlEntityId('widget-' . $this->componentName . '-controls')
+            ->setJsonResponseObjectName('controls');
+
+        $getSkeletonPar->addOnFinishOperation($updateOperation2);
+
+        $scripts[] = $getSkeletonPar->build();
 
         // REFRESH CONTROLS
-        $arb = new AjaxRequestBuilder();
+        $par = new PostAjaxRequest($this->httpRequest);
 
-        $arb->setMethod()
-            ->setComponentAction($this->presenter, $this->componentName . '-refresh')
-            ->setFunctionName($this->componentName . '_refresh')
-            ->updateHTMLElement('widget-' . $this->componentName, 'widget')
-            ->enableLoadingAnimation('widget-' . $this->componentName)
-        ;
+        $par->setComponentUrl($this, 'refresh');
 
-        $addScript($arb);
+        if(!empty($data)) {
+            $par->setData($data);
+        }
+        if(!empty($args)) {
+            foreach($args as $arg) {
+                $par->addArgument($arg);
+            }
+        }
 
-        return implode('', $scripts);
+        $updateOperation = new HTMLPageOperation();
+        $updateOperation->setHtmlEntityId('widget-' . $this->componentName)
+            ->setJsonResponseObjectName('widget');
+
+        $par->addOnFinishOperation($updateOperation);
+
+        $updateOperation = new HTMLPageOperation();
+        $updateOperation->setHtmlEntityId('widget-' . $this->componentName . '-controls')
+            ->setJsonResponseObjectName('controls');
+
+        $par->addOnFinishOperation($updateOperation);
+
+        $scripts[] = $par->build();
+        $scripts[] = 'async function ' . $this->componentName . '_refresh(' . implode(', ', $args) . ') {
+            await ' . $getSkeletonPar->getFunctionName() . '(' . implode(', ', $args) . ');
+            await sleep(2500);
+            await ' . $par->getFunctionName() . '(' . implode(', ', $args) . ');
+        }';
+
+        return '<script type="text/javascript">' . implode(' ', $scripts) . '</script>';
     }
 
     /**
      * Creates HTML code for widget content
      * 
+     * @param bool $isSkeleton Is skeleton
      * @return string HTML code
      */
-    protected function build() {
-        $rows = $this->processData();
+    protected function build(bool $isSkeleton = false) {
+        $rows = $this->processData($isSkeleton);
 
         $table = new Table($rows);
 
@@ -210,9 +291,10 @@ class Widget extends AComponent {
     /**
      * Processes passed data to table rows
      * 
+     * @param bool $isSkeleton Is skeleton
      * @return array<Row> Rows
      */
-    private function processData() {
+    private function processData(bool $isSkeleton = false) {
         $rows = [];
 
         $headerRow = new Row();
@@ -255,6 +337,11 @@ class Widget extends AComponent {
             $valueCell->setContent($value);
             $textCell->setName($i . '-value');
 
+            if($isSkeleton) {
+                $textCell->setContent('<div id="skeletonTextAnimation"><b>' . $text . '</b></div>');
+                $valueCell->setContent('<div id="skeletonTextAnimation">' . $value . '</div>');
+            }
+
             $row = new Row();
             $row->addCell($textCell);
             $row->addCell($valueCell);
@@ -274,7 +361,11 @@ class Widget extends AComponent {
      * @return JsonResponse Return value
      */
     public function actionRefresh() {
-        return new JsonResponse(['widget' => $this->build()]);
+        return new JsonResponse(['widget' => $this->build(), 'controls' => $this->buildControls()]);
+    }
+
+    public function actionGetSkeleton() {
+        return new JsonResponse(['widget' => $this->build(true), 'controls' => $this->buildControls(true)]);
     }
 
     public static function createFromComponent(AComponent $component) {}

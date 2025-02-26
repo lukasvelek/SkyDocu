@@ -6,9 +6,11 @@ use App\Components\ProcessesSelect\ProcessesSelect;
 use App\Components\ProcessViewSidebar\ProcessViewSidebar;
 use App\Constants\Container\ProcessGridViews;
 use App\Constants\Container\StandaloneProcesses;
+use App\Core\FileUploadManager;
 use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
+use App\Exceptions\GeneralException;
 use App\Exceptions\RequiredAttributeIsNotSetException;
 
 class NewProcessPresenter extends AUserPresenter {
@@ -19,7 +21,7 @@ class NewProcessPresenter extends AUserPresenter {
     public function renderSelect() {}
 
     protected function createComponentProcessViewsSidebar(HttpRequest $request) {
-        $sidebar = new ProcessViewSidebar($request);
+        $sidebar = new ProcessViewSidebar($request, $this->supervisorAuthorizator, $this->getUserId());
 
         return $sidebar;
     }
@@ -32,7 +34,7 @@ class NewProcessPresenter extends AUserPresenter {
 
     public function handleStartProcess(?FormRequest $fr = null) {
         if($fr !== null) {
-            $name = $this->httpRequest->query('name');
+            $name = $this->httpRequest->get('name');
             if($name === null) {
                 throw new RequiredAttributeIsNotSetException('name');
             }
@@ -43,7 +45,28 @@ class NewProcessPresenter extends AUserPresenter {
                 try {
                     $this->processRepository->beginTransaction(__METHOD__);
 
-                    $this->standaloneProcessManager->$methodName($fr->getData());
+                    $_data = $fr->getData();
+
+                    if(!empty($_FILES)) {
+                        $fum = new FileUploadManager();
+                        $data = $fum->uploadFile($_FILES['file'], null, $this->getUserId());
+
+                        if(empty($data)) {
+                            throw new GeneralException('Could not upload file.');
+                        }
+
+                        $fileId = $this->fileStorageManager->createNewFile(
+                            null,
+                            $this->getUserId(),
+                            $data[FileUploadManager::FILE_FILENAME],
+                            $data[FileUploadManager::FILE_FILEPATH],
+                            $data[FileUploadManager::FILE_FILESIZE]
+                        );
+
+                        $_data['fileId'] = $fileId;
+                    }
+
+                    $this->standaloneProcessManager->$methodName($_data);
 
                     $this->processRepository->commit($this->getUserId(), __METHOD__);
 
@@ -62,7 +85,11 @@ class NewProcessPresenter extends AUserPresenter {
     }
 
     public function handleProcessForm() {
-        $process = $this->httpRequest->query('name');
+        $process = null;
+        if($this->httpRequest->get('name') !== null) {
+            $process = $this->httpRequest->get('name');
+        }
+
         $name = StandaloneProcesses::toString($process);
 
         $this->saveToPresenterCache('processTitle', $name);
@@ -80,11 +107,23 @@ class NewProcessPresenter extends AUserPresenter {
     }
 
     protected function createComponentProcessForm(HttpRequest $request) {
-        $processForm = $this->componentFactory->getCommonProcessForm();
-        $processForm->setProcess($request->query('name'));
-        $processForm->setBaseUrl(['page' => $request->query('page'), 'action' => 'startProcess']);
+        $process = null;
+        if($request->get('name') !== null) {
+            $process = $request->get('name');
+        } else if($request->post('name') !== null) {
+            $process = $request->post('name');
+        }
 
-        return $processForm;
+        $form = $this->componentFactory->getStandaloneProcessFormByName($process, $this->standaloneProcessManager);
+
+        if($form === null) {
+            throw new GeneralException('No definition for process type "' . StandaloneProcesses::toString($process) . '" found in ComponentFactory.');
+        }
+
+        $form->baseUrl = ['page' => $request->get('page'), 'action' => 'startProcess'];
+        $form->setComponentName('processForm');
+
+        return $form;
     }
 }
 

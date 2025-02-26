@@ -15,10 +15,12 @@ use App\UI\AComponent;
  * @author Lukas Velek
  */
 abstract class AAjaxRequest implements IAjaxRequest {
+    protected const RESULT_TYPE_JSON = 'json';
+    protected const RESULT_TYPE_TEXT = 'text';
+
     private HttpRequest $request;
     private bool $buildCheck;
     private string $functionName;
-    private bool $isComponent;
 
     protected array $url;
     /**
@@ -31,6 +33,7 @@ abstract class AAjaxRequest implements IAjaxRequest {
     protected array $beforeStartOperations;
     protected array $arguments;
     protected array $data;
+    protected string $resultType;
 
     /**
      * Abstract class constructor
@@ -43,10 +46,24 @@ abstract class AAjaxRequest implements IAjaxRequest {
         $this->beforeStartOperations = [];
         $this->arguments = [];
         $this->buildCheck = false;
-        $this->isComponent = false;
         $this->data = [];
+        $this->resultType = self::RESULT_TYPE_JSON;
 
         $this->functionName = $this->generateFunctionName();
+    }
+
+    /**
+     * Sets the result type to JSON
+     */
+    public function setResultTypeJson() {
+        $this->resultType = self::RESULT_TYPE_JSON;
+    }
+
+    /**
+     * Sets the result type to text
+     */
+    public function setResultTypeText() {
+        $this->resultType = self::RESULT_TYPE_TEXT;
     }
 
     /**
@@ -102,12 +119,6 @@ abstract class AAjaxRequest implements IAjaxRequest {
      * Converts URL array to string
      */
     protected function processUrl(): string {
-        if(!array_key_exists('isAjax', $this->url)) {
-            $this->url['isAjax'] = '1';
-        }
-        if($this->isComponent && !array_key_exists('isComponent', $this->url)) {
-            $this->url['isComponent'] = '1';
-        }
         return Router::generateUrl($this->url);
     }
 
@@ -141,11 +152,10 @@ abstract class AAjaxRequest implements IAjaxRequest {
      */
     public function setComponentUrl(AComponent $component, string $actionName): static {
         $this->url = [
-            'page' => $this->request->query('page'),
-            'action' => $this->request->query('action'),
+            'page' => $this->request->get('page'),
+            'action' => $this->request->get('action'),
             'do' => $component->getComponentName() . '-' . $actionName
         ];
-        $this->isComponent = true;
         return $this;
     }
 

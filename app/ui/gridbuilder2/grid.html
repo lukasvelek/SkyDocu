@@ -1,33 +1,39 @@
-<span>
-    <script type="text/javascript">
-        var _checkboxHandlerTimestamp = null;
-    </script>
-    $SCRIPTS$
-</span>
-<div id="grid-content">
-    <div id="$GRID_NAME$">
-        <div class="row">
-            <div class="col-md">
-                $FILTERS$
+<div id="grid_$GRID_NAME$">
+    <span>
+        <script type="text/javascript">
+            var _checkboxHandlerTimestamp = null;
+        </script>
+        $SCRIPTS$
+    </span>
+    <div id="grid-content">
+        <div id="$GRID_NAME$">
+            <div class="row">
+                <div class="col-md">
+                    <div id="grid-$GRID_NAME$-filters">
+                        $FILTERS$
+                    </div>
+                </div>
             </div>
-        </div>
-    
-        <div class="row">
-            <div class="col-md" id="gridbuilder-grid">
-                $GRID$
+        
+            <div class="row">
+                <div class="col-md" id="grid-$GRID_NAME$">
+                    $GRID$
+                </div>
             </div>
-        </div>
-    
-        <div class="row">
-            <div class="col-md">
-                $CONTROLS$
+        
+            <div class="row">
+                <div class="col-md">
+                    <div id="grid-$GRID_NAME$-controls">
+                        $CONTROLS$
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-</div>
-<div id="grid-filter-modal">
-    $component filter$
-</div>
-<div id="grid-export-modal">
-    $component export$
+    <div id="grid-filter-modal">
+        $component filter$
+    </div>
+    <div id="grid-export-modal">
+        $component export$
+    </div>
 </div>

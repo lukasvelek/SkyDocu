@@ -2,6 +2,7 @@
 
 namespace App\Modules\SuperAdminModule;
 
+use App\Constants\ContainerStatus;
 use App\Core\Http\HttpRequest;
 use App\Modules\APresenter;
 
@@ -13,7 +14,7 @@ abstract class ASuperAdminPresenter extends APresenter {
     }
 
     private function checkAction(string ...$actions) {
-        if(in_array($this->httpRequest->query('action'), $actions)) {
+        if(in_array($this->httpRequest->get('action'), $actions)) {
             return true;
         } else {
             return false;
@@ -21,7 +22,8 @@ abstract class ASuperAdminPresenter extends APresenter {
     }
 
     protected function createComponentSidebar(HttpRequest $request) {
-        $containerId = $request->query('containerId');
+        $containerId = $request->get('containerId');
+        $container = $this->app->containerManager->getContainerById($containerId);
 
         $sidebar = $this->componentFactory->getSidebar();
 
@@ -30,13 +32,19 @@ abstract class ASuperAdminPresenter extends APresenter {
         $advanced = $this->checkAction('advanced');
         $usageStatistics = $this->checkAction('usageStatistics', 'clearUsageStatistics');
         $invites = $this->checkAction('invites', 'invitesWithoutGrid');
+        $transactionLog = $this->checkAction('transactionLog');
+        $processes = $this->checkAction('processes', 'addProcessForm');
 
         $sidebar->addLink('&larr; Back', $this->createFullURL('SuperAdmin:Containers', 'list'));
         $sidebar->addLink('Home', $this->createURL('home', ['containerId' => $containerId]), $home);
         $sidebar->addLink('Status', $this->createURL('status', ['containerId' => $containerId]), $status);
-        $sidebar->addLink('Usage statistics', $this->createURL('usageStatistics', ['containerId' => $containerId]), $usageStatistics);
-        $sidebar->addLink('Invites', $this->createURL('invites', ['containerId' => $containerId]), $invites);
-        $sidebar->addLink('Advanced', $this->createURL('advanced', ['containerId' => $containerId]), $advanced);
+        if(!in_array($container->status, [ContainerStatus::ERROR_DURING_CREATION, ContainerStatus::IS_BEING_CREATED, ContainerStatus::NEW, ContainerStatus::REQUESTED])) {
+            $sidebar->addLink('Statistics', $this->createURL('usageStatistics', ['containerId' => $containerId]), $usageStatistics);
+            $sidebar->addLink('Invites', $this->createURL('invites', ['containerId' => $containerId]), $invites);
+            $sidebar->addLink('Advanced', $this->createURL('advanced', ['containerId' => $containerId]), $advanced);
+            $sidebar->addLink('Transaction log', $this->createURL('transactionLog', ['containerId' => $containerId]), $transactionLog);
+            $sidebar->addLink('Processes', $this->createURL('processes', ['containerId' => $containerId]), $processes);
+        }
 
         return $sidebar;
     }

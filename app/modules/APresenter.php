@@ -6,6 +6,7 @@ use App\Core\AjaxRequestBuilder;
 use App\Core\Application;
 use App\Core\Caching\CacheFactory;
 use App\Core\Caching\CacheNames;
+use App\Core\Configuration;
 use App\Core\Datatypes\ArrayList;
 use App\Core\Datetypes\DateTime;
 use App\Core\HashManager;
@@ -200,15 +201,22 @@ abstract class APresenter extends AGUICore {
      * 
      * @param string $action Action name
      * @param array $params Custom URL params
+     * @param bool $throwException Throw exception
      * @return array URL
      */
-    public function createURL(string $action, array $params = []) {
+    public function createURL(string $action, array $params = [], bool $throwException = true) {
         $module = $this->moduleName;
         $presenter = $this->getCleanName();
 
         $url = ['page' => $module . ':' . $presenter, 'action' => $action];
 
-        return array_merge($url, $params);
+        $result = array_merge($url, $params);
+
+        if(Configuration::getAppBranch() == 'TEST') {
+            $this->router->checkEndpointExists($result, $throwException);
+        }
+
+        return $result;
     }
 
     /**
@@ -321,16 +329,16 @@ abstract class APresenter extends AGUICore {
     /**
      * Redirects the current page to other page. If no parameters are provided then it just refreshes the current page.
      * 
-     * @param array $url URL params
+     * @param array|string $url URL params or full URL
      */
-    public function redirect(array $url = []) {
-        if(!empty($url)) {    
+    public function redirect(array|string $url) {
+        if(!empty($url) && is_array($url)) {    
             if(!array_key_exists('page', $url)) {
-                $url['page'] = $this->httpRequest->query('page');
+                $url['page'] = $this->httpRequest->get('page');
             }
 
             if(!array_key_exists('_fm', $this->specialRedirectUrlParams)) {
-                $_fm = $this->httpRequest->query('_fm');
+                $_fm = $this->httpRequest->get('_fm');
                 if($_fm !== null) {
                     $this->specialRedirectUrlParams['_fm'] = $_fm;
                 }
@@ -529,12 +537,12 @@ abstract class APresenter extends AGUICore {
                     $this->redirect(['page' => $moduleName . ':' . $this->title, 'action' => $this->defaultAction]);
                 }
 
-                $this->redirect(['page' => 'Error:E404', 'reason' => 'ActionDoesNotExist', 'calledAction' => $this->action, 'calledPage' => $moduleName . ':' . $this->title]);
+                $this->redirect(['page' => 'Error:E404', 'reason' => 'ActionDoesNotExist', 'calledAction' => $this->action, 'calledPage' => $moduleName . ':' . substr($this->name, 0, -strlen('Presenter'))]);
             }
         }
 
         // Process component action
-        if($this->httpRequest->query('do') !== null) {
+        if($this->httpRequest->get('do') !== null) {
             $templateContent2 = $this->processComponentAction($templateContent);
 
             if($templateContent2 !== null) {
@@ -555,7 +563,7 @@ abstract class APresenter extends AGUICore {
      */
     private function processComponentAction(TemplateObject $templateContent) {
         // Split the component action parameter
-        $do = $this->httpRequest->query('do');
+        $do = $this->httpRequest->get('do');
         $doParts = explode('-', $do);
 
         if(count($doParts) < 2) {
@@ -586,7 +594,7 @@ abstract class APresenter extends AGUICore {
             if(method_exists($component, $methodName)) {
                 $result = $this->logger->stopwatch(function() use ($component, $methodName) {
                     try {
-                        if($this->httpRequest->query('isFormSubmit') == '1') { // it is a form
+                        if($this->httpRequest->get('isFormSubmit') == '1') { // it is a form
                             $fr = $this->createFormRequest();
                             $result = $component->processMethod($methodName, [$this->httpRequest, $fr]);
                         } else {

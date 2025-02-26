@@ -5,6 +5,7 @@ namespace App\Components\BackgroundServicesGrid;
 use App\Constants\SystemServiceStatus;
 use App\Core\Application;
 use App\Core\DB\DatabaseRow;
+use App\Core\Http\JsonResponse;
 use App\Helpers\GridHelper;
 use App\Repositories\SystemServicesRepository;
 use App\UI\GridBuilder2\GridBuilder;
@@ -64,6 +65,8 @@ class BackgroundServicesGrid extends GridBuilder implements IGridExtendingCompon
      */
     private function setup() {
         $this->setGridName(GridHelper::GRID_BACKGROUND_SERVICES);
+
+        $this->addQuickSearch('title', 'Title');
     }
 
     /**
@@ -87,7 +90,7 @@ class BackgroundServicesGrid extends GridBuilder implements IGridExtendingCompon
         $history = $this->addAction('history');
         $history->setTitle('History');
         $history->onCanRender[] = function(DatabaseRow $row, Row $_row) {
-            return true;
+            return ($row->dateStarted !== null && $row->dateEnded !== null);
         };
         $history->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
             $el = HTML::el('a')
@@ -107,6 +110,20 @@ class BackgroundServicesGrid extends GridBuilder implements IGridExtendingCompon
         $this->addColumnDatetime('dateStarted', 'Service started');
         $this->addColumnDatetime('dateEnded', 'Service ended');
         $this->addColumnConst('status', 'Status', SystemServiceStatus::class);
+    }
+    
+    public function actionQuickSearch(): JsonResponse {
+        $this->quickSearchQuery = $this->httpRequest->post('query');
+
+        $this->prerender();
+
+        return parent::actionQuickSearch();
+    }
+
+    public function actionGetSkeleton(): JsonResponse {
+        $this->prerender();
+
+        return parent::actionGetSkeleton();
     }
 }
 

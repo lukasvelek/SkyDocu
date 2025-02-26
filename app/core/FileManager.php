@@ -119,6 +119,9 @@ class FileManager {
      * @return bool True on success or false on failure
      */
     public static function createFolder(string $dirPath, bool $recursive = false) {
+        if(is_dir($dirPath)) {
+            return true;
+        }
         return mkdir($dirPath, 0777, $recursive);
     }
 

@@ -2,8 +2,9 @@
 SkyDocu is a web DMS that has been created to be run in a cloud. It has a superadministration where the superadministrator can manage containers.
 Containers are instances of DMS applications for customers.
 
-Current version: ___1.2___
-Latest version: ___1.2___ (January 27th, 2025)
+Current version: ___1.3___
+
+Latest version: ___1.3___ (February 26th, 2025)
 
 ## Tech stack
 The web application is written purely in PHP with a few JS scripts. These JS scripts are mostly used for AJAX and other dynamic behavior functions.
@@ -12,20 +13,42 @@ The web application is written purely in PHP with a few JS scripts. These JS scr
 These future plans are also in Issues list and can be distinguished by their milestone.
 
 Future plans include:
-- Archive (__1.3__)
-- Widget / Component skeletons (__1.4__)
-    - Instead of a loading loop icon
-- New widgets (__1.3__)
-    - For in-container Administration-System-Dashboard
-    - For in-container Dashboard
 - Dark theme support (__1.4__)
 - Grid exporting (__1.4__)
-- Container document uploading (__1.3__)
-- Multiple database servers (__1.4__, but will probably be postponed)
-- Grid searching (__1.3__)
+- Multiple database servers (__1.4__, may be postponed)
 
 ## Changelog
-### 1.2 (?)
+### 1.3 (February 26th, 2025)
+- Grid searching
+    - Containers grid
+    - In-container Documents grid
+    - In-container Users grid
+    - In-conatiner Groups grid
+- Cache invalidation bug fix
+- FoldersSidebar alphabetical sorting
+- New widgets
+- All process rights update
+- Archive
+    - Archive folders
+    - Document archivation
+- Component skeletons
+    - More user-friendly component loading or refreshing animation
+- Document file uploading
+    - Uploaded file overview (in grid) + stats in in-container administration
+- Invoice Process
+- CotnainerRequest Process
+- Bugfixes
+- Exception page
+- Process metadata
+- Process comments
+- File storing
+    - Upload files and associate them with documents
+    - Download files
+    - File storage overview
+- Process profile page design update
+- In-application versioning update
+
+### 1.2 (January 27th, 2025)
 - Code readability update
 - Superadministration about application page
 - ErrorModule implementation

@@ -10,6 +10,7 @@ abstract class AAdminPresenter extends AContainerPresenter {
     private bool $isDocuments;
     private bool $isSystem;
     private bool $isProcesses;
+    private bool $isArchive;
 
     private array $sidebarLinks;
 
@@ -21,12 +22,17 @@ abstract class AAdminPresenter extends AContainerPresenter {
         $this->isDocuments = false;
         $this->isSystem = false;
         $this->isProcesses = false;
+        $this->isArchive = false;
 
         $this->sidebarLinks = [];
     }
 
     protected function setDocuments() {
         $this->isDocuments = true;
+    }
+
+    protected function setArchive() {
+        $this->isArchive = true;
     }
 
     protected function setMembers() {
@@ -71,15 +77,25 @@ abstract class AAdminPresenter extends AContainerPresenter {
             $addLink('Folders', $this->createFullURL('Admin:DocumentFolders', 'list'), $folders);
             $addLink('Metadata', $this->createFullURL('Admin:DocumentMetadata', 'list'), $metadata);
         }
+        
+        if($this->isArchive) {
+            $archive = $this->checkActivePage('Archive');
+            $folders = $this->checkActivePage('ArchiveFolders');
+            
+            $addLink('Archive', $this->createFullURL('Admin:Archive', 'dashboard'), $archive);
+            $addLink('Folders', $this->createFullURL('Admin:ArchiveFolders', 'list'), $folders);
+        }
 
         if($this->isSystem) {
             $system = $this->checkActivePage('System');
             $transactionLog = $this->checkActivePage('TransactionLog');
             $gridConfiguration = $this->checkActivePage('GridConfiguration');
+            $fileStorage = $this->checkActivePage('FileStorage');
 
             $addLink('Dashboard', $this->createFullURL('Admin:System', 'dashboard'), $system);
             $addLink('Transaction log', $this->createFullURL('Admin:TransactionLog', 'list'), $transactionLog);
             $addLink('Grid configuration', $this->createFullURL('Admin:GridConfiguration', 'list'), $gridConfiguration);
+            $addLink('File storage', $this->createFullURL('Admin:FileStorage', 'list'), $fileStorage);
         }
 
         if($this->isProcesses) {

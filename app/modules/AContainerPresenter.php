@@ -4,11 +4,14 @@ namespace App\Modules;
 
 use App\Authorizators\DocumentBulkActionAuthorizator;
 use App\Authorizators\GroupStandardOperationsAuthorizator;
+use App\Authorizators\SupervisorAuthorizator;
 use App\Core\Caching\CacheFactory;
 use App\Core\DatabaseConnection;
 use App\Lib\Processes\ProcessFactory;
+use App\Managers\Container\ArchiveManager;
 use App\Managers\Container\DocumentManager;
 use App\Managers\Container\EnumManager;
+use App\Managers\Container\FileStorageManager;
 use App\Managers\Container\FolderManager;
 use App\Managers\Container\GridManager;
 use App\Managers\Container\GroupManager;
@@ -16,8 +19,10 @@ use App\Managers\Container\MetadataManager;
 use App\Managers\Container\ProcessManager;
 use App\Managers\Container\StandaloneProcessManager;
 use App\Managers\EntityManager;
+use App\Repositories\Container\ArchiveRepository;
 use App\Repositories\Container\DocumentClassRepository;
 use App\Repositories\Container\DocumentRepository;
+use App\Repositories\Container\FileStorageRepository;
 use App\Repositories\Container\FolderRepository;
 use App\Repositories\Container\GridRepository;
 use App\Repositories\Container\GroupRepository;
@@ -42,6 +47,8 @@ abstract class AContainerPresenter extends APresenter {
     protected TransactionLogRepository $transactionLogRepository;
     protected GridRepository $gridRepository;
     protected ProcessRepository $processRepository;
+    protected ArchiveRepository $archiveRepository;
+    protected FileStorageRepository $fileStorageRepository;
     
     protected EntityManager $entityManager;
     protected FolderManager $folderManager;
@@ -52,9 +59,12 @@ abstract class AContainerPresenter extends APresenter {
     protected GridManager $gridManager;
     protected ProcessManager $processManager;
     protected StandaloneProcessManager $standaloneProcessManager;
+    protected ArchiveManager $archiveManager;
+    protected FileStorageManager $fileStorageManager;
 
     protected DocumentBulkActionAuthorizator $documentBulkActionAuthorizator;
     protected GroupStandardOperationsAuthorizator $groupStandardOperationsAuthorizator;
+    protected SupervisorAuthorizator $supervisorAuthorizator;
 
     protected ProcessFactory $processFactory;
 
@@ -97,10 +107,13 @@ abstract class AContainerPresenter extends APresenter {
         $this->initManagers();
         $this->injectCacheFactoryToManagers();
 
+        $this->enumManager->standaloneProcessManager = $this->standaloneProcessManager;
+
         $this->documentManager->enumManager = $this->enumManager;
 
-        $this->documentBulkActionAuthorizator = new DocumentBulkActionAuthorizator($containerConnection, $this->logger, $this->documentManager, $this->documentRepository, $this->app->userManager, $this->groupManager, $this->processManager);
+        $this->documentBulkActionAuthorizator = new DocumentBulkActionAuthorizator($containerConnection, $this->logger, $this->documentManager, $this->documentRepository, $this->app->userManager, $this->groupManager, $this->processManager, $this->archiveManager);
         $this->groupStandardOperationsAuthorizator = new GroupStandardOperationsAuthorizator($containerConnection, $this->logger, $this->groupManager);
+        $this->supervisorAuthorizator = new SupervisorAuthorizator($containerConnection, $this->logger, $this->groupManager);
 
         $this->injectCacheFactoryToAuthorizators();
 
@@ -112,7 +125,8 @@ abstract class AContainerPresenter extends APresenter {
             $this->groupManager,
             $this->app->currentUser,
             $this->containerId,
-            $this->processManager
+            $this->processManager,
+            $this->archiveManager
         );
 
         $this->componentFactory->setCacheFactory($this->getContainerCacheFactory());
@@ -129,11 +143,21 @@ abstract class AContainerPresenter extends APresenter {
                 ':userSubstituteManager',
                 ':userAbsenceManager'
             ],
+            'archiveManager' => [
+                'archiveRepository'
+            ],
+            'fileStorageManager' => [
+                'fileStorageRepository'
+            ],
             'standaloneProcessManager' => [
                 'processManager',
                 ':currentUser',
-                ':userManager'
-            ]
+                ':userManager',
+                'documentManager',
+                'fileStorageManager',
+                'groupManager',
+                'folderManager'
+            ],
         ];
 
         $notFound = [];

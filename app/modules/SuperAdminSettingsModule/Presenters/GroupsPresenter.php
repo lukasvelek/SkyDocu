@@ -2,6 +2,7 @@
 
 namespace App\Modules\SuperAdminSettingsModule;
 
+use App\Constants\SystemGroups;
 use App\Core\AjaxRequestBuilder;
 use App\Core\DB\DatabaseRow;
 use App\Core\Http\FormRequest;
@@ -28,7 +29,7 @@ class GroupsPresenter extends ASuperAdminSettingsPresenter {
 
         $grid->createDataSourceFromQueryBuilder($this->app->groupRepository->composeQueryForGroups(), 'groupId');
 
-        $grid->addColumnText('title', 'Title');
+        $grid->addColumnConst('title', 'Title', SystemGroups::class);
         $col = $grid->addColumnText('containerId', 'Container');
         $col->onRenderColumn[] = function(DatabaseRow $row, Row $_row, Cell $cell, HTML $html, mixed $value) {
             $el = HTML::el('span');
@@ -83,7 +84,7 @@ class GroupsPresenter extends ASuperAdminSettingsPresenter {
     }
 
     public function handleListUsers() {
-        $groupId = $this->httpRequest->query('groupId');
+        $groupId = $this->httpRequest->get('groupId');
         if($groupId === null) {
             throw new RequiredAttributeIsNotSetException('groupId');
         }
@@ -95,7 +96,7 @@ class GroupsPresenter extends ASuperAdminSettingsPresenter {
             $this->redirect($this->createURL('list'));
         }
 
-        $this->saveToPresenterCache('groupName', $group->title);
+        $this->saveToPresenterCache('groupName', SystemGroups::toString($group->title));
 
         $links = [
             LinkBuilder::createSimpleLink('&larr; Back', $this->createURL('list'), 'link'),
@@ -113,12 +114,12 @@ class GroupsPresenter extends ASuperAdminSettingsPresenter {
     protected function createComponentGroupUsersGrid(HttpRequest $request) {
         $grid = $this->componentFactory->getGridBuilder();
 
-        $grid->createDataSourceFromQueryBuilder($this->app->groupMembershipRepository->composeQueryForGroupUsers($request->query('groupId')), 'groupUserId');
+        $grid->createDataSourceFromQueryBuilder($this->app->groupMembershipRepository->composeQueryForGroupUsers($request->get('groupId')), 'groupUserId');
 
         $grid->addColumnUser('userId', 'User');
         $grid->addColumnDatetime('dateCreated', 'Member since');
 
-        $groupUsers = $this->app->groupManager->getGroupUsersForGroupId($request->query('groupId'));
+        $groupUsers = $this->app->groupManager->getGroupUsersForGroupId($request->get('groupId'));
 
         $remove = $grid->addAction('remove');
         $remove->setTitle('Remove');
@@ -129,7 +130,7 @@ class GroupsPresenter extends ASuperAdminSettingsPresenter {
             $el = HTML::el('a') 
                 ->text('Remove')
                 ->class('grid-link')
-                ->href($this->createURLString('removeUser', ['groupId' => $request->query('groupId'), 'userId' => $row->userId]));
+                ->href($this->createURLString('removeUser', ['groupId' => $request->get('groupId'), 'userId' => $row->userId]));
 
             return $el;
         };
@@ -138,7 +139,7 @@ class GroupsPresenter extends ASuperAdminSettingsPresenter {
     }
 
     public function handleAddUserForm(?FormRequest $fr = null) {
-        $groupId = $this->httpRequest->query('groupId');
+        $groupId = $this->httpRequest->get('groupId');
         if($groupId === null) {
             throw new RequiredAttributeIsNotSetException('groupId');
         }
@@ -221,11 +222,11 @@ class GroupsPresenter extends ASuperAdminSettingsPresenter {
     protected function createComponentAddUserForm(HttpRequest $request) {
         $form = $this->componentFactory->getFormBuilder();
 
-        $form->setAction($this->createURL('addUserForm', ['groupId' => $request->query('groupId')]));
+        $form->setAction($this->createURL('addUserForm', ['groupId' => $request->get('groupId')]));
 
         $form->addTextInput('username', 'Search user:');
         $form->addButton('Search')
-            ->setOnClick('searchUsers(\'' . $request->query('groupId') . '\');');
+            ->setOnClick('searchUsers(\'' . $request->get('groupId') . '\');');
 
         $form->addSelect('user', 'User:')
             ->setRequired();
@@ -237,11 +238,11 @@ class GroupsPresenter extends ASuperAdminSettingsPresenter {
     }
 
     public function actionSearchUsersForAddUserForm() {
-        $groupId = $this->httpRequest->query('groupId');
+        $groupId = $this->httpRequest->get('groupId');
         if($groupId === null) {
             throw new RequiredAttributeIsNotSetException('groupId');
         }
-        $query = $this->httpRequest->query('query');
+        $query = $this->httpRequest->get('query');
         if($query === null) {
             throw new RequiredAttributeIsNotSetException('query');
         }
@@ -262,11 +263,11 @@ class GroupsPresenter extends ASuperAdminSettingsPresenter {
     }
 
     public function handleRemoveUser() {
-        $groupId = $this->httpRequest->query('groupId', true);
+        $groupId = $this->httpRequest->get('groupId', true);
         if($groupId === null) {
             throw new RequiredAttributeIsNotSetException('groupId');
         }
-        $userId = $this->httpRequest->query('userId', true);
+        $userId = $this->httpRequest->get('userId', true);
         if($userId === null) {
             throw new RequiredAttributeIsNotSetException('userId');
         }

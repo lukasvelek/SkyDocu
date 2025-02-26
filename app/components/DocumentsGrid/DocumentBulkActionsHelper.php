@@ -25,6 +25,7 @@ class DocumentBulkActionsHelper {
     private GroupStandardOperationsAuthorizator $groupStandardOperationsAuthorizator;
     private ProcessFactory $processFactory;
     private string $folderId;
+    private bool $isArchive;
 
     private HttpRequest $request;
 
@@ -43,6 +44,8 @@ class DocumentBulkActionsHelper {
         $this->processFactory = $processFactory;
 
         $this->request = $request;
+
+        $this->isArchive = false;
     }
 
     /**
@@ -52,6 +55,16 @@ class DocumentBulkActionsHelper {
      */
     public function setFolderId(string $folderId) {
         $this->folderId = $folderId;
+    }
+
+    /**
+     * Sets the current archive folder ID
+     * 
+     * @param string $folderId
+     */
+    public function setArchiveFolderId(string $folderId) {
+        $this->setFolderId($folderId);
+        $this->isArchive = true;
     }
 
     /**
@@ -96,10 +109,28 @@ class DocumentBulkActionsHelper {
      * @param array<string> Bulk actions
      */
     private function appendProcessBulkActions(array $documentIds, array &$bulkActions) {
-        // Archivation
-        $p = $this->processFactory->createDocumentArchivationProcess();
-        if($p->canExecute($documentIds, null)) {
-            $bulkActions[] = SystemProcessTypes::ARCHIVATION;
+        // Move to archive
+        $moveToArchive = true;
+        foreach($documentIds as $id) {
+            if(!$this->documentBulkActionAuthorizator->canExecuteMoveToArchive($this->app->currentUser->getId(), $id)) {
+                $moveToArchive = false;
+            }
+        }
+
+        if($moveToArchive) {
+            $bulkActions[] = SystemProcessTypes::MOVE_TO_ARCHIVE;
+        }
+
+        // Move from archive
+        $moveFromArchive = true;
+        foreach($documentIds as $id) {
+            if(!$this->documentBulkActionAuthorizator->canExecuteMoveFromArchive($this->app->currentUser->getId(), $id)) {
+                $moveFromArchive = false;
+            }
+        }
+
+        if($moveFromArchive) {
+            $bulkActions[] = SystemProcessTypes::MOVE_FROM_ARCHIVE;
         }
 
         // Shredding request
@@ -123,8 +154,8 @@ class DocumentBulkActionsHelper {
      */
     private function createBulkActionUrlForProcess(array $documentIds, string $bulkAction) {
         $urlParams = [
-            'backPage=' . $this->request->query('page'),
-            'backAction=' . $this->request->query('action'),
+            'backPage=' . $this->request->get('page'),
+            'backAction=' . $this->request->get('action'),
             'process=' . $bulkAction
         ];
 
@@ -150,8 +181,8 @@ class DocumentBulkActionsHelper {
      */
     private function createBulkActionUrl(array $documentIds, string $bulkAction) {
         $urlParams = [
-            'backPage=' . $this->request->query('page'),
-            'backAction=' . $this->request->query('action')
+            'backPage=' . $this->request->get('page'),
+            'backAction=' . $this->request->get('action')
         ];
 
         $urlParams[] = 'backFolderId=' . $this->folderId;
@@ -196,6 +227,11 @@ class DocumentBulkActionsHelper {
      * @return bool True or false
      */
     private function checkIfDocumentsCanBeShared(array $documentIds) {
+        // document must not be in archive
+        if($this->isArchive) {
+            return false;
+        }
+
         // document must not be shared to current user
         $sharedDocuments = $this->documentManager->getSharedDocumentsForUser($this->app->currentUser->getId(), false);
 

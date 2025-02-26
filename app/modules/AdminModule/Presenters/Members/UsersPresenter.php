@@ -35,6 +35,12 @@ class UsersPresenter extends AAdminPresenter {
         $grid->addColumnText('fullname', 'Fullname');
         $grid->addColumnText('username', 'Username');
         $grid->addColumnText('email', 'Email');
+        $grid->addColumnBoolean('isTechnical', 'Technical user');
+
+        $grid->addQuickSearch('fullname', 'Fullname');
+        $grid->addQuickSearch('username', 'Username');
+
+        $grid->addFilter('isTechnical', 0, ['0' => 'False', '1' => 'True']);
 
         return $grid;
     }

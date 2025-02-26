@@ -32,18 +32,32 @@ class PostAjaxRequest extends AAjaxRequest {
     }
 
     public function build(): string {
-        $code = '$.post("' . $this->processUrl() . '", ' . $this->processData() . ').done(function(data) {';
-        $code .= 'const obj = JSON.parse(data);';
-        $code .= 'if(obj.error) {';
-        $code .= 'alert("Request could not be completed. Reason: " + obj.errorMsg);';
-        $code .= '} else {';
+        $code = '';
 
-        foreach($this->onFinishOperations as $operation) {
+        foreach($this->beforeStartOperations as $operation) {
             $code .= $operation->build();
         }
 
-        $code .= '}});';
+        $code .= '$.post("' . $this->processUrl() . '", ' . $this->processData() . ').done(function(data) {';
 
+        if($this->resultType == parent::RESULT_TYPE_JSON) {
+            $code .= 'const obj = JSON.parse(data);';
+            $code .= 'if(obj.error) {';
+            $code .= 'alert("Request could not be completed. Reason: " + obj.errorMsg);';
+            $code .= '} else {';
+            foreach($this->onFinishOperations as $operation) {
+                $code .= $operation->build();
+            }
+    
+            $code .= '}';
+        } else {
+            foreach($this->onFinishOperations as $operation) {
+                $code .= $operation->build();
+            }
+
+        }
+        $code .= '});';
+        
         return $this->internalBuild($code);
     }
 }

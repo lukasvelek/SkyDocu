@@ -45,6 +45,14 @@ class FolderRepository extends ARepository {
         return $qb->fetch();
     }
 
+    public function getFolderByTitle(string $title) {
+        $qb = $this->composeQueryForFolders();
+        $qb->andWhere('title = ?', [$title])
+            ->execute();
+
+        return $qb->fetch();
+    }
+
     public function getVisibleCustomMetadataIdForFolder(string $folderId) {
         $qb = $this->qb(__METHOD__);
 
@@ -142,6 +150,39 @@ class FolderRepository extends ARepository {
 
         $qb->insert('document_folders', $keys)
             ->values($values)
+            ->execute();
+
+        return $qb->fetchBool();
+    }
+
+    public function removeFolder(string $folderId) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->delete()
+            ->from('document_folders')
+            ->where('folderId = ?', [$folderId])
+            ->execute();
+
+        return $qb->fetchBool();
+    }
+
+    public function removeAllFolderRights(string $folderId) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->delete()
+            ->from('document_folder_group_relation')
+            ->where('folderId = ?', [$folderId])
+            ->execute();
+
+        return $qb->fetchBool();
+    }
+
+    public function removeAllFolderCustomMetadataRelation(string $folderId) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->delete()
+            ->from('document_folder_custom_metadata_relation')
+            ->where('folderId = ?', [$folderId])
             ->execute();
 
         return $qb->fetchBool();

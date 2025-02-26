@@ -82,6 +82,14 @@ class DocumentClassRepository extends ARepository {
 
         return $qb->fetch();
     }
+
+    public function getDocumentClassByTitle(string $title) {
+        $qb = $this->composeQueryForClasses();
+        $qb->andWhere('title = ?', [$title])
+            ->execute();
+
+        return $qb->fetch();
+    }
 }
 
 ?>

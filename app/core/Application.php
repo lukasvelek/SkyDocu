@@ -31,6 +31,7 @@ use App\Repositories\TransactionLogRepository;
 use App\Repositories\UserAbsenceRepository;
 use App\Repositories\UserRepository;
 use App\Repositories\UserSubstituteRepository;
+use App\UI\ExceptionPage\ExceptionPage;
 use App\UI\LinkBuilder;
 use Exception;
 use ReflectionClass;
@@ -42,7 +43,8 @@ use ReflectionClass;
  * @author Lukas Velek
  */
 class Application {
-    public const APP_VERSION = '1.2';
+    public const APP_VERSION = '1.3-dev';
+    public const APP_VERSION_RELEASE_DATE = '-';
 
     private array $modules;
     public ?UserEntity $currentUser;
@@ -115,7 +117,7 @@ class Application {
         $this->serviceManager = new ServiceManager($this->systemServicesRepository, $this->userRepository, $this->entityManager);
         $this->userManager = new UserManager($this->logger, $this->userRepository, $this->entityManager);
         $this->groupManager = new GroupManager($this->logger, $this->entityManager, $this->groupRepository, $this->groupMembershipRepository);
-        $this->containerManager = new ContainerManager($this->logger, $this->entityManager, $this->containerRepository, $this->dbManager, $this->groupManager);
+        $this->containerManager = new ContainerManager($this->logger, $this->entityManager, $this->containerRepository, $this->dbManager, $this->groupManager, $this->db);
         $this->containerInviteManager = new ContainerInviteManager($this->logger, $this->entityManager, $this->containerInviteRepository);
         $this->userAbsenceManager = new UserAbsenceManager($this->logger, $this->entityManager, $this->userAbsenceRepository);
         $this->userSubstituteManager = new UserSubstituteManager($this->logger, $this->entityManager, $this->userSubstituteRepository);
@@ -180,7 +182,10 @@ class Application {
             }
         }
 
-        if(isset($_GET['isAjax']) && $_GET['isAjax'] == '1') {
+        /**
+         * Instead of query parameter isAjax, it can be easily determined with the request header.
+         */
+        if(array_key_exists('HTTP_X_REQUESTED_WITH', $_SERVER) && $_SERVER['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest') {
             $this->isAjaxRequest = true;
         }
 
@@ -194,18 +199,34 @@ class Application {
     /**
      * Redirects current page to other page using header('Location: ') method.
      * 
-     * @param array $urlParams URL params
+     * @param array|string $urlParams URL params or full URL
      */
-    public function redirect(array $urlParams) {
+    public function redirect(array|string $urlParams) {
         $url = '';
-
-        if(empty($urlParams)) {
-            $url = '?';
+        if(is_array($urlParams)) {
+            if(empty($urlParams)) {
+                $url = '?';
+            } else {
+                $url = $this->composeURL($urlParams);
+            }
         } else {
-            $url = $this->composeURL($urlParams);
+            $url = $urlParams;
         }
 
         header('Location: ' . $url);
+        exit;
+    }
+
+    /**
+     * Forces file download
+     * 
+     * @param string $filepath File path
+     */
+    public function forceDownloadFile(string $filepath) {
+        header('Content-Type: application/octet-stream');
+        header('Content-Transfer-Encoding: Binary');
+        header('Content-disposition: attachment; filename="' . basename($filepath . '"'));
+        readfile($filepath);
         exit;
     }
 
@@ -287,8 +308,7 @@ class Application {
         try {
             $moduleObject = $this->moduleManager->createModule($this->currentModule);
         } catch(Exception $e) {
-            $fmHash = $this->flashMessage('Container created successfully.');
-            $this->refreshPage(['_fm' => $fmHash]);
+            $this->refreshPage();
         }
         $moduleObject->setLogger($this->logger);
         $moduleObject->setHttpRequest($this->getRequest());
@@ -300,7 +320,13 @@ class Application {
         try {
             return $re->render();
         } catch(AException|Exception $e) {
-            throw $e;
+            try {
+                $ep = new ExceptionPage($this, $this->getRequest());
+                $ep->setException($e);
+                return $ep->render();
+            } catch(Exception $e) {
+                throw $e;
+            }
         }
     }
 
@@ -313,12 +339,10 @@ class Application {
         $request = new HttpRequest();
 
         foreach($_GET as $k => $v) {
-            if($k == 'isAjax') {
-                $request->isAjax = true;
-            } else {
-                $request->query[$k] = $v;
-            }
+            $request->query[$k] = $v;
         }
+
+        $request->isAjax = $this->isAjaxRequest;
 
         if(!empty($_POST)) {
             foreach($_POST as $k => $v) {
@@ -357,13 +381,7 @@ class Application {
             $this->currentAction = 'default';
         }
 
-        $isAjax = '0';
-
-        if(isset($_GET['isAjax'])) {
-            $isAjax = htmlspecialchars($_GET['isAjax']);
-        }
-
-        if ($log) $this->logger->info('Current URL: [module => ' . $this->currentModule . ', presenter => ' . $this->currentPresenter . ', action => ' . $this->currentAction . ', isAjax => ' . $isAjax . ']', __METHOD__);
+        if ($log) $this->logger->info('Current URL: [module => ' . $this->currentModule . ', presenter => ' . $this->currentPresenter . ', action => ' . $this->currentAction . ']', __METHOD__);
     }
 }
 

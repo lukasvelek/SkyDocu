@@ -64,7 +64,11 @@ class Row implements IRenderable {
             $code .= '<div class="col-md">' . $this->label->render() . '</div>';
         }
         if($this->element !== null) {
-            $code .= '<div class="col-md">' . $this->element->render() . '</div>';
+            if($this->element instanceof SubmitButton || $this->element instanceof Button) {
+                $code .= '<div class="col-md" id="center">' . $this->element->render() . '</div>';
+            } else {
+                $code .= '<div class="col-md">' . $this->element->render() . '</div>';
+            }
         }
 
         $code .= '</div><br></div>';

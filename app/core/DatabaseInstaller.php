@@ -54,7 +54,8 @@ class DatabaseInstaller {
                 'fullname' => 'VARCHAR(256) NOT NULL',
                 'loginHash' => 'VARCHAR(256) NULL',
                 'dateCreated' => 'DATETIME NOT NULL DEFAULT current_timestamp()',
-                'email' => 'VARCHAR(256) NULL'
+                'email' => 'VARCHAR(256) NULL',
+                'isTechnical' => 'INT(2) NOT NULL DEFAULT 0'
             ],
             'groups' => [
                 'groupId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',
@@ -78,7 +79,8 @@ class DatabaseInstaller {
                 'dateCreated' => 'DATETIME NOT NULL DEFAULT current_timestamp()',
                 'environment' => 'INT(4) NOT NULL',
                 'canShowContainerReferent' => 'INT(2) NOT NULL DEFAULT 1',
-                'permanentFlashMessage' => 'TEXT NULL'
+                'permanentFlashMessage' => 'TEXT NULL',
+                'dbSchema' => 'INT(32) NOT NULL DEFAULT 0'
             ],
             'container_creation_status' => [
                 'statusId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',
@@ -258,8 +260,8 @@ class DatabaseInstaller {
             $userId = HashManager::createEntityId();
             $fullname = ucfirst($username);
 
-            $sql = 'INSERT INTO `users` (`userId`, `username`, `password`, `fullname`)
-                    SELECT \'' . $userId . '\', \'' . $username . '\', \'' . $password . '\', \'' . $fullname . '\'
+            $sql = 'INSERT INTO `users` (`userId`, `username`, `password`, `fullname`, `isTechnical`)
+                    SELECT \'' . $userId . '\', \'' . $username . '\', \'' . $password . '\', \'' . $fullname . '\', 1
                     WHERE NOT EXISTS (SELECT 1 FROM `users` WHERE `username` = \'' . $username . '\')';
 
             $this->db->query($sql);
@@ -278,6 +280,9 @@ class DatabaseInstaller {
 
         $groups = [
             SystemGroups::SUPERADMINISTRATORS => [
+                'admin'
+            ],
+            SystemGroups::CONTAINER_MANAGERS => [
                 'admin'
             ]
         ];
@@ -330,7 +335,8 @@ class DatabaseInstaller {
             'LogRotate' => 'log_rotate_service.php',
             'ContainerUsageStatistics' => 'container_usage_statistics_service.php',
             'ContainerStandaloneProcessChecker' => 'container_standalone_process_checker_service.php',
-            'ProcessSubstitute' => 'process_substitute_service.php'
+            'ProcessSubstitute' => 'process_substitute_service.php',
+            'ContainerOrphanedFilesRemoving' => 'cofrs.php'
         ];
 
         foreach($services as $title => $path) {

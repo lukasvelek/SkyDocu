@@ -1,0 +1,13 @@
+<?php
+
+$tables = [];
+$indexes = [];
+$data = [];
+
+return [
+    'tables' => $tables,
+    'indexes' => $indexes,
+    'data' => $data
+];
+
+?>

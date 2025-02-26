@@ -6,6 +6,7 @@ use App\Exceptions\ApplicationInitializationException;
 session_start();
 
 require_once('config.php');
+require_once('version.php');
 
 try {
     require_once('app/app_loader.php');

@@ -10,6 +10,7 @@ use App\Constants\Container\StandaloneProcesses;
 use App\Constants\Container\SystemProcessTypes;
 use App\Core\Application;
 use App\Core\DB\DatabaseRow;
+use App\Core\Http\JsonResponse;
 use App\Exceptions\AException;
 use App\Helpers\ProcessHelper;
 use App\Managers\Container\DocumentManager;
@@ -188,7 +189,6 @@ class ProcessesGrid extends GridBuilder implements IGridExtendingComponent {
 
                 case ProcessesGridSystemMetadata::CURRENT_OFFICER_USER_ID:
                     $this->appendCurrentOfficer($name, $text);
-
                     break;
 
                 case ProcessesGridSystemMetadata::DATE_CREATED:
@@ -432,18 +432,24 @@ class ProcessesGrid extends GridBuilder implements IGridExtendingComponent {
         return $authors;
     }
 
-    public function actionFilter() {
+    public function actionFilter(): JsonResponse {
         $this->prerender();
 
         return parent::actionFilter();
     }
 
-    public function actionFilterClear() {
+    public function actionFilterClear(): JsonResponse {
         $this->clearActiveFilters();
 
         $this->prerender();
 
         return parent::actionFilterClear();
+    }
+
+    public function actionGetSkeleton(): JsonResponse {
+        $this->prerender();
+
+        return parent::actionGetSkeleton();
     }
 }
 

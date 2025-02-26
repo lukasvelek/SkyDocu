@@ -237,6 +237,13 @@ class ProcessManager extends AManager {
         return $result;
     }
 
+    /**
+     * Inserts a new process comment
+     * 
+     * @param string $processId Process ID
+     * @param string $authorId Author ID
+     * @param string $text Comment text
+     */
     public function insertNewProcessComment(string $processId, string $authorId, string $text) {
         $commentId = $this->createId(EntityManager::C_PROCESS_COMMENTS);
 
@@ -245,6 +252,18 @@ class ProcessManager extends AManager {
         }
 
         if(!$this->processRepository->insertNewProcessComment($commentId, $processId, $authorId, $text)) {
+            throw new GeneralException('Database error.');
+        }
+    }
+
+    /**
+     * Deletes a process comment
+     * 
+     * @param string $processId Process ID
+     * @param string $commentId Comment ID
+     */
+    public function deleteProcessComment(string $processId, string $commentId) {
+        if(!$this->processRepository->deleteProcessCommentById($commentId)) {
             throw new GeneralException('Database error.');
         }
     }

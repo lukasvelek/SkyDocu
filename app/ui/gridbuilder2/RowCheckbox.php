@@ -12,6 +12,7 @@ use App\UI\HTML\HTML;
 class RowCheckbox extends Cell {
     private string $primaryKey;
     private string $handlerName;
+    private bool $isSkeleton;
 
     /**
      * Class constructor
@@ -25,8 +26,24 @@ class RowCheckbox extends Cell {
         $this->primaryKey = $primaryKey;
         $this->handlerName = $handlerName;
 
-        $this->setContent($this->getContent());
+        $this->isSkeleton = false;
+
         $this->setName('checkbox');
+    }
+
+    public function output(): HTML {
+        $this->setContent($this->getContent());
+        
+        return parent::output();
+    }
+
+    /**
+     * Sets if this is a skeleton
+     * 
+     * @param bool $isSkeleton Is skeleton
+     */
+    public function setSkeleton(bool $isSkeleton = true) {
+        $this->isSkeleton = $isSkeleton;
     }
 
     /**
@@ -40,6 +57,12 @@ class RowCheckbox extends Cell {
                 ->addAtribute('name', 'col-checkbox-ids')
                 ->value($this->primaryKey, true)
                 ->addAtribute('onchange', $this->handlerName);
+
+        if($this->isSkeleton) {
+            $el = HTML::el('div')
+                ->id('skeletonTextAnimation')
+                ->text('x');
+        }
 
         return $el;
     }

@@ -81,10 +81,12 @@ class ProcessRepository extends ARepository {
     public function getActiveProcessCountForDocuments(array $documentIds) {
         $qb = $this->qb(__METHOD__);
 
+        $types = StandaloneProcesses::getAllConstants();
+
         $qb->select(['documentId', 'COUNT(processId) AS cnt'])
             ->from('processes')
             ->where($qb->getColumnInValues('documentId', $documentIds))
-            ->andWhere($qb->getColumnNotInValues('status', [ProcessStatus::FINISHED, ProcessStatus::CANCELED]));
+            ->andWhere($qb->getColumnNotInValues('status', [ProcessStatus::FINISHED, ProcessStatus::CANCELED]) . ' OR ' . $qb->getColumnInValues('type', $types));
 
         $qb->execute();
 
@@ -135,6 +137,15 @@ class ProcessRepository extends ARepository {
             ->execute();
 
         return $qb->fetchBool();
+    }
+
+    public function composeQueryForProcessData() {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->select(['*'])
+            ->from('process_data');
+
+        return $qb;
     }
 
     public function getProcessDataForProcess(string $processId) {
@@ -232,6 +243,97 @@ class ProcessRepository extends ARepository {
         $qb->delete()
             ->from('process_comments')
             ->where('processId = ?', [$processId])
+            ->execute();
+
+        return $qb->fetchBool();
+    }
+
+    public function composeQueryForProcessMetadata() {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->select(['*'])
+            ->from('process_metadata');
+
+        return $qb;
+    }
+
+    public function composeQueryForProcessMetadataListValues() {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->select(['*'])
+            ->from('process_metadata_list_values');
+
+        return $qb;
+    }
+
+    public function getLastMetadataEnumValueKey(string $metadataId) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->select(['metadataKey'])
+            ->from('process_metadata_list_values')
+            ->where('metadataId = ?', [$metadataId])
+            ->orderBy('metadataKey', 'DESC')
+            ->limit(1)
+            ->execute();
+
+        return $qb->fetch('metadataKey');
+    }
+
+    public function createNewMetadataEnumValue(array $data) {
+        $keys = [];
+        $values = [];
+        foreach($data as $k => $v) {
+            $keys[] = $k;
+            $values[] = $v;
+        }
+
+        $qb = $this->qb(__METHOD__);
+
+        $qb->insert('process_metadata_list_values', $keys)
+            ->values($values)
+            ->execute();
+
+        return $qb->fetchBool();
+    }
+
+    public function getMetadataEnumValueById(string $valueId) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->select(['*'])
+            ->from('process_metadata_list_values')
+            ->where('valueId = ?', [$valueId])
+            ->execute();
+
+        return $qb->fetch();
+    }
+
+    public function updateMetadataEnumValue(string $valueId, string $title) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->update('process_metadata_list_values')
+            ->set(['title' => $title])
+            ->where('valueId = ?', [$valueId])
+            ->execute();
+
+        return $qb->fetchBool();
+    }
+
+    public function composeQueryForProcessComments(string $processId) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->select(['*'])
+            ->from('process_comments')
+            ->where('processId = ?', [$processId]);
+
+        return $qb;
+    }
+
+    public function deleteProcessCommentById(string $commentId) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->delete()
+            ->from('process_comments')
+            ->where('commentId = ?', [$commentId])
             ->execute();
 
         return $qb->fetchBool();

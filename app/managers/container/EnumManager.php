@@ -6,6 +6,8 @@ use App\Constants\Container\CustomMetadataTypes;
 use App\Core\Datatypes\ArrayList;
 use App\Core\DB\DatabaseRow;
 use App\Enums\AEnumForMetadata;
+use App\Enums\InvoiceCompaniesEnum;
+use App\Enums\InvoiceSumCurrencyEnum;
 use App\Enums\MetadataUserEnum;
 use App\Logger\Logger;
 use App\Managers\AManager;
@@ -22,6 +24,7 @@ class EnumManager extends AManager {
     private UserRepository $userRepository;
     private GroupManager $groupManager;
     private DatabaseRow $container;
+    public StandaloneProcessManager $standaloneProcessManager;
 
     /**
      * Class constructor
@@ -87,17 +90,35 @@ class EnumManager extends AManager {
             case CustomMetadataTypes::SYSTEM_USER:
                 return $this->getSystemUsersEnum();
 
+            case CustomMetadataTypes::SYSTEM_INVOICE_SUM_CURRENCY:
+                return $this->getInvoiceSumCurrencyEnum();
+
+            case CustomMetadataTypes::SYSTEM_INVOICE_COMPANIES:
+                return $this->getInvoiceCompaniesEnum();
+
             default:
                 return null;
         }
     }
 
     /**
-     * Returns an instance of MetadataUserEnum containing available users in container
-     * 
-     * @return MetadataUserEnum MetadataUserEnum instance
+     * Returns an instance of InvoiceCompaniesEnum containing available invoice companies
      */
-    private function getSystemUsersEnum() {
+    private function getInvoiceCompaniesEnum(): InvoiceCompaniesEnum {
+        return new InvoiceCompaniesEnum($this->standaloneProcessManager);
+    }
+
+    /**
+     * Returns an instance of InvoiceSumCurrencyEnum containing available invoice sum currencies
+     */
+    private function getInvoiceSumCurrencyEnum(): InvoiceSumCurrencyEnum {
+        return new InvoiceSumCurrencyEnum();
+    }
+
+    /**
+     * Returns an instance of MetadataUserEnum containing available users in container
+     */
+    private function getSystemUsersEnum(): MetadataUserEnum {
         return new MetadataUserEnum($this->userRepository, $this->groupManager, $this->container);
     }
 

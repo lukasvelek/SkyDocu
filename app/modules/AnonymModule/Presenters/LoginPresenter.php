@@ -91,7 +91,7 @@ class LoginPresenter extends AAnonymPresenter {
         } else {
             $params = [];
 
-            $lastContainer = $this->httpRequest->query('last');
+            $lastContainer = $this->httpRequest->get('last');
             if($lastContainer !== null) {
                 $params['lastContainer'] = $lastContainer;
             }
@@ -141,16 +141,17 @@ class LoginPresenter extends AAnonymPresenter {
                 ];
 
                 array_unshift($containers, $c);
-            } else {
-                $title = substr($group->title, 0, (strlen($group->title) - 8)) . ' (' . ContainerEnvironments::toString($container->environment) . ')';
+            } else if(str_ends_with($group->title, ' - users')) {
+                $environment = ContainerEnvironments::toString($container->environment) ?? '-';
+                $title = substr($group->title, 0, (strlen($group->title) - 8)) . ' (' . $environment . ')';
 
                 $c = [
                     'value' => $group->containerId,
                     'text' => $title
                 ];
 
-                if($this->httpRequest->query('lastContainer') !== null) {
-                    if($group->containerId == $this->httpRequest->query('lastContainer')) {
+                if($this->httpRequest->get('lastContainer') !== null) {
+                    if($group->containerId == $this->httpRequest->get('lastContainer')) {
                         $c['selected'] = 'selected';
                     }
                 }

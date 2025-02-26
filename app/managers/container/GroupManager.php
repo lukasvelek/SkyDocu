@@ -132,6 +132,18 @@ class GroupManager extends AManager {
         
         return $qb;
     }
+
+    public function getFirstGroupMemberForGroupTitle(string $title) {
+        $group = $this->getGroupByTitle($title);
+
+        $qb = $this->groupRepository->composeQueryForGroupMembers($group->groupId);
+        $qb->limit(1)
+            ->execute();
+
+        $userId = $qb->fetch('userId');
+
+        return $userId;
+    }
 }
 
 ?>

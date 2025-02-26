@@ -21,7 +21,6 @@ class AjaxRequestBuilder {
     private array $customArgs;
     private array $elements;
     private bool $useLoadingAnimation;
-    private bool $isComponent;
     private array $data;
 
     /**
@@ -38,7 +37,6 @@ class AjaxRequestBuilder {
         $this->customArgs = [];
         $this->elements = [];
         $this->useLoadingAnimation = true;
-        $this->isComponent = false;
         $this->data = [];
 
         return $this;
@@ -51,16 +49,6 @@ class AjaxRequestBuilder {
      */
     public function setData(array $data): static {
         $this->data = $data;
-        return $this;
-    }
-
-    /**
-     * Sets whether the call is coming from a component
-     * 
-     * @param bool $component True if the call is coming from a component or false if not
-     */
-    public function setComponent(bool $component = true): static {
-        $this->isComponent = $component;
         return $this;
     }
     
@@ -128,7 +116,6 @@ class AjaxRequestBuilder {
         $url = array_merge(['page' => $module . ':' . $presenter, 'action' => $action, 'do' => $componentActionName], $params);
 
         $this->url = $this->composeURLFromArray($url);
-        $this->isComponent = true;
 
         return $this;
     }
@@ -349,22 +336,6 @@ class AjaxRequestBuilder {
      * @return string JSON encoded parameters
      */
     private function processHeadParams() {
-        if(!array_key_exists('isAjax', $this->headerParams)) {
-            if($this->method == 'GET') {
-                $this->headerParams['isAjax'] = 1;
-            } else {
-                $this->url .= '&isAjax=1';
-            }
-        }
-
-        if($this->isComponent) {
-            if($this->method == 'GET') {
-                $this->headerParams['isComponent'] = 1;
-            } else {
-                $this->url .= '&isComponent=1';
-            }
-        }
-
         $json = json_encode($this->headerParams);
 
         foreach($this->functionArgs as $fa) {

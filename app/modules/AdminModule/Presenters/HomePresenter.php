@@ -5,6 +5,7 @@ namespace App\Modules\AdminModule;
 use App\Constants\ContainerEnvironments;
 use App\Core\Datetypes\DateTime;
 use App\Core\Http\HttpRequest;
+use App\Helpers\ColorHelper;
 
 class HomePresenter extends AAdminPresenter {
     public function __construct() {
@@ -18,6 +19,16 @@ class HomePresenter extends AAdminPresenter {
         $container = $this->app->containerManager->getContainerById($containerId);
 
         $groupUsers = $this->app->groupManager->getGroupUsersForGroupTitle($container->title . ' - users');
+        $groupGeneralUsers = [];
+        $groupTechnicalUsers = [];
+        foreach($groupUsers as $userId) {
+            $user = $this->app->userManager->getUserById($userId);
+            if($user->isTechnical()) {
+                $groupTechnicalUsers[] = $user;
+            } else {
+                $groupGeneralUsers[] = $user;
+            }
+        }
 
         $form = $this->componentFactory->getFormBuilder();
 
@@ -29,9 +40,9 @@ class HomePresenter extends AAdminPresenter {
             ->setDisabled()
             ->setValue($container->title);
 
-        $form->addNumberInput('containerUserCount', 'Container users:')
+        $form->addTextInput('containerUserCount', 'Container users / technical users:')
             ->setDisabled()
-            ->setValue(count($groupUsers));
+            ->setValue(count($groupGeneralUsers) . ' / ' . count($groupTechnicalUsers));
 
         if($container->canShowContainerReferent) {
             $user = $this->app->userManager->getUserById($container->userId);
@@ -52,6 +63,11 @@ class HomePresenter extends AAdminPresenter {
             ->setValue(ContainerEnvironments::toString($container->environment));
 
         return $form;
+    }
+
+    public function renderColorCombo() {
+        [$fgColor, $bgColor] = ColorHelper::createColorCombination();
+        $this->template->color_combo = '<div style="color: ' . $fgColor . '; background-color: ' . $bgColor . '; width: 1000px; height: 100px; text-align: center; font-size: 20px; border: 1px solid ' . $fgColor . '">Lorem ipsum (FG: ' . $fgColor . ', BG: ' . $bgColor . ')</div>';
     }
 }
 

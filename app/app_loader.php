@@ -201,7 +201,7 @@ $files = getContainer();
 $createContainer = false;
 if(empty($files)) {
     $createContainer = true;
-    getFilesInFolderRecursively(__DIR__, $files, [], ['app_loader.php'], ['html', 'distrib', 'bak', 'css', 'js']);
+    getFilesInFolderRecursively(__DIR__, $files, [], ['app_loader.php'], ['html', 'distrib', 'bak', 'css', 'js', 'sql']);
     sortFilesByPriority($files);
 }
 

@@ -2,11 +2,17 @@
 
 namespace App\Managers;
 
+use App\Constants\Container\CustomMetadataTypes;
+use App\Constants\Container\Processes\InvoiceCustomMetadata;
 use App\Constants\Container\StandaloneProcesses;
 use App\Constants\Container\SystemGroups;
+use App\Constants\ContainerStatus;
 use App\Core\Caching\CacheNames;
+use App\Core\DatabaseConnection;
 use App\Core\DB\DatabaseManager;
 use App\Core\DB\DatabaseRow;
+use App\Core\FileManager;
+use App\Core\HashManager;
 use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
 use App\Exceptions\NonExistingEntityException;
@@ -21,18 +27,20 @@ class ContainerManager extends AManager {
     public ContainerRepository $containerRepository;
     private DatabaseManager $dbManager;
     private GroupManager $groupManager;
+    private DatabaseConnection $masterConn;
 
-    public function __construct(Logger $logger, EntityManager $entityManager, ContainerRepository $containerRepository, DatabaseManager $dbManager, GroupManager $groupManager) {
+    public function __construct(Logger $logger, EntityManager $entityManager, ContainerRepository $containerRepository, DatabaseManager $dbManager, GroupManager $groupManager, DatabaseConnection $masterConn) {
         parent::__construct($logger, $entityManager);
 
         $this->containerRepository = $containerRepository;
         $this->dbManager = $dbManager;
         $this->groupManager = $groupManager;
+        $this->masterConn = $masterConn;
     }
 
-    public function createNewContainer(string $title, string $description, string $callingUserId, int $environment, bool $canShowReferent) {
+    public function createNewContainer(string $title, string $description, string $callingUserId, int $environment, bool $canShowReferent, int $status = ContainerStatus::NEW) {
         $containerId = $this->createId(EntityManager::CONTAINERS);
-        $databaseName = 'sd_db_' . $containerId;
+        $databaseName = 'sd_db_' . $containerId . '_' . HashManager::createHash(8, false);
 
         $data = [
             'containerId' => $containerId,
@@ -41,24 +49,27 @@ class ContainerManager extends AManager {
             'description' => $description,
             'databaseName' => $databaseName,
             'environment' => $environment,
-            'canShowContainerReferent' => ($canShowReferent ? 1 : 0)
+            'canShowContainerReferent' => ($canShowReferent ? 1 : 0),
+            'status' => $status
         ];
 
         if(!$this->containerRepository->createNewContainer($data)) {
             throw new GeneralException('Could not create a new container.');
         }
 
-        $statusId = $this->createId(EntityManager::CONTAINER_CREATION_STATUS);
-        if(!$this->containerRepository->createNewCreationStatusEntry($statusId, $containerId)) {
-            throw new GeneralException('Could not queue container for background creation.');
-        }
+        if($status != ContainerStatus::REQUESTED) {
+            $statusId = $this->createId(EntityManager::CONTAINER_CREATION_STATUS);
+            if(!$this->containerRepository->createNewCreationStatusEntry($statusId, $containerId)) {
+                throw new GeneralException('Could not queue container for background creation.');
+            }
 
-        $this->groupManager->createNewGroup($title . ' - users', [$callingUserId], $containerId);
+            $this->groupManager->createNewGroup($title . ' - users', [$callingUserId], $containerId);
 
-        if(!$this->cacheFactory->invalidateCacheByNamespace(CacheNames::GROUP_MEMBERSHIPS) ||
-            !$this->cacheFactory->invalidateCacheByNamespace(CacheNames::USER_GROUP_MEMBERSHIPS) ||
-            !$this->cacheFactory->invalidateCacheByNamespace(CacheNames::NAVBAR_CONTAINER_SWITCH_USER_MEMBERSHIPS)) {
-            throw new GeneralException('Could not invalidate cache.');
+            if(!$this->cacheFactory->invalidateCacheByNamespace(CacheNames::GROUP_MEMBERSHIPS) ||
+                !$this->cacheFactory->invalidateCacheByNamespace(CacheNames::USER_GROUP_MEMBERSHIPS) ||
+                !$this->cacheFactory->invalidateCacheByNamespace(CacheNames::NAVBAR_CONTAINER_SWITCH_USER_MEMBERSHIPS)) {
+                throw new GeneralException('Could not invalidate cache.');
+            }
         }
 
         return $containerId;
@@ -78,6 +89,7 @@ class ContainerManager extends AManager {
 
             $this->createNewContainerTables($container->databaseName);
             $this->createContainerTablesIndexes($container->databaseName);
+            $this->updateContainerDbSchema($container->databaseName, $containerId);
             
             $exceptions = [];
             $this->insertNewContainerDefaultDataAsync($containerId, $container, $container->databaseName, $exceptions);
@@ -101,11 +113,20 @@ class ContainerManager extends AManager {
         }
 
         $folderIds = [
-            'Default' => $this->createIdCustomDb(EntityManager::C_DOCUMENT_FOLDERS, $conn)
+            'Default' => $this->createIdCustomDb(EntityManager::C_DOCUMENT_FOLDERS, $conn),
+            'Invoices' => $this->createIdCustomDb(EntityManager::C_DOCUMENT_FOLDERS, $conn)
         ];
 
         $classIds = [
-            'Default' => $this->createIdCustomDb(EntityManager::C_DOCUMENT_CLASSES, $conn)
+            'Default' => $this->createIdCustomDb(EntityManager::C_DOCUMENT_CLASSES, $conn),
+            'Invoices' => $this->createIdCustomDb(EntityManager::C_DOCUMENT_CLASSES, $conn)
+        ];
+
+        $metadataIds = [
+            InvoiceCustomMetadata::COMPANY => $this->createIdCustomDb(EntityManager::C_CUSTOM_METADATA, $conn),
+            InvoiceCustomMetadata::SUM => $this->createIdCustomDb(EntityManager::C_CUSTOM_METADATA, $conn),
+            InvoiceCustomMetadata::INVOICE_NO => $this->createIdCustomDb(EntityManager::C_CUSTOM_METADATA, $conn),
+            InvoiceCustomMetadata::SUM_CURRENCY => $this->createIdCustomDb(EntityManager::C_CUSTOM_METADATA, $conn)
         ];
         
         $data = [
@@ -114,6 +135,24 @@ class ContainerManager extends AManager {
                 'data' => [
                     'classId' => $classIds['Default'],
                     'title' => 'Default'
+                ]
+            ],
+            [
+                'table' => 'document_classes',
+                'data' => [
+                    'classId' => $classIds['Invoices'],
+                    'title' => 'Invoices'
+                ]
+            ],
+            [
+                'table' => 'document_class_group_rights',
+                'data' => [
+                    'rightId' => $this->createIdCustomDb(EntityManager::C_DOCUMENT_CLASS_GROUP_RIGHTS, $conn),
+                    'groupId' => $groupIds[SystemGroups::ACCOUNTANTS],
+                    'classId' => $classIds['Invoices'],
+                    'canView' => 1,
+                    'canCreate' => 1,
+                    'canEdit' => 1
                 ]
             ],
             [
@@ -147,6 +186,14 @@ class ContainerManager extends AManager {
                 ]
             ],
             [
+                'table' => 'document_folders',
+                'data' => [
+                    'folderId' => $folderIds['Invoices'],
+                    'title' => 'Invoices',
+                    'isSystem' => 1
+                ]
+            ],
+            [
                 'table' => 'document_folder_group_relation',
                 'data' => [
                     'relationId' => $this->createIdCustomDb(EntityManager::C_DOCUMENT_FOLDER_GROUP_RELATION, $conn),
@@ -169,6 +216,17 @@ class ContainerManager extends AManager {
                 ]
             ],
             [
+                'table' => 'document_folder_group_relation',
+                'data' => [
+                    'relationId' => $this->createIdCustomDb(EntityManager::C_DOCUMENT_FOLDER_GROUP_RELATION, $conn),
+                    'folderId' => $folderIds['Invoices'],
+                    'groupId' => $groupIds[SystemGroups::ACCOUNTANTS],
+                    'canView' => 1,
+                    'canCreate' => 1,
+                    'canEdit' => 1
+                ]
+            ],
+            [
                 'table' => 'group_rights_standard_operations',
                 'data' => [
                     'rightId' => $this->createIdCustomDb(EntityManager::C_GROUP_STANDARD_OPERATION_RIGHTS, $conn),
@@ -177,20 +235,96 @@ class ContainerManager extends AManager {
                     'canExportDocuments' => 1,
                     'canViewDocumentHistory' => 1
                 ]
-            ]
+            ],
+            [
+                'table' => 'archive_folders',
+                'data' => [
+                    'folderId' => $folderIds['Default'],
+                    'title' => 'Default',
+                    'isSystem' => 1
+                ]
+            ],
+            [
+                'table' => 'custom_metadata',
+                'data' => [
+                    'metadataId' => $metadataIds['Invoices_SumCurrency'],
+                    'title' => InvoiceCustomMetadata::SUM_CURRENCY,
+                    'guiTitle' => InvoiceCustomMetadata::toString(InvoiceCustomMetadata::SUM_CURRENCY),
+                    'type' => CustomMetadataTypes::SYSTEM_INVOICE_SUM_CURRENCY,
+                    'isRequired' => 1
+                ]
+            ],
+            [
+                'table' => 'custom_metadata',
+                'data' => [
+                    'metadataId' => $metadataIds['Invoices_Sum'],
+                    'title' => InvoiceCustomMetadata::SUM,
+                    'guiTitle' => InvoiceCustomMetadata::toString(InvoiceCustomMetadata::SUM),
+                    'type' => CustomMetadataTypes::NUMBER,
+                    'isRequired' => 1
+                ]
+            ],
+            [
+                'table' => 'custom_metadata',
+                'data' => [
+                    'metadataId' => $metadataIds['Invoices_InvoiceNo'],
+                    'title' => InvoiceCustomMetadata::INVOICE_NO,
+                    'guiTitle' => InvoiceCustomMetadata::toString(InvoiceCustomMetadata::INVOICE_NO),
+                    'type' => CustomMetadataTypes::TEXT,
+                    'isRequired' => 1
+                ]
+            ],
+            [
+                'table' => 'custom_metadata',
+                'data' => [
+                    'metadataId' => $metadataIds['Invoices_Company'],
+                    'title' => InvoiceCustomMetadata::COMPANY,
+                    'guiTitle' => InvoiceCustomMetadata::toString(InvoiceCustomMetadata::COMPANY),
+                    'type' => CustomMetadataTypes::SYSTEM_INVOICE_COMPANIES,
+                    'isRequired' => 1
+                ]
+            ],
         ];
 
+        foreach($metadataIds as $title => $id) {
+            $data[] = [
+                'table' => 'document_folder_custom_metadata_relation',
+                'data' => [
+                    'relationId' => $this->createIdCustomDb(EntityManager::C_CUSTOM_METADATA_FOLDER_RELATION, $conn),
+                    'customMetadataId' => $id,
+                    'folderId' => $folderIds['Invoices']
+                ]
+            ];
+        }
+
+        $standaloneProcessIds = [];
         foreach(StandaloneProcesses::getAll() as $key => $title) {
+            if(StandaloneProcesses::isDisabled($key)) continue;
+
+            $standaloneProcessIds[$key] = $this->createIdCustomDb(EntityManager::C_PROCESS_TYPES, $conn);
+
             $data[] = [
                 'table' => 'process_types',
                 'data' => [
-                    'typeId' => $this->createIdCustomDb(EntityManager::C_PROCESS_TYPES, $conn),
+                    'typeId' => $standaloneProcessIds[$key],
                     'typeKey' => $key,
                     'title' => $title,
                     'description' => StandaloneProcesses::getDescription($key)
                 ]
             ];
         }
+
+        $data[] = [
+            'table' => 'process_metadata',
+            'data' => [
+                'metadataId' => $this->createIdCustomDb(EntityManager::C_PROCESS_CUSTOM_METADATA, $conn),
+                'typeId' => $standaloneProcessIds[StandaloneProcesses::INVOICE],
+                'title' => 'companies',
+                'guiTitle' => 'Companies',
+                'type' => CustomMetadataTypes::ENUM,
+                'isRequired' => '1'
+            ]
+        ];
 
         foreach($groupIds as $value => $groupId) {
             $data[] = [
@@ -229,8 +363,12 @@ class ContainerManager extends AManager {
         }
     }
 
-    private function createNewContainerTables(string $dbName) {
-        $tables = ContainerCreationHelper::getContainerTableDefinitions();
+    private function createNewContainerTables(string $dbName, array $tableDefinitions = []) {
+        if(empty($tableDefinitions)) {
+            $tables = ContainerCreationHelper::getContainerTableDefinitions();
+        } else {
+            $tables = $tableDefinitions;
+        }
 
         foreach($tables as $name => $definition) {
             if(!$this->dbManager->createTable($name, $definition, $dbName)) {
@@ -239,8 +377,12 @@ class ContainerManager extends AManager {
         }
     }
 
-    private function createContainerTablesIndexes(string $dbName) {
-        $indexes = ContainerCreationHelper::getContainerTableIndexDefinitions();
+    private function createContainerTablesIndexes(string $dbName, array $indexDefinitions = []) {
+        if(empty($indexDefinitions)) {
+            $indexes = ContainerCreationHelper::getContainerTableIndexDefinitions();
+        } else {
+            $indexes = $indexDefinitions;
+        }
 
         $count = 1;
         foreach($indexes as $tableName => $columns) {
@@ -255,6 +397,64 @@ class ContainerManager extends AManager {
 
             $count++;
         }
+    }
+
+    private function updateContainerDbSchema(string $dbName, string $containerId) {
+        try {
+            $conn = $this->dbManager->getConnectionToDatabase($dbName);
+        } catch(AException $e) {
+            throw new GeneralException('Could not establish connection to the container database.');
+        }
+
+        $sqlScripts = [];
+        $files = FileManager::getFilesInFolder(APP_ABSOLUTE_DIR . 'data\\db\\schema');
+        foreach($files as $file => $fileFullpath) {
+            if($file != "." && $file != "..") {
+                if(str_starts_with($file, 'u') && str_ends_with($file, '.php')) {
+                    $sqlScripts[$file] = $fileFullpath;
+                }
+            }
+        }
+
+        $this->logger->info('Found ' . count($sqlScripts) . ' DB schema updates.', __METHOD__);
+
+        foreach($sqlScripts as $scriptName => $script) {
+            $php = file_get_contents($script);
+
+            $schema = (int)(substr($scriptName, 1, -strlen('.php')));
+
+            $php = substr($php, strlen('<?php'));
+            $php = substr($php, 0, -strlen('?>'));
+
+            $result = eval($php);
+
+            if(!empty($result['tables'])) {
+                $this->createNewContainerTables($dbName, $result['tables']);
+            }
+            if(!empty($result['indexes'])) {
+                $this->createContainerTablesIndexes($dbName, $result['indexes']);
+            }
+            if(!empty($result['data'])) {
+                foreach($result['data'] as $tableName => $contents) {
+                    foreach($contents as $content) {
+                        $sql = 'INSERT INTO ' . $tableName . '(' . implode(', ', array_keys($content)) . ')';
+                        $sql .= ' VALUES (\'' . implode('\', \'', $content) . '\')';
+
+                        $conn->query($sql);
+                    }
+                }
+            }
+
+            $this->updateDbSchema($containerId, $schema);
+
+            $this->logger->info('Updated container database schema to ' . $schema . '.', __METHOD__);
+        }
+    }
+
+    private function updateDbSchema(string $containerId, int $schema) {
+        $sql = "UPDATE containers SET dbSchema = " . $schema . " WHERE containerId = '" . $containerId . "';";
+
+        $this->masterConn->query($sql);
     }
 
     public function checkContainerTitleExists(string $title) {
@@ -310,36 +510,42 @@ class ContainerManager extends AManager {
         return DatabaseRow::createFromDbRow($container);
     }
 
-    public function deleteContainer(string $containerId) {
+    public function deleteContainer(string $containerId, bool $isRequest = false) {
         $container = $this->getContainerById($containerId);
         
-        // Drop container database with all data
-        $this->dbManager->dropDatabase($container->databaseName);
+        if(!$isRequest) {
+            // Drop container database with all data
+            try {
+                $this->dbManager->dropDatabase($container->databaseName);
+            } catch(AException $e) {}
 
-        // Remove group and memberships
-        $group = $this->groupManager->getGroupByTitle($container->title . ' - users');
+            // Remove group and memberships
+            $group = null;
+            try {
+                $group = $this->groupManager->getGroupByTitle($container->title . ' - users');
+            } catch(AException $e) {}
 
-        $exceptions = [];
-        $this->groupManager->removeAllUsersFromGroup($group->groupId, $exceptions);
-
-        $this->groupManager->removeGroup($group->groupId);
-
-        // Delete container and all history data
+            if($group !== null) {
+                $exceptions = [];
+                $this->groupManager->removeAllUsersFromGroup($group->groupId, $exceptions);
+    
+                $this->groupManager->removeGroup($group->groupId);
+            }
+        }
+        
+        // Delete container
         if(!$this->containerRepository->deleteContainer($containerId)) {
             throw new GeneralException('Could not delete container.');
         }
-        if(!$this->containerRepository->deleteContainerCreationStatus($containerId)) {
-            throw new GeneralException('Could not delete container creation status entry.');
-        }
-        if(!$this->containerRepository->deleteContainerStatusHistory($containerId)) {
-            throw new GeneralException('COuld not delete container status history entries.');
-        }
 
-        // Invalidate container cache
-        $result = $this->cacheFactory->invalidateAllCache();
-
-        if(!$result) {
-            throw new GeneralException('Could not invalidate cache.');
+        if(!$isRequest) {
+            // Delete container history data
+            if(!$this->containerRepository->deleteContainerCreationStatus($containerId)) {
+                throw new GeneralException('Could not delete container creation status entry.');
+            }
+            if(!$this->containerRepository->deleteContainerStatusHistory($containerId)) {
+                throw new GeneralException('COuld not delete container status history entries.');
+            }
         }
     }
 
@@ -394,6 +600,31 @@ class ContainerManager extends AManager {
 
         if(!$this->containerRepository->deleteContainerUsageStatistics($containerId, $entries)) {
             throw new GeneralException('Database error.');
+        }
+    }
+
+    public function declineContainerRequest(string $containerId) {
+        $this->deleteContainer($containerId, true);
+    }
+
+    public function approveContainerRequest(string $containerId, string $callingUserId) {
+        $container = $this->getContainerById($containerId);
+
+        $this->updateContainer($containerId, [
+            'status' => ContainerStatus::NEW
+        ]);
+
+        $statusId = $this->createId(EntityManager::CONTAINER_CREATION_STATUS);
+        if(!$this->containerRepository->createNewCreationStatusEntry($statusId, $containerId)) {
+            throw new GeneralException('Could not queue container for background creation.');
+        }
+
+        $this->groupManager->createNewGroup($container->title . ' - users', [$callingUserId], $containerId);
+
+        if(!$this->cacheFactory->invalidateCacheByNamespace(CacheNames::GROUP_MEMBERSHIPS) ||
+            !$this->cacheFactory->invalidateCacheByNamespace(CacheNames::USER_GROUP_MEMBERSHIPS) ||
+            !$this->cacheFactory->invalidateCacheByNamespace(CacheNames::NAVBAR_CONTAINER_SWITCH_USER_MEMBERSHIPS)) {
+            throw new GeneralException('Could not invalidate cache.');
         }
     }
 }

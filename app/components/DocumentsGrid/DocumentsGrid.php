@@ -9,15 +9,16 @@ use App\Constants\Container\DocumentsGridSystemMetadata;
 use App\Constants\Container\DocumentStatus;
 use App\Constants\Container\GridNames;
 use App\Core\Application;
-use App\Core\Caching\CacheFactory;
 use App\Core\DB\DatabaseRow;
 use App\Core\Http\JsonResponse;
 use App\Enums\AEnumForMetadata;
 use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
 use App\Lib\Processes\ProcessFactory;
+use App\Managers\Container\ArchiveManager;
 use App\Managers\Container\DocumentManager;
 use App\Managers\Container\EnumManager;
+use App\Managers\Container\FileStorageManager;
 use App\Managers\Container\GridManager;
 use App\Modules\APresenter;
 use App\UI\GridBuilder2\Cell;
@@ -40,11 +41,14 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
     private EnumManager $enumManager;
     private GridManager $gridManager;
     private ProcessFactory $processFactory;
+    private ArchiveManager $archiveManager;
+    private FileStorageManager $fileStorageManager;
 
     private bool $allMetadata;
     private ?string $currentFolderId;
     private bool $showDocumentInfoLink;
     private bool $showShared;
+    private bool $isArchive;
 
     /**
      * Class constructor
@@ -57,7 +61,8 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
      * @param EnumManager $enumManager
      * @param GridManager $gridManager
      * @param ProcessFactory $processFactory
-     * @param string $containerId
+     * @param ArchiveManager $archiveManager
+     * @param FileStorageManager $fileStorageManager
      */
     public function __construct(
         GridBuilder $grid,
@@ -67,10 +72,13 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
         GroupStandardOperationsAuthorizator $groupStandardOperationsAuthorizator,
         EnumManager $enumManager,
         GridManager $gridManager,
-        ProcessFactory $processFactory
+        ProcessFactory $processFactory,
+        ArchiveManager $archiveManager,
+        FileStorageManager $fileStorageManager
     ) {
         parent::__construct($grid->httpRequest);
         $this->setHelper($grid->getHelper());
+        $this->setCacheFactory($grid->cacheFactory);
 
         $this->app = $app;
         $this->documentManager = $documentManager;
@@ -80,6 +88,8 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
         $this->enumManager = $enumManager;
         $this->gridManager = $gridManager;
         $this->processFactory = $processFactory;
+        $this->archiveManager = $archiveManager;
+        $this->fileStorageManager = $fileStorageManager;
 
         $this->documentBulkActionsHelper = new DocumentBulkActionsHelper($this->app, $this->documentManager, $this->httpRequest, $this->documentBulkActionAuthorizator, $this->groupStandardOperationsAuthorizator, $this->processFactory);
 
@@ -87,6 +97,7 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
         $this->currentFolderId = null;
         $this->showDocumentInfoLink = true;
         $this->showShared = false;
+        $this->isArchive = false;
     }
 
     /**
@@ -96,6 +107,11 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
      */
     public function setCurrentFolder(?string $folderId) {
         $this->currentFolderId = $folderId;
+    }
+
+    public function setCurrentArchiveFolder(?string $folderId) {
+        $this->currentFolderId = $folderId;
+        $this->isArchive = true;
     }
 
     /**
@@ -134,6 +150,8 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
     }
 
     public function prerender() {
+        $this->setup();
+        
         $this->createDataSource();
 
         $this->fetchDataFromDb();
@@ -148,8 +166,6 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
 
         $this->appendFilters();
 
-        $this->setup();
-
         parent::prerender();
     }
 
@@ -160,14 +176,18 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
         if(!$this->showShared) {
             $this->addQueryDependency('folderId', $this->getFolderId());
         }
-        $this->setGridName(GridNames::DOCUMENTS_GRID);
+        if($this->isArchive) {
+            $this->addQueryDependency('isArchive', '1');
+        }
+        
+        $this->addQuickSearch('title', 'Title');
     }
 
     /**
      * Appends grid actions
      */
     private function appendActions() {
-        if($this->showDocumentInfoLink) {
+        if($this->showDocumentInfoLink && !$this->isArchive) {
             $info = $this->addAction('info');
             $info->setTitle('Information');
             $info->onCanRender[] = function() {
@@ -175,7 +195,7 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
             };
             $info->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
                 $el = HTML::el('a');
-                $el->href($this->createFullURLString('User:Documents', 'info', ['documentId' => $primaryKey]))
+                $el->href($this->createFullURLString('User:Documents', 'info', ['documentId' => $primaryKey, 'folderId' => $row->folderId]))
                     ->text('Information')
                     ->class('grid-link');
 
@@ -189,7 +209,13 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
             $qb = $this->documentManager->composeQueryForSharedDocuments($this->currentUserId);
         } else {
             $folderId = $this->getFolderId();
-            $qb = $this->documentManager->composeQueryForDocuments($this->currentUserId, $folderId, $this->allMetadata);
+            if(!$this->isArchive) {
+                $qb = $this->documentManager->composeQueryForDocuments($this->currentUserId, $folderId, $this->allMetadata);
+            } else {
+                $documentIds = $this->archiveManager->getDocumentsForArchiveFolder($folderId);
+                $qb = $this->documentManager->documentRepository->composeQueryForDocuments();
+                $qb->andWhere($qb->getColumnInValues('documentId', $documentIds));
+            }
         }
 
         $this->createDataSourceFromQueryBuilder($qb, 'documentId');
@@ -202,11 +228,15 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
      */
     private function getFolderId() {
         if($this->currentFolderId === null) {
-            if($this->httpRequest->query('folderId') !== null) {
-                $this->currentFolderId = $this->httpRequest->query('folderId');
+            if($this->httpRequest->get('folderId') !== null) {
+                $this->currentFolderId = $this->httpRequest->get('folderId');
             } else {
                 throw new GeneralException('No folder is selected.');
             }
+        }
+
+        if($this->httpRequest->post('isArchive') !== null) {
+            $this->isArchive = true;
         }
 
         return $this->currentFolderId;
@@ -220,6 +250,13 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
 
         if($config === null) {
             $config = array_keys(DocumentsGridSystemMetadata::getAll());
+        }
+
+        $dataSource = clone $this->filledDataSource;
+
+        $documentIds = [];
+        while($row = $dataSource->fetchAssoc()) {
+            $documentIds[] = $row['documentId'];
         }
 
         foreach($config as $column) {
@@ -237,18 +274,20 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
                     break;
 
                 case DocumentsGridSystemMetadata::IS_IN_PROCESS:
-                    $dataSource = clone $this->filledDataSource;
-
-                    $documentIds = [];
-                    while($row = $dataSource->fetchAssoc()) {
-                        $documentIds[] = $row['documentId'];
-                    }
-
                     $documentsInProcess = $this->processFactory->processManager->areDocumentsInProcesses($documentIds);
 
                     $col = $this->addColumnBoolean(DocumentsGridSystemMetadata::IS_IN_PROCESS, DocumentsGridSystemMetadata::toString(DocumentsGridSystemMetadata::IS_IN_PROCESS));
                     array_unshift($col->onRenderColumn, function(DatabaseRow $row, Row $_row, Cell $cell, HTML $html, mixed $value) use ($documentsInProcess) {
-                        return array_key_exists($row->documentId, $documentsInProcess);
+                        return in_array($row->documentId, $documentsInProcess);
+                    });
+                    break;
+
+                case DocumentsGridSystemMetadata::HAS_FILE:
+                    $documentsWithFile = $this->fileStorageManager->doDocumentsHaveFile($documentIds);
+
+                    $col = $this->addColumnBoolean(DocumentsGridSystemMetadata::HAS_FILE, DocumentsGridSystemMetadata::toString(DocumentsGridSystemMetadata::HAS_FILE));
+                    array_unshift($col->onRenderColumn, function(DatabaseRow $row, Row $_row, Cell $cell, HTML $html, mixed $value) use ($documentsWithFile) {
+                        return in_array($row->documentId, $documentsWithFile);
                     });
                     break;
             }
@@ -501,7 +540,7 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
      * @return array Entity IDs
      */
     private function getEntityIdsInGrid() {
-        $ds = clone $this->fetchDataFromDb();
+        $ds = clone $this->fetchDataFromDb(true);
 
         $ids = [];
         while($row = $ds->fetchAssoc()) {
@@ -528,8 +567,8 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
      */
     public function useCheckboxes(APresenter $presenter) {
         $params = [];
-        if($this->httpRequest->query('folderId') !== null) {
-            $params['folderId'] = $this->httpRequest->query('folderId');
+        if($this->httpRequest->get('folderId') !== null) {
+            $params['folderId'] = $this->httpRequest->get('folderId');
         }
 
         $this->addCheckboxes2($presenter, 'bulkAction', $params);
@@ -582,9 +621,14 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
     public function actionBulkAction() {
         $modal = new BulkActionsModal($this);
 
-        $ids = $this->httpRequest->query('ids');
+        $ids = $this->httpRequest->get('ids');
 
-        $this->documentBulkActionsHelper->setFolderId($this->getFolderId());
+        if($this->isArchive) {
+            $this->documentBulkActionsHelper->setArchiveFolderId($this->getFolderId());
+        } else {
+            $this->documentBulkActionsHelper->setFolderId($this->getFolderId());
+        }
+
         $bulkActions = $this->documentBulkActionsHelper->getBulkActions($ids, $this->currentFolderId);
 
         $modal->setBulkActions($bulkActions);
@@ -593,18 +637,34 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
         return new JsonResponse(['modal' => $modal->render()]);
     }
 
-    public function actionFilter() {
+    public function actionFilter(): JsonResponse {
+        $this->getActiveFiltersFromCache();
+
         $this->prerender();
 
         return parent::actionFilter();
     }
 
-    public function actionFilterClear() {
+    public function actionFilterClear(): JsonResponse {
         $this->clearActiveFilters();
         
         $this->prerender();
 
         return parent::actionFilterClear();
+    }
+
+    public function actionQuickSearch(): JsonResponse {
+        $this->quickSearchQuery = $this->httpRequest->post('query');
+
+        $this->prerender();
+
+        return parent::actionQuickSearch();
+    }
+
+    public function actionGetSkeleton(): JsonResponse {
+        $this->prerender();
+        
+        return parent::actionGetSkeleton();
     }
 }
 

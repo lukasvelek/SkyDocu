@@ -9,11 +9,14 @@ use App\Constants\Container\ProcessGridViews;
 use App\Constants\Container\ProcessStatus;
 use App\Constants\Container\StandaloneProcesses;
 use App\Constants\Container\SystemProcessTypes;
+use App\Core\DB\DatabaseRow;
+use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
 use App\Exceptions\RequiredAttributeIsNotSetException;
 use App\Helpers\DateTimeFormatHelper;
 use App\Helpers\ProcessHelper;
+use App\UI\HTML\HTML;
 use App\UI\LinkBuilder;
 
 class ProcessesPresenter extends AUserPresenter {
@@ -22,9 +25,7 @@ class ProcessesPresenter extends AUserPresenter {
     }
 
     public function handleList() {
-        $view = $this->httpRequest->query('view');
-
-        if($view === null) {
+        if($this->httpRequest->get('view') === null && $this->httpRequest->post('view') === null) {
             $this->redirect($this->createURL('list', ['view' => ProcessGridViews::VIEW_ALL]));
         }
     }
@@ -34,7 +35,7 @@ class ProcessesPresenter extends AUserPresenter {
     }
 
     protected function createComponentProcessViewsSidebar(HttpRequest $request) {
-        $sidebar = new ProcessViewSidebar($request);
+        $sidebar = new ProcessViewSidebar($request, $this->supervisorAuthorizator, $this->getUserId());
 
         return $sidebar;
     }
@@ -48,17 +49,21 @@ class ProcessesPresenter extends AUserPresenter {
             $this->documentManager
         );
 
-        $grid->setView($request->query('view'));
+        if($this->httpRequest->post('view') !== null) {
+            $grid->setView($request->post('view'));
+        } else if($this->httpRequest->get('view') !== null) {
+            $grid->setView($request->get('view'));
+        }
     
         return $grid;
     }
 
     public function handleProfile() {
-        $processId = $this->httpRequest->query('processId');
+        $processId = $this->httpRequest->get('processId');
         if($processId === null) {
             throw new RequiredAttributeIsNotSetException('processId');
         }
-        $backView = $this->httpRequest->query('backView');
+        $backView = $this->httpRequest->get('backView');
 
         try {
             $process = $this->processManager->getProcessById($processId);
@@ -213,10 +218,16 @@ class ProcessesPresenter extends AUserPresenter {
                     $params['isStandalone'] = '1';
                 }
 
-                $tmp[] = LinkBuilder::createSimpleLink($title, $this->createURL('process', $params), 'link');
+                $el = HTML::el('a')
+                    ->text($title)
+                    ->href($this->createURLString('process', $params))
+                    ->title($title)
+                    ->class('process-action-link-' . $action);
+
+                $tmp[] = $el->toString();
             }
 
-            $processActionsCode = implode('<br>', $tmp);
+            $processActionsCode = implode('<br><br>', $tmp);
         } else {
             if($process->status == ProcessStatus::FINISHED) {
                 $processActionsCode = 'Process has been finished.';
@@ -228,7 +239,7 @@ class ProcessesPresenter extends AUserPresenter {
         $this->saveToPresenterCache('process_actions', $processActionsCode);
 
         $links = [];
-        if($this->httpRequest->query('disableBackLink') === null) {
+        if($this->httpRequest->get('disableBackLink') === null) {
             $backLinkParams = [];
             if($backView !== null) {
                 $backLinkParams['view'] = $backView;
@@ -240,25 +251,131 @@ class ProcessesPresenter extends AUserPresenter {
         }
 
         $this->saveToPresenterCache('links', implode('&nbsp;&nbsp;', $links));
+
+        $comments = '';
+        if(StandaloneProcesses::isCommentingEnabled($process->type)) {
+            $commentsTemplate = $this->getTemplate(__DIR__ . '/templates/ProcessesPresenter/profile.comments.html');
+
+            $commentList = [];
+            $qb = $this->processRepository->composeQueryForProcessComments($processId);
+            $qb->orderBy('dateCreated', 'DESC')
+                ->execute();
+            while($row = $qb->fetchAssoc()) {
+                $row = DatabaseRow::createFromDbRow($row);
+
+                $author = $this->app->userManager->getUserById($row->userId);
+
+                $deleteLink = LinkBuilder::createSimpleLink('Delete', $this->createURL('deleteComment', ['commentId' => $row->commentId, 'processId' => $processId]), 'link');
+
+                if($author->getId() != $this->getUserId()) {
+                    $deleteLink = '';
+                }
+
+                $commentList[] = '
+                    <hr>
+                    <div class="row" id="process-comment-' . $row->commentId . '">
+                        <div class="col-md">
+                            <p style="font-size: 19px">' . $row->description . '</p>
+                            <p>Author: ' . $author->getFullname() . ' | Date posted: <span title="' . $row->dateCreated . '">' . DateTimeFormatHelper::formatDateToUserFriendly($row->dateCreated) . '</span></p>
+                            ' . $deleteLink . '
+                        </div>
+                    </div>
+                ';
+            }
+
+            $commentsTemplate->comments = implode('', $commentList);
+
+            $comments = $commentsTemplate->render()->getRenderedContent();
+        }
+
+        $this->saveToPresenterCache('comments', $comments);
     }
 
     public function renderProfile() {
         $this->template->process_basic_information = $this->loadFromPresenterCache('process_basic_information');
         $this->template->process_actions = $this->loadFromPresenterCache('process_actions');
         $this->template->links = $this->loadFromPresenterCache('links');
+        $this->template->process_comments = $this->loadFromPresenterCache('comments');
+    }
+
+    public function handleDeleteComment() {
+        $processId = $this->httpRequest->get('processId');
+        $commentId = $this->httpRequest->get('commentId');
+
+        try {
+            $this->processRepository->beginTransaction(__METHOD__);
+
+            $this->processManager->deleteProcessComment($processId, $commentId);
+
+            $this->processRepository->commit($this->getUserId(), __METHOD__);
+
+            $this->flashMessage('Comment deleted.', 'success');
+        } catch(AException $e) {
+            $this->processRepository->rollback(__METHOD__);
+
+            $this->flashMessage('Could not delete comment. Reason: ' . $e->getMessage(), 'error');
+        }
+
+        $this->redirect($this->createURL('profile', ['processId' => $processId]));
+    }
+
+    protected function createComponentNewCommentForm(HttpRequest $request) {
+        $processId = $request->get('processId');
+        try {
+            $process = $this->processManager->getProcessById($processId);
+        } catch(AException $e) {
+            $this->flashMessage('Process not found. Reason: ' . $e->getMessage(), 'error', 10);
+            $this->redirect($this->createURL('profile', ['processId' => $processId]));
+        }
+
+        $disabled = ($process->currentOfficerUserId == $this->getUserId());
+
+        $form = $this->componentFactory->getFormBuilder();
+
+        $form->setAction($this->createURL('newCommentForm', ['processId' => $processId]));
+
+        $form->addTextArea('text', 'Text:')
+            ->setRequired($disabled)
+            ->setDisabled(!$disabled)
+            ->setPlaceholder('Write a comment text here...');
+
+        $form->addSubmit('Create')
+            ->setDisabled(!$disabled);
+
+        return $form;
+    }
+
+    public function handleNewCommentForm(?FormRequest $fr = null) {
+        if($fr !== null) {
+            try {
+                $this->processRepository->beginTransaction(__METHOD__);
+
+                $this->processManager->insertNewProcessComment($this->httpRequest->get('processId'), $this->getUserId(), $fr->text);
+
+                $this->processRepository->commit($this->getUserId(), __METHOD__);
+
+                $this->flashMessage('Comment saved.', 'success');
+            } catch(AException $e) {
+                $this->processRepository->rollback(__METHOD__);
+
+                $this->flashMessage('Could not save comment. Reason: ' . $e->getMessage(), 'error');
+            }
+
+            $this->redirect($this->createURL('profile', ['processId' => $this->httpRequest->get('processId')]));
+        }
     }
 
     public function handleProcess() {
-        $processId = $this->httpRequest->query('processId');
+        $processId = $this->httpRequest->get('processId');
         if($processId === null) {
             throw new RequiredAttributeIsNotSetException('processId');
         }
-        $action = $this->httpRequest->query('actionName');
+        $action = $this->httpRequest->get('actionName');
         if($action === null) {
             throw new RequiredAttributeIsNotSetException('action');
         }
-        $backView = $this->httpRequest->query('backView');
-        $isStandalone = $this->httpRequest->query('isStandalone');
+        $backView = $this->httpRequest->get('backView');
+        $isStandalone = $this->httpRequest->get('isStandalone');
 
         try {
             $process = $this->processManager->getProcessById($processId);
@@ -293,6 +410,14 @@ class ProcessesPresenter extends AUserPresenter {
                     }
 
                     $this->processManager->finishProcess($processId, $this->getUserId());
+
+                    if($isStandalone !== null) {
+                        switch($process->type) {
+                            case StandaloneProcesses::INVOICE:
+                                $this->standaloneProcessManager->finishInvoice($processId);
+                                break;
+                        }
+                    }
     
                     $this->flashMessage('Process finished.', 'success');
                     break;

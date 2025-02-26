@@ -9,6 +9,7 @@ use App\Entities\UserEntity;
 use App\Exceptions\GeneralException;
 use App\Lib\Processes\Shredding\ShreddingProcess;
 use App\Lib\Processes\Shredding\ShreddingRequestProcess;
+use App\Managers\Container\ArchiveManager;
 use App\Managers\Container\DocumentManager;
 use App\Managers\Container\GroupManager;
 use App\Managers\Container\ProcessManager;
@@ -27,6 +28,7 @@ class ProcessFactory {
     private GroupManager $groupManager;
     private UserEntity $currentUser;
     public ProcessManager $processManager;
+    private ArchiveManager $archiveManager;
 
     private string $containerId;
 
@@ -39,8 +41,9 @@ class ProcessFactory {
      * @param UserManager $userManager UserManager instance
      * @param GroupManager $groupManager GroupManager instance
      * @param UserEntity $currentUser Current user UserEntity instance
-     * @param ProcessManager $processManager ProcessManager instance
      * @param string $containerId Container ID
+     * @param ProcessManager $processManager ProcessManager instance
+     * @param ArchiveManager $archiveManager ArchiveManager instance
      */
     public function __construct(
         DocumentManager $documentManager,
@@ -50,7 +53,8 @@ class ProcessFactory {
         GroupManager $groupManager,
         UserEntity $currentUser,
         string $containerId,
-        ProcessManager $processManager
+        ProcessManager $processManager,
+        ArchiveManager $archiveManager
     ) {
         $this->documentManager = $documentManager;
         $this->groupStandardOperationsAuthorizator = $groupStandardOperationsAuthorizator;
@@ -60,6 +64,7 @@ class ProcessFactory {
         $this->currentUser = $currentUser;
         $this->containerId = $containerId;
         $this->processManager = $processManager;
+        $this->archiveManager = $archiveManager;
     }
 
     /**
@@ -81,7 +86,8 @@ class ProcessFactory {
             $this->userManager,
             $this->groupManager,
             $this->currentUser,
-            $this->processManager
+            $this->processManager,
+            $this->archiveManager
         );
         $obj->setContainerId($this->containerId);
         $obj->startup();
@@ -105,14 +111,6 @@ class ProcessFactory {
     }
 
     /**
-     * @return ArchivingProcess
-     */
-    public function createDocumentArchivationProcess() {
-        $obj = $this->commonDocumentCreate(ArchivingProcess::class);
-        return $obj;
-    }
-
-    /**
      * Starts a document process synchronously
      * 
      * @param string $name Process name
@@ -128,10 +126,6 @@ class ProcessFactory {
 
             case SystemProcessTypes::SHREDDING_REQUEST:
                 $obj = $this->createDocumentShreddingRequestProcess();
-                return $obj->execute($documentIds, $this->currentUser->getId(), $exceptions);
-
-            case SystemProcessTypes::ARCHIVATION:
-                $obj = $this->createDocumentArchivationProcess();
                 return $obj->execute($documentIds, $this->currentUser->getId(), $exceptions);
 
             default:

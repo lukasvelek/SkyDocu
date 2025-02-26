@@ -53,6 +53,17 @@ abstract class AInteractableElement extends AElement {
     }
 
     /**
+     * Sets that the element is readonly
+     * 
+     * @param bool $readonly True if the element is readonly
+     */
+    public function setReadonly(bool $readonly = true): static {
+        $this->commonChangeUIParam('readonly', $readonly);
+        $this->modifiers[] = 'readonly';
+        return $this;
+    }
+
+    /**
      * Is the element required?
      * 
      * @return bool True or false
@@ -68,6 +79,15 @@ abstract class AInteractableElement extends AElement {
      */
     public function isDisabled() {
         return in_array('disabled', $this->modifiers);
+    }
+
+    /**
+     * Is the element readonly?
+     * 
+     * @return bool True or false
+     */
+    public function isReadonly() {
+        return in_array('readonly', $this->modifiers);
     }
 
     /**

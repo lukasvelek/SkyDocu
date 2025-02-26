@@ -17,7 +17,7 @@ class UserPresenter extends AUserPresenter {
     }
 
     public function handleProfile() {
-        $userId = $this->httpRequest->query('userId');
+        $userId = $this->httpRequest->get('userId');
 
         if($userId === null) {
             $this->redirect($this->createURL('profile', ['userId' => $this->getUserId()]));
@@ -84,10 +84,10 @@ class UserPresenter extends AUserPresenter {
     protected function createComponentUserGroupMembershipsGrid(HttpRequest $request) {
         $grid = $this->componentFactory->getGridBuilder($this->containerId);
 
-        $qb = $this->groupManager->composeQueryForGroupsWhereUserIsMember($request->query('userId'));
+        $qb = $this->groupManager->composeQueryForGroupsWhereUserIsMember($request->get('userId'));
 
         $grid->createDataSourceFromQueryBuilder($qb, 'groupId');
-        $grid->addQueryDependency('userId', $request->query('userId'));
+        $grid->addQueryDependency('userId', $request->get('userId'));
 
         $grid->addColumnConst('title', 'Title', SystemGroups::class);
 
@@ -144,7 +144,7 @@ class UserPresenter extends AUserPresenter {
     }
 
     public function handleClearOutOfOffice() {
-        $absenceId = $this->httpRequest->query('absenceId');
+        $absenceId = $this->httpRequest->get('absenceId');
 
         try {
             $this->app->userAbsenceRepository->beginTransaction(__METHOD__);

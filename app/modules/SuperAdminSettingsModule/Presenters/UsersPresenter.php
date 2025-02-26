@@ -160,7 +160,7 @@ class UsersPresenter extends ASuperAdminSettingsPresenter {
     }
 
     public function handleProfile() {
-        $userId = $this->httpRequest->query('userId');
+        $userId = $this->httpRequest->get('userId');
         if($userId === null) {
             throw new RequiredAttributeIsNotSetException('userId');
         }
@@ -195,7 +195,7 @@ class UsersPresenter extends ASuperAdminSettingsPresenter {
 
     public function handleEditUserForm(?FormRequest $fr = null) {
         if($fr !== null) {
-            $userId = $this->httpRequest->query('userId');
+            $userId = $this->httpRequest->get('userId');
             if($userId === null) {
                 throw new RequiredAttributeIsNotSetException('userId');
             }
@@ -232,11 +232,11 @@ class UsersPresenter extends ASuperAdminSettingsPresenter {
     }
 
     protected function createComponentEditUserForm(HttpRequest $request) {
-        $user = $this->app->userManager->getUserById($request->query('userId'));
+        $user = $this->app->userManager->getUserById($request->get('userId'));
         
         $form = $this->componentFactory->getFormBuilder();
 
-        $form->setAction($this->createURL('editUserForm', ['userId' => $request->query('userId')]));
+        $form->setAction($this->createURL('editUserForm', ['userId' => $request->get('userId')]));
 
         $form->addTextInput('username', 'Username:')
             ->setRequired()
@@ -257,7 +257,7 @@ class UsersPresenter extends ASuperAdminSettingsPresenter {
     public function handleDeleteUserForm(?FormRequest $fr = null) {
         if($fr !== null) {
             try {
-                $user = $this->app->userManager->getUserById($this->httpRequest->query('userId'));
+                $user = $this->app->userManager->getUserById($this->httpRequest->get('userId'));
 
                 if($user->getUsername() != $fr->username) {
                     throw new GeneralException('Username entered does not match with the username of the user to be deleted.');
@@ -297,11 +297,11 @@ class UsersPresenter extends ASuperAdminSettingsPresenter {
     }
 
     protected function createComponentDeleteUserForm(HttpRequest $request) {
-        $user = $this->app->userManager->getUserById($request->query('userId'));
+        $user = $this->app->userManager->getUserById($request->get('userId'));
 
         $form = $this->componentFactory->getFormBuilder();
 
-        $form->setAction($this->createURL('deleteUserForm', ['userId' => $request->query('userId')]));
+        $form->setAction($this->createURL('deleteUserForm', ['userId' => $request->get('userId')]));
 
         $form->addLabel('main', 'Do you want to delete user \'' . $user->getUsername() . '\'?');
 

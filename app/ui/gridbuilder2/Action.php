@@ -68,11 +68,11 @@ class Action implements IHTMLOutput {
     public function output(): HTML {
         $this->html->id('col-actions-' . $this->name);
 
+        $this->html->text($this->processText());
+
         if(isset($this->title)) {
             $this->html->title($this->title);
         }
-
-        $this->html->text($this->processText());
 
         return $this->html;
     }
@@ -100,7 +100,8 @@ class Action implements IHTMLOutput {
                 try {
                     $result = $render($this->primaryKey, $this->row, $this->_row, $this->html);
                 } catch(Exception $e) {
-                    $result = '-';
+                    $result = '#ERROR';
+                    $this->title = $e->getMessage();
                 }
             }
         } else {

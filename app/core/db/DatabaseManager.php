@@ -158,16 +158,16 @@ class DatabaseManager {
      * @return bool True on success
      */
     public function dropDatabase(string $databaseName) {
-        try {
+        /*try {
             $conn = $this->getConnectionToDatabase($databaseName);
         } catch(AException $e) {
             throw $e;
-        }
+        }*/
 
         $sql = "DROP DATABASE `" . $databaseName . "`";
 
         try {
-            $result = $conn->query($sql);
+            $result = $this->db->query($sql);
 
             if($result !== false) {
                 return true;
@@ -226,6 +226,61 @@ class DatabaseManager {
         } catch(AException $e) {
             throw $e;
         }
+    }
+
+    /**
+     * Returns all tables in given database
+     * 
+     * @param string $databaseName Database name
+     */
+    public function getAllTablesInDatabase(string $databaseName): mixed {
+        try {
+            $conn = $this->getConnectionToDatabase($databaseName);
+        } catch(AException $e) {
+            throw $e;
+        }
+
+        $sql = "SHOW TABLES";
+
+        try {
+            $result = $conn->query($sql);
+
+            if($result === false) {
+                throw new DatabaseExecutionException('Could not retrieve all tables in given database.', $sql);
+            }
+        } catch(AException $e) {
+            throw $e;
+        }
+
+        return $result;
+    }
+
+    /**
+     * Truncates table in given database
+     * 
+     * @param string $databaseName Database name
+     * @param string $tableName Table name
+     */
+    public function truncateTableInDatabase(string $databaseName, string $tableName) {
+        try {
+            $conn = $this->getConnectionToDatabase($databaseName);
+        } catch(AException $e) {
+            throw $e;
+        }
+
+        $sql = "TRUNCATE `" . $tableName . "`";
+
+        try {
+            $result = $conn->query($sql);
+            
+            if($result === false) {
+                throw new DatabaseExecutionException('Could not truncate table in given database.', $sql);
+            }
+        } catch(AException $e) {
+            throw $e;
+        }
+
+        return true;
     }
 }
 

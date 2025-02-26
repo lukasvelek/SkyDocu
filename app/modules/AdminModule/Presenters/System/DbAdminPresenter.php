@@ -5,7 +5,6 @@ namespace App\Modules\AdminModule;
 use App\Core\DB\DatabaseRow;
 use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
-use App\Entities\ContainerDatabaseEntity;
 use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
 use App\Managers\EntityManager;
@@ -43,6 +42,20 @@ class DbAdminPresenter extends AAdminPresenter {
         $grid->addColumnText('name', 'Name');
         $grid->addColumnBoolean('isDefault', 'Is system');
 
+        $truncate = $grid->addAction('truncate');
+        $truncate->setTitle('Truncate');
+        $truncate->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) {
+            return ($row->isDefault == 0);
+        };
+        $truncate->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
+            $el = HTML::el('a')
+                ->class('grid-link')
+                ->href($this->createURLString('truncateDatabaseForm', ['entryId' => $primaryKey]))
+                ->text('Truncate');
+
+            return $el;
+        };
+
         $drop = $grid->addAction('drop');
         $drop->setTitle('Drop');
         $drop->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) {
@@ -57,21 +70,68 @@ class DbAdminPresenter extends AAdminPresenter {
             return $el;
         };
 
-        $delete = $grid->addAction('delete');
-        $delete->setTitle('Delete');
-        $delete->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) {
-            return ($row->isDefault == 0);
-        };
-        $delete->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
-            $el = HTML::el('a')
-                ->class('grid-link')
-                ->href($this->createURLString('deleteDatabaseForm', ['entryId' => $primaryKey]))
-                ->text('Delete');
-
-            return $el;
-        };
-
         return $grid;
+    }
+
+    public function handleTruncateDatabaseForm(?FormRequest $fr = null) {
+        if($fr !== null) {
+            try {
+                $this->app->containerDatabaseRepository->beginTransaction(__METHOD__);
+
+                $this->app->userAuth->authUser($fr->password);
+                
+                $database = $this->app->containerDatabaseManager->getDatabaseByEntryId($this->httpRequest->get('entryId'));
+
+                if($fr->title != $database->getTitle()) {
+                    throw new GeneralException('Database titles do no match.');
+                }
+
+                $this->app->containerDatabaseManager->truncateDatabaseByEntryId($this->httpRequest->get('entryId'));
+
+                $this->app->containerDatabaseRepository->commit($this->getUserId(), __METHOD__);
+
+                $this->flashMessage('Database truncated.', 'success');
+            } catch(AException $e) {
+                $this->app->containerDatabaseRepository->rollback(__METHOD__);
+
+                $this->flashMessage('Could not truncate database. Reason: ' . $e->getMessage(), 'error', 10);
+            }
+
+            $this->redirect($this->createURL('list'));
+        } else {
+            $entryId = $this->httpRequest->get('entryId');
+
+            $container = $this->app->containerManager->getContainerById($this->containerId);
+
+            if($container->getDefaultDatabase()->getId() == $entryId) {
+                $this->flashMessage('Could not truncate system database. Only custom databases can be truncated.', 'error', 10);
+
+                $this->redirect($this->createURL('list'));
+            }
+        }
+    }
+
+    public function renderTruncateDatabaseForm() {
+        $this->template->links = $this->createBackUrl('list');
+    }
+
+    protected function createComponentTruncateDatabaseForm(HttpRequest $request) {
+        $database = $this->app->containerDatabaseManager->getDatabaseByEntryId($request->get('entryId'));
+
+        $form = $this->componentFactory->getFormBuilder();
+
+        $form->setAction($this->createURL('truncateDatabaseForm', ['entryId' => $database->getId()]));
+
+        $form->addLabel('lbl_requirement1', 'Type in database title: \'' . $database->getTitle() . '\'.');
+        $form->addTextInput('title', 'Title:')
+            ->setRequired();
+
+        $form->addPasswordInput('password', 'Your password:')
+            ->setRequired();
+
+        $form->addSubmit('Truncate');
+
+        return $form;
     }
 
     public function handleDropDatabaseForm(?FormRequest $fr = null) {
@@ -79,7 +139,15 @@ class DbAdminPresenter extends AAdminPresenter {
             try {
                 $this->app->containerDatabaseRepository->beginTransaction(__METHOD__);
 
+                $this->app->userAuth->authUser($fr->password);
                 
+                $database = $this->app->containerDatabaseManager->getDatabaseByEntryId($this->httpRequest->get('entryId'));
+
+                if($fr->title != $database->getTitle()) {
+                    throw new GeneralException('Database titles do no match.');
+                }
+
+                $this->app->containerDatabaseManager->dropDatabaseByEntryId($this->httpRequest->get('entryId'));
 
                 $this->app->containerDatabaseRepository->commit($this->getUserId(), __METHOD__);
 
@@ -87,10 +155,20 @@ class DbAdminPresenter extends AAdminPresenter {
             } catch(AException $e) {
                 $this->app->containerDatabaseRepository->rollback(__METHOD__);
 
-                $this->flashMessage('Could not drop database. Reason: ' . $e->getMessage(), 'error');
+                $this->flashMessage('Could not drop database. Reason: ' . $e->getMessage(), 'error', 10);
             }
 
             $this->redirect($this->createURL('list'));
+        } else {
+            $entryId = $this->httpRequest->get('entryId');
+
+            $container = $this->app->containerManager->getContainerById($this->containerId);
+
+            if($container->getDefaultDatabase()->getId() == $entryId) {
+                $this->flashMessage('Could not drop system database. Only custom databases can be dropped.', 'error', 10);
+
+                $this->redirect($this->createURL('list'));
+            }
         }
     }
 
@@ -99,8 +177,7 @@ class DbAdminPresenter extends AAdminPresenter {
     }
 
     protected function createComponentDropDatabaseForm(HttpRequest $request) {
-        $database = $this->app->containerDatabaseRepository->getDatabaseByEntryId($request->get('entryId'));
-        $database = ContainerDatabaseEntity::createEntityFromDbRow($database);
+        $database = $this->app->containerDatabaseManager->getDatabaseByEntryId($request->get('entryId'));
 
         $form = $this->componentFactory->getFormBuilder();
 
@@ -118,20 +195,12 @@ class DbAdminPresenter extends AAdminPresenter {
         return $form;
     }
 
-    public function handleDeleteDatabaseForm() {
-        // todo: implement confirmation form
-    }
-
     public function handleNewDatabaseForm(?FormRequest $fr = null) {
         if($fr !== null) {
             try {
                 $this->app->containerDatabaseRepository->beginTransaction(__METHOD__);
 
-                $entryId = $this->app->entityManager->generateEntityId(EntityManager::CONTAINER_DATABASES);
-
-                if(!$this->app->containerDatabaseRepository->insertNewContainerDatabase($entryId, $this->containerId, $fr->name, $fr->title, $fr->description)) {
-                    throw new GeneralException('Database error.');
-                }
+                $this->app->containerDatabaseManager->insertNewContainerDatabase($this->containerId, $fr->name, $fr->title, $fr->description);
 
                 $this->app->containerDatabaseRepository->commit($this->getUserId(), __METHOD__);
 
@@ -139,7 +208,7 @@ class DbAdminPresenter extends AAdminPresenter {
             } catch(AException $e) {
                 $this->app->containerDatabaseRepository->rollback(__METHOD__);
 
-                $this->flashMessage('Could not create database. Reason: ' . $e->getMessage(), 'error');
+                $this->flashMessage('Could not create database. Reason: ' . $e->getMessage(), 'error', 10);
             }
 
             $this->redirect($this->createURL('list'));

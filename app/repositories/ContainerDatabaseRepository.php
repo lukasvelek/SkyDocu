@@ -55,6 +55,22 @@ class ContainerDatabaseRepository extends ARepository {
 
         return $qb->fetch();
     }
+
+    /**
+     * Deletes a container database
+     * 
+     * @param string $entryId Entry ID
+     */
+    public function deleteContainerDatabase(string $entryId): bool {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->delete()
+            ->from('container_databases')
+            ->where('entryId = ?', [$entryId])
+            ->execute();
+
+        return $qb->fetchBool();
+    }
 }
 
 ?>

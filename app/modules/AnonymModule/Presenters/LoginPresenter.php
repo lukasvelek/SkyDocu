@@ -58,7 +58,7 @@ class LoginPresenter extends AAnonymPresenter {
             if($group->containerId !== null) {
                 $container = $this->app->containerManager->getContainerById($group->containerId);
 
-                if($container->status == ContainerStatus::NEW || $container->status == ContainerStatus::IS_BEING_CREATED || $container->status == ContainerStatus::NOT_RUNNING) {
+                if($container->getStatus() == ContainerStatus::NEW || $container->getStatus() == ContainerStatus::IS_BEING_CREATED || $container->getStatus() == ContainerStatus::NOT_RUNNING) {
                     continue;
                 }
 
@@ -129,7 +129,7 @@ class LoginPresenter extends AAnonymPresenter {
             if($group->containerId !== null) {
                 $container = $this->app->containerManager->getContainerById($group->containerId);
 
-                if($container->status == ContainerStatus::NEW || $container->status == ContainerStatus::IS_BEING_CREATED || $container->status == ContainerStatus::NOT_RUNNING) {
+                if($container->getStatus() == ContainerStatus::NEW || $container->getStatus() == ContainerStatus::IS_BEING_CREATED || $container->getStatus() == ContainerStatus::NOT_RUNNING) {
                     continue;
                 }
             }
@@ -142,7 +142,7 @@ class LoginPresenter extends AAnonymPresenter {
 
                 array_unshift($containers, $c);
             } else if(str_ends_with($group->title, ' - users')) {
-                $environment = ContainerEnvironments::toString($container->environment) ?? '-';
+                $environment = ContainerEnvironments::toString($container->getEnvironment()) ?? '-';
                 $title = substr($group->title, 0, (strlen($group->title) - 8)) . ' (' . $environment . ')';
 
                 $c = [

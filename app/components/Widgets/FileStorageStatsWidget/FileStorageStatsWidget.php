@@ -87,7 +87,7 @@ class FileStorageStatsWidget extends Widget {
 
         $storedFiles = 0;
         foreach($containers as $containerId => $container) {
-            $conn = $this->dbManager->getConnectionToDatabase($container->databaseName);
+            $conn = $this->dbManager->getConnectionToDatabase($container->getDefaultDatabase()->getName());
 
             $fileStorageRepository = new FileStorageRepository($conn, $this->logger);
 
@@ -116,7 +116,7 @@ class FileStorageStatsWidget extends Widget {
 
         $storedFiles = 0;
         foreach($containers as $containerId => $container) {
-            $conn = $this->dbManager->getConnectionToDatabase($container->databaseName);
+            $conn = $this->dbManager->getConnectionToDatabase($container->getDefaultDatabase()->getName());
 
             $fileStorageRepository = new FileStorageRepository($conn, $this->logger);
 
@@ -141,7 +141,7 @@ class FileStorageStatsWidget extends Widget {
 
         $filesize = 0;
         foreach($containers as $containerId => $container) {
-            $conn = $this->dbManager->getConnectionToDatabase($container->databaseName);
+            $conn = $this->dbManager->getConnectionToDatabase($container->getDefaultDatabase()->getName());
 
             $fileStorageRepository = new FileStorageRepository($conn, $this->logger);
 
@@ -158,6 +158,8 @@ class FileStorageStatsWidget extends Widget {
 
     /**
      * Returns an array with all containers
+     * 
+     * @return array<string, \App\Entities\ContainerEntity>
      */
     private function getAllContainers(): array {
         $qb = $this->containerManager->containerRepository->composeQueryForContainers();

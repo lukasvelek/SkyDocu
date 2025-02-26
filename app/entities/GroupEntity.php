@@ -31,7 +31,7 @@ class GroupEntity extends AEntity {
         return $this->dateCreated;
     }
 
-    public static function createEntityFromDbRow(mixed $row) {
+    public static function createEntityFromDbRow(mixed $row): static {
         $row = self::createRow($row);
 
         return new self($row->groupId, $row->title, $row->containerId, $row->dateCreated);

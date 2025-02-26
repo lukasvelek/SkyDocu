@@ -21,6 +21,24 @@ class ContainerDatabaseRepository extends ARepository {
 
         return $qb;
     }
+
+    /**
+     * Inserts a new container database
+     * 
+     * @param string $entryId Entry ID
+     * @param string $containerId Container ID
+     * @param string $databaseName Database name
+     * @param bool $isDefault Is the database default
+     */
+    public function insertNewContainerDatabase(string $entryId, string $containerId, string $databaseName, bool $isDefault = false): bool {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->insert('container_databases', ['entryId', 'containerId', 'name', 'isDefault'])
+            ->values([$entryId, $containerId, $databaseName, $isDefault])
+            ->execute();
+
+        return $qb->fetchBool();
+    }
 }
 
 ?>

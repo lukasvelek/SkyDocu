@@ -152,7 +152,7 @@ class GroupsPresenter extends AAdminPresenter {
     protected function createComponentNewMemberForm(HttpRequest $request) {
         $container = $this->app->containerManager->getContainerById($this->httpSessionGet('container'));
 
-        $containerUsers = $this->app->groupManager->getGroupUsersForGroupTitle($container->title . ' - users');
+        $containerUsers = $this->app->groupManager->getGroupUsersForGroupTitle($container->getTitle() . ' - users');
         $groupUsers = $this->groupRepository->getMembersForGroup($request->get('groupId'));
 
         $users = [];

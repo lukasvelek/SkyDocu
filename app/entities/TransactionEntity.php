@@ -31,7 +31,7 @@ class TransactionEntity extends AEntity {
         return $this->dateCreated;
     }
 
-    public static function createEntityFromDbRow(mixed $row) {
+    public static function createEntityFromDbRow(mixed $row): static {
         if($row === null) {
             return null;
         }

@@ -5,6 +5,7 @@ namespace App\Managers\Container;
 use App\Constants\Container\CustomMetadataTypes;
 use App\Core\Datatypes\ArrayList;
 use App\Core\DB\DatabaseRow;
+use App\Entities\ContainerEntity;
 use App\Enums\AEnumForMetadata;
 use App\Enums\InvoiceCompaniesEnum;
 use App\Enums\InvoiceSumCurrencyEnum;
@@ -23,7 +24,7 @@ use App\Repositories\UserRepository;
 class EnumManager extends AManager {
     private UserRepository $userRepository;
     private GroupManager $groupManager;
-    private DatabaseRow $container;
+    private ContainerEntity $container;
     public StandaloneProcessManager $standaloneProcessManager;
 
     /**
@@ -33,14 +34,14 @@ class EnumManager extends AManager {
      * @param EntityManager $entityManager EntityManager instance
      * @param UserRepository $userRepository UserRepository instance
      * @param GroupManager $groupManager GroupManager instance
-     * @param DatabaseRow $container Container DB row
+     * @param ContainerEntity $container Container DB row
      */
     public function __construct(
         Logger $logger,
         EntityManager $entityManager,
         UserRepository $userRepository,
         GroupManager $groupManager,
-        DatabaseRow $container
+        ContainerEntity $container
     ) {
         parent::__construct($logger, $entityManager);
 

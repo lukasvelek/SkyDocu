@@ -14,8 +14,8 @@ class HomePresenter extends AUserPresenter {
     public function handleDashboard() {
         $container = $this->app->containerManager->getContainerById($this->containerId);
 
-        if($container->permanentFlashMessage !== null) {
-            $code = $this->createFlashMessage('info', $container->permanentFlashMessage, 0, false, true);
+        if($container->getPermanentFlashMessage() !== null) {
+            $code = $this->createFlashMessage('info', $container->getPermanentFlashMessage(), 0, false, true);
             $this->saveToPresenterCache('permanentFlashMessage', $code);
         } else {
             $this->saveToPresenterCache('permanentFlashMessage', '');

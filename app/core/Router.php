@@ -87,8 +87,9 @@ class Router {
 
             $handleActionName = 'handle' . ucfirst($actionName);
             $renderActionName = 'render' . ucfirst($actionName);
+            $actionActionName = 'action' . ucfirst($actionName);
 
-            if(!method_exists($presenter, $handleActionName) && !method_exists($presenter, $renderActionName)) {
+            if(!method_exists($presenter, $handleActionName) && !method_exists($presenter, $renderActionName) && !method_exists($presenter, $actionActionName)) {
                 throw new RouterException(sprintf('Page \'%s:%s\' does not exist.', $presenterName, $actionName));
             }
         } catch(AException|Exception $e) {

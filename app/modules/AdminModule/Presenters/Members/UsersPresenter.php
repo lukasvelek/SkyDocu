@@ -63,7 +63,7 @@ class UsersPresenter extends AAdminPresenter {
                 $containerId = $this->httpSessionGet('container');
                 $container = $this->app->containerManager->getContainerById($containerId);
 
-                $masterTableName = $container->title . ' - users';
+                $masterTableName = $container->getTitle() . ' - users';
                 $group = $this->app->groupManager->getGroupByTitle($masterTableName);
 
                 $this->app->groupManager->addUserToGroup($userId, $group->groupId);

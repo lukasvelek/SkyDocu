@@ -71,7 +71,7 @@ class RegistrationInvitePresenter extends AAnonymPresenter {
                 $this->redirect($this->createFullURL('Anonym:Home', 'default', $params));
             }
 
-            $this->containerId = $container->containerId;
+            $this->containerId = $container->getId();
 
             $this->addScript('
                 $("#password").on("change", function() {

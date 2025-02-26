@@ -88,7 +88,7 @@ abstract class AContainerPresenter extends APresenter {
 
         $containerId = $this->httpSessionGet('container');
         $container = $this->app->containerManager->getContainerById($containerId);
-        $containerConnection = $this->app->dbManager->getConnectionToDatabase($container->databaseName);
+        $containerConnection = $this->app->dbManager->getConnectionToDatabase($container->getDefaultDatabase()->getName());
 
         $this->containerId = $containerId;
 

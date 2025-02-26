@@ -16,6 +16,11 @@ use App\Managers\UserAbsenceManager;
 use App\Managers\UserSubstituteManager;
 use App\Repositories\Container\ProcessRepository;
 
+/**
+ * ProcessManager is responsible for managing processes
+ * 
+ * @author Lukas Velek
+ */
 class ProcessManager extends AManager {
     public ProcessRepository $processRepository;
     private GroupManager $groupManager;
@@ -24,6 +29,16 @@ class ProcessManager extends AManager {
 
     private array $mProcessesCache;
     
+    /**
+     * Class constructor
+     * 
+     * @param Logger $logger
+     * @param EntityManager $entityManager
+     * @param ProcessRepository $processRepository
+     * @param GroupManager $groupManager
+     * @param UserSubstituteManager $userSubstituteManager
+     * @param UserAbsenceManager $userAbsenceManager
+     */
     public function __construct(
         Logger $logger,
         EntityManager $entityManager,
@@ -42,7 +57,17 @@ class ProcessManager extends AManager {
         $this->mProcessesCache = [];
     }
 
-    public function startProcess(?string $documentId, string $type, string $userId, string $currentOfficerId, array $workflowUserIds) {
+    /**
+     * Starts given process
+     * 
+     * @param ?string $documentId Document ID or null
+     * @param string $type Proces type
+     * @param string $userId Process author user ID
+     * @param string $currentOfficerUserId Process current officer user ID
+     * @param array $workflowUserIds Array of user IDs that are in the workflow
+     * @return string Process ID
+     */
+    public function startProcess(?string $documentId, string $type, string $userId, string $currentOfficerId, array $workflowUserIds): string {
         $processId = $this->createId(EntityManager::C_PROCESSES);
 
         if($processId === null) {
@@ -77,6 +102,12 @@ class ProcessManager extends AManager {
         return $processId;
     }
 
+    /**
+     * Moves the process to the previous workflow user
+     * 
+     * @param string $processId Process ID
+     * @param string $userId User ID
+     */
     public function previousWorkflowProcess(string $processId, string $userId) {
         $process = $this->getProcessById($processId);
 
@@ -114,6 +145,12 @@ class ProcessManager extends AManager {
         $this->insertProcessMetadataHistory($processId, $userId, ProcessesGridSystemMetadata::CURRENT_OFFICER_USER_ID, $process->currentOfficerUserId, $newOfficer);
     }
 
+    /**
+     * Moves the process to the next workflow user
+     * 
+     * @param string $processId Process ID
+     * @param string $userId User ID
+     */
     public function nextWorkflowProcess(string $processId, string $userId) {
         $process = $this->getProcessById($processId);
 
@@ -151,6 +188,13 @@ class ProcessManager extends AManager {
         $this->insertProcessMetadataHistory($processId, $userId, ProcessesGridSystemMetadata::CURRENT_OFFICER_USER_ID, $process->currentOfficerUserId, $newOfficer);
     }
 
+    /**
+     * Cancels given process
+     * 
+     * @param string $processId Process ID
+     * @param string $reason Reason of process canceling
+     * @param string $userId User ID
+     */
     public function cancelProcess(string $processId, string $reason, string $userId) {
         $process = $this->getProcessById($processId);
 
@@ -166,6 +210,12 @@ class ProcessManager extends AManager {
         $this->insertProcessMetadataHistory($processId, $userId, ProcessesGridSystemMetadata::STATUS, $process->status, ProcessStatus::CANCELED);
     }
 
+    /**
+     * Finishes given process
+     * 
+     * @param string $processId Process ID
+     * @param string $userId User ID
+     */
     public function finishProcess(string $processId, string $userId) {
         $process = $this->getProcessById($processId);
         
@@ -183,13 +233,25 @@ class ProcessManager extends AManager {
         $this->insertProcessMetadataHistory($processId, $userId, ProcessesGridSystemMetadata::CURRENT_OFFICER_USER_ID, $process->currentOfficerUserId, null);
     }
 
-    public function isDocumentInProcess(string $documentId) {
+    /**
+     * Checks if given document is in a process
+     * 
+     * @param string $documentId Document ID
+     * @return bool True if document is in a process or false if not
+     */
+    public function isDocumentInProcess(string $documentId): bool {
         $processes = $this->processRepository->getProcessesForDocument($documentId);
 
         return !empty($processes);
     }
 
-    public function areDocumentsInProcesses(array $documentIds) {
+    /**
+     * Checks if given documents are in processes. Returns array of all document IDs that are in processes.
+     * 
+     * @param array $documentIds Array of document IDs
+     * @return array Array of document IDs that are in processes
+     */
+    public function areDocumentsInProcesses(array $documentIds): array {
         $tmp = $this->processRepository->getActiveProcessCountForDocuments($documentIds);
 
         $result = [];
@@ -202,6 +264,12 @@ class ProcessManager extends AManager {
         return $result;
     }
 
+    /**
+     * Returns process by its ID
+     * 
+     * @param string $processId Process ID
+     * @return DatabaseRow Process database row
+     */
     public function getProcessById(string $processId) {
         if(!array_key_exists($processId, $this->mProcessesCache)) {
             $row = $this->processRepository->getProcessById($processId);
@@ -218,7 +286,17 @@ class ProcessManager extends AManager {
         return $this->mProcessesCache[$processId];
     }
 
-    public function saveProcess(string $documentId, string $type, string $userId, string $currentOfficerId, array $workflowUserIds) {
+    /**
+     * Starts process and finishes it right after
+     * 
+     * @param string $documentId Document ID
+     * @param string $type Process type
+     * @param string $userId User ID
+     * @param string $currentOfficerUserId Current officer user ID
+     * @param array $workflowUserIds Array of user IDs that are in the process workflow
+     * @return bool True on success or false on failure
+     */
+    public function saveProcess(string $documentId, string $type, string $userId, string $currentOfficerId, array $workflowUserIds): bool {
         $result = true;
 
         try {
@@ -268,6 +346,15 @@ class ProcessManager extends AManager {
         }
     }
 
+    /**
+     * Inserts process metadata history entry
+     * 
+     * @param string $processId Process ID
+     * @param string $userId User ID
+     * @param string $metadataName Metadata name
+     * @param mixed $oldValue Old metadata value
+     * @param mixed $newValue New metadata value
+     */
     public function insertProcessMetadataHistory(string $processId, string $userId, string $metadataName, mixed $oldValue, mixed $newValue) {
         $entryId = $this->createId(EntityManager::C_PROCESS_METADATA_HISTORY);
 
@@ -293,6 +380,11 @@ class ProcessManager extends AManager {
         }
     }
 
+    /**
+     * Deletes given process type
+     * 
+     * @param string $typeKey Type key
+     */
     public function deleteProcessType(string $typeKey) {
         $qb = $this->processRepository->commonComposeQuery(false);
         $qb->andWhere('type = ?', [$typeKey])
@@ -320,6 +412,14 @@ class ProcessManager extends AManager {
         }
     }
 
+    /**
+     * Inserts new process type
+     * 
+     * @param string $typeKey Type key
+     * @param string $title GUI title
+     * @param string $description Description
+     * @param bool $enabled True if enabled
+     */
     public function insertNewProcessType(string $typeKey, string $title, string $description, bool $enabled = true) {
         $typeId = $this->createId(EntityManager::C_PROCESS_TYPES);
 

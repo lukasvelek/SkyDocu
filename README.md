@@ -46,6 +46,7 @@ Future plans include:
     - Download files
     - File storage overview
 - Process profile page design update
+- In-application versioning update
 
 ### 1.2 (January 27th, 2025)
 - Code readability update

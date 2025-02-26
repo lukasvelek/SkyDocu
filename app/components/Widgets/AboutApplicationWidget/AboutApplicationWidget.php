@@ -70,7 +70,7 @@ class AboutApplicationWidget extends Widget {
      */
     private function processData() {
         $data = [
-            'Application version' => Application::APP_VERSION,
+            'Application version' => APP_VERSION,
             'Version release date' => $this->getAppVersionReleaseDate()
         ];
 
@@ -90,11 +90,11 @@ class AboutApplicationWidget extends Widget {
      * @return string Link
      */
     private function getAppVersionReleaseDate(): string {
-        if(Application::APP_VERSION_RELEASE_DATE == '-') {
+        if(APP_VERSION_RELEASE_DATE == '-') {
             // not released yet
-            return '<span title="This version has not been released yet.">' . Application::APP_VERSION_RELEASE_DATE . '</span>';
+            return '<span title="This version has not been released yet.">' . APP_VERSION_RELEASE_DATE . '</span>';
         } else {
-            return Application::APP_VERSION_RELEASE_DATE;
+            return APP_VERSION_RELEASE_DATE;
         }
     }
 

@@ -258,13 +258,19 @@ class ProcessesPresenter extends AUserPresenter {
 
                 $author = $this->app->userManager->getUserById($row->userId);
 
+                $deleteLink = LinkBuilder::createSimpleLink('Delete', $this->createURL('deleteComment', ['commentId' => $row->commentId, 'processId' => $processId]), 'link');
+
+                if($author->getId() != $this->getUserId()) {
+                    $deleteLink = '';
+                }
+
                 $commentList[] = '
                     <hr>
                     <div class="row" id="process-comment-' . $row->commentId . '">
                         <div class="col-md">
                             <p style="font-size: 19px">' . $row->description . '</p>
-                            <p>Author: ' . $author->getFullname() . '</p>
-                            <p>Date posted: ' . DateTimeFormatHelper::formatDateToUserFriendly($row->dateCreated) . '</p>
+                            <p>Author: ' . $author->getFullname() . ' | Date posted: <span title="' . $row->dateCreated . '">' . DateTimeFormatHelper::formatDateToUserFriendly($row->dateCreated) . '</span></p>
+                            ' . $deleteLink . '
                         </div>
                     </div>
                 ';
@@ -283,6 +289,27 @@ class ProcessesPresenter extends AUserPresenter {
         $this->template->process_actions = $this->loadFromPresenterCache('process_actions');
         $this->template->links = $this->loadFromPresenterCache('links');
         $this->template->process_comments = $this->loadFromPresenterCache('comments');
+    }
+
+    public function handleDeleteComment() {
+        $processId = $this->httpRequest->get('processId');
+        $commentId = $this->httpRequest->get('commentId');
+
+        try {
+            $this->processRepository->beginTransaction(__METHOD__);
+
+            $this->processManager->deleteProcessComment($processId, $commentId);
+
+            $this->processRepository->commit($this->getUserId(), __METHOD__);
+
+            $this->flashMessage('Comment deleted.', 'success');
+        } catch(AException $e) {
+            $this->processRepository->rollback(__METHOD__);
+
+            $this->flashMessage('Could not delete comment. Reason: ' . $e->getMessage(), 'error');
+        }
+
+        $this->redirect($this->createURL('profile', ['processId' => $processId]));
     }
 
     protected function createComponentNewCommentForm(HttpRequest $request) {

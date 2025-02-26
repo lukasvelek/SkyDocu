@@ -327,6 +327,17 @@ class ProcessRepository extends ARepository {
 
         return $qb;
     }
+
+    public function deleteProcessCommentById(string $commentId) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->delete()
+            ->from('process_comments')
+            ->where('commentId = ?', [$commentId])
+            ->execute();
+
+        return $qb->fetchBool();
+    }
 }
 
 ?>

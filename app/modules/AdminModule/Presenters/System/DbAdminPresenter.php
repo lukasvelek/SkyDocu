@@ -70,6 +70,24 @@ class DbAdminPresenter extends AAdminPresenter {
             return $el;
         };
 
+        $tables = $grid->addAction('tables');
+        $tables->setTitle('Tables');
+        $tables->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) {
+            if(APP_BRANCH == 'TEST') {
+                return true;
+            } else {
+                return ($row->isDefault == 0);
+            }
+        };
+        $tables->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
+            $el = HTML::el('a')
+                ->class('grid-link')
+                ->href($this->createURLString('tableList', ['entryId' => $primaryKey]))
+                ->text('Tables');
+
+            return $el;
+        };
+
         return $grid;
     }
 
@@ -239,6 +257,14 @@ class DbAdminPresenter extends AAdminPresenter {
         $form->addSubmit('Create');
 
         return $form;
+    }
+
+    public function renderTableList() {}
+
+    protected function createComponentDatabaseTablesGrid(HttpRequest $request) {
+        $list = $this->componentFactory->getListBuilder();
+
+        return $list;
     }
 }
 

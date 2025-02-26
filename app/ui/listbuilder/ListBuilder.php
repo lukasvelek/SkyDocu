@@ -1,0 +1,83 @@
+<?php
+
+namespace App\UI\ListBuilder;
+
+use App\Core\Http\HttpRequest;
+use App\UI\AComponent;
+
+/**
+ * ListBuilder allows building lists
+ * 
+ * @author Lukas Velek
+ */
+class ListBuilder extends AComponent {
+    private array $dataSource;
+    private string $listName;
+    private ListBuilderHelper $helper;
+
+    /**
+     * Class constructor
+     */
+    public function __construct(HttpRequest $request) {
+        parent::__construct($request);
+
+        $this->helper = new ListBuilderHelper();
+
+        $this->dataSource = [];
+        $this->listName = 'MyList';
+    }
+
+    /**
+     * Sets list name
+     * 
+     * @param string $listName
+     */
+    public function setListName(string $listName) {
+        $this->listName = $listName;
+    }
+
+    /**
+     * Sets data source for the list
+     * 
+     * @param array $dataSource
+     */
+    public function setDataSource(array $dataSource) {
+        $this->dataSource = $dataSource;
+    }
+
+    /**
+     * Adds general column
+     * 
+     * @param string $name Column name
+     * @param ?string $label Column label
+     */
+    public function addColumnText(string $name, ?string $label = null) {
+        return $this->helper->addColumn($name, $label, ListColumnTypes::COL_TYPE_TEXT);
+    }
+
+    public function addColumnBoolean(string $name, ?string $label = null) {
+        return $this->helper->addColumn($name, $label, ListColumnTypes::COL_TYPE_BOOLEAN);
+    }
+
+    public function addColumnDatetime(string $name, ?string $label = null) {
+        return $this->helper->addColumn($name, $label, ListColumnTypes::COL_TYPE_DATETIME);
+    }
+
+    public function addColumnConst(string $name, ?string $label = null, string $constClass = '') {
+        return $this->helper->addColumn($name, $label, ListColumnTypes::COL_TYPE_CONST, $constClass);
+    }
+
+    public function prerender() {
+        parent::prerender();
+        
+        $this->helper->setDataSource($this->dataSource);
+    }
+
+    public function render() {
+        return $this->helper->render();
+    }
+
+    public static function createFromComponent(AComponent $component) {}
+}
+
+?>

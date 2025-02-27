@@ -1,24 +1,24 @@
 <?php
 
-namespace App\UI\GridBuilder2;
+namespace App\UI\ListBuilder;
 
 use App\UI\HTML\HTML;
 
 /**
- * Class that represents the grid table
+ * Class that represents the list table
  * 
  * @author Lukas Velek
  */
-class Table extends AElement {
+class ListTable extends AListElement {
     /**
-     * @var array<Row> $rows
+     * @var array<int, ListRow> $rows
      */
     private array $rows;
 
     /**
      * Class constructor
      * 
-     * @param array $rows Grid rows
+     * @param array $rows List rows
      */
     public function __construct(array $rows) {
         parent::__construct();
@@ -35,7 +35,7 @@ class Table extends AElement {
     }
 
     /**
-     * Renders the grid content to HTML code
+     * Renders the list content to HTML code
      * 
      * @return string HTML code
      */
@@ -44,16 +44,16 @@ class Table extends AElement {
 
         $first = true;
         foreach($this->rows as $row) {
-            $cRow = clone $row;
-            
+            $_row = clone $row;
+
             if($first) {
-                $content .= '<thead>' . $cRow->output()->toString() . '</thead>';
+                $content .= '<thead>' . $_row->output()->toString() . '</thead>';
                 $first = false;
                 $content .= '<tbody>';
                 continue;
             }
-            
-            $content .= $cRow->output()->toString();
+
+            $content = $_row->output()->toString();
         }
         $content .= '</tbody>';
 

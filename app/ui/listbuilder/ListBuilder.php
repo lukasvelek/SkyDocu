@@ -51,25 +51,47 @@ class ListBuilder extends AComponent {
      * @param string $name Column name
      * @param ?string $label Column label
      */
-    public function addColumnText(string $name, ?string $label = null) {
+    public function addColumnText(string $name, ?string $label = null): ListColumn {
         return $this->helper->addColumn($name, $label, ListColumnTypes::COL_TYPE_TEXT);
     }
 
-    public function addColumnBoolean(string $name, ?string $label = null) {
+    /**
+     * Adds boolean column
+     * 
+     * @param string $name Column name
+     * @param ?string $label Column label
+     */
+    public function addColumnBoolean(string $name, ?string $label = null): ListColumn {
         return $this->helper->addColumn($name, $label, ListColumnTypes::COL_TYPE_BOOLEAN);
     }
 
-    public function addColumnDatetime(string $name, ?string $label = null) {
+    /**
+     * Adds datetime column
+     * 
+     * @param string $name Column name
+     * @param ?string $label Column label
+     */
+    public function addColumnDatetime(string $name, ?string $label = null): ListColumn {
         return $this->helper->addColumn($name, $label, ListColumnTypes::COL_TYPE_DATETIME);
     }
 
-    public function addColumnConst(string $name, ?string $label = null, string $constClass = '') {
+    /**
+     * Adds constant column
+     * 
+     * @param string $name Column name
+     * @param ?string $label Column label
+     */
+    public function addColumnConst(string $name, ?string $label = null, string $constClass = ''): ListColumn{
         return $this->helper->addColumn($name, $label, ListColumnTypes::COL_TYPE_CONST, $constClass);
+    }
+
+    public function addAction(string $name): ListAction {
+        return $this->helper->addAction($name);
     }
 
     public function prerender() {
         parent::prerender();
-        
+
         $this->helper->setDataSource($this->dataSource);
     }
 

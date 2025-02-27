@@ -23,6 +23,7 @@ Future plans include:
     - Database management
     - Database table scheme browser
     - Database table data browser
+- Moving documents between folders
 
 ### 1.3.1 (February 26th, 2025)
 - About application widget update

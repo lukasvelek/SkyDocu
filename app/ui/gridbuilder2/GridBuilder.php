@@ -47,7 +47,7 @@ class GridBuilder extends AComponent {
     private int $gridPage;
     private ?int $totalCount;
     private GridHelper $gridHelper;
-    private string $gridName;
+    protected string $gridName;
     private bool $isPrerendered;
 
     /**

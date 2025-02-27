@@ -856,11 +856,7 @@ class GridBuilderHelper {
                 }
             }
 
-            if(!array_key_exists('isComponent', $checkboxHandler)) {
-                $arb->setAction($checkboxHandler['presenter'], $checkboxHandler['action']);
-            } else {
-                $arb->setComponentAction($checkboxHandler['presenter'], $this->componentName . '-' . $checkboxHandler['action']);
-            }
+            $arb->setComponentAction($checkboxHandler['presenter'], $this->componentName . '-' . $checkboxHandler['action']);
 
             $arb->setMethod()
                 ->setHeader($headerParams)

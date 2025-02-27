@@ -76,7 +76,7 @@ class UserEntity extends AEntity {
         return $this->isTechnical;
     }
 
-    public static function createEntityFromDbRow(mixed $row) {
+    public static function createEntityFromDbRow(mixed $row): static {
         if($row === null) {
             return null;
         }

@@ -9,12 +9,14 @@ namespace App\Core\DB;
  */
 class DatabaseRow {
     private array $values;
+    private mixed $originalRow;
 
     /**
      * Class constructor
      */
     public function __construct() {
         $this->values = [];
+        $this->originalRow = null;
     }
     
     /**
@@ -51,12 +53,21 @@ class DatabaseRow {
     }
 
     /**
+     * Returns the original raw database row
+     */
+    public function getOriginalRow() {
+        return $this->originalRow;
+    }
+
+    /**
      * Creates a DatabaseRow instance from mysqli_result $row
      * 
      * @param mixed $row mysqli_result row
      */
     public static function createFromDbRow($row) {
         $obj = new self();
+
+        $obj->originalRow = $row;
 
         foreach($row as $k => $v) {
             $obj->$k = $v;

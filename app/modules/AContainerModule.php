@@ -24,7 +24,7 @@ abstract class AContainerModule extends AModule {
 
         $containerId = $this->httpSessionGet('container');
         $container = $this->app->containerManager->getContainerById($containerId);
-        $db = $this->app->dbManager->getConnectionToDatabase($container->databaseName);
+        $db = $this->app->dbManager->getConnectionToDatabase($container->getDefaultDatabase()->getName());
 
         $contentRepository = new ContentRepository($db, $this->logger);
 

@@ -18,7 +18,7 @@ class HomePresenter extends AAdminPresenter {
         $containerId = $this->httpSessionGet('container');
         $container = $this->app->containerManager->getContainerById($containerId);
 
-        $groupUsers = $this->app->groupManager->getGroupUsersForGroupTitle($container->title . ' - users');
+        $groupUsers = $this->app->groupManager->getGroupUsersForGroupTitle($container->getTitle() . ' - users');
         $groupGeneralUsers = [];
         $groupTechnicalUsers = [];
         foreach($groupUsers as $userId) {
@@ -38,21 +38,21 @@ class HomePresenter extends AAdminPresenter {
 
         $form->addTextInput('containerTitle', 'Container title:')
             ->setDisabled()
-            ->setValue($container->title);
+            ->setValue($container->getTitle());
 
         $form->addTextInput('containerUserCount', 'Container users / technical users:')
             ->setDisabled()
             ->setValue(count($groupGeneralUsers) . ' / ' . count($groupTechnicalUsers));
 
-        if($container->canShowContainerReferent) {
-            $user = $this->app->userManager->getUserById($container->userId);
+        if($container->canShowContainerReferent()) {
+            $user = $this->app->userManager->getUserById($container->getUserId());
 
             $form->addTextInput('containerReferent', 'Container referent:')
                 ->setDisabled()
                 ->setValue($user->getFullname());
         }
 
-        $dateCreated = new DateTime(strtotime($container->dateCreated));
+        $dateCreated = new DateTime(strtotime($container->getDateCreated()));
 
         $form->addDateTimeInput('containerDateCreated', 'Date created:')
             ->setDisabled()
@@ -60,7 +60,7 @@ class HomePresenter extends AAdminPresenter {
 
         $form->addTextInput('containerEnvironment', 'Container environment:')
             ->setDisabled()
-            ->setValue(ContainerEnvironments::toString($container->environment));
+            ->setValue(ContainerEnvironments::toString($container->getEnvironment()));
 
         return $form;
     }

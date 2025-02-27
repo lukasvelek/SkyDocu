@@ -226,7 +226,7 @@ class Navbar extends AComponent {
                 if(str_contains($membership->title, ' - users')) {
                     $container = $this->app->containerManager->getContainerById($membership->containerId);
 
-                    if($container->status == ContainerStatus::RUNNING) {
+                    if($container->getStatus() == ContainerStatus::RUNNING) {
                         $count++;
                     }
                 } else if($membership->title == \App\Constants\SystemGroups::SUPERADMINISTRATORS) {
@@ -261,7 +261,7 @@ class Navbar extends AComponent {
                 if(str_contains($membership->title, ' - users')) {
                     $container = $this->app->containerManager->getContainerById($membership->containerId, true);
 
-                    if($container->status == ContainerStatus::RUNNING) {
+                    if($container->getStatus() == ContainerStatus::RUNNING) {
                         $count++;
                     }
                 } else if($membership->title == \App\Constants\SystemGroups::SUPERADMINISTRATORS) {

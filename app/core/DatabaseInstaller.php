@@ -41,12 +41,12 @@ class DatabaseInstaller {
     }
 
     /**
-     * Creates tables
+     * Returns generated table scheme
+     * 
+     * @return array
      */
-    private function createTables() {
-        $this->logger->info('Creating tables.', __METHOD__);
-
-        $tables = [
+    public static function getTableScheme(): array {
+        return [
             'users' => [
                 'userId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',
                 'username' => 'VARCHAR(256) NOT NULL',
@@ -81,6 +81,30 @@ class DatabaseInstaller {
                 'canShowContainerReferent' => 'INT(2) NOT NULL DEFAULT 1',
                 'permanentFlashMessage' => 'TEXT NULL',
                 'dbSchema' => 'INT(32) NOT NULL DEFAULT 0'
+            ],
+            'container_databases' => [
+                'entryId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',
+                'containerId' => 'VARCHAR(256) NOT NULL',
+                'name' => 'VARCHAR(256) NOT NULL',
+                'isDefault' => 'INT(2) NOT NULL DEFAULT 0',
+                'title' => 'VARCHAR(256) NOT NULL',
+                'description' => 'TEXT NOT NULL',
+            ],
+            'container_database_tables' => [
+                'entryId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',
+                'containerId' => 'VARCHAR(256) NOT NULL',
+                'databaseId' => 'VARCHAR(256) NOT NULL',
+                'name' => 'VARCHAR(256) NOT NULL',
+                'isCreated' => 'INT(2) NOT NULL DEFAULT 0'
+            ],
+            'container_database_table_columns' => [
+                'entryId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',
+                'containerId' => 'VARCHAR(256) NOT NULL',
+                'databaseId' => 'VARCHAR(256) NOT NULL',
+                'tableId' => 'VARCHAR(256) NOT NULL',
+                'name' => 'VARCHAR(256) NOT NULL',
+                'title' => 'VARCHAR(256) NOT NULL',
+                'definition' => 'VARCHAR(256) NOT NULL'
             ],
             'container_creation_status' => [
                 'statusId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',
@@ -155,6 +179,15 @@ class DatabaseInstaller {
                 'substituteUserId' => 'VARCHAR(256) NOT NULL'
             ]
         ];
+    }
+
+    /**
+     * Creates tables
+     */
+    private function createTables() {
+        $this->logger->info('Creating tables.', __METHOD__);
+
+        $tables = self::getTableScheme();
 
         $i = 0;
         foreach($tables as $name => $values) {

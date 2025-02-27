@@ -12,6 +12,7 @@ use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
 use App\Exceptions\ModuleDoesNotExistException;
 use App\Logger\Logger;
+use App\Managers\ContainerDatabaseManager;
 use App\Managers\ContainerInviteManager;
 use App\Managers\ContainerManager;
 use App\Managers\EntityManager;
@@ -20,6 +21,7 @@ use App\Managers\UserAbsenceManager;
 use App\Managers\UserManager;
 use App\Managers\UserSubstituteManager;
 use App\Modules\ModuleManager;
+use App\Repositories\ContainerDatabaseRepository;
 use App\Repositories\ContainerInviteRepository;
 use App\Repositories\ContainerRepository;
 use App\Repositories\ContentRepository;
@@ -73,6 +75,7 @@ class Application {
     public ContainerInviteRepository $containerInviteRepository;
     public UserAbsenceRepository $userAbsenceRepository;
     public UserSubstituteRepository $userSubstituteRepository;
+    public ContainerDatabaseRepository $containerDatabaseRepository;
 
     public ServiceManager $serviceManager;
     public UserManager $userManager;
@@ -82,6 +85,7 @@ class Application {
     public ContainerInviteManager $containerInviteManager;
     public UserAbsenceManager $userAbsenceManager;
     public UserSubstituteManager $userSubstituteManager;
+    public ContainerDatabaseManager $containerDatabaseManager;
 
     public array $repositories;
 
@@ -117,10 +121,11 @@ class Application {
         $this->serviceManager = new ServiceManager($this->systemServicesRepository, $this->userRepository, $this->entityManager);
         $this->userManager = new UserManager($this->logger, $this->userRepository, $this->entityManager);
         $this->groupManager = new GroupManager($this->logger, $this->entityManager, $this->groupRepository, $this->groupMembershipRepository);
-        $this->containerManager = new ContainerManager($this->logger, $this->entityManager, $this->containerRepository, $this->dbManager, $this->groupManager, $this->db);
+        $this->containerManager = new ContainerManager($this->logger, $this->entityManager, $this->containerRepository, $this->dbManager, $this->groupManager, $this->db, $this->containerDatabaseRepository);
         $this->containerInviteManager = new ContainerInviteManager($this->logger, $this->entityManager, $this->containerInviteRepository);
         $this->userAbsenceManager = new UserAbsenceManager($this->logger, $this->entityManager, $this->userAbsenceRepository);
         $this->userSubstituteManager = new UserSubstituteManager($this->logger, $this->entityManager, $this->userSubstituteRepository);
+        $this->containerDatabaseManager = new ContainerDatabaseManager($this->logger, $this->entityManager, $this->containerDatabaseRepository, $this->dbManager);
 
         $this->isAjaxRequest = false;
 

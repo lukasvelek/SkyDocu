@@ -19,7 +19,10 @@ Future plans include:
 
 ## Changelog
 ### 1.4 (?)
-
+- In-container multiple database support
+    - Database management
+    - Database table scheme browser
+    - Database table data browser
 
 ### 1.3.1 (February 26th, 2025)
 - About application widget update

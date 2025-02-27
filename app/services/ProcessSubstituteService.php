@@ -74,7 +74,7 @@ class ProcessSubstituteService extends AService {
         foreach($containers as $containerId) {
             $this->logInfo(sprintf('Starting processing container \'%s\'.', $containerId));
             $container = $this->containerManager->getContainerById($containerId);
-            $containerConnection = $this->dbManager->getConnectionToDatabase($container->databaseName);
+            $containerConnection = $this->dbManager->getConnectionToDatabase($container->getDefaultDatabase()->getName());
 
             $processRepository = new ProcessRepository($containerConnection, $this->logger);
 

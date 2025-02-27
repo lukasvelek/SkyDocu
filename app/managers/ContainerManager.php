@@ -13,12 +13,15 @@ use App\Core\DB\DatabaseManager;
 use App\Core\DB\DatabaseRow;
 use App\Core\FileManager;
 use App\Core\HashManager;
+use App\Entities\ContainerDatabaseEntity;
+use App\Entities\ContainerEntity;
 use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
 use App\Exceptions\NonExistingEntityException;
 use App\Helpers\ContainerCreationHelper;
 use App\Logger\Logger;
 use App\Repositories\Container\GroupRepository;
+use App\Repositories\ContainerDatabaseRepository;
 use App\Repositories\ContainerRepository;
 use App\Repositories\ContentRepository;
 use App\Repositories\UserRepository;
@@ -28,26 +31,42 @@ class ContainerManager extends AManager {
     private DatabaseManager $dbManager;
     private GroupManager $groupManager;
     private DatabaseConnection $masterConn;
+    private ContainerDatabaseRepository $containerDatabaseRepository;
 
-    public function __construct(Logger $logger, EntityManager $entityManager, ContainerRepository $containerRepository, DatabaseManager $dbManager, GroupManager $groupManager, DatabaseConnection $masterConn) {
+    public function __construct(Logger $logger, EntityManager $entityManager, ContainerRepository $containerRepository, DatabaseManager $dbManager, GroupManager $groupManager, DatabaseConnection $masterConn, ContainerDatabaseRepository $containerDatabaseRepository) {
         parent::__construct($logger, $entityManager);
 
         $this->containerRepository = $containerRepository;
         $this->dbManager = $dbManager;
         $this->groupManager = $groupManager;
         $this->masterConn = $masterConn;
+        $this->containerDatabaseRepository = $containerDatabaseRepository;
+    }
+
+    /**
+     * Returns generated database name for given containerId
+     * 
+     * @param string $containerId
+     */
+    public function generateContainerDatabaseName(string $containerId): string {
+        return 'sd_db_' . $containerId . '_' . HashManager::createHash(8, false);
     }
 
     public function createNewContainer(string $title, string $description, string $callingUserId, int $environment, bool $canShowReferent, int $status = ContainerStatus::NEW) {
         $containerId = $this->createId(EntityManager::CONTAINERS);
-        $databaseName = 'sd_db_' . $containerId . '_' . HashManager::createHash(8, false);
+        $databaseName = $this->generateContainerDatabaseName($containerId);
+
+        $containerDatabaseEntryId = $this->createId(EntityManager::CONTAINER_DATABASES);
+
+        if(!$this->containerDatabaseRepository->insertNewContainerDatabase($containerDatabaseEntryId, $containerId, $databaseName, 'SkyDocu Database', 'Default SkyDocu database', true)) {
+            throw new GeneralException('Database error.');
+        }
 
         $data = [
             'containerId' => $containerId,
             'userId' => $callingUserId,
             'title' => $title,
             'description' => $description,
-            'databaseName' => $databaseName,
             'environment' => $environment,
             'canShowContainerReferent' => ($canShowReferent ? 1 : 0),
             'status' => $status
@@ -76,36 +95,30 @@ class ContainerManager extends AManager {
     }
 
     public function createNewContainerAsync(string $containerId) {
-        $container = $this->containerRepository->getContainerById($containerId);
-
-        if($container === null || $container === false) {
-            throw new GeneralException('Container does not exist.');
-        }
-
-        $container = DatabaseRow::createFromDbRow($container);
+        $container = $this->getContainerById($containerId, true);
 
         try {
-            $this->dbManager->createNewDatabase($container->databaseName);
+            $this->dbManager->createNewDatabase($container->getDefaultDatabase()->getName());
 
-            $this->createNewContainerTables($container->databaseName);
-            $this->createContainerTablesIndexes($container->databaseName);
-            $this->updateContainerDbSchema($container->databaseName, $containerId);
+            $this->createNewContainerTables($container->getDefaultDatabase()->getName());
+            $this->createContainerTablesIndexes($container->getDefaultDatabase()->getName());
+            $this->updateContainerDbSchema($container->getDefaultDatabase()->getName(), $containerId);
             
             $exceptions = [];
-            $this->insertNewContainerDefaultDataAsync($containerId, $container, $container->databaseName, $exceptions);
+            $this->insertNewContainerDefaultDataAsync($containerId, $container, $container->getDefaultDatabase()->getName(), $exceptions);
         } catch(AException $e) {
             throw $e;
         }
     }
 
-    private function insertNewContainerDefaultDataAsync(string $containerId, DatabaseRow $container, string $dbName, array &$exceptions) {
+    private function insertNewContainerDefaultDataAsync(string $containerId, ContainerEntity $container, string $dbName, array &$exceptions) {
         try {
             $conn = $this->dbManager->getConnectionToDatabase($dbName);
         } catch(AException $e) {
             throw new GeneralException('Could not establish connection to the container database.');
         }
 
-        $users = $this->groupManager->getGroupUsersForGroupTitle($container->title . ' - users');
+        $users = $this->groupManager->getGroupUsersForGroupTitle($container->getTitle() . ' - users');
 
         $groupIds = [];
         foreach(SystemGroups::getAll() as $value => $text) {
@@ -466,7 +479,7 @@ class ContainerManager extends AManager {
 
         $container = $this->getContainerById($containerId);
 
-        if(!$this->containerRepository->createNewStatusHistoryEntry($historyId, $containerId, $callingUserId, $description, $container->status, $newStatus)) {
+        if(!$this->containerRepository->createNewStatusHistoryEntry($historyId, $containerId, $callingUserId, $description, $container->getStatus(), $newStatus)) {
             throw new GeneralException('Could not create new status history change entry.');
         }
 
@@ -494,7 +507,7 @@ class ContainerManager extends AManager {
         }
     }
 
-    public function getContainerById(string $containerId, bool $force = false) {
+    public function getContainerById(string $containerId, bool $force = false): ContainerEntity {
         $cache = $this->cacheFactory->getCache(CacheNames::CONTAINERS);
 
         $container = $cache->load($containerId, function() use ($containerId) {
@@ -504,10 +517,27 @@ class ContainerManager extends AManager {
         if($container === null) {
             throw new NonExistingEntityException('Entity does not exist.');
         }
-
-        $container = $this->containerRepository->getContainerById($containerId);
         
-        return DatabaseRow::createFromDbRow($container);
+        $containerEntity = ContainerEntity::createEntityFromDbRow($container);
+
+        $dbCache = $this->cacheFactory->getCache(CacheNames::CONTAINER_DATABASES);
+
+        $databases = $dbCache->load($containerId, function() use ($containerId) {
+            $qb = $this->containerDatabaseRepository->composeQueryForContainerDatabases();
+            $qb->andWhere('containerId = ?', [$containerId])
+                ->execute();
+
+            $entities = [];
+            while($row = $qb->fetchAssoc()) {
+                $entities[] = ContainerDatabaseEntity::createEntityFromDbRow($row);
+            }
+
+            return $entities;
+        });
+
+        $containerEntity->addContainerDatabases($databases);
+
+        return $containerEntity;
     }
 
     public function deleteContainer(string $containerId, bool $isRequest = false) {
@@ -516,13 +546,15 @@ class ContainerManager extends AManager {
         if(!$isRequest) {
             // Drop container database with all data
             try {
-                $this->dbManager->dropDatabase($container->databaseName);
+                foreach($container->getDatabases() as $database) {
+                    $this->dbManager->dropDatabase($database->getName());
+                }
             } catch(AException $e) {}
 
             // Remove group and memberships
             $group = null;
             try {
-                $group = $this->groupManager->getGroupByTitle($container->title . ' - users');
+                $group = $this->groupManager->getGroupByTitle($container->getTitle() . ' - users');
             } catch(AException $e) {}
 
             if($group !== null) {
@@ -552,7 +584,7 @@ class ContainerManager extends AManager {
     public function addUserToContainer(string $userId, string $containerId) {
         $container = $this->getContainerById($containerId);
 
-        $conn = $this->dbManager->getConnectionToDatabase($container->databaseName);
+        $conn = $this->dbManager->getConnectionToDatabase($container->getDefaultDatabase()->getName());
 
         $userRepository = new UserRepository($this->containerRepository->conn, $this->logger);
         $groupRepository = new GroupRepository($conn, $this->logger);
@@ -619,7 +651,7 @@ class ContainerManager extends AManager {
             throw new GeneralException('Could not queue container for background creation.');
         }
 
-        $this->groupManager->createNewGroup($container->title . ' - users', [$callingUserId], $containerId);
+        $this->groupManager->createNewGroup($container->getTitle() . ' - users', [$callingUserId], $containerId);
 
         if(!$this->cacheFactory->invalidateCacheByNamespace(CacheNames::GROUP_MEMBERSHIPS) ||
             !$this->cacheFactory->invalidateCacheByNamespace(CacheNames::USER_GROUP_MEMBERSHIPS) ||

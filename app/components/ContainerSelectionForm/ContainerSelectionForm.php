@@ -174,9 +174,7 @@ class ContainerSelectionForm extends FormBuilder2 {
             if($group->containerId !== null) {
                 $container = $this->app->containerManager->getContainerById($group->containerId);
 
-                if($container->status == ContainerStatus::NEW || $container->status == ContainerStatus::IS_BEING_CREATED || $container->status == ContainerStatus::NOT_RUNNING) {
-                    continue;
-                }
+                if(in_array($container->getStatus(), [ContainerStatus::NEW, ContainerStatus::IS_BEING_CREATED, ContainerStatus::NOT_RUNNING])) continue;
 
                 if($query !== null) {
                     if(!str_contains($group->title, $query) && !str_contains(strtolower($group->title), strtolower($query)) && ($group->title != 'superadministrators')) {
@@ -193,7 +191,7 @@ class ContainerSelectionForm extends FormBuilder2 {
 
                 array_unshift($containers, $c);
             } else {
-                $title = substr($group->title, 0, (strlen($group->title) - 8)) . ' (' . ContainerEnvironments::toString($container->environment) . ')';
+                $title = substr($group->title, 0, (strlen($group->title) - 8)) . ' (' . ContainerEnvironments::toString($container->getEnvironment()) . ')';
 
                 $c = [
                     'value' => $group->containerId,

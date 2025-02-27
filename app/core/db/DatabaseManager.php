@@ -8,6 +8,7 @@ use App\Exceptions\DatabaseExecutionException;
 use App\Logger\Logger;
 use Error;
 use Exception;
+use QueryBuilder\QueryBuilder;
 
 /**
  * DatabaseManager allows managing databases and database tables - e.g. enables manipulation with the structure.
@@ -75,6 +76,18 @@ class DatabaseManager {
         } catch(AException $e) {
             throw $e;
         }
+    }
+
+    /**
+     * Returns an instance of QueryBuilder with connection to different database
+     * 
+     * @param string $dbName Database name
+     * @param string $method Calling method
+     */
+    public function getQbWithConnectionToDifferentDatabase(string $dbName, string $method = __METHOD__): QueryBuilder {
+        $conn = $this->getConnectionToDatabase($dbName);
+
+        return new QueryBuilder($conn, $this->logger, $method);
     }
 
     /**

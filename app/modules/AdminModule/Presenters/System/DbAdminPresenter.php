@@ -339,6 +339,21 @@ class DbAdminPresenter extends AAdminPresenter {
 
                 return $el;
             };
+
+            $showData = $list->addAction('showData');
+            $showData->setTitle('Data');
+            $showData->onCanRender[] = function(ArrayRow $row, ListRow $_row, ListAction &$action) use ($entryId) {
+                return !$this->app->containerDatabaseManager->canContainerDatabaseTableBeCreated($this->containerId, $entryId, $row->entryId);
+            };
+            $showData->onRender[] = function(mixed $primaryKey, ArrayRow $row, ListRow $_row, HTML $html) use ($entryId) {
+                $el = HTML::el('a')
+                    ->class('grid-link')
+                    ->text('Data')
+                    ->href($this->createURLString('tableDataList', ['entryId' => $entryId, 'tableId' => $row->entryId, 'table' => $row->table]))
+                ;
+
+                return $el;
+            };
         }
         
         $scheme = $list->addAction('scheme');
@@ -365,7 +380,7 @@ class DbAdminPresenter extends AAdminPresenter {
         $table = $this->httpRequest->get('table');
         $database = $this->app->containerDatabaseManager->getDatabaseByEntryId($entryId);
 
-        $this->saveToPresenterCache('path', $database->getName() . ' > ' . $table);
+        $this->saveToPresenterCache('path', $database->getName() . ' > ' . $table . ' > Scheme');
 
         $links = [
             $this->createBackUrl('tableList', ['entryId' => $this->httpRequest->get('entryId')])
@@ -574,6 +589,62 @@ class DbAdminPresenter extends AAdminPresenter {
         }
 
         $this->redirect($this->createURL('tableList', ['entryId' => $entryId]));
+    }
+
+    public function handleTableDataList() {
+        $entryId = $this->httpRequest->get('entryId');
+        $table = $this->httpRequest->get('table');
+        $database = $this->app->containerDatabaseManager->getDatabaseByEntryId($entryId);
+
+        $this->saveToPresenterCache('path', $database->getName() . ' > ' . $table . ' > Data');
+    }
+
+    public function renderTableDataList() {
+        $this->template->links = $this->createBackUrl('tableList', ['entryId' => $this->httpRequest->get('entryId')]);
+        $this->template->path = $this->loadFromPresenterCache('path');
+    }
+
+    protected function createComponentTableDataGrid(HttpRequest $request) {
+        $entryId = $request->get('entryId');
+        $tableId = $request->get('tableId');
+        $table = $request->get('table');
+
+        $database = $this->app->containerDatabaseManager->getDatabaseByEntryId($entryId);
+
+        $columnsQb = $this->app->containerDatabaseRepository->composeQueryForContainerDatabaseTableColumns()
+            ->andWhere('tableId = ?', [$tableId])
+            ->andWhere('databaseId = ?', [$entryId])
+            ->execute();
+
+        $columns = [];
+        $primaryKey = null;
+        while($row = $columnsQb->fetchAssoc()) {
+            $row = DatabaseRow::createFromDbRow($row);
+
+            if($primaryKey === null) {
+                $primaryKey = $row->name;
+            }
+
+            $columns[$row->name] = $row->title;
+        }
+
+        $grid = $this->componentFactory->getGridBuilder($this->containerId);
+
+        $qb = $this->app->dbManager->getQbWithConnectionToDifferentDatabase($database->getName(), __METHOD__);
+
+        $qb->select(['*'])
+            ->from($table);
+
+        $grid->createDataSourceFromQueryBuilder($qb, $primaryKey);
+        $grid->addQueryDependency('entryId', $entryId);
+        $grid->addQueryDependency('tableId', $tableId);
+        $grid->addQueryDependency('table', $table);
+
+        foreach($columns as $name => $label) {
+            $grid->addColumnText($name, $label);
+        }
+
+        return $grid;
     }
 }
 

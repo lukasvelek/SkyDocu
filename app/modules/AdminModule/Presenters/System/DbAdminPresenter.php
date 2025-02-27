@@ -263,8 +263,16 @@ class DbAdminPresenter extends AAdminPresenter {
         return $form;
     }
 
+    public function handleTableList() {
+        $entryId = $this->httpRequest->get('entryId');
+        $database = $this->app->containerDatabaseManager->getDatabaseByEntryId($entryId);
+
+        $this->saveToPresenterCache('path', $database->getName());
+    }
+
     public function renderTableList() {
         $this->template->links = $this->createBackUrl('list');
+        $this->template->path = $this->loadFromPresenterCache('path');
     }
 
     protected function createComponentDatabaseTablesList(HttpRequest $request) {
@@ -306,8 +314,17 @@ class DbAdminPresenter extends AAdminPresenter {
         return $list;
     }
 
+    public function handleTableSchemeList() {
+        $entryId = $this->httpRequest->get('entryId');
+        $table = $this->httpRequest->get('table');
+        $database = $this->app->containerDatabaseManager->getDatabaseByEntryId($entryId);
+
+        $this->saveToPresenterCache('path', $database->getName() . ' > ' . $table);
+    }
+
     public function renderTableSchemeList() {
         $this->template->links = $this->createBackUrl('tableList', ['entryId' => $this->httpRequest->get('entryId')]);
+        $this->template->path = $this->loadFromPresenterCache('path');
     }
 
     protected function createComponentDatabaseTableSchemeList(HttpRequest $request) {

@@ -2,6 +2,7 @@
 
 namespace App\Modules;
 
+use App\Constants\AppDesignThemes;
 use App\Core\AjaxRequestBuilder;
 use App\Core\Application;
 use App\Core\Caching\CacheFactory;
@@ -428,8 +429,10 @@ abstract class APresenter extends AGUICore {
         
             if($this->currentUser !== null) {
                 $this->sysTemplate->sys_user_id = $this->currentUser->getId();
+                $this->sysTemplate->sys_design_theme_filename = AppDesignThemes::convertToStyleFileName($this->currentUser->getAppDesignTheme());
             } else {
                 $this->sysTemplate->sys_user_id = '';
+                $this->sysTemplate->sys_design_theme_filename = AppDesignThemes::convertToStyleFileName(AppDesignThemes::LIGHT);
             }
         }
     }

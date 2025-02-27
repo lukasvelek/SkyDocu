@@ -1,0 +1,801 @@
+body {
+    overflow-x: hidden;
+
+    background-color: rgb(245, 245, 245);
+}
+
+#form input, #form select, #form textarea, #form button {
+    width: 100%;
+
+    padding: 5px;
+
+    border: 1px solid black;
+}
+
+#form input[type=radio] {
+    width: auto;
+
+    margin-left: 15px;
+    margin-right: 5px;
+}
+
+#page-title {
+    font-size: 27px;
+
+    text-align: center;
+}
+
+#page-text {
+    font-size: 20px;
+}
+
+.page-text-link {
+    font-size: 20px;
+
+    text-decoration: underline;
+
+    color: black;
+}
+
+.page-text-link:hover {
+    color: black;
+}
+
+#flash-messages {
+    position: absolute;
+    z-index: 9999;
+    
+    width: 90%;
+    
+    margin-left: 5%;
+    margin-top: 5%;
+}
+
+.fm-info {
+    color: #133c55;
+    background-color: #84d2f6;
+    border: 1px solid #133c55;
+}
+
+.fm-error {
+    color: rgb(140, 0, 0);
+    background-color: rgb(255, 100, 100);
+
+    border: 1px solid rgb(140, 0, 0);
+}
+
+.fm-success {
+    color: rgb(1, 80, 1);
+    background-color: rgb(100, 200, 100);
+
+    border: 1px solid rgb(1, 80, 1);
+}
+
+.fm-warning {
+    color: red;
+    background-color: rgb(255, 190, 70);
+
+    border: 1px solid red;
+}
+
+div[class^="fm-"], div[class*="fm-"] {
+    padding-top: 20px;
+    padding-left: 20px;
+    padding-right: 20px;
+    padding-bottom: 5px;
+
+    border-radius: 5px;
+}
+
+.fm-link:hover {
+    color: black;
+}
+
+#left {
+    text-align: left;
+}
+
+#center {
+    text-align: center;
+}
+
+#right {
+    text-align: right;
+}
+
+#navbar {
+    background-color: rgba(0, 0, 0, 0.75);
+
+    color: white;
+
+    padding: 10px;
+    padding-left: 20px;
+    padding-right: 20px;
+
+    border: 0;
+    border-radius: 10px;
+
+    backdrop-filter: blur(5px);
+
+    position: fixed;
+    right: 1%;
+    top: 1%;
+
+    width: 98%;
+
+    z-index: 9990;
+}
+
+#navbar input[type=text] {
+    border: 0;
+
+    border-radius: 10px;
+    
+    padding-left: 10px;
+    padding-right: 10px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+}
+
+#navbar input[type=text]:focus {
+    border: 0;
+}
+
+#navbar button {
+    border: 0;
+
+    background-color: rgba(0, 0, 0, 0.75);
+
+    color: white;
+
+    border-radius: 10px;
+
+    padding-left: 10px;
+    padding-right: 10px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+
+    transition: background-color 0.25s;
+}
+
+#navbar button:hover {
+    background-color: rgb(50, 50, 50);
+}
+
+.navbar-link {
+    color: white;
+    text-decoration: none;
+    transition: color 0.25s;
+}
+
+.navbar-link:hover {
+    text-decoration: none;
+    color: rgb(200, 200, 200);
+}
+
+#left .navbar-link {
+    margin-right: 10px;
+}
+
+#right .navbar-link {
+    margin-left: 10px;
+}
+
+.post-title, .post-title-link, .post-title-link-smaller {
+    font-size: 24px;
+
+    color: black;
+}
+
+.post-title-link-smaller {
+    font-size: 20px;
+}
+
+.post-title-link {
+    text-decoration: underline;
+}
+
+.post-text, .post-text-link {
+    font-size: 18px;
+
+    text-align: left;
+}
+
+.post-text-link {
+    color: darkgrey;
+    text-decoration: none;
+}
+
+.post-text-link:hover {
+    text-decoration: underline;
+}
+
+.post-data {
+    font-size: 16px;
+
+    color: black;
+
+    text-align: left;
+}
+
+.post-like {
+    color: black;
+
+    text-decoration: underline;
+
+    text-align: left;
+}
+
+.link, .footer-link {
+    font-size: 16px;
+
+    color: black;
+
+    text-decoration: none;
+
+    transition: color 0.25s;
+}
+
+.link:hover, .footer-link:hover {
+    text-decoration: none;
+
+    color: rgb(100, 100, 100);
+}
+
+.post-comment-border {
+    border-left: 1px solid lightgrey;
+}
+
+.topic-title {
+    font-size: 16px;
+
+    color: black;
+
+    transition: color 0.25s;
+}
+
+.topic-title-link {
+    color: black;
+
+    text-decoration: none;
+}
+
+.topic-title-link:hover {
+    color: rgb(100, 100, 100);
+}
+
+.system-status-item-title {
+    font-size: 25px;
+}
+
+.changelog-title {
+    font-size: 25px;
+}
+
+.changelog-item {
+    font-size: 20px;
+}
+
+.changelog-link {
+    font-size: 20px;
+    text-decoration: none;
+    color: black;
+    transition: color 0.25s;
+}
+
+.changelog-link:hover {
+    color: rgb(100, 100, 100);
+}
+
+.sidebar-link {
+    font-size: 20px;
+
+    color: black;
+
+    text-decoration: none;
+
+    margin-left: 10px;
+
+    transition: color 0.25s;
+}
+
+.sidebar-link:hover {
+    color: rgb(100, 100, 100);
+}
+
+.system-status-item-link {
+    color: black;
+
+    text-decoration: none;
+}
+
+#modal-grid table {
+    width: 100%;
+
+    text-align: center;
+}
+
+#modal-grid tr td {
+    border: 0;
+    border-collapse: inherit;
+    border-radius: 10px;
+
+    background-color: rgba(255, 255, 255, 0.75);
+}
+
+#grid table {
+    width: 100%;
+
+    text-align: center;
+
+    border: 0;
+    border-collapse: inherit;
+    border-radius: 10px;
+
+    background-color: rgba(255, 255, 255, 0.75);
+}
+
+#flashMessage {
+    width: 97.5%;
+
+    margin-left: 1.5%;
+}
+
+#grid tr {
+    line-height: 30px;
+}
+
+#grid thead th {
+    background-color: rgb(220, 220, 220);
+
+    border: 0;
+    border-collapse: inherit;
+    border-radius: 10px;
+}
+
+.grid-cell-action {
+    background-color: rgb(245, 245, 245);
+
+    border: 0;
+    border-collapse: inherit;
+    border-radius: 10px;
+}
+
+.grid-control-button, .grid-control-button-last {
+    width: 35px;
+
+    border: 1px solid black;
+
+    border-radius: 5px;
+}
+
+.grid-control-button {
+    margin-right: 5px;
+}
+
+.grid-control-button2, #grid-control-button2 {
+    border: 1px solid black;
+
+    border-radius: 5px;
+}
+
+.calendar-control-button {
+    max-width: 150px;
+
+    border: 1px solid black;
+
+    border-radius: 5px;
+
+    margin-right: 5px;
+}
+
+.grid-link {
+    color: black;
+
+    text-decoration: underline;
+
+    transition: color 0.25s;
+}
+
+.grid-link:hover {
+    color: rgb(100, 100, 100);
+}
+
+.limited {
+    width: 100%;
+    max-width: 800px;
+}
+
+.post-image-browser-link {
+    color: black;
+    text-decoration: none;
+
+    border: 1px solid black;
+    border-radius: 100px;
+}
+
+.post-image-browser-link:hover {
+    color: black;
+    
+    text-decoration: none;
+
+    background-color: rgb(220, 220, 220);
+}
+
+div [id*="post-id-"], div [id*="poll-id-"], div [id*="chat-id-"] {
+    background-color: rgba(255, 255, 255, 0.75);
+
+    border-radius: 10px;
+
+    padding-top: 10px;
+
+    backdrop-filter: blur(5px);
+}
+
+div [id*="chat-id-"] {
+    padding: 10px;
+
+    text-align: center;
+}
+
+div [id*="message-id-"] {
+    text-align: left;
+
+    background-color: rgba(255, 255, 255, 0.75);
+
+    border-radius: 10px;
+
+    padding: 10px;
+
+    backdrop-filter: blur(5px);
+}
+
+div [id*="my-message-id-"] {
+    text-align: right;
+
+    background-color: rgba(100, 100, 255, 0.75);
+
+    border-radius: 10px;
+
+    padding: 10px;
+
+    backdrop-filter: blur(5px);
+}
+
+#post-comment-form {
+    background-color: rgba(255, 255, 255, 0.75);
+
+    padding: 10px;
+
+    border-radius: 10px;
+}
+
+#form-centered {
+    display: inherit;
+
+    margin: auto;
+
+    width: 30%;
+}
+
+#post-comments-load-more-link button, #notification-links button, #posts-load-more-link button {
+    width: 160px;
+    height: 36px;
+}
+
+#formSubmit, #post-comment-form #formSubmit, #poll-choice-form #formSubmit, #post-comments-load-more-link button, #notification-links button, #followers-list-load-more-link button, #follows-list-load-more-link button, #posts-load-more-link button, #form #formSubmit, #form .formSubmit, #form #formButton {
+    background-color: rgba(0, 0, 0, 0.75);
+
+    color: white;
+
+    transition: background-color 0.25s;
+
+    border: 1px solid rgba(0, 0, 0, 0.75);;
+    border-radius: 10px;
+}
+
+#formSubmit:hover, #post-comment-form #formSubmit:hover, #poll-choice-form #formSubmit:hover, #post-comments-load-more-link button:hover, #notification-links button:hover, #followers-list-load-more-link button:hover, #follows-list-load-more-link button:hover, #posts-load-more-link button:hover, #form #formSubmit:hover, #form .formSubmit:hover, #form #formButton:hover {
+    background-color: rgb(50, 50, 50);
+    border: 1px solid rgb(50, 50, 50);
+}
+
+button #formSubmit {
+    padding: 3px 10px 3px 10px;
+}
+
+#followers-list-load-more-link button, #follows-list-load-more-link button {
+    width: 150px;
+
+    padding: 5px;
+}
+
+#form #formSubmit, #form #formButton {
+    width: 50%;
+
+    height: 40px;
+}
+
+#post-comment-form textarea {
+    border: 0;
+
+    background-color: rgba(240, 240, 240, 0.75);
+
+    border-radius: 10px;
+}
+
+div [id*="post-comment-id-"] {
+    background-color: rgba(255, 255, 255, 0.75);
+
+    border-radius: 10px;
+
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
+
+.post-comment-text {
+    text-align: left;
+
+    font-size: 18px;
+}
+
+.post-comment-data {
+    text-align: left;
+
+    font-size: 14px;
+}
+
+.post-comment-link {
+    font-size: 14px;
+    color: black;
+
+    text-decoration: none;
+
+    transition: color 0.25s;
+}
+
+.post-comment-link:hover {
+    text-decoration: none;
+
+    color: rgb(100, 100, 100);
+}
+
+#poll-choice-form input[type=radio] {
+    accent-color: black;
+}
+
+#post-text, #topic-text {
+    background-color: rgba(255, 255, 255, 0.75);
+
+    border-radius: 10px;
+
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+
+div [id*="notification-id-"] {
+    background-color: rgb(255, 255, 255);
+
+    border: 0;
+    border-radius: 10px;
+
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+
+div [id*="user-action-history-"] {
+    background-color: rgb(255, 255, 255);
+
+    border: 0;
+    border-radius: 10px;
+
+    padding: 10px;
+    padding-bottom: 1px;
+
+    margin-bottom: -5px;
+}
+
+#page-content {
+    margin-top: 60px;
+}
+
+@media screen and (max-width: 1000px) {
+    #page-content {
+        margin-top: 100px;
+    }
+}
+
+#notification-links button {
+    width: 250px;
+}
+
+#notification-links {
+    text-align: center;
+}
+
+#post-data-section, #post-upload-image-section, #post-images-section, #topic-data-section, #post-title-section, #user-links-section {
+    background-color: rgba(255, 255, 255, 0.75);
+
+    border-radius: 10px;
+    border: 0;
+
+    padding: 10px;
+}
+
+#post-comment-form {
+    margin-left: -12px;
+    margin-right: -12px;
+}
+
+#topic-links, #topic-title-section, #topic-followed-section {
+    background-color: rgba(255, 255, 255, 0.75);
+
+    border: 0;
+    border-radius: 10px;
+
+    padding: 10px;
+}
+
+#topic-title-section, #post-title-section {
+    font-size: 27px;
+
+    text-align: center;
+}
+
+#sidebar {
+    background-color: rgba(255, 255, 255, 0.75);
+
+    border: 0;
+    border-radius: 10px;
+
+    padding: 10px;
+
+    margin-left: 25px;
+}
+
+#feedback-title-section, #manage-title-section, #user-title-section {
+    background-color: rgba(255, 255, 255, 0.75);
+
+    border: 0;
+    border-radius: 10px;
+
+    padding: 10px;
+
+    margin-top: 10px;
+
+    font-size: 27px;
+
+    text-align: center;
+}
+
+#user-title-section a {
+    color: black;
+}
+
+#user-title-section a:hover {
+    color: rgba(0, 0, 0, 0.75);
+}
+
+#user-list {
+    background-color: rgba(255, 255, 255, 0.75);
+
+    border: 0;
+    border-radius: 10px;
+
+    padding: 10px;
+
+    text-align: center;
+}
+
+.user-list-link {
+    color: black;
+
+    text-decoration: none;
+
+    font-size: 18px;
+
+    transition: color 0.25s;
+}
+
+.user-list-link:hover {
+    color: rgb(100, 100, 100);
+}
+
+#gridbuilder-calendar td {
+    height: 100px;
+}
+
+p.widget-title {
+    font-size: 24px;
+}
+
+a.widget-title {
+    font-size: 24px;
+
+    text-decoration: none;
+
+    color: black;
+}
+
+a.widget-title:hover {
+    text-decoration: underline;
+}
+
+#widget table {
+    width: 100%;
+
+    text-align: center;
+
+    border: 0;
+    border-collapse: inherit;
+    border-radius: 0;
+    
+    background-color: rgba(255, 255, 255, 0.75);
+}
+
+#widget tr {
+    line-height: 30px;
+}
+
+#widget thead th {
+    background-color: rgb(220, 220, 220);
+
+    border: 0;
+    border-collapse: inherit;
+    border-radius: 10px;
+}
+
+#skeletonTextAnimation {
+    animation-name: skeletonTextAnimationX;
+    animation-duration: 0.75s;
+    animation-iteration-count: infinite;
+    animation-direction: alternate;
+
+    border-radius: 10px;
+}
+
+@keyframes skeletonTextAnimationX {
+    0% {
+        color: rgb(220, 220, 220);
+        background-color: rgb(220, 220, 220);
+    }
+
+    100% {
+        color: rgb(150, 150, 150);
+        background-color: rgb(150, 150, 150);
+    }
+}
+
+.process-action-link-finish, .process-action-link-accept, .process-action-link-cancel {
+    padding: 5px;
+    border-radius: 10px;
+    font-size: 20px; /* inherited from .changelog-item */
+    text-decoration: none;
+    transition: color 0.25s;
+}
+
+.process-action-link-finish {
+    color: green;
+    background-color: lightgreen;
+}
+
+.process-action-link-finish:hover {
+    color: darkgreen;
+}
+
+.process-action-link-accept {
+    color: blue;
+    background-color: lightblue;
+}
+
+.process-action-link-accept:hover {
+    color: darkblue;
+}
+
+.process-action-link-cancel {
+    color: red;
+    background-color: pink;
+}
+
+.process-action-link-cancel:hover {
+    color: darkred;
+}

@@ -56,7 +56,7 @@ class DatabaseInstaller {
                 'dateCreated' => 'DATETIME NOT NULL DEFAULT current_timestamp()',
                 'email' => 'VARCHAR(256) NULL',
                 'isTechnical' => 'INT(2) NOT NULL DEFAULT 0',
-                'appDesignSchema' => 'INT(4) NOT NULL DEFAULT 0'
+                'appDesignTheme' => 'INT(4) NOT NULL DEFAULT 0'
             ],
             'groups' => [
                 'groupId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',

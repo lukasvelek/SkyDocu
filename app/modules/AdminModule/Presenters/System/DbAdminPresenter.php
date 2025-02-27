@@ -2,11 +2,13 @@
 
 namespace App\Modules\AdminModule;
 
+use App\Core\DatabaseInstaller;
 use App\Core\DB\DatabaseRow;
 use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
+use App\Helpers\ContainerCreationHelper;
 use App\Managers\EntityManager;
 use App\UI\GridBuilder2\Action;
 use App\UI\GridBuilder2\Row;
@@ -265,7 +267,7 @@ class DbAdminPresenter extends AAdminPresenter {
         $this->template->links = $this->createBackUrl('list');
     }
 
-    protected function createComponentDatabaseTablesGrid(HttpRequest $request) {
+    protected function createComponentDatabaseTablesList(HttpRequest $request) {
         $entryId = $request->get('entryId');
         $database = $this->app->containerDatabaseManager->getDatabaseByEntryId($entryId);
         $tables = $this->app->dbManager->getAllTablesInDatabase($database->getName());
@@ -280,6 +282,7 @@ class DbAdminPresenter extends AAdminPresenter {
 
         $list = $this->componentFactory->getListBuilder();
 
+        $list->setListName('DatabaseTablesList');
         $list->setDataSource($data);
 
         $list->addColumnText('table', 'Table');
@@ -303,7 +306,37 @@ class DbAdminPresenter extends AAdminPresenter {
         return $list;
     }
 
-    public function handleTableSchemeList() {}
+    public function renderTableSchemeList() {
+        $this->template->links = $this->createBackUrl('tableList', ['entryId' => $this->httpRequest->get('entryId')]);
+    }
+
+    protected function createComponentDatabaseTableSchemeList(HttpRequest $request) {
+        $entryId = $request->get('entryId');
+        $table = $request->get('table');
+
+        $scheme = ContainerCreationHelper::getContainerTableDefinitions();
+
+        $tableScheme = $scheme[$table];
+        
+        $data = [];
+        $i = 0;
+        foreach($tableScheme as $name => $definition) {
+            $data[$i]['columns'] = $name;
+            $data[$i]['definition'] = $definition;
+
+            $i++;
+        }
+
+        $list = $this->componentFactory->getListBuilder();
+
+        $list->setListName('DatabaseTableSchemeList');
+        $list->setDataSource($data);
+
+        $list->addColumnText('columns', 'Column');
+        $list->addColumnText('definition', 'Definition');
+
+        return $list;
+    }
 }
 
 ?>

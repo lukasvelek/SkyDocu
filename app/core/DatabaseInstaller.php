@@ -41,12 +41,12 @@ class DatabaseInstaller {
     }
 
     /**
-     * Creates tables
+     * Returns generated table scheme
+     * 
+     * @return array
      */
-    private function createTables() {
-        $this->logger->info('Creating tables.', __METHOD__);
-
-        $tables = [
+    public static function getTableScheme(): array {
+        return [
             'users' => [
                 'userId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',
                 'username' => 'VARCHAR(256) NOT NULL',
@@ -163,6 +163,15 @@ class DatabaseInstaller {
                 'substituteUserId' => 'VARCHAR(256) NOT NULL'
             ]
         ];
+    }
+
+    /**
+     * Creates tables
+     */
+    private function createTables() {
+        $this->logger->info('Creating tables.', __METHOD__);
+
+        $tables = self::getTableScheme();
 
         $i = 0;
         foreach($tables as $name => $values) {

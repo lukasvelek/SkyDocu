@@ -9,6 +9,7 @@ class DocumentBulkActions extends AConstant {
     public const SHARING = 'sharing';
     public const MOVE_TO_ARCHIVE = 'moveToArchive';
     public const MOVE_FROM_ARCHIVE = 'moveFromArchive';
+    public const MOVE_TO_FOLDER = 'moveToFolder';
 
     public static function toString($key): ?string {
         return match($key) {
@@ -16,6 +17,7 @@ class DocumentBulkActions extends AConstant {
             self::SHARING => 'Share',
             self::MOVE_TO_ARCHIVE => 'Move to archive',
             self::MOVE_FROM_ARCHIVE => 'Move from archive',
+            self::MOVE_TO_FOLDER => 'Move to folder',
             default => null
         };
     }

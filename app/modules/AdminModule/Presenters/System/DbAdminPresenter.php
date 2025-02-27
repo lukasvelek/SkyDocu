@@ -15,6 +15,7 @@ use App\UI\GridBuilder2\Row;
 use App\UI\HTML\HTML;
 use App\UI\LinkBuilder;
 use App\UI\ListBuilder\ArrayRow;
+use App\UI\ListBuilder\ListAction;
 use App\UI\ListBuilder\ListRow;
 
 class DbAdminPresenter extends AAdminPresenter {
@@ -268,24 +269,50 @@ class DbAdminPresenter extends AAdminPresenter {
         $database = $this->app->containerDatabaseManager->getDatabaseByEntryId($entryId);
 
         $this->saveToPresenterCache('path', $database->getName());
+
+        $links = [
+            $this->createBackUrl('list')
+        ];
+
+        if($database->isDefault() === false) {
+            $links[] = LinkBuilder::createSimpleLink('New table', $this->createURL('newTableForm', ['entryId' => $entryId]), 'link');
+        }
+
+        $this->saveToPresenterCache('links', implode('&nbsp;&nbsp;', $links));
     }
 
     public function renderTableList() {
-        $this->template->links = $this->createBackUrl('list');
+        $this->template->links = $this->loadFromPresenterCache('links');
         $this->template->path = $this->loadFromPresenterCache('path');
     }
 
     protected function createComponentDatabaseTablesList(HttpRequest $request) {
         $entryId = $request->get('entryId');
         $database = $this->app->containerDatabaseManager->getDatabaseByEntryId($entryId);
-        $tables = $this->app->dbManager->getAllTablesInDatabase($database->getName());
-
+        
         $data = [];
-        $i = 0;
-        foreach($tables as $row) {
-            $data[$i]['table'] = $row['Tables_in_' . strtolower($database->getName())];
+        if($database->isDefault()) {
+            $tables = $this->app->dbManager->getAllTablesInDatabase($database->getName());
+            
+            $i = 0;
+            foreach($tables as $row) {
+                $data[$i]['table'] = $row['Tables_in_' . strtolower($database->getName())];
 
-            $i++;
+                $i++;
+            }
+        } else {
+            $qb = $this->app->containerDatabaseRepository->composeQueryForContainerDatabaseTables();
+            $qb->andWhere('databaseId = ?', [$entryId])
+                ->execute();
+
+            $i = 0;
+            while($row = $qb->fetchAssoc()) {
+                $data[$i]['table'] = $row['name'];
+                $data[$i]['isCreated'] = $row['isCreated'];
+                $data[$i]['entryId'] = $row['entryId'];
+
+                $i++;
+            }
         }
 
         $list = $this->componentFactory->getListBuilder();
@@ -294,6 +321,25 @@ class DbAdminPresenter extends AAdminPresenter {
         $list->setDataSource($data);
 
         $list->addColumnText('table', 'Table');
+
+        if(!$database->isDefault()) {
+            $list->addColumnBoolean('isCreated', 'Is created');
+
+            $create = $list->addAction('create');
+            $create->setTitle('Create');
+            $create->onCanRender[] = function(ArrayRow $row, ListRow $_row, ListAction &$action) use ($entryId) {
+                return $this->app->containerDatabaseManager->canContainerDatabaseTableBeCreated($this->containerId, $entryId, $row->entryId);
+            };
+            $create->onRender[] = function(mixed $primaryKey, ArrayRow $row, ListRow $_row, HTML $html) use ($entryId, $data) {
+                $el = HTML::el('a')
+                    ->class('grid-link')
+                    ->href($this->createURLString('createTableScheme', ['entryId' => $entryId, 'tableId' => $row->entryId]))
+                    ->text('Create')
+                ;
+
+                return $el;
+            };
+        }
         
         $scheme = $list->addAction('scheme');
         $scheme->setTitle('Scheme');
@@ -320,28 +366,62 @@ class DbAdminPresenter extends AAdminPresenter {
         $database = $this->app->containerDatabaseManager->getDatabaseByEntryId($entryId);
 
         $this->saveToPresenterCache('path', $database->getName() . ' > ' . $table);
+
+        $links = [
+            $this->createBackUrl('tableList', ['entryId' => $this->httpRequest->get('entryId')])
+        ];
+
+        if(!$database->isDefault()) {
+            $tableRow = $this->app->containerDatabaseManager->getContainerDatabaseTableByName($this->containerId, $entryId, $table);
+            
+            if(!$tableRow->isCreated) {
+                $links[] = LinkBuilder::createSimpleLink('New column', $this->createURL('newTableColumnForm', ['entryId' => $entryId, 'tableId' => $tableRow->entryId, 'table' => $table]), 'link');
+            }
+        }
+
+        $this->saveToPresenterCache('links', implode('&nbsp;&nbsp;', $links));
     }
 
     public function renderTableSchemeList() {
-        $this->template->links = $this->createBackUrl('tableList', ['entryId' => $this->httpRequest->get('entryId')]);
+        $this->template->links = $this->loadFromPresenterCache('links');
         $this->template->path = $this->loadFromPresenterCache('path');
     }
 
     protected function createComponentDatabaseTableSchemeList(HttpRequest $request) {
         $entryId = $request->get('entryId');
+        $database = $this->app->containerDatabaseManager->getDatabaseByEntryId($entryId);
         $table = $request->get('table');
 
-        $scheme = ContainerCreationHelper::getContainerTableDefinitions();
-
-        $tableScheme = $scheme[$table];
-        
         $data = [];
-        $i = 0;
-        foreach($tableScheme as $name => $definition) {
-            $data[$i]['columns'] = $name;
-            $data[$i]['definition'] = $definition;
+        if($database->isDefault()) {
+            $scheme = ContainerCreationHelper::getContainerTableDefinitions();
 
-            $i++;
+            if(array_key_exists($table, $scheme)) {
+                $tableScheme = $scheme[$table];
+
+                $i = 0;
+                foreach($tableScheme as $name => $definition) {
+                    $data[$i]['column'] = $name;
+                    $data[$i]['definition'] = $definition;
+
+                    $i++;
+                }
+            }
+        } else {
+            $tableRow = $this->app->containerDatabaseManager->getContainerDatabaseTableByName($this->containerId, $entryId, $table);
+            $qb = $this->app->containerDatabaseRepository->composeQueryForContainerDatabaseTableColumns();
+            $qb->andWhere('containerId = ?', [$this->containerId])
+                ->andWhere('databaseId = ?', [$entryId])
+                ->andWhere('tableId = ?', [$tableRow->entryId])
+                ->execute();
+
+            $i = 0;
+            while($row = $qb->fetchAssoc()) {
+                $data[$i]['column'] = $row['name'];
+                $data[$i]['definition'] = $row['definition'];
+
+                $i++;
+            }
         }
 
         $list = $this->componentFactory->getListBuilder();
@@ -349,10 +429,151 @@ class DbAdminPresenter extends AAdminPresenter {
         $list->setListName('DatabaseTableSchemeList');
         $list->setDataSource($data);
 
-        $list->addColumnText('columns', 'Column');
+        $list->addColumnText('column', 'Column');
         $list->addColumnText('definition', 'Definition');
 
         return $list;
+    }
+
+    public function handleNewTableForm(?FormRequest $fr = null) {
+        $entryId = $this->httpRequest->get('entryId');
+        $database = $this->app->containerDatabaseManager->getDatabaseByEntryId($entryId);
+
+        if($fr !== null) {
+            try {
+                $this->app->containerDatabaseRepository->beginTransaction(__METHOD__);
+
+                $name = str_replace(' ', '_', $fr->name);
+                $name = str_replace('-', '_', $name);
+                $name = strtolower($name);
+
+                $this->app->containerDatabaseManager->insertNewContainerDatabaseTable($this->containerId, $entryId, $name);
+
+                $this->app->containerDatabaseRepository->commit($this->getUserId(), __METHOD__);
+
+                $this->flashMessage('Table created successfully.', 'success');
+            } catch(AException $e) {
+                $this->app->containerDatabaseRepository->rollback(__METHOD__);
+
+                $this->flashMessage('Could not create table. Reason: ' . $e->getMessage(), 'error', 10);
+            }
+
+            $this->redirect($this->createURL('tableList', ['entryId' => $entryId]));
+        } else {
+            $this->saveToPresenterCache('path', $database->getName() . ' > New table');
+        }
+    }
+
+    public function renderNewTableForm() {
+        $this->template->links = $this->createBackUrl('tableList', ['entryId' => $this->httpRequest->get('entryId')]);
+        $this->template->path = $this->loadFromPresenterCache('path');
+    }
+
+    protected function createComponentNewTableForm(HttpRequest $request) {
+        $form = $this->componentFactory->getFormBuilder();
+
+        $form->setAction($this->createURL('newTableForm', ['entryId' => $request->get('entryId')]));
+
+        $form->addTextInput('name', 'Name:')
+            ->setRequired();
+        $form->addSubmit('Create');
+
+        return $form;
+    }
+
+    public function handleNewTableColumnForm(?FormRequest $fr = null) {
+        $entryId = $this->httpRequest->get('entryId');
+        $database = $this->app->containerDatabaseManager->getDatabaseByEntryId($entryId);
+        $tableId = $this->httpRequest->get('tableId');
+        $table = $this->httpRequest->get('table');
+
+        if($fr !== null) {
+            try {
+                $this->app->containerDatabaseRepository->beginTransaction(__METHOD__);
+
+                $this->app->containerDatabaseManager->insertNewContainerDatabaseTableColumn(
+                    $this->containerId,
+                    $entryId,
+                    $tableId,
+                    $fr->name,
+                    $fr->title,
+                    $fr->definition
+                );
+
+                $this->app->containerDatabaseRepository->commit($this->getUserId(), __METHOD__);
+
+                $this->flashMessage('New table column created successfully.', 'success');
+            } catch(AException $e) {
+                $this->app->containerDatabaseRepository->rollback(__METHOD__);
+
+                $this->flashMessage('Could not create new table column. Reason: ' . $e->getMessage(), 'error', 10);
+            }
+
+            $this->redirect($this->createURL('tableSchemeList', ['entryId' => $entryId, 'table' => $table]));
+        } else {
+            $this->saveToPresenterCache('path', $database->getName() . ' > ' . $table . ' > New column');
+        }
+    }
+
+    public function renderNewTableColumnForm() {
+        $this->template->links = $this->createBackUrl('tableSchemeList', ['entryId' => $this->httpRequest->get('entryId'), 'table' => $this->httpRequest->get('table')]);
+        $this->template->path = $this->loadFromPresenterCache('path');
+    }
+
+    protected function createComponentNewTableColumnForm(HttpRequest $request) {
+        $form = $this->componentFactory->getFormBuilder();
+
+        $form->setAction($this->createURL('newTableColumnForm', ['entryId' => $request->get('entryId'), 'table' => $request->get('table'), 'tableId' => $request->get('tableId')]));
+
+        $form->addTextInput('name', 'Name:')
+            ->setRequired();
+        $form->addTextInput('title', 'Title:')
+            ->setRequired();
+        $form->addTextArea('definition', 'Definition:')
+            ->setRequired();
+
+        $form->addSubmit('Create');
+
+        return $form;
+    }
+
+    public function handleCreateTableScheme() {
+        $entryId = $this->httpRequest->get('entryId');
+        $tableId = $this->httpRequest->get('tableId');
+
+        $database = $this->app->containerDatabaseManager->getDatabaseByEntryId($entryId);
+        $tableRow = $this->app->containerDatabaseManager->getContainerDatabaseTableById($this->containerId, $entryId, $tableId);
+
+        $qb = $this->app->containerDatabaseRepository->composeQueryForContainerDatabaseTableColumns();
+        $qb->andWhere('containerId = ?', [$this->containerId])
+            ->andWhere('databaseId = ?', [$entryId])
+            ->andWhere('tableId = ?', [$tableId])
+            ->execute();
+
+        $columns = [];
+        while($row = $qb->fetchAssoc()) {
+            $columns[$row['name']] = $row['definition'];
+        }
+
+        try {
+            $this->app->containerDatabaseRepository->beginTransaction(__METHOD__);
+
+            $this->app->dbManager->createTable($tableRow->name, $columns, $database->getName());
+
+            $this->app->containerDatabaseManager->updateContainerDatabaseTable($tableId, [
+                'isCreated' => '1'
+            ]);
+
+            $this->app->containerDatabaseRepository->commit($this->getUserId(), __METHOD__);
+
+            $this->flashMessage('Table scheme successfully created.', 'success');
+        } catch(AException $e) {
+            $this->app->containerDatabaseRepository->rollback(__METHOD__);
+
+            $this->flashMessage('Could not create table scheme. Reason: ' . $e->getMessage(), 'error', 10);
+        }
+
+        $this->redirect($this->createURL('tableList', ['entryId' => $entryId]));
     }
 }
 

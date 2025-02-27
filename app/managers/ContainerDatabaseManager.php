@@ -4,6 +4,7 @@ namespace App\Managers;
 
 use App\Core\Caching\CacheNames;
 use App\Core\DB\DatabaseManager;
+use App\Core\DB\DatabaseRow;
 use App\Entities\ContainerDatabaseEntity;
 use App\Exceptions\GeneralException;
 use App\Exceptions\NonExistingEntityException;
@@ -121,6 +122,107 @@ class ContainerDatabaseManager extends AManager {
         if(!$this->cacheFactory->invalidateCacheByNamespace(CacheNames::CONTAINER_DATABASES)) {
             throw new GeneralException('Could not invalidate cache.');
         }
+    }
+
+    /**
+     * Inserts a new container database table
+     * 
+     * @param string $containerId Container ID
+     * @param string $databaseId Database ID
+     * @param string $name Table name
+     */
+    public function insertNewContainerDatabaseTable(string $containerId, string $databaseId, string $name) {
+        $entryId = $this->createId(EntityManager::CONTAINER_DATABASE_TABLES);
+
+        if(!$this->containerDatabaseRepository->insertNewContainerDatabaseTable($entryId, $containerId, $databaseId, $name)) {
+            throw new GeneralException('Database error.');
+        }
+    }
+
+    /**
+     * Updates given container database table
+     * 
+     * @param string $tableId Table ID
+     * @param array $data Data
+     */
+    public function updateContainerDatabaseTable(string $tableId, array $data) {
+        if(!$this->containerDatabaseRepository->updateContainerDatabaseTable($tableId, $data)) {
+            throw new GeneralException('Database error.');
+        }
+    }
+
+    /**
+     * Inserts a new container database table column
+     * 
+     * @param string $containerId Container ID
+     * @param string $databaseId Database ID
+     * @param string $tableId Table ID
+     * @param string $name Column name
+     * @param string $title Column title
+     * @param string $definition Column definition
+     */
+    public function insertNewContainerDatabaseTableColumn(string $containerId, string $databaseId, string $tableId, string $name, string $title, string $definition) {
+        $entryId = $this->createId(EntityManager::CONTAINER_DATABASE_TABLE_COLUMNS);
+
+        if(!$this->containerDatabaseRepository->insertNewContainerDatabaseTableColumnDefinition($entryId, $containerId, $databaseId, $tableId, $name, $title, $definition)) {
+            throw new GeneralException('Database error.');
+        }
+    }
+
+    /**
+     * Checks if given database table can be created
+     * 
+     * @param string $containerId Container ID
+     * @param string $databaseId Database ID
+     * @param string $tableId Table ID
+     */
+    public function canContainerDatabaseTableBeCreated(string $containerId, string $databaseId, string $tableId): bool {
+        $qb = $this->containerDatabaseRepository->composeQueryForContainerDatabaseTableColumns();
+        $qb->select(['COUNT(*) AS cnt'])
+            ->andWhere('containerId = ?', [$containerId])
+            ->andWhere('databaseId = ?', [$databaseId])
+            ->andWhere('tableId = ?', [$tableId])
+            ->execute();
+
+        $cnt = $qb->fetch('cnt');
+
+        $table = $this->getContainerDatabaseTableById($containerId, $databaseId, $tableId);
+
+        return ($cnt > 0) && !$table->isCreated;
+    }
+
+    /**
+     * Returns an instance of DatabaseRow for given container database table
+     * 
+     * @param string $containerId Container ID
+     * @param string $databaseId Database ID
+     * @param string $name Table name
+     */
+    public function getContainerDatabaseTableByName(string $containerId, string $databaseId, string $name): DatabaseRow {
+        $qb = $this->containerDatabaseRepository->composeQueryForContainerDatabaseTables();
+        $qb->andWhere('containerId = ?', [$containerId])
+            ->andWhere('databaseId = ?', [$databaseId])
+            ->andWhere('name = ?', [$name])
+            ->execute();
+
+        return DatabaseRow::createFromDbRow($qb->fetch());
+    }
+
+    /**
+     * Returns an instance of DatabaseRow for given container database table
+     * 
+     * @param string $containerId Container ID
+     * @param string $databaseId Database ID
+     * @param string $tableId Table ID
+     */
+    public function getContainerDatabaseTableById(string $containerId, string $databaseId, string $tableId): DatabaseRow {
+        $qb = $this->containerDatabaseRepository->composeQueryForContainerDatabaseTables();
+        $qb->andWhere('containerId = ?', [$containerId])
+            ->andWhere('databaseId = ?', [$databaseId])
+            ->andWhere('entryId = ?', [$tableId])
+            ->execute();
+
+        return DatabaseRow::createFromDbRow($qb->fetch());
     }
 }
 

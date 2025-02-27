@@ -28,6 +28,8 @@ class EntityManager extends AManager {
     public const USER_ABSENCE = 'user_absence';
     public const USER_SUBSTITUTES = 'user_substitutes';
     public const CONTAINER_DATABASES = 'container_databases';
+    public const CONTAINER_DATABASE_TABLES = 'container_database_tables';
+    public const CONTAINER_DATABASE_TABLE_COLUMNS = 'container_database_table_columns';
 
     public const C_GROUPS = 'groups';
     public const C_DOCUMENT_CLASSES = 'document_classes';
@@ -148,6 +150,8 @@ class EntityManager extends AManager {
             self::USER_ABSENCE => 'absenceId',
             self::USER_SUBSTITUTES => 'entryId',
             self::CONTAINER_DATABASES => 'entryId',
+            self::CONTAINER_DATABASE_TABLES => 'entryId',
+            self::CONTAINER_DATABASE_TABLE_COLUMNS => 'entryId',
 
             self::C_GROUPS => 'groupId',
             self::C_DOCUMENT_CLASSES => 'classId',

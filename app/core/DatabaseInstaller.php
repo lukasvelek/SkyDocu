@@ -88,7 +88,23 @@ class DatabaseInstaller {
                 'name' => 'VARCHAR(256) NOT NULL',
                 'isDefault' => 'INT(2) NOT NULL DEFAULT 0',
                 'title' => 'VARCHAR(256) NOT NULL',
-                'description' => 'TEXT NOT NULL'
+                'description' => 'TEXT NOT NULL',
+            ],
+            'container_database_tables' => [
+                'entryId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',
+                'containerId' => 'VARCHAR(256) NOT NULL',
+                'databaseId' => 'VARCHAR(256) NOT NULL',
+                'name' => 'VARCHAR(256) NOT NULL',
+                'isCreated' => 'INT(2) NOT NULL DEFAULT 0'
+            ],
+            'container_database_table_columns' => [
+                'entryId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',
+                'containerId' => 'VARCHAR(256) NOT NULL',
+                'databaseId' => 'VARCHAR(256) NOT NULL',
+                'tableId' => 'VARCHAR(256) NOT NULL',
+                'name' => 'VARCHAR(256) NOT NULL',
+                'title' => 'VARCHAR(256) NOT NULL',
+                'definition' => 'VARCHAR(256) NOT NULL'
             ],
             'container_creation_status' => [
                 'statusId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',

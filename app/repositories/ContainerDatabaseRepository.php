@@ -71,6 +71,102 @@ class ContainerDatabaseRepository extends ARepository {
 
         return $qb->fetchBool();
     }
+
+    /**
+     * Inserts a new container database table
+     * 
+     * @param string $entryId Entry ID
+     * @param string $containerId Container ID
+     * @param string $databaseId Database ID
+     * @param string $name Table name
+     */
+    public function insertNewContainerDatabaseTable(string $entryId, string $containerId, string $databaseId, string $name): bool {
+        $qb = $this->qb(__METHOD__);
+        
+        $qb->insert('container_database_tables', ['entryId', 'containerId', 'databaseId', 'name'])
+            ->values([$entryId, $containerId, $databaseId, $name])
+            ->execute();
+
+        return $qb->fetchBool();
+    }
+
+    /**
+     * Updates container database table
+     * 
+     * @param string $entryId Entry ID
+     * @param array $data Data
+     */
+    public function updateContainerDatabaseTable(string $entryId, array $data): bool {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->update('container_database_tables')
+            ->set($data)
+            ->where('entryId = ?', [$entryId])
+            ->execute();
+
+        return $qb->fetchBool();
+    }
+
+    /**
+     * Composes a QueryBuilder instance for container_database_tables
+     */
+    public function composeQueryForContainerDatabaseTables(): QueryBuilder {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->select(['*'])
+            ->from('container_database_tables');
+
+        return $qb;
+    }
+
+    /**
+     * Inserts a new container database table column definition
+     * 
+     * @param string $entryId Entry ID
+     * @param string $containerId Container ID
+     * @param string $databaseId Database ID
+     * @param string $tableId Table ID
+     * @param string $name Column name
+     * @param string $title Column title
+     * @param string $definition Column definition
+     */
+    public function insertNewContainerDatabaseTableColumnDefinition(string $entryId, string $containerId, string $databaseId, string $tableId, string $name, string $title, string $definition): bool {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->insert('container_database_table_columns', [
+            'entryId',
+            'containerId',
+            'databaseId',
+            'tableId',
+            'name',
+            'title',
+            'definition'
+            ])
+            ->values([
+                $entryId,
+                $containerId,
+                $databaseId,
+                $tableId,
+                $name,
+                $title,
+                $definition
+            ])
+            ->execute();
+
+        return $qb->fetchBool();
+    }
+
+    /**
+     * Composes a QueryBuilder instance for container_database_table_columns
+     */
+    public function composeQueryForContainerDatabaseTableColumns(): QueryBuilder {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->select(['*'])
+            ->from('container_database_table_columns');
+
+        return $qb;
+    }
 }
 
 ?>

@@ -5,7 +5,6 @@ namespace App\UI\ListBuilder;
 use App\Constants\AConstant;
 use App\Constants\IBackgroundColorable;
 use App\Constants\IColorable;
-use App\Exceptions\GeneralException;
 use App\Helpers\ArrayHelper;
 use App\Helpers\DateTimeFormatHelper;
 use App\UI\HTML\HTML;
@@ -146,11 +145,10 @@ class ListBuilderHelper {
         $this->dataSource = $dataSource;
     }
 
-    public function render() {
-        if(empty($this->dataSource)) {
-            throw new GeneralException('Data source is empty.');
-        }
-
+    /**
+     * Renders the list
+     */
+    public function render(): ListTable {
         $_tableRows = [];
 
         $_headerRow = new ListRow();
@@ -226,7 +224,7 @@ class ListBuilderHelper {
 
                     foreach($_action->onCanRender as $render) {
                         try {
-                            $result = $render($_row, $row, $_action);
+                            $result = $render($row, $_row, $_action);
 
                             if($result == true) {
                                 $canRender[$k][$actionName] = $_action;

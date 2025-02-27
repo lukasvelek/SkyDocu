@@ -10,7 +10,7 @@ class ListAction implements IListHTMLOutput {
     private string $title;
 
     /**
-     * ArrayRow $row, ListRow $_row, Action &$action
+     * ArrayRow $row, ListRow $_row, ListAction &$action
      */
     public array $onCanRender;
     /**

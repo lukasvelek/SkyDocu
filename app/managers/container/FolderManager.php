@@ -276,6 +276,18 @@ class FolderManager extends AManager {
             throw new GeneralException('Could not invalidate cache.');
         }
     }
+
+    /**
+     * Checks if given folder has custom metadata
+     * 
+     * @param string $folderId Folder ID
+     * @param string $callingUserId Calling user ID
+     */
+    public function hasFolderCustomMetadata(string $folderId, string $callingUserId): bool {
+        $metadata = $this->folderRepository->getVisibleCustomMetadataIdForFolder($folderId);
+
+        return count($metadata) > 0;
+    }
 }
 
 ?>

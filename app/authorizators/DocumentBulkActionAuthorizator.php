@@ -10,6 +10,7 @@ use App\Exceptions\GeneralException;
 use App\Logger\Logger;
 use App\Managers\Container\ArchiveManager;
 use App\Managers\Container\DocumentManager;
+use App\Managers\Container\FolderManager;
 use App\Managers\Container\GroupManager;
 use App\Managers\Container\ProcessManager;
 use App\Managers\UserManager;
@@ -28,6 +29,7 @@ class DocumentBulkActionAuthorizator extends AAuthorizator {
     private GroupManager $containerGroupManager;
     private ProcessManager $processManager;
     private ArchiveManager $archiveManager;
+    private FolderManager $folderManager;
 
     /**
      * Class constructor
@@ -40,6 +42,7 @@ class DocumentBulkActionAuthorizator extends AAuthorizator {
      * @param GroupManager $containerGroupManager
      * @param ProcessManager $processManager
      * @param ArchiveManager $archiveManager
+     * @param FolderManager $folderManager
      */
     public function __construct(
         DatabaseConnection $db,
@@ -49,7 +52,8 @@ class DocumentBulkActionAuthorizator extends AAuthorizator {
         UserManager $userManager,
         GroupManager $containerGroupManager,
         ProcessManager $processManager,
-        ArchiveManager $archiveManager
+        ArchiveManager $archiveManager,
+        FolderManager $folderManager
     ) {
         parent::__construct($db, $logger);
 
@@ -59,6 +63,7 @@ class DocumentBulkActionAuthorizator extends AAuthorizator {
         $this->containerGroupManager = $containerGroupManager;
         $this->processManager = $processManager;
         $this->archiveManager = $archiveManager;
+        $this->folderManager = $folderManager;
     }
 
     /**
@@ -245,6 +250,34 @@ class DocumentBulkActionAuthorizator extends AAuthorizator {
     private function checkDocumentIsInProcess(string $documentId) {
         if($this->processManager->isDocumentInProcess($documentId)) {
             throw new GeneralException('Document is already in a process.', null, false);
+        }
+    }
+
+    /**
+     * Returns true if user can move document to another folder
+     * 
+     * @param string $userId User ID
+     * @param string $documentId Document ID
+     */
+    public function canExecuteMoveToFolder(string $userId, string $documentId) {
+        return $this->internalExecute('throwExceptionIfCannotExecuteMoveToFolder', $userId, $documentId);
+    }
+
+    /**
+     * Throws exception why user cannot move document to another folder
+     * 
+     * @param string $userId User ID
+     * @param string $documentId Document ID
+     */
+    public function throwExceptionIfCannotExecuteMoveToFolder(string $userId, string $documentId) {
+        $document = $this->documentManager->getDocumentById($documentId);
+
+        if(in_array($document->status, [DocumentStatus::IS_BEING_MOVED_TO_ARCHIVE])) {
+            throw new GeneralException(sprintf('Document\'s status must not be %s but it is \'%s\'.', ('\'' . implode('\' or \'', [DocumentStatus::toString(DocumentStatus::NEW), DocumentStatus::toString(DocumentStatus::IS_BEING_MOVED_TO_ARCHIVE)]) . '\''), DocumentStatus::toString($document->status)));
+        }
+
+        if($this->folderManager->hasFolderCustomMetadata($document->folderId, $userId)) {
+            throw new GeneralException(sprintf('Document must not be saved in a folder with custom metadata.'));
         }
     }
 }

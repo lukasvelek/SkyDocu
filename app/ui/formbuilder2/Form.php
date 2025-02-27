@@ -123,7 +123,13 @@ class Form extends AElement {
 
         $parts = [];
         foreach($this->action as $key => $value) {
-            $parts[] = $key . '=' . $value;
+            if(!is_array($value)) {
+                $parts[] = $key . '=' . $value;
+            } else {
+                foreach($value as $v) {
+                    $parts[] = $key . '[]=' . $v;
+                }
+            }
         }
 
         foreach($this->additionalLinkParams as $key => $data) {

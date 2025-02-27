@@ -82,8 +82,19 @@ class DocumentBulkActionsHelper {
             $bulkActions[] = DocumentBulkActions::DOCUMENT_HISTORY;
         }*/
 
-        if($this->groupStandardOperationsAuthorizator->canUserShareDocuments($this->app->currentUser->getID()) && $this->checkIfDocumentsCanBeShared($documentIds)) {
+        if($this->groupStandardOperationsAuthorizator->canUserShareDocuments($this->app->currentUser->getId()) && $this->checkIfDocumentsCanBeShared($documentIds)) {
             $bulkActions[] = DocumentBulkActions::SHARING;
+        }
+
+        $ok = true;
+        foreach($documentIds as $documentId) {
+            if(!$this->documentBulkActionAuthorizator->canExecuteMoveToFolder($this->app->currentUser->getId(), $documentId)) {
+                $ok = false;
+            }
+        }
+
+        if($ok === true) {
+            $bulkActions[] = DocumentBulkActions::MOVE_TO_FOLDER;
         }
 
         // 1b. Create array of allowed processes
@@ -202,6 +213,10 @@ class DocumentBulkActionsHelper {
 
             case DocumentBulkActions::SHARING:
                 $el->href($this->createLink('User:Documents', 'shareForm', $urlParams));
+                break;
+
+            case DocumentBulkActions::MOVE_TO_FOLDER:
+                $el->href($this->createLink('User:Documents', 'moveToFolderForm', $urlParams));
                 break;
         }
 

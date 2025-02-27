@@ -53,7 +53,7 @@ class ListTable extends AListElement {
                 continue;
             }
 
-            $content = $_row->output()->toString();
+            $content .= $_row->output()->toString();
         }
         $content .= '</tbody>';
 

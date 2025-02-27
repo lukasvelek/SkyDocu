@@ -10,7 +10,7 @@ class ListRow extends AListElement {
     public ArrayRow $rowData;
     
     /**
-     * @var array<ListCell> $cells
+     * @var array<int, ListCell> $cells
      */
     private array $cells;
 

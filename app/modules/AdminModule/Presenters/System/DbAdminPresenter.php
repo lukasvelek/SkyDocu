@@ -12,6 +12,8 @@ use App\UI\GridBuilder2\Action;
 use App\UI\GridBuilder2\Row;
 use App\UI\HTML\HTML;
 use App\UI\LinkBuilder;
+use App\UI\ListBuilder\ArrayRow;
+use App\UI\ListBuilder\ListRow;
 
 class DbAdminPresenter extends AAdminPresenter {
     public function __construct() {
@@ -259,13 +261,49 @@ class DbAdminPresenter extends AAdminPresenter {
         return $form;
     }
 
-    public function renderTableList() {}
+    public function renderTableList() {
+        $this->template->links = $this->createBackUrl('list');
+    }
 
     protected function createComponentDatabaseTablesGrid(HttpRequest $request) {
+        $entryId = $request->get('entryId');
+        $database = $this->app->containerDatabaseManager->getDatabaseByEntryId($entryId);
+        $tables = $this->app->dbManager->getAllTablesInDatabase($database->getName());
+
+        $data = [];
+        $i = 0;
+        foreach($tables as $row) {
+            $data[$i]['table'] = $row['Tables_in_' . strtolower($database->getName())];
+
+            $i++;
+        }
+
         $list = $this->componentFactory->getListBuilder();
+
+        $list->setDataSource($data);
+
+        $list->addColumnText('table', 'Table');
+        
+        $scheme = $list->addAction('scheme');
+        $scheme->setTitle('Scheme');
+        $scheme->onCanRender[] = function() {
+            return true;
+        };
+        $scheme->onRender[] = function(mixed $primaryKey, ArrayRow $row, ListRow $_row, HTML $html) use ($entryId, $data) {
+            $index = substr($primaryKey, 4);
+            $table = $data[$index]['table'];
+            $el = HTML::el('a')
+                ->class('grid-link')
+                ->href($this->createURLString('tableSchemeList', ['entryId' => $entryId, 'table' => $table]))
+                ->text('Scheme');
+
+            return $el;
+        };
 
         return $list;
     }
+
+    public function handleTableSchemeList() {}
 }
 
 ?>

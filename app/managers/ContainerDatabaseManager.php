@@ -49,7 +49,7 @@ class ContainerDatabaseManager extends AManager {
 
         $tablesQ = $this->dbManager->getAllTablesInDatabase($database->getName());
 
-        $col = 'Tables_' . $database->getName();
+        $col = 'Tables_in_' . $database->getName();
 
         $_tables = [];
         foreach($tablesQ as $row) {

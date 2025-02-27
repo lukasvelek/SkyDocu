@@ -14,14 +14,14 @@ class ListAction implements IListHTMLOutput {
      */
     public array $onCanRender;
     /**
-     * int $index, ArrayRow $row, ListRow $_row, HTML $html
+     * mixed $primaryKey, ArrayRow $row, ListRow $_row, HTML $html
      */
     public array $onRender;
 
     private ArrayRow $row;
     private ListRow $_row;
     private HTML $html;
-    private int $index;
+    private mixed $primaryKey;
 
     /**
      * Class constructor
@@ -44,12 +44,12 @@ class ListAction implements IListHTMLOutput {
      * 
      * @param ArrayRow $row ArrayRow instance
      * @param ListRow $_row ListRow instance
-     * @param int $index Index
+     * @param mixed $primaryKey Primary key
      */
-    public function inject(ArrayRow $row, ListRow $_row, int $index) {
+    public function inject(ArrayRow $row, ListRow $_row, mixed $primaryKey) {
         $this->row = $row;
         $this->_row = $_row;
-        $this->index = $index;
+        $this->primaryKey = $primaryKey;
     }
 
     /**
@@ -67,13 +67,13 @@ class ListAction implements IListHTMLOutput {
      * 
      * @return string Text
      */
-    private function processText(): string {
+    private function processText(): string|HTML {
         $result = '-';
 
         if(!empty($this->onRender)) {
             foreach($this->onRender as $render) {
                 try {
-                    $result = $render($this->index, $this->row, $this->_row, $this->html);
+                    $result = $render($this->primaryKey, $this->row, $this->_row, $this->html);
                 } catch(Exception $e) {
                     $result = '#ERROR';
                     $this->title = $e->getMessage();

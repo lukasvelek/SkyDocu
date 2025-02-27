@@ -14,6 +14,7 @@ class ListBuilder extends AComponent {
     private array $dataSource;
     private string $listName;
     private ListBuilderHelper $helper;
+    private ListTable $table;
 
     /**
      * Class constructor
@@ -96,7 +97,14 @@ class ListBuilder extends AComponent {
     }
 
     public function render() {
-        return $this->helper->render();
+        $this->table = $this->helper->render();
+
+        $template = $this->getTemplate(__DIR__ . '/list.html');
+
+        $template->list = $this->table->output();
+        $template->list_name = $this->listName;
+
+        return $template->render()->getRenderedContent();
     }
 
     public static function createFromComponent(AComponent $component) {}

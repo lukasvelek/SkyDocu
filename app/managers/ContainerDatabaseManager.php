@@ -17,7 +17,7 @@ use App\Repositories\ContainerDatabaseRepository;
  * @author Lukas Velek
  */
 class ContainerDatabaseManager extends AManager {
-    private ContainerDatabaseRepository $containerDatabaseRepository;
+    public ContainerDatabaseRepository $containerDatabaseRepository;
     private DatabaseManager $dbManager;
 
     /**
@@ -232,6 +232,27 @@ class ContainerDatabaseManager extends AManager {
             ->execute();
 
         return DatabaseRow::createFromDbRow($qb->fetch());
+    }
+
+    /**
+     * Returns an array of container databases
+     * 
+     * @param string $containerId Container ID
+     * @return array<int, DatabaseRow>
+     */
+    public function getContainerDatabasesForContainerId(string $containerId): array {
+        $qb = $this->containerDatabaseRepository->composeQueryForContainerDatabases();
+        $qb->andWhere('containerId = ?', [$containerId])
+            ->execute();
+
+        $databases = [];
+        while($row = $qb->fetchAssoc()) {
+            $row = DatabaseRow::createFromDbRow($row);
+
+            $databases[] = $row;
+        }
+
+        return $databases;
     }
 }
 

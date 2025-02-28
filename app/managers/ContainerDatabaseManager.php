@@ -238,7 +238,7 @@ class ContainerDatabaseManager extends AManager {
      * Returns an array of container databases
      * 
      * @param string $containerId Container ID
-     * @return array<int, DatabaseRow>
+     * @return array<int, ContainerDatabaseEntity>
      */
     public function getContainerDatabasesForContainerId(string $containerId): array {
         $qb = $this->containerDatabaseRepository->composeQueryForContainerDatabases();
@@ -247,7 +247,7 @@ class ContainerDatabaseManager extends AManager {
 
         $databases = [];
         while($row = $qb->fetchAssoc()) {
-            $row = DatabaseRow::createFromDbRow($row);
+            $row = ContainerDatabaseEntity::createEntityFromDbRow($row);
 
             $databases[] = $row;
         }

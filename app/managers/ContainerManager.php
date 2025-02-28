@@ -571,7 +571,7 @@ class ContainerManager extends AManager {
         $databases = $this->containerDatabaseManager->getContainerDatabasesForContainerId($containerId);
 
         foreach($databases as $database) {
-            $this->containerDatabaseManager->dropDatabaseByEntryId($containerId, $database->entryId);
+            $this->containerDatabaseManager->dropDatabaseByEntryId($containerId, $database->getId());
         }
     }
 

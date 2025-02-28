@@ -237,6 +237,8 @@ class GridBuilder extends AComponent {
         $this->activeFilters = [];
 
         $this->saveActiveFilters();
+
+        $this->activeFilters = [];
     }
 
     /**
@@ -556,7 +558,7 @@ class GridBuilder extends AComponent {
         if(!$this->isPrerendered) {
             $this->prerender();
         }
-        $this->build();
+        $this->build(false, true);
 
         $template = $this->getTemplate(__DIR__ . '/grid.html');
 
@@ -1132,8 +1134,6 @@ class GridBuilder extends AComponent {
      */
     public function actionFilterClear(): JsonResponse {
         $this->clearActiveFilters();
-
-        $this->build();
 
         return new JsonResponse(['grid' => $this->render()]);
     }

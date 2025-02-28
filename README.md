@@ -13,7 +13,6 @@ The web application is written purely in PHP with a few JS scripts. These JS scr
 These future plans are also in Issues list and can be distinguished by their milestone.
 
 Future plans include:
-- Dark theme support (__1.4__)
 - Grid exporting (__1.4__)
 - Multiple database servers (__1.4__, may be postponed)
 
@@ -24,6 +23,7 @@ Future plans include:
     - Database table scheme browser
     - Database table data browser
 - Moving documents between folders
+- Dark theme support
 
 ### 1.3.1 (February 26th, 2025)
 - About application widget update

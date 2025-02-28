@@ -2,6 +2,7 @@
 
 namespace App\Modules\SuperAdminSettingsModule;
 
+use App\Constants\AppDesignThemes;
 use App\Core\DB\DatabaseRow;
 use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
@@ -206,6 +207,7 @@ class UsersPresenter extends ASuperAdminSettingsPresenter {
                 $data = [
                     'username' => $fr->username,
                     'fullname' => $fr->fullname,
+                    'appDesignTheme' => $fr->appDesignTheme
                 ];
 
                 if($fr->isset('email') && $fr->email !== null) {
@@ -233,6 +235,20 @@ class UsersPresenter extends ASuperAdminSettingsPresenter {
 
     protected function createComponentEditUserForm(HttpRequest $request) {
         $user = $this->app->userManager->getUserById($request->get('userId'));
+
+        $themes = [];
+        foreach(AppDesignThemes::getAll() as $key => $title) {
+            $theme = [
+                'value' => $key,
+                'text' => $title
+            ];
+
+            if($user->getAppDesignTheme() == $key) {
+                $theme['selected'] = 'selected';
+            }
+
+            $themes[] = $theme;
+        }
         
         $form = $this->componentFactory->getFormBuilder();
 
@@ -248,6 +264,10 @@ class UsersPresenter extends ASuperAdminSettingsPresenter {
 
         $form->addEmailInput('email', 'Email:')
             ->setValue($user->getEmail());
+
+        $form->addSelect('appDesignTheme', 'App theme:')
+            ->setRequired()
+            ->addRawOptions($themes);
 
         $form->addSubmit('Save');
 

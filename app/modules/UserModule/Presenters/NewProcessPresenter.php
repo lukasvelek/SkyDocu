@@ -28,6 +28,8 @@ class NewProcessPresenter extends AUserPresenter {
 
     protected function createComponentProcessesSelect(HttpRequest $request) {
         $select = new ProcessesSelect($request, $this->standaloneProcessManager);
+        $select->setApplication($this->app);
+        $select->setPresenter($this);
 
         return $select;
     }

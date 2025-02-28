@@ -351,7 +351,7 @@ div[class^="fm-"], div[class*="fm-"] {
 }
 
 #grid thead th {
-    background-color: rgba(50, 50, 50, 0.75);
+    background-color: rgba(30, 30, 30, 0.75);
 
     border: 0;
     border-collapse: inherit;
@@ -359,7 +359,7 @@ div[class^="fm-"], div[class*="fm-"] {
 }
 
 .grid-cell-action {
-    background-color: rgba(50, 50, 50, 0.75);
+    background-color: rgba(30, 30, 30, 0.75);
 
     border: 0;
     border-collapse: inherit;
@@ -367,13 +367,16 @@ div[class^="fm-"], div[class*="fm-"] {
 }
 
 .grid-control-button, .grid-control-button-last {
-    width: 35px;
+    width: 50px;
 
-    border: 1px solid black;
-
-    border-radius: 5px;
+    border: 0;
+    border-radius: 10px;
 
     color: rgb(200, 200, 200);
+
+    background-color: rgba(30, 30, 30, 0.75);
+
+    padding: 5px 0px 5px 0px;
 }
 
 .grid-control-button {
@@ -750,7 +753,7 @@ a.widget-title:hover {
 
     border: 0;
     border-collapse: inherit;
-    border-radius: 0;
+    border-radius: 10px;
     
     background-color: rgba(50, 50, 50, 0.75);
 
@@ -762,7 +765,7 @@ a.widget-title:hover {
 }
 
 #widget thead th {
-    background-color: rgba(50, 50, 50, 0.75);
+    background-color: rgba(30, 30, 30, 0.75);
 
     border: 0;
     border-collapse: inherit;

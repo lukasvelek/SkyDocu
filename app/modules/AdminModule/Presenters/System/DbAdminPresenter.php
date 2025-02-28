@@ -170,7 +170,7 @@ class DbAdminPresenter extends AAdminPresenter {
                     throw new GeneralException('Database titles do no match.');
                 }
 
-                $this->app->containerDatabaseManager->dropDatabaseByEntryId($this->httpRequest->get('entryId'));
+                $this->app->containerDatabaseManager->dropDatabaseByEntryId($this->containerId, $this->httpRequest->get('entryId'));
 
                 $this->app->containerDatabaseRepository->commit($this->getUserId(), __METHOD__);
 

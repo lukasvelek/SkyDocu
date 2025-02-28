@@ -3,6 +3,7 @@
 namespace App\UI\GridBuilder2;
 
 use App\Constants\AConstant;
+use App\Constants\AppDesignThemes;
 use App\Constants\IBackgroundColorable;
 use App\Constants\IColorable;
 use App\Core\Caching\CacheFactory;
@@ -236,6 +237,8 @@ class GridBuilder extends AComponent {
         $this->activeFilters = [];
 
         $this->saveActiveFilters();
+
+        $this->activeFilters = [];
     }
 
     /**
@@ -377,20 +380,33 @@ class GridBuilder extends AComponent {
                         $result = $constClass::toString($value);
 
                         $el = HTML::el('span');
-                        $el->text($result ?? '-');
+                        $el->text($result ?? $value);
 
                         if(in_array(IColorable::class, class_implements($constClass))) {
                             $color = $constClass::getColor($value);
 
-                            $el->style('color', $color);
+                            if($this->app !== null && $this->app->currentUser !== null && $this->app->currentUser->getAppDesignTheme() == AppDesignThemes::DARK) {
+                                if(!str_starts_with($color, 'rgb')) {
+                                    $el->style('background-color', 'dark' . $color);
+                                } else {
+                                    $el->style('background-color', $color);
+                                }
+                            } else {
+                                $el->style('color', $color);
+                            }
                         }
 
                         if(in_array(IBackgroundColorable::class, class_implements($constClass))) {
                             $bgColor = $constClass::getBackgroundColor($value);
 
                             if($bgColor !== null) {
-                                $el->style('background-color', $bgColor)
-                                    ->style('border-radius', '10px')
+                                if($this->app !== null && $this->app->currentUser !== null && $this->app->currentUser->getAppDesignTheme() == AppDesignThemes::DARK) {
+                                    $el->style('color', $bgColor);
+                                } else {
+                                    $el->style('background-color', $bgColor);
+                                }
+
+                                $el->style('border-radius', '10px')
                                     ->style('padding', '5px');
                             }
                         }
@@ -542,7 +558,7 @@ class GridBuilder extends AComponent {
         if(!$this->isPrerendered) {
             $this->prerender();
         }
-        $this->build();
+        $this->build(false, true);
 
         $template = $this->getTemplate(__DIR__ . '/grid.html');
 
@@ -1118,8 +1134,6 @@ class GridBuilder extends AComponent {
      */
     public function actionFilterClear(): JsonResponse {
         $this->clearActiveFilters();
-
-        $this->build();
 
         return new JsonResponse(['grid' => $this->render()]);
     }

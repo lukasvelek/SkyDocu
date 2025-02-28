@@ -17,7 +17,7 @@ use App\Repositories\ContainerDatabaseRepository;
  * @author Lukas Velek
  */
 class ContainerDatabaseManager extends AManager {
-    private ContainerDatabaseRepository $containerDatabaseRepository;
+    public ContainerDatabaseRepository $containerDatabaseRepository;
     private DatabaseManager $dbManager;
 
     /**
@@ -85,14 +85,23 @@ class ContainerDatabaseManager extends AManager {
     /**
      * Drops database
      * 
+     * @param string $containerId Container ID
      * @param string $entryId Entry ID
      */
-    public function dropDatabaseByEntryId(string $entryId) {
+    public function dropDatabaseByEntryId(string $containerId, string $entryId) {
         $database = $this->getDatabaseByEntryId($entryId);
 
         $this->dbManager->dropDatabase($database->getName());
 
         if(!$this->containerDatabaseRepository->deleteContainerDatabase($entryId)) {
+            throw new GeneralException('Database error.');
+        }
+
+        if(!$this->containerDatabaseRepository->deleteContainerDatabaseTables($containerId, $entryId)) {
+            throw new GeneralException('Database error.');
+        }
+
+        if(!$this->containerDatabaseRepository->deleteColumnsForAllContainerDatabaseTables($containerId, $entryId)) {
             throw new GeneralException('Database error.');
         }
 
@@ -223,6 +232,27 @@ class ContainerDatabaseManager extends AManager {
             ->execute();
 
         return DatabaseRow::createFromDbRow($qb->fetch());
+    }
+
+    /**
+     * Returns an array of container databases
+     * 
+     * @param string $containerId Container ID
+     * @return array<int, ContainerDatabaseEntity>
+     */
+    public function getContainerDatabasesForContainerId(string $containerId): array {
+        $qb = $this->containerDatabaseRepository->composeQueryForContainerDatabases();
+        $qb->andWhere('containerId = ?', [$containerId])
+            ->execute();
+
+        $databases = [];
+        while($row = $qb->fetchAssoc()) {
+            $row = ContainerDatabaseEntity::createEntityFromDbRow($row);
+
+            $databases[] = $row;
+        }
+
+        return $databases;
     }
 }
 

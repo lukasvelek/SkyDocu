@@ -73,6 +73,24 @@ class ContainerDatabaseRepository extends ARepository {
     }
 
     /**
+     * Deletes container database tables
+     * 
+     * @param string $containerId Container ID
+     * @param string $databaseId Database ID
+     */
+    public function deleteContainerDatabaseTables(string $containerId, string $databaseId): bool {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->delete()
+            ->from('container_database_tables')
+            ->where('containerId = ?', [$containerId])
+            ->andWhere('databaseId = ?', [$databaseId])
+            ->execute();
+
+        return $qb->fetchBool();
+    }
+
+    /**
      * Inserts a new container database table
      * 
      * @param string $entryId Entry ID
@@ -117,6 +135,24 @@ class ContainerDatabaseRepository extends ARepository {
             ->from('container_database_tables');
 
         return $qb;
+    }
+
+    /**
+     * Deletes columns for all container database tables
+     * 
+     * @param string $containerId Container ID
+     * @param string $databaseId Database ID
+     */
+    public function deleteColumnsForAllContainerDatabaseTables(string $containerId, string $databaseId): bool {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->delete()
+            ->from('container_database_table_columns')
+            ->where('containerId = ?', [$containerId])
+            ->andWhere('databaseId = ?', [$databaseId])
+            ->execute();
+
+        return $qb->fetchBool();
     }
 
     /**

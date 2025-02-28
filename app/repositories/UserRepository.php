@@ -20,7 +20,7 @@ class UserRepository extends ARepository {
         $this->userUsername2IdCache = $this->cacheFactory->getCache(CacheNames::USERS_USERNAME_TO_ID_MAPPING);
     }
 
-    public function getUserById(string $id): UserEntity|null {
+    public function getUserById(string $id, bool $force = false): UserEntity|null {
         $qb = $this->qb(__METHOD__);
 
         $qb ->select(['*'])
@@ -33,7 +33,7 @@ class UserRepository extends ARepository {
             $entity = UserEntity::createEntityFromDbRow($row);
 
             return $entity;
-        });
+        }, [], $force);
 
         return $entity;
     }

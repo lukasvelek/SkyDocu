@@ -10,7 +10,6 @@ use App\Constants\ContainerStatus;
 use App\Core\Caching\CacheNames;
 use App\Core\DatabaseConnection;
 use App\Core\DB\DatabaseManager;
-use App\Core\DB\DatabaseRow;
 use App\Core\FileManager;
 use App\Core\HashManager;
 use App\Entities\ContainerDatabaseEntity;
@@ -21,7 +20,6 @@ use App\Exceptions\NonExistingEntityException;
 use App\Helpers\ContainerCreationHelper;
 use App\Logger\Logger;
 use App\Repositories\Container\GroupRepository;
-use App\Repositories\ContainerDatabaseRepository;
 use App\Repositories\ContainerRepository;
 use App\Repositories\ContentRepository;
 use App\Repositories\UserRepository;
@@ -31,16 +29,16 @@ class ContainerManager extends AManager {
     private DatabaseManager $dbManager;
     private GroupManager $groupManager;
     private DatabaseConnection $masterConn;
-    private ContainerDatabaseRepository $containerDatabaseRepository;
+    private ContainerDatabaseManager $containerDatabaseManager;
 
-    public function __construct(Logger $logger, EntityManager $entityManager, ContainerRepository $containerRepository, DatabaseManager $dbManager, GroupManager $groupManager, DatabaseConnection $masterConn, ContainerDatabaseRepository $containerDatabaseRepository) {
+    public function __construct(Logger $logger, EntityManager $entityManager, ContainerRepository $containerRepository, DatabaseManager $dbManager, GroupManager $groupManager, DatabaseConnection $masterConn, ContainerDatabaseManager $containerDatabaseManager) {
         parent::__construct($logger, $entityManager);
 
         $this->containerRepository = $containerRepository;
         $this->dbManager = $dbManager;
         $this->groupManager = $groupManager;
         $this->masterConn = $masterConn;
-        $this->containerDatabaseRepository = $containerDatabaseRepository;
+        $this->containerDatabaseManager = $containerDatabaseManager;
     }
 
     /**
@@ -56,9 +54,7 @@ class ContainerManager extends AManager {
         $containerId = $this->createId(EntityManager::CONTAINERS);
         $databaseName = $this->generateContainerDatabaseName($containerId);
 
-        $containerDatabaseEntryId = $this->createId(EntityManager::CONTAINER_DATABASES);
-
-        if(!$this->containerDatabaseRepository->insertNewContainerDatabase($containerDatabaseEntryId, $containerId, $databaseName, 'SkyDocu Database', 'Default SkyDocu database', true)) {
+        if(!$this->containerDatabaseManager->insertNewContainerDatabase($containerId, $databaseName, 'SkyDocu Database', 'Default SkyDocu database', true)) {
             throw new GeneralException('Database error.');
         }
 
@@ -523,16 +519,7 @@ class ContainerManager extends AManager {
         $dbCache = $this->cacheFactory->getCache(CacheNames::CONTAINER_DATABASES);
 
         $databases = $dbCache->load($containerId, function() use ($containerId) {
-            $qb = $this->containerDatabaseRepository->composeQueryForContainerDatabases();
-            $qb->andWhere('containerId = ?', [$containerId])
-                ->execute();
-
-            $entities = [];
-            while($row = $qb->fetchAssoc()) {
-                $entities[] = ContainerDatabaseEntity::createEntityFromDbRow($row);
-            }
-
-            return $entities;
+            return $this->containerDatabaseManager->getContainerDatabasesForContainerId($containerId);
         });
 
         $containerEntity->addContainerDatabases($databases);
@@ -578,6 +565,13 @@ class ContainerManager extends AManager {
             if(!$this->containerRepository->deleteContainerStatusHistory($containerId)) {
                 throw new GeneralException('COuld not delete container status history entries.');
             }
+        }
+
+        // Drop container custom databases
+        $databases = $this->containerDatabaseManager->getContainerDatabasesForContainerId($containerId);
+
+        foreach($databases as $database) {
+            $this->containerDatabaseManager->dropDatabaseByEntryId($containerId, $database->getId());
         }
     }
 

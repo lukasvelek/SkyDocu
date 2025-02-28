@@ -2,6 +2,7 @@
 
 namespace App\Components\ProcessesSelect;
 
+use App\Constants\AppDesignThemes;
 use App\Constants\Container\StandaloneProcesses;
 use App\Core\Http\HttpRequest;
 use App\Modules\TemplateObject;
@@ -61,10 +62,16 @@ class ProcessWidget extends AComponent {
         $this->generateColors();
 
         $this->template->title = $this->title;
-        $this->template->color = $this->fgColor;
-        $this->template->background = $this->bgColor;
         $this->template->link = $this->link;
         $this->template->widget_id = $this->componentName;
+
+        if($this->app !== null && $this->app->currentUser !== null && $this->app->currentUser->getAppDesignTheme() == AppDesignThemes::DARK) {
+            $this->template->color = $this->bgColor;
+            $this->template->background = $this->fgColor;
+        } else {
+            $this->template->color = $this->fgColor;
+            $this->template->background = $this->bgColor;
+        }
     }
 
     public function render() {

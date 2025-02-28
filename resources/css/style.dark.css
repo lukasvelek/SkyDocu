@@ -2,7 +2,9 @@ body {
     overflow-x: hidden;
 
     /*background-color: rgb(245, 245, 245);*/
-    background-color: rgba(0, 0, 0, 0.75);
+    background-color: rgba(70, 70, 70, 1);
+
+    color: rgb(200, 200, 200);
 }
 
 #form input, #form select, #form textarea, #form button {
@@ -230,7 +232,7 @@ div[class^="fm-"], div[class*="fm-"] {
 .link, .footer-link {
     font-size: 16px;
 
-    color: black;
+    color: rgb(200, 200, 200);
 
     text-decoration: none;
 
@@ -240,7 +242,7 @@ div[class^="fm-"], div[class*="fm-"] {
 .link:hover, .footer-link:hover {
     text-decoration: none;
 
-    color: rgb(100, 100, 100);
+    color: rgb(150, 150, 150);
 }
 
 .post-comment-border {
@@ -291,7 +293,7 @@ div[class^="fm-"], div[class*="fm-"] {
 .sidebar-link {
     font-size: 20px;
 
-    color: black;
+    color: rgb(200, 200, 200);
 
     text-decoration: none;
 
@@ -301,7 +303,7 @@ div[class^="fm-"], div[class*="fm-"] {
 }
 
 .sidebar-link:hover {
-    color: rgb(100, 100, 100);
+    color: rgb(150, 150, 150);
 }
 
 .system-status-item-link {
@@ -321,7 +323,7 @@ div[class^="fm-"], div[class*="fm-"] {
     border-collapse: inherit;
     border-radius: 10px;
 
-    background-color: rgba(255, 255, 255, 0.75);
+    background-color: rgba(50, 50, 50, 0.75);
 }
 
 #grid table {
@@ -333,7 +335,9 @@ div[class^="fm-"], div[class*="fm-"] {
     border-collapse: inherit;
     border-radius: 10px;
 
-    background-color: rgba(255, 255, 255, 0.75);
+    background-color: rgba(50, 50, 50, 0.75);
+
+    color: rgb(200, 200, 200);
 }
 
 #flashMessage {
@@ -347,7 +351,7 @@ div[class^="fm-"], div[class*="fm-"] {
 }
 
 #grid thead th {
-    background-color: rgb(220, 220, 220);
+    background-color: rgba(50, 50, 50, 0.75);
 
     border: 0;
     border-collapse: inherit;
@@ -355,7 +359,7 @@ div[class^="fm-"], div[class*="fm-"] {
 }
 
 .grid-cell-action {
-    background-color: rgb(245, 245, 245);
+    background-color: rgba(50, 50, 50, 0.75);
 
     border: 0;
     border-collapse: inherit;
@@ -368,6 +372,8 @@ div[class^="fm-"], div[class*="fm-"] {
     border: 1px solid black;
 
     border-radius: 5px;
+
+    color: rgb(200, 200, 200);
 }
 
 .grid-control-button {
@@ -376,6 +382,8 @@ div[class^="fm-"], div[class*="fm-"] {
 
 .grid-control-button2, #grid-control-button2 {
     border: 1px solid black;
+
+    color: rgb(200, 200, 200);
 
     border-radius: 5px;
 }
@@ -391,7 +399,7 @@ div[class^="fm-"], div[class*="fm-"] {
 }
 
 .grid-link {
-    color: black;
+    color: rgb(200, 200, 200);
 
     text-decoration: underline;
 
@@ -399,7 +407,15 @@ div[class^="fm-"], div[class*="fm-"] {
 }
 
 .grid-link:hover {
-    color: rgb(100, 100, 100);
+    color: rgb(150, 150, 150);
+}
+
+#grid input {
+    background-color: rgb(85, 85, 85);
+
+    color: rgb(200, 200, 200);
+
+    border: 1px solid black;
 }
 
 .limited {
@@ -514,6 +530,12 @@ button #formSubmit {
     width: 50%;
 
     height: 40px;
+}
+
+#form input, #form textarea, #form select {
+    background-color: rgb(85, 85, 85);
+
+    color: rgb(200, 200, 200);
 }
 
 #post-comment-form textarea {
@@ -643,7 +665,7 @@ div [id*="user-action-history-"] {
 }
 
 #sidebar {
-    background-color: rgba(255, 255, 255, 0.75);
+    background-color: rgba(50, 50, 50, 0.75);
 
     border: 0;
     border-radius: 10px;
@@ -730,7 +752,9 @@ a.widget-title:hover {
     border-collapse: inherit;
     border-radius: 0;
     
-    background-color: rgba(255, 255, 255, 0.75);
+    background-color: rgba(50, 50, 50, 0.75);
+
+    color: rgb(200, 200, 200);
 }
 
 #widget tr {
@@ -738,7 +762,7 @@ a.widget-title:hover {
 }
 
 #widget thead th {
-    background-color: rgb(220, 220, 220);
+    background-color: rgba(50, 50, 50, 0.75);
 
     border: 0;
     border-collapse: inherit;
@@ -756,13 +780,13 @@ a.widget-title:hover {
 
 @keyframes skeletonTextAnimationX {
     0% {
-        color: rgb(220, 220, 220);
-        background-color: rgb(220, 220, 220);
+        color: rgb(100, 100, 100);
+        background-color: rgb(100, 100, 100);
     }
 
     100% {
-        color: rgb(150, 150, 150);
-        background-color: rgb(150, 150, 150);
+        color: rgb(75, 75, 75);
+        background-color: rgb(75, 75, 75);
     }
 }
 

@@ -379,9 +379,17 @@ class DatabaseInstaller {
         foreach($services as $title => $path) {
             $id = HashManager::createEntityId();
 
-            $sql = "INSERT INTO `system_services` (`serviceId`, `title`, `scriptPath`)
-                    SELECT '$id', '$title', '$path'
-                    WHERE NOT EXISTS (SELECT 1 FROM `system_services` WHERE `serviceId` = '$id' AND title = '$title' AND scriptPath = '$path')";
+            $arr = [
+                'schedule' => [
+                    'days' => 'mon;tue;wed;thu;fri',
+                    'time' => '02'
+                ]
+            ];
+            $schedule = json_encode($arr, JSON_FORCE_OBJECT);
+
+            $sql = "INSERT INTO `system_services` (`serviceId`, `title`, `scriptPath`, `schedule`)
+                    SELECT '$id', '$title', '$path', '$schedule'
+                    WHERE NOT EXISTS (SELECT 1 FROM `system_services` WHERE `serviceId` = '$id' AND title = '$title' AND scriptPath = '$path' AND schedule = '$schedule')";
 
             $this->db->query($sql);
         }

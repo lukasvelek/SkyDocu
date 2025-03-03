@@ -193,20 +193,19 @@ class BackgroundServicesGrid extends GridBuilder implements IGridExtendingCompon
                     $diff = 7 - $todayIndex + $nextIndex; // count until the end of the week plus index of the next day
                 }
 
-                $_t = new DateTime();
-                $_t->modify('+' . $diff . 'd');
-                $_t->format('d.m.Y');
-                $t = $_t->getResult() . ' ' . $time;
+                $_text = new DateTime();
+                $_text->modify('+' . $diff . 'd');
+                $_text->format('d.m.Y');
+                $text = $_text->getResult() . ' ' . $time;
 
-                if($todayIndex < $nextIndex) {
-                    $nextFinal .= ' ' . $time;
-                } else {
-                    $nextFinal = $t;
-                }
+                $_title = new DateTime();
+                $_title->modify('+' . $diff . 'd');
+                $_title->format('Y-m-d');
+                $title = $_title->getResult() . ' ' . $time . ':00';
 
                 $el = HTML::el('span')
-                    ->text($nextFinal)
-                    ->title($t);
+                    ->text($text)
+                    ->title($title);
 
                 return $el;
             } else {

@@ -83,6 +83,16 @@ class SystemServicesRepository extends ARepository {
 
         return $qb;
     }
+
+    public function getChildrenCountForServiceId(string $serviceId) {
+        $qb = $this->composeQueryForServices();
+
+        $qb->andWhere('parentServiceId = ?', [$serviceId])
+            ->select(['COUNT(*) AS cnt'])
+            ->execute();
+
+        return $qb->fetch('cnt');
+    }
 }
 
 ?>

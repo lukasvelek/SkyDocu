@@ -467,6 +467,23 @@ class FormBuilder2 extends AComponent {
     }
 
     /**
+     * Adds time input
+     * 
+     * @param string $name Element name
+     * @param ?string $label Labet text or null
+     * @return TimeInput TimeInput instance
+     */
+    public function addTimeInput(string $name, ?string $label = null) {
+        $ti = new TimeInput($name);
+
+        $this->elements[$name] = &$ti;
+
+        $this->processLabel($name, $label);
+
+        return $ti;
+    }
+
+    /**
      * Adds checkbox input
      * 
      * @param string $name Element name

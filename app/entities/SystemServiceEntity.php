@@ -58,6 +58,9 @@ class SystemServiceEntity extends AEntity {
     }
 
     public function getSchedule() {
+        if($this->schedule == '') {
+            return null;
+        }
         return $this->schedule;
     }
 

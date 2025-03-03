@@ -21,6 +21,8 @@ use App\UI\HTML\HTML;
 class BackgroundServicesGrid extends GridBuilder implements IGridExtendingComponent {
     private SystemServicesRepository $systemServicesRepository;
 
+    private ?string $serviceId;
+
     /**
      * Class constructor
      * 
@@ -39,6 +41,12 @@ class BackgroundServicesGrid extends GridBuilder implements IGridExtendingCompon
         $this->setApplication($app);
         
         $this->systemServicesRepository = $systemServicesRepository;
+
+        $this->serviceId = null;
+    }
+
+    public function setServiceId(string $serviceId) {
+        $this->serviceId = $serviceId;
     }
 
     public function prerender() {
@@ -56,6 +64,12 @@ class BackgroundServicesGrid extends GridBuilder implements IGridExtendingCompon
 
     public function createDataSource() {
         $qb = $this->systemServicesRepository->composeQueryForServices();
+        
+        if($this->serviceId === null) {
+            $qb->andWhere('parentServiceId IS NULL');
+        } else {
+            $qb->andWhere('parentServiceId = ?', [$this->serviceId]);
+        }
 
         $this->createDataSourceFromQueryBuilder($qb, 'serviceId');
     }
@@ -100,6 +114,34 @@ class BackgroundServicesGrid extends GridBuilder implements IGridExtendingCompon
 
             return $el;
         };
+
+        $children = $this->addAction('children');
+        $children->setTitle('Children');
+        $children->onCanRender[] = function(DatabaseRow $row, Row $_row) {
+            return $this->systemServicesRepository->getChildrenCountForServiceId($row->serviceId) > 0;
+        };
+        $children->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
+            $el = HTML::el('a')
+                ->class('grid-link')
+                ->href($this->createFullURLString('SuperAdminSettings:BackgroundServices', 'list', ['serviceId' => $primaryKey]))
+                ->text('Children');
+
+            return $el;
+        };
+
+        $edit = $this->addAction('edit');
+        $edit->setTitle('Edit');
+        $edit->onCanRender[] = function(DatabaseRow $row, Row $_row) {
+            return true;
+        };
+        $edit->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
+            $el = HTML::el('a')
+                ->class('grid-link')
+                ->href($this->createFullURLString('SuperAdminSettings:BackgroundServices', 'editForm', ['serviceId' => $primaryKey]))
+                ->text('Edit');
+
+            return $el;
+        };
     }
     
     /**
@@ -110,6 +152,7 @@ class BackgroundServicesGrid extends GridBuilder implements IGridExtendingCompon
         $this->addColumnDatetime('dateStarted', 'Service started');
         $this->addColumnDatetime('dateEnded', 'Service ended');
         $this->addColumnConst('status', 'Status', SystemServiceStatus::class);
+        $this->addColumnBoolean('isEnabled', 'Is enabled');
     }
     
     public function actionQuickSearch(): JsonResponse {

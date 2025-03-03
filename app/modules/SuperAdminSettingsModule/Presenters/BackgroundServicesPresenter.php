@@ -31,6 +31,7 @@ class BackgroundServicesPresenter extends ASuperAdminSettingsPresenter {
 
         if($serviceId !== null) {
             $grid->setServiceId($serviceId);
+            $grid->addQueryDependency('serviceId', $serviceId);
         }
 
         return $grid;

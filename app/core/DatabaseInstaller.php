@@ -135,7 +135,10 @@ class DatabaseInstaller {
                 'scriptPath' => 'VARCHAR(256) NOT NULL',
                 'dateStarted' => 'DATETIME NULL',
                 'dateEnded' => 'DATETIME NULL',
-                'status' => 'INT(4) NOT NULL DEFAULT 1'
+                'status' => 'INT(4) NOT NULL DEFAULT 1',
+                'parentServiceId' => 'VARCHAR(256) NULL',
+                'isEnabled' => 'INT(2) NOT NULL DEFAULT 1',
+                'schedule' => 'VARCHAR(512) NOT NULL'
             ],
             'system_services_history' => [
                 'historyId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',

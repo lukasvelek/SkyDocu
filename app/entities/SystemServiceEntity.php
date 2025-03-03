@@ -43,7 +43,7 @@ class SystemServiceEntity extends AEntity {
         return $this->status;
     }
 
-    public static function createEntityFromDbRow(mixed $row): static {
+    public static function createEntityFromDbRow(mixed $row): ?static {
         if($row === null) {
             return null;
         }

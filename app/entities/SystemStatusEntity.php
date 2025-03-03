@@ -37,7 +37,7 @@ class SystemStatusEntity extends AEntity {
         return $this->dateUpdated;
     }
 
-    public static function createEntityFromDbRow(mixed $row): static {
+    public static function createEntityFromDbRow(mixed $row): ?static {
         if($row === null) {
             return null;
         }

@@ -4,10 +4,13 @@ namespace App\Components\BackgroundServicesGrid;
 
 use App\Constants\SystemServiceStatus;
 use App\Core\Application;
+use App\Core\Datetypes\DateTime;
 use App\Core\DB\DatabaseRow;
 use App\Core\Http\JsonResponse;
+use App\Helpers\BackgroundServiceScheduleHelper;
 use App\Helpers\GridHelper;
 use App\Repositories\SystemServicesRepository;
+use App\UI\GridBuilder2\Cell;
 use App\UI\GridBuilder2\GridBuilder;
 use App\UI\GridBuilder2\IGridExtendingComponent;
 use App\UI\GridBuilder2\Row;
@@ -55,6 +58,7 @@ class BackgroundServicesGrid extends GridBuilder implements IGridExtendingCompon
         $this->fetchDataFromDb();
 
         $this->appendSystemMetadata();
+        $this->appendNextRunColumn();
         $this->appendActions();
 
         $this->setup();
@@ -153,6 +157,62 @@ class BackgroundServicesGrid extends GridBuilder implements IGridExtendingCompon
         $this->addColumnDatetime('dateEnded', 'Service ended');
         $this->addColumnConst('status', 'Status', SystemServiceStatus::class);
         $this->addColumnBoolean('isEnabled', 'Is enabled');
+    }
+
+    private function appendNextRunColumn() {
+        $col = $this->addColumnText('nextRun', 'Next run');
+        $col->onRenderColumn[] = function(DatabaseRow $row, Row $_row, Cell $cell, HTML $html, mixed $value) {
+            $schedule = json_decode($row->schedule, true);
+
+            $days = $schedule['schedule']['days'];
+            $time = $schedule['schedule']['time'] . ':00';
+
+            $todayShortcut = strtolower(date('D'));
+
+            if(in_array($todayShortcut, explode(';', $days))) {
+                $pos = array_search(strtolower($todayShortcut), explode(';', $days));
+
+                if(($pos + 1) == count(explode(';', $days))) {
+                    // last
+                    $next = explode(';', $days)[0];
+                } else {
+                    // not last
+                    $next = explode(';', $days)[$pos + 1];
+                }
+
+                $nextFinal = BackgroundServiceScheduleHelper::getFullDayNameFromShortcut($next);
+
+                $daysArr = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+
+                $t = '';
+                $todayIndex = array_search(strtolower($todayShortcut), $daysArr);
+                $nextIndex = array_search(strtolower($next), $daysArr);
+                if($todayIndex < $nextIndex) {
+                    $diff = $nextIndex - $todayIndex;
+                } else {
+                    $diff = 7 - $todayIndex + $nextIndex; // count until the end of the week plus index of the next day
+                }
+
+                $_t = new DateTime();
+                $_t->modify('+' . $diff . 'd');
+                $_t->format('d.m.Y');
+                $t = $_t->getResult() . ' ' . $time;
+
+                if($todayIndex < $nextIndex) {
+                    $nextFinal .= ' ' . $time;
+                } else {
+                    $nextFinal = $t;
+                }
+
+                $el = HTML::el('span')
+                    ->text($nextFinal)
+                    ->title($t);
+
+                return $el;
+            } else {
+                return '-';
+            }
+        };
     }
     
     public function actionQuickSearch(): JsonResponse {

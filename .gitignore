@@ -6,3 +6,4 @@ config.php
 install
 containers/
 service.bat
+PROGRAMMING_DOCUMENTATION.md

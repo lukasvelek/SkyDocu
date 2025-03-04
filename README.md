@@ -14,7 +14,7 @@ These future plans are also in Issues list and can be distinguished by their mil
 
 Future plans include:
 - Grid exporting (__1.4__)
-- Multiple database servers (__1.4__, may be postponed)
+- Multiple database servers (__?__, may be postponed)
 
 ## Changelog
 ### 1.4 (?)
@@ -24,6 +24,10 @@ Future plans include:
     - Database table data browser
 - Moving documents between folders
 - Dark theme support
+- Background services rework
+    - Automatic running
+    - Service scheduling
+    - Service master & slave
 
 ### 1.3.1 (February 26th, 2025)
 - About application widget update

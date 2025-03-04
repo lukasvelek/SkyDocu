@@ -10,6 +10,7 @@ require_once('config.php');
 require_once('app/app_loader.php');
 
 const RUN_ALL_EXPLICITLY = false;
+const WAIT_TIME_SECONDS = 60;
 
 try {
     $app = new Application();
@@ -19,10 +20,15 @@ try {
     throw $e;
 }
 
+/**
+ * Here is the definition of all the code that is run every WAIT_TIME_SECONDS seconds.
+ * 
+ * The script get all services that should be executed as of now.
+ * Then goes through every one of them and runs them in their own system process.
+ * Every time it starts a process it waits 1 second for the system process startup to finish.
+ */
 function run() {
     global $app;
-
-    $waitTime = 60; // for testing 60s, for production 1h
 
     $services = getServicesThatShouldBeExecuted();
 
@@ -43,12 +49,17 @@ function run() {
         say(sprintf('Found %d services that are scheduled.', count($services)));
     }
 
-    say('Finished, now waiting ' . $waitTime . ' seconds.');
-    sleep($waitTime);
+    say('Finished, now waiting ' . WAIT_TIME_SECONDS . ' seconds.');
+    sleep(WAIT_TIME_SECONDS);
     run();
 }
 
-function getServicesThatShouldBeExecuted() {
+/**
+ * Returns an array of services that should be executed just now
+ * 
+ * @return array<string, string> Array where key is the service title and value is the service script path
+ */
+function getServicesThatShouldBeExecuted(): array {
     global $app;
 
     $services = [];
@@ -83,6 +94,12 @@ function getServicesThatShouldBeExecuted() {
     return $services;
 }
 
+/**
+ * Prints out text to the console and also saves the text to a log file
+ * 
+ * @param string $text Output text
+ * @param bool $newLine New line
+ */
 function say(string $text, bool $newLine = true) {
     global $app;
 

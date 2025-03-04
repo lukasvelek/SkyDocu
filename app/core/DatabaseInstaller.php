@@ -392,8 +392,10 @@ class DatabaseInstaller {
 
             if($title == 'ContainerCreationMaster') {
                 $arr = [
-                    'schedule' => 'mon;tue;wed;thu;fri;sat;sun',
-                    'every' => '5'
+                    'schedule' => [
+                        'days' => 'mon;tue;wed;thu;fri;sat;sun',
+                        'every' => '5'
+                    ]
                 ];
             }
 

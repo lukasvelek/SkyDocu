@@ -57,7 +57,11 @@ class ContainerOrphanedFilesRemovingService extends AService {
         foreach($containers as $containerId) {
             $this->logInfo(sprintf('Starting processing container \'%s\'.', $containerId));
             $container = $this->containerManager->getContainerById($containerId);
-            $containerConnection = $this->databaseManager->getConnectionToDatabase($container->getDefaultDatabase()->getName());
+            try {
+                $containerConnection = $this->databaseManager->getConnectionToDatabase($container->getDefaultDatabase()->getName());
+            } catch(AException|Exception $e) {
+                continue;
+            }
 
             $contentRepository = new ContentRepository($containerConnection, $this->logger);
             $entityManager = new EntityManager($this->logger, $contentRepository);

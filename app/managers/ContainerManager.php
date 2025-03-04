@@ -92,7 +92,7 @@ class ContainerManager extends AManager {
         $container = $this->getContainerById($containerId, true);
 
         try {
-            $this->dbManager->createNewDatabase($container->getDefaultDatabase()->getName());
+            //$this->dbManager->createNewDatabase($container->getDefaultDatabase()->getName());
 
             $this->createNewContainerTables($container->getDefaultDatabase()->getName());
             $this->createContainerTablesIndexes($container->getDefaultDatabase()->getName());

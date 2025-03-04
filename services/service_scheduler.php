@@ -57,6 +57,8 @@ function getServicesThatShouldBeExecuted() {
         ->execute();
     
     while($row = $qb->fetchAssoc()) {
+        if(str_contains(strtolower($row['title']), 'slave') || $row['schedule'] === null) continue;
+
         $schedule = json_decode($row['schedule'], true);
 
         $days = $schedule['schedule']['days'];
@@ -78,7 +80,7 @@ function getServicesThatShouldBeExecuted() {
 function say(string $text, bool $newLine = true) {
     global $app;
 
-    echo($text . ($newLine ? "\r\n" : ''));
+    echo('[' . date('Y-m-d H:i:s') . '] ' . $text . ($newLine ? "\r\n" : ''));
 
     $app->logger->serviceInfo($text, 'service_scheduler');
 }

@@ -58,7 +58,11 @@ class BackgroundServicesGrid extends GridBuilder implements IGridExtendingCompon
         $this->fetchDataFromDb();
 
         $this->appendSystemMetadata();
-        $this->appendNextRunColumn();
+        
+        if($this->serviceId === null) {
+            $this->appendNextRunColumn();
+        }
+
         $this->appendActions();
 
         $this->setup();

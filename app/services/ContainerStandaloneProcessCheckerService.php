@@ -46,7 +46,7 @@ class ContainerStandaloneProcessCheckerService extends AService {
             $this->serviceStop();
         } catch(AException|Exception|Error $e) {
             $this->logError($e->getMessage());
-            $this->serviceStop(true);
+            $this->serviceStop($e);
             
             throw $e;
         }

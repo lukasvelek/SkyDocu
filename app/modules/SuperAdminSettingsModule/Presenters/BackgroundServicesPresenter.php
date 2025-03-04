@@ -17,7 +17,13 @@ class BackgroundServicesPresenter extends ASuperAdminSettingsPresenter {
     }
 
     public function renderList() {
-        $this->template->links = [];
+        $serviceId = $this->httpRequest->get('serviceId');
+
+        if($serviceId === null) {
+            $this->template->links = [];
+        } else {
+            $this->template->links = $this->createBackUrl('list');
+        }
     }
 
     protected function createComponentBgServicesGrid(HttpRequest $request) {
@@ -61,7 +67,11 @@ class BackgroundServicesPresenter extends ASuperAdminSettingsPresenter {
             $this->flashMessage('Could not run service. Reason: ' . $e->getMessage(), 'error');
         }
         
-        $this->redirect($this->createURL('list'));
+        if($service->getParentServiceId() !== null) {
+            $this->redirect($this->createURL('list', ['serviceId' => $service->getParentServiceId()]));
+        } else {
+            $this->redirect($this->createURL('list'));
+        }
     }
 
     public function handleEditForm(?FormRequest $fr = null) {

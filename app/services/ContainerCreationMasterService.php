@@ -26,7 +26,7 @@ class ContainerCreationMasterService extends AService {
             $this->serviceStop();
         } catch(AException|Exception $e) {
             $this->logError($e->getMessage());
-            $this->serviceStop(true);
+            $this->serviceStop($e);
             
             throw $e;
         }
@@ -34,6 +34,8 @@ class ContainerCreationMasterService extends AService {
 
     private function innerRun() {
         // Service executes all commands here
+        $this->getCount();
+
         $qb = $this->containerRepository->composeQueryForContainersAwaitingCreation();
         $qb->execute();
 
@@ -49,6 +51,14 @@ class ContainerCreationMasterService extends AService {
                 $this->logError('Could not start slave.');
             }
         }
+    }
+
+    private function getCount() {
+        $qb = $this->containerRepository->composeQueryForContainersAwaitingCreation();
+        $qb->select(['COUNT(*) AS cnt'])
+            ->execute();
+
+        $this->logInfo(sprintf('Found %d containers awaiting creation.', $qb->fetch('cnt')));
     }
 }
 

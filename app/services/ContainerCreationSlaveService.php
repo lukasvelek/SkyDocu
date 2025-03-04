@@ -36,10 +36,10 @@ class ContainerCreationSlaveService extends AService {
 
             $this->innerRun();
 
-            $this->serviceStop(false, $_argv);
+            $this->serviceStop(null, $_argv);
         } catch(AException|Exception $e) {
             $this->logError($e->getMessage());
-            $this->serviceStop(true, $_argv);
+            $this->serviceStop($e, $_argv);
             
             throw $e;
         }

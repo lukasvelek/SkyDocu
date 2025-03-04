@@ -28,7 +28,7 @@ class LogRotateService extends AService {
             $this->serviceStop();
         } catch(AException|Exception $e) {
             $this->logError($e->getMessage());
-            $this->serviceStop(true);
+            $this->serviceStop($e);
             
             throw $e;
         }
@@ -152,6 +152,8 @@ class LogRotateService extends AService {
         $oldFiles = [];
 
         foreach($containers as $containerId) {
+            if(!FileManager::folderExists(APP_ABSOLUTE_DIR . LOG_DIR . 'containers\\' . $containerId . '\\')) continue;
+
             $files = FileManager::getFilesInFolder(APP_ABSOLUTE_DIR . LOG_DIR . 'containers\\' . $containerId . '\\', false);
 
             foreach($files as $filename => $filepath) {

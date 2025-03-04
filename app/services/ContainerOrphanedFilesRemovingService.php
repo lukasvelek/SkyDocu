@@ -39,7 +39,7 @@ class ContainerOrphanedFilesRemovingService extends AService {
             $this->serviceStop();
         } catch(AException|Exception $e) {
             $this->logError($e->getMessage());
-            $this->serviceStop(true);
+            $this->serviceStop($e);
             
             throw $e;
         }

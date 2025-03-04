@@ -11,9 +11,9 @@ class SystemServiceEntity extends AEntity {
     private int $status;
     private ?string $parentServiceId;
     private bool $isEnabled;
-    private string $schedule;
+    private ?string $schedule;
 
-    public function __construct(string $id, string $title, string $scriptPath, ?string $dateStarted, ?string $dateEnded, int $status, ?string $parentServiceId, bool $isEnabled, string $schedule) {
+    public function __construct(string $id, string $title, string $scriptPath, ?string $dateStarted, ?string $dateEnded, int $status, ?string $parentServiceId, bool $isEnabled, ?string $schedule) {
         $this->id = $id;
         $this->title = $title;
         $this->scriptPath = $scriptPath;
@@ -79,7 +79,7 @@ class SystemServiceEntity extends AEntity {
             'status' => 'int',
             'parentServiceId' => '?string',
             'isEnabled' => 'bool',
-            'schedule' => 'string'
+            'schedule' => '?string'
         ]);
 
         return new self($row->serviceId, $row->title, $row->scriptPath, $row->dateStarted, $row->dateEnded, $row->status, $row->parentServiceId, $row->isEnabled, $row->schedule);

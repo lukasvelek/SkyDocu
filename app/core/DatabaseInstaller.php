@@ -145,7 +145,8 @@ class DatabaseInstaller {
                 'serviceId' => 'VARCHAR(256) NOT NULL',
                 'args' => 'TEXT NOT NULL',
                 'dateCreated' => 'DATETIME NOT NULL DEFAULT current_timestamp()',
-                'status' => 'INT(4) NOT NULL'
+                'status' => 'INT(4) NOT NULL',
+                'exception' => 'TEXT NULL'
             ],
             'container_usage_statistics' => [
                 'entryId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',

@@ -168,37 +168,20 @@ class BackgroundServicesGrid extends GridBuilder implements IGridExtendingCompon
         $col->onRenderColumn[] = function(DatabaseRow $row, Row $_row, Cell $cell, HTML $html, mixed $value) {
             $schedule = json_decode($row->schedule, true);
 
-            if(array_key_exists('time', $schedule['schedule'])) {
-                $time = $schedule['schedule']['time'] . ':00';
+            $nextRun = BackgroundServiceScheduleHelper::getNextRun($schedule, $row);
 
-                $nextRun = BackgroundServiceScheduleHelper::getNextRun($schedule, $row);
-
-                $_text = new DateTime(strtotime($nextRun));
-                $_text->format('d.m.Y');
-                $text = $_text->getResult() . ' ' . $time;
-
-                $title = $nextRun . ' ' . $time;
-
-                $el = HTML::el('span')
-                    ->text($text)
-                    ->title($title);
-            } else {
-                $nextRun = BackgroundServiceScheduleHelper::getNextRun($schedule, $row);
-
-                $title = $nextRun;
-                $_text = new DateTime(strtotime($nextRun));
-                $_text->format('d.m.Y H:i');
-                $text = $_text->getResult();
-
-                $el = HTML::el('span')
-                    ->text($text)
-                    ->title($title);
-
-                if(time() > strtotime($text)) {
-                    // scheduled date has already passed
-                    $el->style('color', 'red');
-                }
+            if($nextRun === null) {
+                return null;
             }
+
+            $title = $nextRun;
+            $_text = new DateTime(strtotime($nextRun));
+            $_text->format('d.m.Y H:i');
+            $text = $_text->getResult();
+
+            $el = HTML::el('span')
+                ->text($text)
+                ->title($title);
 
             return $el;
         };

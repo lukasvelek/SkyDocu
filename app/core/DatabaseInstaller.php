@@ -385,18 +385,13 @@ class DatabaseInstaller {
 
             $arr = [
                 'schedule' => [
-                    'days' => 'mon;tue;wed;thu;fri',
-                    'time' => '02'
+                    'days' => 'mon;tue;wed;thu;fri;sat;sun',
+                    'every' => '10'
                 ]
             ];
 
             if($title == 'ContainerCreationMaster') {
-                $arr = [
-                    'schedule' => [
-                        'days' => 'mon;tue;wed;thu;fri;sat;sun',
-                        'every' => '5'
-                    ]
-                ];
+                $arr['schedule']['every'] = '5';
             }
 
             $schedule = json_encode($arr, JSON_FORCE_OBJECT);

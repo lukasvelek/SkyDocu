@@ -88,14 +88,9 @@ class BackgroundServicesPresenter extends ASuperAdminSettingsPresenter {
                 $daysChecked[$day] = FormHelper::isCheckboxChecked($fr, $elem);
             }
 
-            $time = $fr->time;
             $every = $fr->every;
 
-            if(!FormHelper::isCheckboxChecked($fr, 'useTime')) {
-                $time = null;
-            }
-
-            $schedule = BackgroundServiceScheduleHelper::createScheduleFromForm($daysChecked, $time, $every);
+            $schedule = BackgroundServiceScheduleHelper::createScheduleFromForm($daysChecked, $every);
 
             $isEnabled = FormHelper::isCheckboxChecked($fr, 'enabled');
 
@@ -158,15 +153,9 @@ class BackgroundServicesPresenter extends ASuperAdminSettingsPresenter {
             $c->setChecked(BackgroundServiceScheduleHelper::isDayEnabled($schedule, $day));
         }
 
-        $form->addLabel('lbl_time', '<b>Schedule time</b>');
-        $form->addCheckboxInput('useTime', 'Use time:')
-            ->setChecked(BackgroundServiceScheduleHelper::usesTime($schedule));
-        $form->addTimeInput('time', 'Time:')
-            ->setValue(BackgroundServiceScheduleHelper::getTime($schedule));
-
         $form->addLabel('lbl_every', '<b>Schedule repeat</b>');
         $form->addNumberInput('every', 'Repeat every [minutes]:')
-            ->setValue(5)
+            ->setValue(BackgroundServiceScheduleHelper::getEvery($schedule))
             ->setMin(5)
             ->setMax(43_200 /* 1 month */);
 

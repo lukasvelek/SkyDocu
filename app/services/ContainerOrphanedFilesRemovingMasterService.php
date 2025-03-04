@@ -13,7 +13,7 @@ class ContainerOrphanedFilesRemovingMasterService extends AService {
     private ContainerManager $containerManager;
 
     public function __construct(Logger $logger, ServiceManager $serviceManager, ContainerManager $containerManager) {
-        parent::__construct('ContainerOrpahedFilesRemovingMaster', $logger, $serviceManager);
+        parent::__construct('ContainerOrphanedFilesRemovingMaster', $logger, $serviceManager);
 
         $this->containerManager = $containerManager;
     }

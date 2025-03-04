@@ -67,30 +67,17 @@ function getServicesThatShouldBeExecuted() {
 
         $nextRun = BackgroundServiceScheduleHelper::getNextRun($schedule, $row);
 
+        if(array_key_exists('time', $schedule['schedule'])) {
+            $nextRun .= ' ' . $schedule['schedule']['time'] . ':00:00';
+        } else {
+            $nextRun .= ':00';
+        }
+
         $_time = strtotime($nextRun);
 
         if(time() >= $_time || RUN_ALL_EXPLICITLY) {
             $services[$row->title] = $row->scriptPath;
         }
-
-        /*if(array_key_exists('time', $schedule['schedule'])) {
-            $time = $schedule['schedule']['time'];
-
-            $todayShortcut = date('D');
-
-            if(RUN_ALL_EXPLICITLY ||
-            (in_array($todayShortcut, explode(';', $days)) &&
-            (int)date('H') >= (int)$time)
-            ) {
-                $services[$row['title']] = $row->scriptPath;
-            }
-        } else {
-            // every
-
-            if(RUN_ALL_EXPLICITLY) {
-                $services[$row['title']] = $row->scriptPath;
-            }
-        }*/
     }
 
     return $services;

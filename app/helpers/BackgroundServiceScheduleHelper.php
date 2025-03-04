@@ -167,6 +167,10 @@ class BackgroundServiceScheduleHelper {
                 $nextIndex = array_search(strtolower($next), $daysArr);
                 if($todayIndex < $nextIndex) {
                     $diff = $nextIndex - $todayIndex;
+
+                    if((int)$schedule['schedule']['time'] > (int)date('H')) {
+                        $diff--;
+                    }
                 } else {
                     $diff = 7 - $todayIndex + $nextIndex; // count until the end of the week plus index of the next day
                 }

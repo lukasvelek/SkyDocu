@@ -64,11 +64,11 @@ class SystemServicesRepository extends ARepository {
         return $qb;
     }
 
-    public function createHistoryEntry(string $historyId, string $serviceId, int $status) {
+    public function createHistoryEntry(string $historyId, string $serviceId, int $status, string $args) {
         $qb = $this->qb(__METHOD__);
 
-        $qb->insert('system_services_history', ['historyId', 'serviceId', 'status'])
-            ->values([$historyId, $serviceId, $status])
+        $qb->insert('system_services_history', ['historyId', 'serviceId', 'status', 'args'])
+            ->values([$historyId, $serviceId, $status, $args])
             ->execute();
 
         return $qb->fetchAll();

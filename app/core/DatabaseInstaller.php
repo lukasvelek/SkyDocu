@@ -138,11 +138,12 @@ class DatabaseInstaller {
                 'status' => 'INT(4) NOT NULL DEFAULT 1',
                 'parentServiceId' => 'VARCHAR(256) NULL',
                 'isEnabled' => 'INT(2) NOT NULL DEFAULT 1',
-                'schedule' => 'VARCHAR(512) NOT NULL'
+                'schedule' => 'VARCHAR(512) NULL'
             ],
             'system_services_history' => [
                 'historyId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',
                 'serviceId' => 'VARCHAR(256) NOT NULL',
+                'args' => 'TEXT NOT NULL',
                 'dateCreated' => 'DATETIME NOT NULL DEFAULT current_timestamp()',
                 'status' => 'INT(4) NOT NULL'
             ],
@@ -368,7 +369,8 @@ class DatabaseInstaller {
         $this->logger->info('Adding system services.', __METHOD__);
 
         $services = [
-            'ContainerCreation' => 'container_creation_service.php',
+            //'ContainerCreation' => 'container_creation_service.php',
+            'ContainerCreationMaster' => 'container_creation_master.php',
             'LogRotate' => 'log_rotate_service.php',
             'ContainerUsageStatistics' => 'container_usage_statistics_service.php',
             'ContainerStandaloneProcessChecker' => 'container_standalone_process_checker_service.php',
@@ -376,8 +378,10 @@ class DatabaseInstaller {
             'ContainerOrphanedFilesRemoving' => 'cofrs.php'
         ];
 
+        $serviceIds = [];
         foreach($services as $title => $path) {
             $id = HashManager::createEntityId();
+            $serviceIds[$title] = $id;
 
             $arr = [
                 'schedule' => [
@@ -389,9 +393,29 @@ class DatabaseInstaller {
 
             $sql = "INSERT INTO `system_services` (`serviceId`, `title`, `scriptPath`, `schedule`)
                     SELECT '$id', '$title', '$path', '$schedule'
-                    WHERE NOT EXISTS (SELECT 1 FROM `system_services` WHERE `serviceId` = '$id' AND title = '$title' AND scriptPath = '$path' AND schedule = '$schedule')";
+                    WHERE NOT EXISTS (SELECT 1 FROM `system_services` WHERE serviceId = '$id' AND title = '$title' AND scriptPath = '$path' AND schedule = '$schedule')";
 
             $this->db->query($sql);
+        }
+
+        $childServices = [
+            'ContainerCreationMaster' => [
+                'ContainerCreationSlave' => 'container_creation_slave.php'
+            ]
+        ];
+
+        foreach($childServices as $masterService => $children) {
+            $masterId = $serviceIds[$masterService];
+
+            foreach($children as $title => $path) {
+                $id = HashManager::createEntityId();
+
+                $sql = "INSERT INTO `system_services` (`serviceId`, `title`, `scriptPath`, `parentServiceId`)
+                        SELECT '$id', '$title', '$path', '$masterId'
+                        WHERE NOT EXISTS (SELECT 1 FROM `system_services` WHERE serviceId = '$id' AND title = '$title' AND scriptPath = '$path' AND parentServiceId = '$masterId')";
+
+                $this->db->query($sql);
+            }
         }
 
         $this->logger->info('Added system services.', __METHOD__);

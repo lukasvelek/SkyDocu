@@ -214,6 +214,8 @@ class UserPresenter extends AUserPresenter {
 
                 $this->app->userRepository->commit($this->getUserId(), __METHOD__);
 
+                $this->app->userManager->getUserById($this->getUserId(), true); // for recache
+
                 $this->flashMessage('Theme changed successfully.', 'success');
             } catch(AException $e) {
                 $this->app->userRepository->rollback(__METHOD__);

@@ -180,8 +180,6 @@ class BackgroundServicesGrid extends GridBuilder implements IGridExtendingCompon
                     $next = explode(';', $days)[$pos + 1];
                 }
 
-                $nextFinal = BackgroundServiceScheduleHelper::getFullDayNameFromShortcut($next);
-
                 $daysArr = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
 
                 $t = '';

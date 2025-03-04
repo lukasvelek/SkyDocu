@@ -6,6 +6,7 @@ use App\Core\Caching\CacheNames;
 use App\Core\DB\DatabaseManager;
 use App\Core\DB\DatabaseRow;
 use App\Entities\ContainerDatabaseEntity;
+use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
 use App\Exceptions\NonExistingEntityException;
 use App\Logger\Logger;
@@ -123,13 +124,17 @@ class ContainerDatabaseManager extends AManager {
         $entryId = $this->createId(EntityManager::CONTAINER_DATABASES);
 
         if(!$this->containerDatabaseRepository->insertNewContainerDatabase($entryId, $containerId, $databaseName, $title, $description, $isDefault)) {
-            throw new GeneralException('Database error.');
+            throw new GeneralException('Database error [CC0001.1].');
         }
 
-        $this->dbManager->createNewDatabase($databaseName);
+        try {
+            $this->dbManager->createNewDatabase($databaseName);
+        } catch(AException $e) {
+            throw new GeneralException('Database error [CC0001.2].', $e);
+        }
 
         if(!$this->cacheFactory->invalidateCacheByNamespace(CacheNames::CONTAINER_DATABASES)) {
-            throw new GeneralException('Could not invalidate cache.');
+            throw new GeneralException('Could not invalidate cache [CC0001.3].');
         }
     }
 

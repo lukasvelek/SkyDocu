@@ -75,7 +75,7 @@ class DatabaseInstaller {
                 'title' => 'VARCHAR(256) NOT NULL',
                 'description' => 'TEXT NULL',
                 'userId' => 'VARCHAR(256) NOT NULL',
-                'databaseName' => 'VARCHAR(256) NOT NULL',
+                'databaseName' => 'VARCHAR(256) NULL',
                 'status' => 'INT(4) NOT NULL DEFAULT 1',
                 'dateCreated' => 'DATETIME NOT NULL DEFAULT current_timestamp()',
                 'environment' => 'INT(4) NOT NULL',

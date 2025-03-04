@@ -370,13 +370,12 @@ class DatabaseInstaller {
         $this->logger->info('Adding system services.', __METHOD__);
 
         $services = [
-            //'ContainerCreation' => 'container_creation_service.php',
             'ContainerCreationMaster' => 'container_creation_master.php',
             'LogRotate' => 'log_rotate_service.php',
             'ContainerUsageStatistics' => 'container_usage_statistics_service.php',
             'ContainerStandaloneProcessChecker' => 'container_standalone_process_checker_service.php',
             'ProcessSubstitute' => 'process_substitute_service.php',
-            'ContainerOrphanedFilesRemoving' => 'cofrs.php'
+            'ContainerOrphanedFilesRemovingMaster' => 'cofrs_master.php'
         ];
 
         $serviceIds = [];
@@ -390,6 +389,14 @@ class DatabaseInstaller {
                     'time' => '02'
                 ]
             ];
+
+            if($title == 'ContainerCreationMaster') {
+                $arr = [
+                    'schedule' => 'mon;tue;wed;thu;fri;sat;sun',
+                    'every' => '5'
+                ];
+            }
+
             $schedule = json_encode($arr, JSON_FORCE_OBJECT);
 
             $sql = "INSERT INTO `system_services` (`serviceId`, `title`, `scriptPath`, `schedule`)
@@ -402,6 +409,9 @@ class DatabaseInstaller {
         $childServices = [
             'ContainerCreationMaster' => [
                 'ContainerCreationSlave' => 'container_creation_slave.php'
+            ],
+            'ContainerOrphanedFilesRemovingMaster' => [
+                'ContainerOrphanedFilesRemovingSlave' => 'cofrs_slave.php'
             ]
         ];
 

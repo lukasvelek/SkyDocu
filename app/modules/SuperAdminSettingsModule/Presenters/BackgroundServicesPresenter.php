@@ -89,8 +89,13 @@ class BackgroundServicesPresenter extends ASuperAdminSettingsPresenter {
             }
 
             $time = $fr->time;
+            $every = $fr->every;
 
-            $schedule = BackgroundServiceScheduleHelper::createScheduleFromForm($daysChecked, $time);
+            if(!FormHelper::isCheckboxChecked($fr, 'useTime')) {
+                $time = null;
+            }
+
+            $schedule = BackgroundServiceScheduleHelper::createScheduleFromForm($daysChecked, $time, $every);
 
             $isEnabled = FormHelper::isCheckboxChecked($fr, 'enabled');
 
@@ -134,7 +139,6 @@ class BackgroundServicesPresenter extends ASuperAdminSettingsPresenter {
 
     protected function createComponentEditServiceForm(HttpRequest $request) {
         $service = $this->app->systemServicesRepository->getServiceById($request->get('serviceId'));
-        $arr = ['schedule' => ['days' => 'mon;wed;fri', 'time' => '01']];
         $schedule = $service->getSchedule();
 
         $form = $this->componentFactory->getFormBuilder();
@@ -155,9 +159,16 @@ class BackgroundServicesPresenter extends ASuperAdminSettingsPresenter {
         }
 
         $form->addLabel('lbl_time', '<b>Schedule time</b>');
+        $form->addCheckboxInput('useTime', 'Use time:')
+            ->setChecked(BackgroundServiceScheduleHelper::usesTime($schedule));
         $form->addTimeInput('time', 'Time:')
-            ->setRequired()
             ->setValue(BackgroundServiceScheduleHelper::getTime($schedule));
+
+        $form->addLabel('lbl_every', '<b>Schedule repeat</b>');
+        $form->addNumberInput('every', 'Repeat every [minutes]:')
+            ->setValue(5)
+            ->setMin(5)
+            ->setMax(43_200 /* 1 month */);
 
         $form->addSubmit('Save');
 

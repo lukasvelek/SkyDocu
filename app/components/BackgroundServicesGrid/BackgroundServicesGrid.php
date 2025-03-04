@@ -168,51 +168,39 @@ class BackgroundServicesGrid extends GridBuilder implements IGridExtendingCompon
         $col->onRenderColumn[] = function(DatabaseRow $row, Row $_row, Cell $cell, HTML $html, mixed $value) {
             $schedule = json_decode($row->schedule, true);
 
-            $days = $schedule['schedule']['days'];
-            $time = $schedule['schedule']['time'] . ':00';
+            if(array_key_exists('time', $schedule['schedule'])) {
+                $time = $schedule['schedule']['time'] . ':00';
 
-            $todayShortcut = strtolower(date('D'));
+                $nextRun = BackgroundServiceScheduleHelper::getNextRun($schedule, $row);
 
-            if(in_array($todayShortcut, explode(';', $days))) {
-                $pos = array_search(strtolower($todayShortcut), explode(';', $days));
-
-                if(($pos + 1) == count(explode(';', $days))) {
-                    // last
-                    $next = explode(';', $days)[0];
-                } else {
-                    // not last
-                    $next = explode(';', $days)[$pos + 1];
-                }
-
-                $daysArr = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
-
-                $t = '';
-                $todayIndex = array_search(strtolower($todayShortcut), $daysArr);
-                $nextIndex = array_search(strtolower($next), $daysArr);
-                if($todayIndex < $nextIndex) {
-                    $diff = $nextIndex - $todayIndex;
-                } else {
-                    $diff = 7 - $todayIndex + $nextIndex; // count until the end of the week plus index of the next day
-                }
-
-                $_text = new DateTime();
-                $_text->modify('+' . $diff . 'd');
+                $_text = new DateTime(strtotime($nextRun));
                 $_text->format('d.m.Y');
                 $text = $_text->getResult() . ' ' . $time;
 
-                $_title = new DateTime();
-                $_title->modify('+' . $diff . 'd');
-                $_title->format('Y-m-d');
-                $title = $_title->getResult() . ' ' . $time . ':00';
+                $title = $nextRun . ' ' . $time;
+
+                $el = HTML::el('span')
+                    ->text($text)
+                    ->title($title);
+            } else {
+                $nextRun = BackgroundServiceScheduleHelper::getNextRun($schedule, $row);
+
+                $title = $nextRun;
+                $_text = new DateTime(strtotime($nextRun));
+                $_text->format('d.m.Y H:i');
+                $text = $_text->getResult();
 
                 $el = HTML::el('span')
                     ->text($text)
                     ->title($title);
 
-                return $el;
-            } else {
-                return '-';
+                if(time() > strtotime($text)) {
+                    // scheduled date has already passed
+                    $el->style('color', 'red');
+                }
             }
+
+            return $el;
         };
     }
     

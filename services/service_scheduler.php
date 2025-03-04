@@ -1,13 +1,15 @@
 <?php
 
 use App\Core\Application;
+use App\Core\DB\DatabaseRow;
 use App\Exceptions\AException;
 use App\Exceptions\ServiceException;
+use App\Helpers\BackgroundServiceScheduleHelper;
 
 require_once('config.php');
 require_once('app/app_loader.php');
 
-const RUN_ALL_EXPLICITLY = true;
+const RUN_ALL_EXPLICITLY = false;
 
 try {
     $app = new Application();
@@ -57,21 +59,38 @@ function getServicesThatShouldBeExecuted() {
         ->execute();
     
     while($row = $qb->fetchAssoc()) {
-        if(str_contains(strtolower($row['title']), 'slave') || $row['schedule'] === null) continue;
+        $row = DatabaseRow::createFromDbRow($row);
 
-        $schedule = json_decode($row['schedule'], true);
+        if(str_contains(strtolower($row->title), 'slave') || $row->schedule === null) continue;
 
-        $days = $schedule['schedule']['days'];
-        $time = $schedule['schedule']['time'];
+        $schedule = json_decode($row->schedule, true);
 
-        $todayShortcut = date('D');
+        $nextRun = BackgroundServiceScheduleHelper::getNextRun($schedule, $row);
 
-        if(RUN_ALL_EXPLICITLY ||
-           (in_array($todayShortcut, explode(';', $days)) &&
-           (int)date('H') >= (int)$time)
-        ) {
-            $services[$row['title']] = $row['scriptPath'];
+        $_time = strtotime($nextRun);
+
+        if(time() >= $_time || RUN_ALL_EXPLICITLY) {
+            $services[$row->title] = $row->scriptPath;
         }
+
+        /*if(array_key_exists('time', $schedule['schedule'])) {
+            $time = $schedule['schedule']['time'];
+
+            $todayShortcut = date('D');
+
+            if(RUN_ALL_EXPLICITLY ||
+            (in_array($todayShortcut, explode(';', $days)) &&
+            (int)date('H') >= (int)$time)
+            ) {
+                $services[$row['title']] = $row->scriptPath;
+            }
+        } else {
+            // every
+
+            if(RUN_ALL_EXPLICITLY) {
+                $services[$row['title']] = $row->scriptPath;
+            }
+        }*/
     }
 
     return $services;

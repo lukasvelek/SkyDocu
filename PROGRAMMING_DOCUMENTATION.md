@@ -1,6 +1,5 @@
 # SkyDocu - Programming documentation
-
-This documentation contains useful information for SkyDocu development.
+This documentation contains useful information for SkyDocu development. It is still being worked on and may contain untrue information.
 
 ## `0` Index
 Here is the list of all chapters.
@@ -18,6 +17,11 @@ Here is the list of all chapters.
 [`3.1.5` SuperAdminModule](#315-superadminmodule)  
 [`3.1.6` SuperAdminSettingsModule](#316-superadminsettingsmodule)  
 [`3.2` Core UI components](#32-core-ui-components)  
+[`3.2.1` FormBuilder](#321-formbuilder)  
+[`3.2.2` GridBuilder](#322-gridbuilder)  
+[`3.2.3` ListBuilder](#323-listbuilder)  
+[`3.2.4` ModalBuilder](#324-modalbuilder)  
+[`3.2.5` HTML](#325-html)  
 [`3.3` Components](#33-components)  
 
 ## `1` About SkyDocu
@@ -44,7 +48,7 @@ SkyDocu is written mostly in PHP with some dynamic functionalities written in Ja
 
 The main framework used in the application is taken from another project and upgraded for more complex functionality. All other code is either taken from other projects and updated or written from scratch.
 
-I have also made a on-premises DMS that has been an inspiration for this project. Although it's not similar in any way.
+I have also made an on-premises DMS that has been an inspiration for this project. Although it's not similar in any way.
 
 There are three external libraries used:
 - Bootstrap
@@ -98,4 +102,39 @@ SuperAdminModule is available for superadministrators and allows creating contai
 SuperAdminSettingsModule is used for managing the application or superadministration itself.
 
 ### `3.2` Core UI components
+Core UI components are used in advanced components (see section `3.3` Components). These components allow creating basic tables, forms, modals and links.
+
+They usually contain basic and general functionalities.
+
+#### `3.2.1` FormBuilder
+FormBuilder allows creating interactive forms. All the functionality is in `FormBuilder` class.
+
+#### `3.2.2` GridBuilder
+GridBuilder allows creating tables with data that come from database. These are usually dynamic, paginated tables.
+
+#### `3.2.3` ListBuilder
+ListBuilder allows creating static tables with static data. No pagination or searching is allowed.
+
+#### `3.2.4` ModalBuilder
+ModalBuilder allows creating modal windows. It is not used that much.
+
+#### `3.2.5` HTML
+HTML is not a UI component per se but it's more of a library with useful functions for creating or composing HTML tags.
+
 ### `3.3` Components
+Components are extensions to core UI components.
+
+E.g. core UI component is a GridBuilder that is used for creating tables with database data source. For documents there is DocumentsGrid and that is an extension for GridBuilder.
+
+Core UI components can therefore be used by multiple parts of the application. Whereas components usually are in a single-use scenario.
+
+### Background services
+
+### Database
+
+#### Database table schema
+#### Database connection
+
+### Caching
+
+### Logging

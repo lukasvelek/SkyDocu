@@ -1,7 +1,6 @@
 body {
     overflow-x: hidden;
 
-    /*background-color: rgb(245, 245, 245);*/
     background-color: rgba(70, 70, 70, 1);
 
     color: rgb(200, 200, 200);
@@ -48,10 +47,10 @@ body {
     position: absolute;
     z-index: 9999;
     
-    width: 90%;
+    width: 40%;
     
-    margin-left: 5%;
-    margin-top: 5%;
+    margin-left: 1.5%;
+    margin-top: 43%;
 }
 
 .fm-info {

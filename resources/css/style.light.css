@@ -45,10 +45,10 @@ body {
     position: absolute;
     z-index: 9999;
     
-    width: 90%;
+    width: 40%;
     
-    margin-left: 5%;
-    margin-top: 5%;
+    margin-left: 1.5%;
+    margin-top: 43%;
 }
 
 .fm-info {

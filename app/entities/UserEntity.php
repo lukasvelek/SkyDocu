@@ -86,7 +86,7 @@ class UserEntity extends AEntity {
         return $this->appDesignTheme;
     }
 
-    public static function createEntityFromDbRow(mixed $row): static {
+    public static function createEntityFromDbRow(mixed $row): ?static {
         if($row === null) {
             return null;
         }

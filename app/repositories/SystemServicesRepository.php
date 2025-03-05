@@ -64,11 +64,19 @@ class SystemServicesRepository extends ARepository {
         return $qb;
     }
 
-    public function createHistoryEntry(string $historyId, string $serviceId, int $status) {
+    public function createHistoryEntry(string $historyId, string $serviceId, int $status, string $args, ?string $exceptionText = null) {
         $qb = $this->qb(__METHOD__);
 
-        $qb->insert('system_services_history', ['historyId', 'serviceId', 'status'])
-            ->values([$historyId, $serviceId, $status])
+        $keys = ['historyId', 'serviceId', 'status', 'args'];
+        $values = [$historyId, $serviceId, $status, $args];
+
+        if($exceptionText !== null) {
+            $keys[] = 'exception';
+            $values[] = $exceptionText;
+        }
+
+        $qb->insert('system_services_history', $keys)
+            ->values($values)
             ->execute();
 
         return $qb->fetchAll();
@@ -82,6 +90,16 @@ class SystemServicesRepository extends ARepository {
             ->where('serviceId = ?', [$serviceId]);
 
         return $qb;
+    }
+
+    public function getChildrenCountForServiceId(string $serviceId) {
+        $qb = $this->composeQueryForServices();
+
+        $qb->andWhere('parentServiceId = ?', [$serviceId])
+            ->select(['COUNT(*) AS cnt'])
+            ->execute();
+
+        return $qb->fetch('cnt');
     }
 }
 

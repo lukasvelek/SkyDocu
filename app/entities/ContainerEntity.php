@@ -148,7 +148,7 @@ class ContainerEntity extends AEntity {
     /**
      * Returns container's default database
      */
-    public function getDefaultDatabase(): ContainerDatabaseEntity {
+    public function getDefaultDatabase(): ?ContainerDatabaseEntity {
         foreach($this->databases as $database) {
             if($database->isDefault()) {
                 return $database;
@@ -173,7 +173,7 @@ class ContainerEntity extends AEntity {
         }
     }
 
-    public static function createEntityFromDbRow(mixed $row): static {
+    public static function createEntityFromDbRow(mixed $row): ?static {
         if($row === null) {
             return null;
         }

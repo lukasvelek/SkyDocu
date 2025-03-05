@@ -46,7 +46,7 @@ class ContainerStandaloneProcessCheckerService extends AService {
             $this->serviceStop();
         } catch(AException|Exception|Error $e) {
             $this->logError($e->getMessage());
-            $this->serviceStop(true);
+            $this->serviceStop($e);
             
             throw $e;
         }
@@ -64,7 +64,11 @@ class ContainerStandaloneProcessCheckerService extends AService {
         foreach($containers as $containerId) {
             $this->logInfo(sprintf('Starting processing container \'%s\'.', $containerId));
             $container = $this->containerManager->getContainerById($containerId);
-            $containerConnection = $this->dbManager->getConnectionToDatabase($container->getDefaultDatabase()->getName());
+            try {
+                $containerConnection = $this->dbManager->getConnectionToDatabase($container->getDefaultDatabase()->getName());
+            } catch(AException|Exception $e) {
+                continue;
+            }
 
             $contentRepository = new ContentRepository($containerConnection, $this->logger);
             $entityManager = new EntityManager($this->logger, $contentRepository);

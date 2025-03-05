@@ -76,7 +76,7 @@ class ContainerDatabaseEntity extends AEntity {
         return $this->description;
     }
 
-    public static function createEntityFromDbRow(mixed $row): static {
+    public static function createEntityFromDbRow(mixed $row): ?static {
         if($row === null) {
             return null;
         }

@@ -70,8 +70,6 @@ class UserManager extends AManager {
            || !$this->cacheFactory->invalidateCacheByNamespace(CacheNames::USERS_USERNAME_TO_ID_MAPPING)) {
             throw new GeneralException('Could not invalidate cache.');
         }
-
-        $this->getUserById($userId, true);
     }
 
     public function deleteUser(string $userId) {

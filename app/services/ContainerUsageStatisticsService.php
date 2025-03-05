@@ -32,7 +32,7 @@ class ContainerUsageStatisticsService extends AService {
             $this->serviceStop();
         } catch(AException|Exception $e) {
             $this->logError($e->getMessage());
-            $this->serviceStop(true);
+            $this->serviceStop($e);
             
             throw $e;
         }
@@ -75,6 +75,11 @@ class ContainerUsageStatisticsService extends AService {
 
         foreach($containers as $containerId) {
             $this->logInfo('Starting to search for log files for container \'' . $containerId . '\'.');
+
+            if(!FileManager::folderExists(APP_ABSOLUTE_DIR . LOG_DIR . 'containers\\' . $containerId)) {
+                $this->logInfo('No files found.');
+                continue;
+            }
 
             $containerFiles = FileManager::getFilesInFolder(APP_ABSOLUTE_DIR . LOG_DIR . 'containers\\' . $containerId);
 

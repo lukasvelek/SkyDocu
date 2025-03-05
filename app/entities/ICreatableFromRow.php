@@ -13,7 +13,7 @@ interface ICreatableFromRow {
      * 
      * @param mixed $row Raw database row
      */
-    static function createEntityFromDbRow(mixed $row): static;
+    static function createEntityFromDbRow(mixed $row): ?static;
 }
 
 ?>

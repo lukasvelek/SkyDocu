@@ -122,7 +122,9 @@ class FileManager {
         if(is_dir($dirPath)) {
             return true;
         }
-        return mkdir($dirPath, 0777, $recursive);
+        if(!FileManager::folderExists($dirPath)) {
+            return mkdir($dirPath, 0777, $recursive);
+        }
     }
 
     /**
@@ -154,7 +156,11 @@ class FileManager {
             }
 
             if(!$root) {
-                return rmdir($dirPath) && $result;
+                if(self::folderExists($dirPath)) {
+                    return rmdir($dirPath) && $result;
+                } else {
+                    return $result;
+                }
             } else {
                 return $result;
             }

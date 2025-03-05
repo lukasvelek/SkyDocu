@@ -54,9 +54,7 @@ class ContainerManager extends AManager {
         $containerId = $this->createId(EntityManager::CONTAINERS);
         $databaseName = $this->generateContainerDatabaseName($containerId);
 
-        if(!$this->containerDatabaseManager->insertNewContainerDatabase($containerId, $databaseName, 'SkyDocu Database', 'Default SkyDocu database', true)) {
-            throw new GeneralException('Database error.');
-        }
+        $this->containerDatabaseManager->insertNewContainerDatabase($containerId, $databaseName, 'SkyDocu Database', 'Default SkyDocu database', true);
 
         $data = [
             'containerId' => $containerId,
@@ -94,7 +92,7 @@ class ContainerManager extends AManager {
         $container = $this->getContainerById($containerId, true);
 
         try {
-            $this->dbManager->createNewDatabase($container->getDefaultDatabase()->getName());
+            //$this->dbManager->createNewDatabase($container->getDefaultDatabase()->getName());
 
             $this->createNewContainerTables($container->getDefaultDatabase()->getName());
             $this->createContainerTablesIndexes($container->getDefaultDatabase()->getName());

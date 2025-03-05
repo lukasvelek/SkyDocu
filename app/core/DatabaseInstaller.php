@@ -373,7 +373,7 @@ class DatabaseInstaller {
             'ContainerCreationMaster' => 'container_creation_master.php',
             'LogRotate' => 'log_rotate_service.php',
             'ContainerUsageStatistics' => 'container_usage_statistics_service.php',
-            'ContainerStandaloneProcessChecker' => 'container_standalone_process_checker_service.php',
+            //'ContainerStandaloneProcessChecker' => 'container_standalone_process_checker_service.php',
             'ProcessSubstitute' => 'process_substitute_service.php',
             'ContainerOrphanedFilesRemovingMaster' => 'cofrs_master.php'
         ];

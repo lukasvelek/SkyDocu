@@ -964,11 +964,22 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
             ];
         }
 
+        $empty = false;
+        if(empty($processSelect)) {
+            $empty = true;
+            $processSelect[] = [
+                'value' => 'none',
+                'text' => 'No processes found'
+            ];
+        }
+
         $form->addSelect('process', 'Process:')
             ->addRawOptions($processSelect)
-            ->setRequired();
+            ->setRequired()
+            ->setDisabled($empty);
 
-        $form->addSubmit('Add');
+        $form->addSubmit('Add')
+            ->setDisabled($empty);
 
         return $form;
     }

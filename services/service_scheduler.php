@@ -51,7 +51,6 @@ function run() {
 
     say('Finished, now waiting ' . WAIT_TIME_SECONDS . ' seconds.');
     sleep(WAIT_TIME_SECONDS);
-    run();
 }
 
 /**
@@ -108,6 +107,8 @@ function say(string $text, bool $newLine = true) {
     $app->logger->serviceInfo($text, 'service_scheduler');
 }
 
-run();
+while(true) {
+    run();
+}
 
 ?>

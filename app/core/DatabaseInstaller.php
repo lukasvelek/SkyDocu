@@ -3,6 +3,7 @@
 namespace App\Core;
 
 use App\Constants\SystemGroups;
+use App\Core\DB\DatabaseMigrationManager;
 use App\Logger\Logger;
 
 /**
@@ -32,254 +33,21 @@ class DatabaseInstaller {
         $this->logger->info('Database installation started.', __METHOD__);
 
         $this->createTables();
-        $this->createIndexes();
-        $this->createUsers();
-        $this->createGroupsAndTheirMembers();
-        $this->addSystemServices();
+        //$this->createIndexes();
+        //$this->createUsers();
+        //$this->createGroupsAndTheirMembers();
+        //$this->addSystemServices();
 
         $this->logger->info('Database installation finished.', __METHOD__);
     }
 
-    /**
-     * Returns generated table scheme
-     * 
-     * @return array
-     */
-    public static function getTableScheme(): array {
-        return [
-            'users' => [
-                'userId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',
-                'username' => 'VARCHAR(256) NOT NULL',
-                'password' => 'VARCHAR(256) NOT NULL',
-                'fullname' => 'VARCHAR(256) NOT NULL',
-                'loginHash' => 'VARCHAR(256) NULL',
-                'dateCreated' => 'DATETIME NOT NULL DEFAULT current_timestamp()',
-                'email' => 'VARCHAR(256) NULL',
-                'isTechnical' => 'INT(2) NOT NULL DEFAULT 0',
-                'appDesignTheme' => 'INT(4) NOT NULL DEFAULT 0'
-            ],
-            'groups' => [
-                'groupId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',
-                'title' => 'VARCHAR(256) NOT NULL',
-                'containerId' => 'VARCHAR(256) NULL',
-                'dateCreated' => 'DATETIME NOT NULL DEFAULT current_timestamp()'
-            ],
-            'group_users' => [
-                'groupUserId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',
-                'groupId' => 'VARCHAR(256) NOT NULL',
-                'userId' => 'VARCHAR(256) NOT NULL',
-                'dateCreated' => 'DATETIME NOT NULL DEFAULT current_timestamp()'
-            ],
-            'containers' => [
-                'containerId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',
-                'title' => 'VARCHAR(256) NOT NULL',
-                'description' => 'TEXT NULL',
-                'userId' => 'VARCHAR(256) NOT NULL',
-                'databaseName' => 'VARCHAR(256) NULL',
-                'status' => 'INT(4) NOT NULL DEFAULT 1',
-                'dateCreated' => 'DATETIME NOT NULL DEFAULT current_timestamp()',
-                'environment' => 'INT(4) NOT NULL',
-                'canShowContainerReferent' => 'INT(2) NOT NULL DEFAULT 1',
-                'permanentFlashMessage' => 'TEXT NULL',
-                'dbSchema' => 'INT(32) NOT NULL DEFAULT 0'
-            ],
-            'container_databases' => [
-                'entryId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',
-                'containerId' => 'VARCHAR(256) NOT NULL',
-                'name' => 'VARCHAR(256) NOT NULL',
-                'isDefault' => 'INT(2) NOT NULL DEFAULT 0',
-                'title' => 'VARCHAR(256) NOT NULL',
-                'description' => 'TEXT NOT NULL',
-            ],
-            'container_database_tables' => [
-                'entryId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',
-                'containerId' => 'VARCHAR(256) NOT NULL',
-                'databaseId' => 'VARCHAR(256) NOT NULL',
-                'name' => 'VARCHAR(256) NOT NULL',
-                'isCreated' => 'INT(2) NOT NULL DEFAULT 0'
-            ],
-            'container_database_table_columns' => [
-                'entryId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',
-                'containerId' => 'VARCHAR(256) NOT NULL',
-                'databaseId' => 'VARCHAR(256) NOT NULL',
-                'tableId' => 'VARCHAR(256) NOT NULL',
-                'name' => 'VARCHAR(256) NOT NULL',
-                'title' => 'VARCHAR(256) NOT NULL',
-                'definition' => 'VARCHAR(256) NOT NULL'
-            ],
-            'container_creation_status' => [
-                'statusId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',
-                'containerId' => 'VARCHAR(256) NOT NULL',
-                'percentFinished' => 'INT(4) NOT NULL DEFAULT 0',
-                'description' => 'TEXT NULL',
-                'dateCreated' => 'DATETIME NOT NULL DEFAULT current_timestamp()'
-            ],
-            'container_status_history' => [
-                'historyId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',
-                'containerId' => 'VARCHAR(256) NOT NULL',
-                'userId' => 'VARCHAR(256) NOT NULL',
-                'description' => 'TEXT NOT NULL',
-                'oldStatus' => 'INT(4) NOT NULL',
-                'newStatus' => 'INT(4) NOT NULL',
-                'dateCreated' => 'DATETIME NOT NULL DEFAULT current_timestamp()'
-            ],
-            'transaction_log' => [
-                'transactionId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',
-                'userId' => 'VARCHAR(256) NOT NULL',
-                'callingMethod' => 'TEXT NOT NULL',
-                'dateCreated' => 'DATETIME NOT NULL DEFAULT current_timestamp()'
-            ],
-            'system_services' => [
-                'serviceId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',
-                'title' => 'VARCHAR(256) NOT NULL',
-                'scriptPath' => 'VARCHAR(256) NOT NULL',
-                'dateStarted' => 'DATETIME NULL',
-                'dateEnded' => 'DATETIME NULL',
-                'status' => 'INT(4) NOT NULL DEFAULT 1',
-                'parentServiceId' => 'VARCHAR(256) NULL',
-                'isEnabled' => 'INT(2) NOT NULL DEFAULT 1',
-                'schedule' => 'VARCHAR(512) NULL'
-            ],
-            'system_services_history' => [
-                'historyId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',
-                'serviceId' => 'VARCHAR(256) NOT NULL',
-                'args' => 'TEXT NOT NULL',
-                'dateCreated' => 'DATETIME NOT NULL DEFAULT current_timestamp()',
-                'status' => 'INT(4) NOT NULL',
-                'exception' => 'TEXT NULL'
-            ],
-            'container_usage_statistics' => [
-                'entryId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',
-                'containerId' => 'VARCHAR(256) NOT NULL',
-                'totalSqlQueries' => 'INT(32) NOT NULL',
-                'averageTimeTaken' => 'VARCHAR(256) NOT NULL',
-                'totalTimeTaken' => 'VARCHAR(256) NOT NULL',
-                'date' => 'DATETIME NOT NULL',
-                'dateCreated' => 'DATETIME NOT NULL DEFAULT current_timestamp()'
-            ],
-            'container_invites' => [
-                'inviteId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',
-                'containerId' => 'VARCHAR(256) NOT NULL',
-                'dateValid' => 'DATETIME NOT NULL',
-                'dateCreated' => 'DATETIME NOT NULL DEFAULT current_timestamp()'
-            ],
-            'container_invite_usage' => [
-                'entryId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',
-                'inviteId' => 'VARCHAR(256) NOT NULL',
-                'containerId' => 'VARCHAR(256) NOT NULL',
-                'data' => 'TEXT NOT NULL',
-                'status' => 'INT(4) NOT NULL DEFAULT 1',
-                'dateCreated' => 'DATETIME NOT NULL DEFAULT current_timestamp()'
-            ],
-            'user_absence' => [
-                'absenceId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',
-                'userId' => 'VARCHAR(256) NOT NULL',
-                'dateFrom' => 'DATETIME NOT NULL',
-                'dateTo' => 'DATETIME NOT NULL',
-                'dateCreated' => 'DATETIME NOT NULL DEFAULT current_timestamp()',
-                'active' => 'INT(2) NOT NULL DEFAULT 1'
-            ],
-            'user_substitutes' => [
-                'entryId' => 'VARCHAR(256) NOT NULL PRIMARY KEY',
-                'userId' => 'VARCHAR(256) NOT NULL',
-                'substituteUserId' => 'VARCHAR(256) NOT NULL'
-            ]
-        ];
-    }
-
-    /**
-     * Creates tables
-     */
     private function createTables() {
         $this->logger->info('Creating tables.', __METHOD__);
 
-        $tables = self::getTableScheme();
+        $migrationManager = new DatabaseMigrationManager($this->db, null, $this->logger);
+        $migrationManager->runMigrations();
 
-        $i = 0;
-        foreach($tables as $name => $values) {
-            $sql = 'CREATE TABLE IF NOT EXISTS `' . $name . '` (';
-
-            $tmp = [];
-
-            foreach($values as $key => $value) {
-                $tmp[] = $key . ' ' . $value;
-            }
-
-            $sql .= implode(', ', $tmp);
-
-            $sql .= ')';
-            
-            $this->db->query($sql);
-            $this->logger->sql($sql, __METHOD__, null);
-
-            $i++;
-        }
-
-        $this->logger->info('Created ' . $i . ' tables.', __METHOD__);
-    }
-
-    /**
-     * Creates indexes
-     */
-    private function createIndexes() {
-        $this->logger->info('Creating indexes.', __METHOD__);
-
-        $indexes = [
-            'containers' => [
-                'databaseName'
-            ],
-            'container_creation_status' => [
-                'containerId'
-            ],
-            'container_status_history' => [
-                'containerId'
-            ],
-            'container_usage_statistics' => [
-                'containerId'
-            ],
-            'groups' => [
-                'containerId'
-            ],
-            'group_users' => [
-                'groupId',
-                'userId'
-            ],
-            'system_services_history' => [
-                'serviceId'
-            ],
-            'users' => [
-                'username'
-            ]
-        ];
-
-        $indexCount = [];
-        foreach($indexes as $tableName => $columns) {
-            $i = 1;
-
-            if(isset($indexCount[$tableName])) {
-                $i = $indexCount[$tableName] + 1;
-            }
-
-            $name = $tableName . '_i' . $i;
-
-            $sql = "DROP INDEX IF EXISTS `$name` ON `$tableName`";
-
-            $this->logger->sql($sql, __METHOD__, null);
-
-            $this->db->query($sql);
-
-            $cols = implode(', ', $columns);
-
-            $sql = "CREATE INDEX $name ON $tableName ($cols)";
-
-            $this->logger->sql($sql, __METHOD__, null);
-
-            $this->db->query($sql);
-
-            $indexCount[$tableName] = $i;
-        }
-
-        $this->logger->info('Created indexes.', __METHOD__);
+        $this->logger->info('Table creation finished.', __METHOD__);
     }
 
     /**

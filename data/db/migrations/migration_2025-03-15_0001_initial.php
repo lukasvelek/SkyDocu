@@ -6,6 +6,7 @@ use App\Constants\SystemGroups;
 use App\Core\DB\ABaseMigration;
 use App\Core\DB\Helpers\TableSchema;
 use App\Core\DB\Helpers\TableSeeding;
+use App\Managers\EntityManager;
 
 class migration_2025_03_15_0001_initial extends ABaseMigration {
     public function up(): TableSchema {
@@ -184,11 +185,11 @@ class migration_2025_03_15_0001_initial extends ABaseMigration {
         $seed = $this->getTableSeeding();
 
         $userIds = [
-            'admin' => $this->getId('users', 'userId'),
-            'service_user' => $this->getId('users', 'userId')
+            'admin' => $this->getId(EntityManager::USERS),
+            'service_user' => $this->getId(EntityManager::USERS)
         ];
 
-        $seed->seed('users')
+        $seed->seed(EntityManager::USERS)
             ->add([
                 'userId' => $userIds['admin'],
                 'username' => 'admin',
@@ -205,11 +206,11 @@ class migration_2025_03_15_0001_initial extends ABaseMigration {
             ]);
 
         $groupIds = [
-            SystemGroups::SUPERADMINISTRATORS => $this->getId('groups', 'groupId'),
-            SystemGroups::CONTAINER_MANAGERS => $this->getId('groups', 'groupId')
+            SystemGroups::SUPERADMINISTRATORS => $this->getId(EntityManager::GROUPS),
+            SystemGroups::CONTAINER_MANAGERS => $this->getId(EntityManager::GROUPS)
         ];
 
-        $seed->seed('groups')
+        $seed->seed(EntityManager::GROUPS)
             ->add([
                 'groupId' => $groupIds[SystemGroups::SUPERADMINISTRATORS],
                 'title' => SystemGroups::SUPERADMINISTRATORS
@@ -219,14 +220,14 @@ class migration_2025_03_15_0001_initial extends ABaseMigration {
                 'title' => SystemGroups::CONTAINER_MANAGERS
             ]);
 
-        $seed->seed('group_users')
+        $seed->seed(EntityManager::GROUP_USERS)
             ->add([
-                'groupUserId' => $this->getId('group_users', 'groupUserId'),
+                'groupUserId' => $this->getId(EntityManager::GROUP_USERS),
                 'groupId' => $groupIds[SystemGroups::SUPERADMINISTRATORS],
                 'userId' => $userIds['admin']
             ])
             ->add([
-                'groupUserId' => $this->getId('group_users', 'groupUserId'),
+                'groupUserId' => $this->getId(EntityManager::GROUP_USERS),
                 'groupId' => $groupIds[SystemGroups::CONTAINER_MANAGERS],
                 'userId' => $userIds['admin']
             ]);
@@ -240,14 +241,14 @@ class migration_2025_03_15_0001_initial extends ABaseMigration {
         ];
 
         $serviceIds = [
-            'ContainerCreationMaster' => $this->getId('system_services', 'serviceId'),
-            'LogRotate' => $this->getId('system_services', 'serviceId'),
-            'ContainerUsageStatistics' => $this->getId('system_services', 'serviceId'),
-            'ProcessSubstitute' => $this->getId('system_services', 'serviceId'),
-            'ContainerOrphanedFilesRemovingMaster' => $this->getId('system_services', 'serviceId')
+            'ContainerCreationMaster' => $this->getId(EntityManager::SYSTEM_SERVICES),
+            'LogRotate' => $this->getId(EntityManager::SYSTEM_SERVICES),
+            'ContainerUsageStatistics' => $this->getId(EntityManager::SYSTEM_SERVICES),
+            'ProcessSubstitute' => $this->getId(EntityManager::SYSTEM_SERVICES),
+            'ContainerOrphanedFilesRemovingMaster' => $this->getId(EntityManager::SYSTEM_SERVICES)
         ];
 
-        $serviceSeed = $seed->seed('system_services');
+        $serviceSeed = $seed->seed(EntityManager::SYSTEM_SERVICES);
 
         foreach($services as $service => $path) {
             $arr = [
@@ -284,7 +285,7 @@ class migration_2025_03_15_0001_initial extends ABaseMigration {
             $masterId = $serviceIds[$masterService];
 
             foreach($services as $service => $path) {
-                $id = $this->getId('system_services', 'serviceId');
+                $id = $this->getId(EntityManager::SYSTEM_SERVICES);
 
                 $serviceSeed->add([
                     'serviceId' => $id,

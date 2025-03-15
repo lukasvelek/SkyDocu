@@ -10,9 +10,9 @@ use App\Constants\ContainerStatus;
 use App\Core\Caching\CacheNames;
 use App\Core\DatabaseConnection;
 use App\Core\DB\DatabaseManager;
+use App\Core\DB\DatabaseMigrationManager;
 use App\Core\FileManager;
 use App\Core\HashManager;
-use App\Entities\ContainerDatabaseEntity;
 use App\Entities\ContainerEntity;
 use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
@@ -50,6 +50,16 @@ class ContainerManager extends AManager {
         return 'sd_db_' . $containerId . '_' . HashManager::createHash(8, false);
     }
 
+    /**
+     * Creates a new container
+     * 
+     * @param string $title Container title
+     * @param string $description Container description
+     * @param string $callingUserId Calling user ID
+     * @param int $environment Container environment
+     * @param bool $canShowReferent Can show referent
+     * @param int $status Container status
+     */
     public function createNewContainer(string $title, string $description, string $callingUserId, int $environment, bool $canShowReferent, int $status = ContainerStatus::NEW) {
         $containerId = $this->createId(EntityManager::CONTAINERS);
         $databaseName = $this->generateContainerDatabaseName($containerId);
@@ -94,12 +104,14 @@ class ContainerManager extends AManager {
         try {
             //$this->dbManager->createNewDatabase($container->getDefaultDatabase()->getName());
 
-            $this->createNewContainerTables($container->getDefaultDatabase()->getName());
+            /*$this->createNewContainerTables($container->getDefaultDatabase()->getName());
             $this->createContainerTablesIndexes($container->getDefaultDatabase()->getName());
-            $this->updateContainerDbSchema($container->getDefaultDatabase()->getName(), $containerId);
+            $this->updateContainerDbSchema($container->getDefaultDatabase()->getName(), $containerId);*/
+
+            $this->runContainerDatabaseMigrations($container->getDefaultDatabase()->getName(), $containerId);
             
-            $exceptions = [];
-            $this->insertNewContainerDefaultDataAsync($containerId, $container, $container->getDefaultDatabase()->getName(), $exceptions);
+            //$exceptions = [];
+            //$this->insertNewContainerDefaultDataAsync($containerId, $container, $container->getDefaultDatabase()->getName(), $exceptions);
         } catch(AException $e) {
             throw $e;
         }
@@ -368,6 +380,25 @@ class ContainerManager extends AManager {
                 continue;
             }
         }
+    }
+
+    /**
+     * Runs container database migrations
+     * 
+     * @param string $dbName Container database name
+     * @param string $containerId Container ID
+     */
+    private function runContainerDatabaseMigrations(string $dbName, string $containerId) {
+        try {
+            $conn = $this->dbManager->getConnectionToDatabase($dbName);
+        } catch(AException $e) {
+            throw new GeneralException('Could not establish connection to the container database. Reason: ' . $e->getMessage(), $e);
+        }
+
+        $migrationManager = new DatabaseMigrationManager($this->masterConn, $conn, $this->logger);
+        $migrationManager->setContainer($containerId);
+
+        $migrationManager->runMigrations();
     }
 
     private function createNewContainerTables(string $dbName, array $tableDefinitions = []) {

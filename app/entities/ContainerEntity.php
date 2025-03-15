@@ -19,7 +19,6 @@ class ContainerEntity extends AEntity {
     private int $environment;
     private bool $canShowContainerReferent;
     private ?string $permanentFlashMessage;
-    private int $dbSchema;
 
     /**
      * @var array<int, ContainerDatabaseEntity> $databases
@@ -50,7 +49,6 @@ class ContainerEntity extends AEntity {
         int $environment,
         bool $canShowContainerReferent,
         ?string $permanentFlashMessage,
-        int $dbSchema
     ) {
         $this->containerId = $containerId;
         $this->title = $title;
@@ -61,7 +59,6 @@ class ContainerEntity extends AEntity {
         $this->environment = $environment;
         $this->canShowContainerReferent = $canShowContainerReferent;
         $this->permanentFlashMessage = $permanentFlashMessage;
-        $this->dbSchema = $dbSchema;
 
         $this->databases = [];
     }
@@ -130,13 +127,6 @@ class ContainerEntity extends AEntity {
     }
 
     /**
-     * Returns container's database schema
-     */
-    public function getDbSchema(): int {
-        return $this->dbSchema;
-    }
-
-    /**
      * Returns all container's databases
      * 
      * @return array<int, ContainerDatabaseEntity>
@@ -188,8 +178,7 @@ class ContainerEntity extends AEntity {
             'dateCreated' => 'string',
             'environment' => 'int',
             'canShowContainerReferent' => 'bool',
-            'permanentFlashMessage' => '?string',
-            'dbSchema' => 'int'
+            'permanentFlashMessage' => '?string'
         ]);
 
         $obj = new self(
@@ -201,8 +190,7 @@ class ContainerEntity extends AEntity {
             $row->dateCreated,
             $row->environment,
             $row->canShowContainerReferent,
-            $row->permanentFlashMessage,
-            $row->dbSchema
+            $row->permanentFlashMessage
         );
 
         return $obj;

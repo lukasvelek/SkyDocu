@@ -136,7 +136,9 @@ class DatabaseMigrationManager {
 
             if($dbResult !== false) {
                 foreach($dbResult as $row) {
-                    $result = $row['dbSchema'];
+                    if($row['dbSchema'] > 0) {
+                        $result = $row['dbSchema'];
+                    }
                 }
             }
         }
@@ -162,7 +164,7 @@ class DatabaseMigrationManager {
         $migrationNumber = $migrationNameParts[count($migrationNameParts) - 2];
 
         try {
-            $fullClassName = '\\App\\Data\\Db\\Migrations\\' . $className;
+            $fullClassName = '\\App\\Data\\Db\\Migrations\\' . ($this->containerId !== null ? 'Containers\\' : '') . $className;
 
             /**
              * @var ABaseMigration $object
@@ -170,9 +172,9 @@ class DatabaseMigrationManager {
             $object = new $fullClassName($fileName, $migrationName, $migrationNumber);
             
             if($this->containerId !== null) {
-                $object->inject($this->conn);
+                $object->inject($this->conn, $this->masterConn);
             } else {
-                $object->inject($this->masterConn);
+                $object->inject($this->masterConn, $this->masterConn);
             }
 
             $tableSchema = $object->up();

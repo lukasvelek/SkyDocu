@@ -36,6 +36,9 @@ class DatabaseInstaller {
         $this->logger->info('Database installation finished.', __METHOD__);
     }
 
+    /**
+     * Runs migrations
+     */
     private function runMigrations() {
         $this->logger->info('Creating tables.', __METHOD__);
 

@@ -2,9 +2,15 @@
 
 namespace App\Data\Db\Migrations\Containers;
 
+use App\Constants\Container\CustomMetadataTypes;
+use App\Constants\Container\Processes\InvoiceCustomMetadata;
+use App\Constants\Container\StandaloneProcesses;
+use App\Constants\Container\SystemGroups;
 use App\Core\DB\ABaseMigration;
 use App\Core\DB\Helpers\TableSchema;
 use App\Core\DB\Helpers\TableSeeding;
+use App\Exceptions\GeneralException;
+use App\Managers\EntityManager;
 
 class migration_2025_03_15_0001_initial extends ABaseMigration {
     public function up(): TableSchema {
@@ -37,6 +43,7 @@ class migration_2025_03_15_0001_initial extends ABaseMigration {
             ->primaryKey('sharingId')
             ->varchar('documentId')
             ->varchar('authorUserId')
+            ->varchar('userId')
             ->datetime('dateValidUntil')
             ->datetimeAuto('dateCreated')
             ->index(['documentId']);
@@ -247,7 +254,240 @@ class migration_2025_03_15_0001_initial extends ABaseMigration {
     }
 
     public function seeding(): TableSeeding {
-        
+        $seed = $this->getTableSeeding();
+
+        $users = $this->getContainerGroupUsers();
+
+        $groupIds = [];
+        foreach(SystemGroups::getAll() as $value => $text) {
+            $groupIds[$value] = $this->getId(EntityManager::C_GROUPS);
+        }
+
+        $folderIds = [
+            'Default' => $this->getId(EntityManager::C_DOCUMENT_FOLDERS),
+            'Invoices' => $this->getId(EntityManager::C_DOCUMENT_FOLDERS)
+        ];
+
+        $classIds = [
+            'Default' => $this->getId(EntityManager::C_DOCUMENT_CLASSES),
+            'Invoices' => $this->getId(EntityManager::C_DOCUMENT_CLASSES)
+        ];
+
+        $metadataIds = [
+            InvoiceCustomMetadata::COMPANY => $this->getId(EntityManager::C_CUSTOM_METADATA),
+            InvoiceCustomMetadata::SUM => $this->getId(EntityManager::C_CUSTOM_METADATA),
+            InvoiceCustomMetadata::INVOICE_NO => $this->getId(EntityManager::C_CUSTOM_METADATA),
+            InvoiceCustomMetadata::SUM_CURRENCY => $this->getId(EntityManager::C_CUSTOM_METADATA),
+        ];
+
+        $seed->seed(EntityManager::C_DOCUMENT_CLASSES)
+            ->add([
+                'classId' => $classIds['Default'],
+                'title' => 'Default'
+            ])
+            ->add([
+                'classId' => $classIds['Invoices'],
+                'title' => 'Invoices'
+            ]);
+
+        $seed->seed(EntityManager::C_DOCUMENT_CLASS_GROUP_RIGHTS)
+            ->add([
+                'rightId' => $this->getId(EntityManager::C_DOCUMENT_CLASS_GROUP_RIGHTS),
+                'groupId' => $groupIds[SystemGroups::ACCOUNTANTS],
+                'classId' => $classIds['Invoices'],
+                'canView' => 1,
+                'canCreate' => 1,
+                'canEdit' => 1
+            ])
+            ->add([
+                'rightId' => $this->getId(EntityManager::C_DOCUMENT_CLASS_GROUP_RIGHTS),
+                'groupId' => $groupIds[SystemGroups::ALL_USERS],
+                'classId' => $classIds['Default'],
+                'canView' => 1,
+                'canCreate' => 1
+            ])
+            ->add([
+                'rightId' => $this->getId(EntityManager::C_DOCUMENT_CLASS_GROUP_RIGHTS),
+                'groupId' => $groupIds[SystemGroups::ADMINISTRATORS],
+                'classId' => $classIds['Default'],
+                'canView' => 1,
+                'canCreate' => 1,
+                'canEdit' => 1,
+                'canDelete' => 1
+            ]);
+
+        $seed->seed(EntityManager::C_DOCUMENT_FOLDERS)
+            ->add([
+                'folderId' => $folderIds['Default'],
+                'title' => 'Default',
+                'isSystem' => 1
+            ])
+            ->add([
+                'folderId' => $folderIds['Invoices'],
+                'title' => 'Invoices',
+                'isSystem' => 1
+            ]);
+
+        $seed->seed(EntityManager::C_DOCUMENT_FOLDER_GROUP_RELATION)
+            ->add([
+                'relationId' => $this->getId(EntityManager::C_DOCUMENT_FOLDER_GROUP_RELATION),
+                'folderId' => $folderIds['Default'],
+                'groupId' => $groupIds[SystemGroups::ALL_USERS],
+                'canView' => 1,
+                'canCreate' => 1
+            ])
+            ->add([
+                'relationId' => $this->getId(EntityManager::C_DOCUMENT_FOLDER_GROUP_RELATION),
+                'folderId' => $folderIds['Default'],
+                'groupId' => $groupIds[SystemGroups::ADMINISTRATORS],
+                'canView' => 1,
+                'canCreate' => 1,
+                'canEdit' => 1,
+                'canDelete' => 1
+            ])
+            ->add([
+                'relationId' => $this->getId(EntityManager::C_DOCUMENT_FOLDER_GROUP_RELATION),
+                'folderId' => $folderIds['Invoices'],
+                'groupId' => $groupIds[SystemGroups::ACCOUNTANTS],
+                'canView' => 1,
+                'canCreate' => 1,
+                'canEdit' => 1
+            ]);
+
+        $seed->seed(EntityManager::C_GROUP_STANDARD_OPERATION_RIGHTS)
+            ->add([
+                'rightId' => $this->getId(EntityManager::C_GROUP_STANDARD_OPERATION_RIGHTS),
+                'groupId' => $groupIds[SystemGroups::ADMINISTRATORS],
+                'canShareDocuments' => 1,
+                'canExportDocuments' => 1,
+                'canViewDocumentHistory' => 1
+            ]);
+
+        $seed->seed(EntityManager::C_ARCHIVE_FOLDERS)
+            ->add([
+                'folderId' => $folderIds['Default'],
+                'title' => 'Default',
+                'isSystem' => 1
+            ]);
+
+        $seed->seed(EntityManager::C_CUSTOM_METADATA)
+            ->add([
+                'metadataId' => $metadataIds['Invoices_SumCurrency'],
+                'title' => InvoiceCustomMetadata::SUM_CURRENCY,
+                'guiTitle' => InvoiceCustomMetadata::toString(InvoiceCustomMetadata::SUM_CURRENCY),
+                'type' => CustomMetadataTypes::SYSTEM_INVOICE_SUM_CURRENCY,
+                'isRequired' => 1
+            ])
+            ->add([
+                'metadataId' => $metadataIds['Invoices_Sum'],
+                'title' => InvoiceCustomMetadata::SUM,
+                'guiTitle' => InvoiceCustomMetadata::toString(InvoiceCustomMetadata::SUM),
+                'type' => CustomMetadataTypes::NUMBER,
+                'isRequired' => 1
+            ])
+            ->add([
+                'metadataId' => $metadataIds['Invoices_InvoiceNo'],
+                'title' => InvoiceCustomMetadata::INVOICE_NO,
+                'guiTitle' => InvoiceCustomMetadata::toString(InvoiceCustomMetadata::INVOICE_NO),
+                'type' => CustomMetadataTypes::TEXT,
+                'isRequired' => 1
+            ])
+            ->add([
+                'metadataId' => $metadataIds['Invoices_Company'],
+                'title' => InvoiceCustomMetadata::COMPANY,
+                'guiTitle' => InvoiceCustomMetadata::toString(InvoiceCustomMetadata::COMPANY),
+                'type' => CustomMetadataTypes::SYSTEM_INVOICE_COMPANIES,
+                'isRequired' => 1
+            ]);
+
+        $metadataFolderRelationSeed = $seed->seed(EntityManager::C_CUSTOM_METADATA_FOLDER_RELATION);
+
+        foreach($metadataIds as $title => $id) {
+            $metadataFolderRelationSeed->add([
+                'relationId' => $this->getId(EntityManager::C_CUSTOM_METADATA_FOLDER_RELATION),
+                'customMetadataId' => $id,
+                'folderId' => $folderIds['Invoices']
+            ]);
+        }
+
+        $processTypesSeed = $seed->seed(EntityManager::C_PROCESS_TYPES);
+
+        $standaloneProcessIds = [];
+        foreach(StandaloneProcesses::getAll() as $key => $title) {
+            if(StandaloneProcesses::isDisabled($key)) continue;
+
+            $standaloneProcessIds[$key] = $this->getId(EntityManager::C_PROCESS_TYPES);
+
+            $processTypesSeed->add([
+                    'typeId' => $standaloneProcessIds[$key],
+                    'typeKey' => $key,
+                    'title' => $title,
+                    'description' => StandaloneProcesses::getDescription($key)
+            ]);
+        }
+
+        $seed->seed(EntityManager::C_PROCESS_CUSTOM_METADATA)
+            ->add([
+                'metadataId' => $this->getId(EntityManager::C_PROCESS_CUSTOM_METADATA),
+                'typeId' => $standaloneProcessIds[StandaloneProcesses::INVOICE],
+                'title' => 'companies',
+                'guiTitle' => 'Companies',
+                'type' => CustomMetadataTypes::ENUM,
+                'isRequired' => 1
+            ]);
+
+        $groupSeed = $seed->seed(EntityManager::C_GROUPS);
+
+        foreach($groupIds as $value => $groupId) {
+            $groupSeed->add([
+                'groupId' => $groupId,
+                'title' => $value
+            ]);
+        }
+
+        $groupUserSeed = $seed->seed(EntityManager::C_GROUP_USERS_RELATION);
+
+        foreach($users as $userId) {
+            foreach($groupIds as $name => $groupId) {
+                $groupUserSeed->add([
+                    'relationId' => $this->getId(EntityManager::C_GROUP_USERS_RELATION),
+                    'userId' => $userId,
+                    'groupId' => $groupId
+                ]);
+            }
+        }
+
+        return $seed;
+    }
+
+    private function getContainerGroupUsers(): array {
+        $sql = 'SELECT * FROM groups WHERE containerId IS NOT NULL';
+
+        $result = $this->masterConn->query($sql);
+
+        $groupId = null;
+        if($result !== null) {
+            foreach($result as $row) {
+                $groupId = $row['groupId'];
+            }
+        }
+
+        if($groupId === null) {
+            throw new GeneralException('No group for container found.');
+        }
+
+        $sql = 'SELECT userId FROM group_users WHERE groupId = \'' . $groupId . '\'';
+
+        $result = $this->masterConn->query($sql);
+
+        $users = [];
+        if($result !== null) {
+            foreach($result as $row) {
+                $users[] = $row['userId'];
+            }
+        }
+
+        return $users;
     }
 }
 

@@ -6,6 +6,7 @@ use App\Core\DatabaseConnection;
 use App\Core\DB\Helpers\TableSchema;
 use App\Core\DB\Helpers\TableSeeding;
 use App\Core\HashManager;
+use App\Managers\EntityManager;
 
 /**
  * Common class for all database migrations
@@ -18,6 +19,8 @@ abstract class ABaseMigration {
     private string $migrationNumber;
     private ?TableSchema $tableSchema = null;
     private DatabaseConnection $conn;
+
+    protected DatabaseConnection $masterConn;
 
     /**
      * Class constructor
@@ -36,9 +39,11 @@ abstract class ABaseMigration {
      * Injects DatabaseConnection instance
      * 
      * @param DatabaseConnection $conn DatabaseConnection instance
+     * @param DatabaseConnection $masterConn Master DatabaseConnection instance
      */
-    public function inject(DatabaseConnection $conn) {
+    public function inject(DatabaseConnection $conn, DatabaseConnection $masterConn) {
         $this->conn = $conn;
+        $this->masterConn = $masterConn;
     }
 
     /**
@@ -78,9 +83,13 @@ abstract class ABaseMigration {
      * Generates unique ID
      * 
      * @param string $tableName Table name
-     * @param string $primaryKeyName Primary key name
+     * @param ?string $primaryKeyName Primary key name or null for auto-complete
      */
-    protected function getId(string $tableName, string $primaryKeyName): ?string {
+    protected function getId(string $tableName, ?string $primaryKeyName = null): ?string {
+        if($primaryKeyName === null) {
+            $primaryKeyName = EntityManager::getPrimaryKeyNameByCategory($tableName);
+        }
+
         $runs = 0;
         $maxRuns = 1000;
 
@@ -91,8 +100,8 @@ abstract class ABaseMigration {
             $result = $this->conn->query('SELECT COUNT(' . $primaryKeyName . ') AS cnt FROM ' . $tableName . ' WHERE ' . $primaryKeyName . ' = \'' . $id . '\'');
 
             if($result !== false) {
-                foreach($result as $rows) {
-                    if($rows['cnt'] == 0) {
+                foreach($result as $row) {
+                    if($row['cnt'] == 0) {
                         $final = $id;
                         break;
                     }

@@ -12,6 +12,14 @@ use App\Core\DB\Helpers\TableSeeding;
 use App\Exceptions\GeneralException;
 use App\Managers\EntityManager;
 
+/**
+ * This is the initial migration that defines the database schema for each SkyDocu container.
+ * 
+ * Here are defined all tables that are necessary for each container.
+ * 
+ * @author Lukas Velek
+ * @version 1.0 from 03/15/2025
+ */
 class migration_2025_03_15_0001_initial extends ABaseMigration {
     public function up(): TableSchema {
         $table = $this->getTableSchema();

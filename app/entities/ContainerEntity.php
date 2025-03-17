@@ -19,6 +19,7 @@ class ContainerEntity extends AEntity {
     private int $environment;
     private bool $canShowContainerReferent;
     private ?string $permanentFlashMessage;
+    private bool $isInDistribution;
 
     /**
      * @var array<int, ContainerDatabaseEntity> $databases
@@ -37,7 +38,7 @@ class ContainerEntity extends AEntity {
      * @param int $environment
      * @param bool $canShowContainerReferent
      * @param ?string $permanentFlashMessage
-     * @param int $dbSchema
+     * @param bool $isInDistribution
      */
     public function __construct(
         string $containerId,
@@ -49,6 +50,7 @@ class ContainerEntity extends AEntity {
         int $environment,
         bool $canShowContainerReferent,
         ?string $permanentFlashMessage,
+        bool $isInDistribution
     ) {
         $this->containerId = $containerId;
         $this->title = $title;
@@ -59,6 +61,7 @@ class ContainerEntity extends AEntity {
         $this->environment = $environment;
         $this->canShowContainerReferent = $canShowContainerReferent;
         $this->permanentFlashMessage = $permanentFlashMessage;
+        $this->isInDistribution = $isInDistribution;
 
         $this->databases = [];
     }
@@ -127,6 +130,13 @@ class ContainerEntity extends AEntity {
     }
 
     /**
+     * Returns true if the container is in distribution
+     */
+    public function isInDistribution(): bool {
+        return $this->isInDistribution;
+    }
+
+    /**
      * Returns all container's databases
      * 
      * @return array<int, ContainerDatabaseEntity>
@@ -178,7 +188,8 @@ class ContainerEntity extends AEntity {
             'dateCreated' => 'string',
             'environment' => 'int',
             'canShowContainerReferent' => 'bool',
-            'permanentFlashMessage' => '?string'
+            'permanentFlashMessage' => '?string',
+            'isInDistribution' => 'bool'
         ]);
 
         $obj = new self(
@@ -190,7 +201,8 @@ class ContainerEntity extends AEntity {
             $row->dateCreated,
             $row->environment,
             $row->canShowContainerReferent,
-            $row->permanentFlashMessage
+            $row->permanentFlashMessage,
+            $row->isInDistribution
         );
 
         return $obj;

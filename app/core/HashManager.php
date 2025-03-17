@@ -17,10 +17,10 @@ class HashManager {
      */
     public static function createHash(int $length = 32, bool $special = true) {
         $alph = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890';
-        $special = '_.,?@-!';
+        $specialString = '_.,?@-!';
 
         if($special === true) {
-            $alph .= $special;
+            $alph .= $specialString;
         }
 
         $hash = '';

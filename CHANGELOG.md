@@ -20,6 +20,7 @@ Previously changelog for versions `1.0`-`1.4` has been located in README.md. How
     - Automatic running
     - Service scheduling
     - Service master & slave
+- Database migrations & initial seeding
 
 ## SkyDocu `1.3.1` (02/26/2025)
 - About application widget update

@@ -5,9 +5,12 @@ namespace App\Core\DB;
 use App\Core\DatabaseConnection;
 use App\Core\FileManager;
 use App\Exceptions\AException;
+use App\Exceptions\DatabaseExecutionException;
 use App\Exceptions\GeneralException;
+use App\Helpers\DateTimeFormatHelper;
 use App\Logger\Logger;
 use Exception;
+use mysqli_sql_exception;
 
 /**
  * DatabaseMigrationManager helps with running database migrations
@@ -48,8 +51,10 @@ class DatabaseMigrationManager {
 
     /**
      * Runs all migrations
+     * 
+     * @param bool $throwExceptions True if exceptions should be thrown
      */
-    public function runMigrations() {
+    public function runMigrations(bool $throwExceptions = false) {
         // get migrations
         $this->logger->info('Starting migrations...', __METHOD__);
 
@@ -60,14 +65,14 @@ class DatabaseMigrationManager {
         $this->logger->info(sprintf('Found %d migrations that must be run.', count($migrations)), __METHOD__);
 
         foreach($migrations as $migration) {
-            $this->runSingleMigration($migration);
+            $this->runSingleMigration($migration, $throwExceptions);
         }
     }
 
     /**
      * Returns all available migrations
      */
-    private function getAvailableMigrations() {
+    public function getAvailableMigrations() {
         $migrationDir = APP_ABSOLUTE_DIR . 'data\\db\\migrations';
 
         if($this->containerId !== null) {
@@ -84,7 +89,7 @@ class DatabaseMigrationManager {
      * 
      * @param array &$migrations Migrations
      */
-    private function filterOnlyUpstreamMigrations(array &$migrations) {
+    public function filterOnlyUpstreamMigrations(array &$migrations) {
         $lastMigration = $this->getLastRunMigration();
 
         $this->logger->info('Last migration found: ' . $lastMigration, __METHOD__);
@@ -134,7 +139,9 @@ class DatabaseMigrationManager {
                 $result = FileManager::loadFile($path);
             }
         } else {
-            $dbResult = $this->masterConn->query('SELECT dbSchema FROM container_databases WHERE containerId = \'' . $this->containerId . '\' AND isDefault = 1');
+            $sql = 'SELECT dbSchema FROM container_databases WHERE containerId = \'' . $this->containerId . '\' AND isDefault = 1';
+
+            $dbResult = $this->query($sql, __METHOD__);
 
             if($dbResult !== false) {
                 foreach($dbResult as $row) {
@@ -152,8 +159,9 @@ class DatabaseMigrationManager {
      * Runs a single migration
      * 
      * @param string $migrationFilePath File path of the migration
+     * @param bool $throwExceptions True if exceptions should be thrown
      */
-    private function runSingleMigration(string $migrationFilePath) {
+    private function runSingleMigration(string $migrationFilePath, bool $throwExceptions) {
         require_once($migrationFilePath);
 
         $fileName = FileManager::getFilenameFromPath($migrationFilePath);
@@ -191,15 +199,11 @@ class DatabaseMigrationManager {
                     $this->masterConn->beginTransaction();
 
                     foreach($sqls as $sql) {
-                        if($this->containerId === null) {
-                            $this->masterConn->query($sql);
-                        } else {
-                            $this->conn->query($sql);
-                        }
+                        $this->query($sql, __METHOD__, ($this->containerId === null));
                     }
 
                     if($this->containerId !== null) {
-                        $this->masterConn->query($this->getContainerUpdateDbSchemaSQL((int)$migrationNumber));
+                        $this->query($this->getContainerUpdateDbSchemaSQL((int)$migrationNumber), __METHOD__);
                     } else {
                         if(!$this->saveSystemLastMigration($fileName)) {
                             throw new GeneralException('Could not save last migration run for system.');
@@ -207,9 +211,13 @@ class DatabaseMigrationManager {
                     }
 
                     $this->masterConn->commit();
-                } catch(Exception $e) {
+                } catch(Exception|mysqli_sql_exception $e) {
                     $this->masterConn->rollback();
                     $this->logger->error('An error occurred during running migration. Exception: ' . $e->getMessage(), __METHOD__);
+
+                    if($throwExceptions) {
+                        throw new GeneralException('Database error.', $e);
+                    }
                 }
             }
 
@@ -225,18 +233,17 @@ class DatabaseMigrationManager {
                     $this->masterConn->beginTransaction();
 
                     foreach($sqls as $sql) {
-
-                        if($this->containerId === null) {
-                            $this->masterConn->query($sql);
-                        } else {
-                            $this->conn->query($sql);
-                        }
+                        $this->query($sql, __METHOD__, ($this->containerId === null));
                     }
 
                     $this->masterConn->commit();
                 } catch(Exception $e) {
                     $this->masterConn->rollback();
                     $this->logger->error('An error occurred during running seeding for table \'' . $tableName . '\'. Exception: ' . $e->getMessage(), __METHOD__);
+
+                    if($throwExceptions) {
+                        throw $e;
+                    }
                 }
             }
         } catch(AException $e) {
@@ -260,6 +267,46 @@ class DatabaseMigrationManager {
      */
     private function saveSystemLastMigration(string $migration): bool {
         return FileManager::saveFile(self::SYSTEM_MIGRATION_FILE_PATH, self::SYSTEM_MIGRATION_FILE_NAME, $migration, true) !== false;
+    }
+
+    /**
+     * Performs an SQL query and saves it to the log file
+     * 
+     * @param string $sql SQL query
+     * @param string $method Calling method
+     * @param bool $useMasterConn Use master database connection or container database connection
+     * @return mixed Database result
+     */
+    private function query(string $sql, string $method, bool $useMasterConn = true): mixed {
+        $tsStart = null;
+        $tsEnd = null;
+
+        $q = function(string $sql) use ($useMasterConn, &$tsStart, &$tsEnd) {
+            $tsStart = hrtime(true);
+            try {
+                if($useMasterConn) {
+                    $result = $this->masterConn->query($sql);
+                } else {
+                    $result = $this->conn->query($sql);
+                }
+            } catch(\mysqli_sql_exception $e) {
+                throw new DatabaseExecutionException($e, $sql, $e);
+            }
+            $tsEnd = hrtime(true);
+            return $result;
+        };
+
+        $result = $q($sql);
+
+        $diff = $tsEnd - $tsStart;
+
+        $diff = DateTimeFormatHelper::convertNsToMs($diff);
+
+        $e = new Exception;
+
+        $this->logger->sql($sql, $method, $diff, $e);
+
+        return $result;
     }
 }
 

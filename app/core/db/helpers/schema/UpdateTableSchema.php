@@ -33,7 +33,7 @@ class UpdateTableSchema extends ABaseTableSchema {
             $definition .= ' NOT';
         }
 
-        $definition . ' NULL';
+        $definition .= ' NULL';
 
         return $this->addColumn($name, $definition);
     }
@@ -167,6 +167,9 @@ class UpdateTableSchema extends ABaseTableSchema {
 
         // create columns
         foreach($this->addColumns as $name => $definition) {
+            if(array_key_exists($name, $this->addDefaults)) {
+                $definition .= ' DEFAULT ' . $this->addDefaults[$name];
+            }
             $sqls[] = "ALTER TABLE " . $this->name . " ADD " . $name . " " . $definition;
         }
         

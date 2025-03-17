@@ -15,13 +15,35 @@ class GroupRepository extends ARepository {
 
     public function __construct(DatabaseConnection $db, Logger $logger) {
         parent::__construct($db, $logger);
+    }
 
-        $this->groupCache = $this->cacheFactory->getCache(CacheNames::GROUPS);
-        $this->groupTitleToIdMappingCache = $this->cacheFactory->getCache(CacheNames::GROUP_TITLE_TO_ID_MAPPING);
-        $this->userGroupMembershipsCache = $this->cacheFactory->getCache(CacheNames::USER_GROUP_MEMBERSHIPS);
+    private function getGroupCache() {
+        if(!isset($this->groupCache)) {
+            $this->groupCache = $this->cacheFactory->getCache(CacheNames::GROUPS);
+        }
+
+        return $this->groupCache;
+    }
+
+    private function getGroupTitleToIdMappingCache() {
+        if(!isset($this->groupCache)) {
+            $this->groupTitleToIdMappingCache = $this->cacheFactory->getCache(CacheNames::GROUP_TITLE_TO_ID_MAPPING);
+        }
+
+        return $this->groupTitleToIdMappingCache;
+    }
+
+    private function getUserGroupMembershipsCache() {
+        if(!isset($this->groupCache)) {
+            $this->userGroupMembershipsCache = $this->cacheFactory->getCache(CacheNames::USER_GROUP_MEMBERSHIPS);
+        }
+
+        return $this->userGroupMembershipsCache;
     }
 
     public function getGroupEntityById(string $groupId) {
+        $this->getGroupCache();
+
         $qb = $this->qb(__METHOD__);
 
         $qb->select(['*'])  
@@ -34,6 +56,8 @@ class GroupRepository extends ARepository {
     }
 
     public function getGroupEntityByTitle(string $title) {
+        $this->getGroupTitleToIdMappingCache();
+
         $qb = $this->qb(__METHOD__);
 
         $qb->select(['groupId'])
@@ -112,6 +136,8 @@ class GroupRepository extends ARepository {
     }
 
     public function getGroupsForUser(string $userId, bool $force = false) {
+        $this->getUserGroupMembershipsCache();
+
         $qb = $this->qb(__METHOD__);
 
         $qb->select(['groupId'])

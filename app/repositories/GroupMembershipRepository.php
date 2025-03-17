@@ -8,12 +8,8 @@ use App\Core\DatabaseConnection;
 use App\Logger\Logger;
 
 class GroupMembershipRepository extends ARepository {
-    private Cache $groupMembershipCache;
-
     public function __construct(DatabaseConnection $db, Logger $logger) {
         parent::__construct($db, $logger);
-
-        $this->groupMembershipCache = $this->cacheFactory->getCache(CacheNames::GROUP_MEMBERSHIPS);
     }
 
     public function getMemberUserIdsForGroupId(string $groupId) {
@@ -23,7 +19,9 @@ class GroupMembershipRepository extends ARepository {
             ->from('group_users')
             ->where('groupId = ?', [$groupId]);
 
-        return $this->groupMembershipCache->load($groupId, function() use ($qb) {
+        $cache = $this->cacheFactory->getCache(CacheNames::GROUP_MEMBERSHIPS);
+
+        return $cache->load($groupId, function() use ($qb) {
             $qb->execute();
 
             $userIds = [];

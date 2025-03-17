@@ -18,8 +18,6 @@ class DatabaseMigrationManager {
     private const SYSTEM_MIGRATION_FILE_PATH = APP_ABSOLUTE_DIR . 'app\\core\\';
     private const SYSTEM_MIGRATION_FILE_NAME = 'migration';
 
-    private bool $log = true;
-
     private DatabaseConnection $masterConn;
     private ?DatabaseConnection $conn;
     private Logger $logger;
@@ -89,6 +87,8 @@ class DatabaseMigrationManager {
     private function filterOnlyUpstreamMigrations(array &$migrations) {
         $lastMigration = $this->getLastRunMigration();
 
+        $this->logger->info('Last migration found: ' . $lastMigration, __METHOD__);
+
         if($lastMigration !== null) {
             $skip = true;
             $filteredMigrations = [];
@@ -98,18 +98,20 @@ class DatabaseMigrationManager {
                 $migrationNameParts = explode('_', $className);
                 $migrationNumber = $migrationNameParts[count($migrationNameParts) - 2];
 
+                if(!$skip) {
+                    $filteredMigrations[] = $migration;
+                }
+
                 if($this->containerId === null) {
                     if($className == $lastMigration) {
                         $skip = false;
                     }
                 } else {
+                    $this->logger->info('Current database schema for given container: ' . (int)$migrationNumber, __METHOD__);
+                    
                     if((int)$migrationNumber == (int)$lastMigration) {
                         $skip = false;
                     }
-                }
-
-                if(!$skip) {
-                    $filteredMigrations[] = $migration;
                 }
             }
 
@@ -223,9 +225,6 @@ class DatabaseMigrationManager {
                     $this->masterConn->beginTransaction();
 
                     foreach($sqls as $sql) {
-                        if($this->log) {
-                            $this->logger->info('SQL: ' . $sql, __METHOD__);
-                        }
 
                         if($this->containerId === null) {
                             $this->masterConn->query($sql);

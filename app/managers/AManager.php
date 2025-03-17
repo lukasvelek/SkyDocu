@@ -45,7 +45,7 @@ abstract class AManager {
      * Sets up the object
      */
     protected function startup() {
-        $this->cacheFactory = new CacheFactory();
+        //$this->cacheFactory = new CacheFactory();
     }
 
     /**

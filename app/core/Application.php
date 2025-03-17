@@ -89,6 +89,8 @@ class Application {
 
     public array $repositories;
 
+    public CacheFactory $cacheFactory;
+
     /**
      * The Application constructor. It creates objects of all used classes.
      */
@@ -111,6 +113,8 @@ class Application {
         }
         $this->logger->info('Database connection established', __METHOD__);
 
+        $this->cacheFactory = new CacheFactory();
+
         $this->initRepositories();
 
         $this->userAuth = new UserAuthenticator($this->userRepository, $this->logger);
@@ -127,6 +131,8 @@ class Application {
         $this->userAbsenceManager = new UserAbsenceManager($this->logger, $this->entityManager, $this->userAbsenceRepository);
         $this->userSubstituteManager = new UserSubstituteManager($this->logger, $this->entityManager, $this->userSubstituteRepository);
 
+        $this->initManagers();
+
         $this->isAjaxRequest = false;
 
         $this->loadModules();
@@ -139,6 +145,24 @@ class Application {
             } catch(AException $e) {
                 throw new GeneralException('Could not install database. Reason: ' . $e->getMessage(), $e);
             }
+        }
+    }
+
+    /**
+     * Initializes *Manager classes
+     */
+    private function initManagers() {
+        foreach([
+            $this->entityManager,
+            $this->userManager,
+            $this->groupManager,
+            $this->containerDatabaseManager,
+            $this->containerManager,
+            $this->containerInviteManager,
+            $this->userAbsenceManager,
+            $this->userSubstituteManager
+        ] as $manager) {
+            $manager->injectCacheFactory(clone $this->cacheFactory);
         }
     }
 
@@ -160,6 +184,10 @@ class Application {
                 $className = (string)$rt;
 
                 $this->$name = new $className($this->db, $this->logger);
+                
+                if(method_exists($this->$name, 'injectCacheFactory')) {
+                    $this->$name->injectCacheFactory(clone $this->cacheFactory);
+                }
 
                 $this->repositories[$name] = $this->$name;
             }
@@ -272,7 +300,7 @@ class Application {
      * @param string $type Flash message type
      */
     public function flashMessage(string $text, string $type = 'info') {
-        $cacheFactory = new CacheFactory();
+        $cacheFactory = clone $this->cacheFactory;
 
         if(array_key_exists('container', $_SESSION)) {
             $containerId = $_SESSION['container'];
@@ -317,6 +345,7 @@ class Application {
         }
         $moduleObject->setLogger($this->logger);
         $moduleObject->setHttpRequest($this->getRequest());
+        $moduleObject->setCacheFactory($this->cacheFactory);
 
         $this->logger->info('Initializing render engine.', __METHOD__);
         $re = new RenderEngine($this->logger, $moduleObject, $this->currentPresenter, $this->currentAction, $this);

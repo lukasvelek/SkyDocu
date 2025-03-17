@@ -236,6 +236,8 @@ class ContainerManager extends AManager {
         foreach($databases as $database) {
             $this->containerDatabaseManager->dropDatabaseByEntryId($containerId, $database->getId());
         }
+
+        $this->cacheFactory->invalidateAllCache();
     }
 
     public function addUserToContainer(string $userId, string $containerId) {

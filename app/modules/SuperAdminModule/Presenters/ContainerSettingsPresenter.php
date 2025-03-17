@@ -12,6 +12,7 @@ use App\Constants\ContainerInviteUsageStatus;
 use App\Constants\ContainerStatus;
 use App\Core\Caching\CacheNames;
 use App\Core\Datetypes\DateTime;
+use App\Core\DB\DatabaseMigrationManager;
 use App\Core\DB\DatabaseRow;
 use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
@@ -325,7 +326,7 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
         return $grid;
     }
 
-    public function handleAdvanced() {
+    public function renderAdvanced() {
         $containerId = $this->httpRequest->get('containerId');
         if($containerId === null) {
             throw new RequiredAttributeIsNotSetException('containerId');
@@ -340,11 +341,7 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
             ->toString()
         ;
 
-        $this->saveToPresenterCache('containerDeleteLink', $containerDeleteLink);
-    }
-
-    public function renderAdvanced() {
-        $this->template->container_delete_link = $this->loadFromPresenterCache('containerDeleteLink');
+        $this->template->container_delete_link = $containerDeleteLink;
     }
 
     public function handleContainerDeleteForm(?FormRequest $fr = null) {
@@ -982,6 +979,70 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
             ->setDisabled($empty);
 
         return $form;
+    }
+
+    public function renderListDatabases() {
+
+    }
+
+    protected function createComponentContainerDatabasesGrid(HttpRequest $request) {
+        $grid = $this->componentFactory->getGridBuilder($request->get('containerId'));
+
+        $qb = $this->app->containerDatabaseRepository->composeQueryForContainerDatabases();
+        $qb->andWhere('containerId = ?', [$request->get('containerId')]);
+
+        $grid->createDataSourceFromQueryBuilder($qb, 'entryId');
+
+        $grid->addColumnText('name', 'Database name');
+        $grid->addColumnBoolean('isDefault', 'System database');
+        $grid->addColumnText('title', 'Title');
+        $grid->addColumnText('description', 'Description');
+        $grid->addColumnText('dbSchema', 'Schema');
+
+        $runMigrations = $grid->addAction('runMigrations');
+        $runMigrations->setTitle('Run migrations');
+        $runMigrations->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) {
+            return ($row->isDefault == true);
+        };
+        $runMigrations->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) use ($request) {
+            $el = HTML::el('a');
+            $el->text('Run migrations')
+                ->class('grid-link')
+                ->href($this->createURLString('runDatabaseMigrations', ['containerId' => $request->get('containerId'), 'entryId' => $row->entryId]));
+
+            return $el;
+        };
+
+        return $grid;
+    }
+
+    public function handleRunDatabaseMigrations() {
+        $containerId = $this->httpRequest->get('containerId');
+        $entryId = $this->httpRequest->get('entryId');
+
+        try {
+            if($containerId === null) {
+                throw new RequiredAttributeIsNotSetException('containerId');
+            }
+            if($entryId === null) {
+                throw new RequiredAttributeIsNotSetException('entryId');
+            }
+
+            $database = $this->app->containerDatabaseManager->getDatabaseByEntryId($entryId);
+
+            $containerDb = $this->app->dbManager->getConnectionToDatabase($database->getName());
+
+            $dmm = new DatabaseMigrationManager($this->app->containerDatabaseRepository->conn, $containerDb, $this->logger);
+            $dmm->setContainer($containerId);
+            
+            $dmm->runMigrations();
+
+            $this->flashMessage('Migrations on database \'' . $database->getName() . '\' successfully run.', 'success');
+        } catch(AException $e) {
+            $this->flashMessage('Could not run migrations on database \'' . $database->getName() . '\'. Reason: ' . $e->getMessage(), 'error', 10);
+        }
+
+        $this->redirect($this->createURL('listDatabases', ['containerId' => $containerId]));
     }
 }
 

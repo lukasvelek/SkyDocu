@@ -47,6 +47,17 @@ class CacheFactory {
     }
 
     /**
+     * Class clone
+     */
+    public function __clone() {
+        $obj = new self();
+
+        $obj->persistentCaches = &$this->persistentCaches;
+
+        return $obj;
+    }
+
+    /**
      * Sets custom additional namespace
      * 
      * @param string $namespace Custom additional namespace

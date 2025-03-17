@@ -14,11 +14,7 @@ abstract class ASuperAdminPresenter extends APresenter {
     }
 
     private function checkAction(string ...$actions) {
-        if(in_array($this->httpRequest->get('action'), $actions)) {
-            return true;
-        } else {
-            return false;
-        }
+        return in_array($this->httpRequest->get('action'), $actions);
     }
 
     protected function createComponentSidebar(HttpRequest $request) {
@@ -34,6 +30,7 @@ abstract class ASuperAdminPresenter extends APresenter {
         $invites = $this->checkAction('invites', 'invitesWithoutGrid');
         $transactionLog = $this->checkAction('transactionLog');
         $processes = $this->checkAction('processes', 'addProcessForm');
+        $databases = $this->checkAction('listDatabases');
 
         $sidebar->addLink('&larr; Back', $this->createFullURL('SuperAdmin:Containers', 'list'));
         $sidebar->addLink('Home', $this->createURL('home', ['containerId' => $containerId]), $home);
@@ -44,6 +41,7 @@ abstract class ASuperAdminPresenter extends APresenter {
             $sidebar->addLink('Advanced', $this->createURL('advanced', ['containerId' => $containerId]), $advanced);
             $sidebar->addLink('Transaction log', $this->createURL('transactionLog', ['containerId' => $containerId]), $transactionLog);
             $sidebar->addLink('Processes', $this->createURL('processes', ['containerId' => $containerId]), $processes);
+            $sidebar->addLink('Databases', $this->createURL('listDatabases', ['containerId' => $containerId]), $databases);
         }
 
         return $sidebar;

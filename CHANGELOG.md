@@ -21,6 +21,9 @@ Previously changelog for versions `1.0`-`1.4` has been located in README.md. How
     - Service scheduling
     - Service master & slave
 - Database migrations & initial seeding
+- Container distribution
+    - Containers can now be removed from distribution
+- Multiple bugfixes
 
 ## SkyDocu `1.3.1` (02/26/2025)
 - About application widget update

@@ -308,6 +308,33 @@ class DatabaseMigrationManager {
 
         return $result;
     }
+
+    /**
+     * Returns the release date of the migration's database schema - version
+     * 
+     * @param int $dbSchema Migration's database schema
+     * @param bool $isContainer Is container?
+     */
+    public static function getMigrationReleaseDateFromNumber(int $dbSchema, bool $isContainer): ?string {
+        $path = APP_ABSOLUTE_DIR . 'data\\db\\migrations';
+
+        if($isContainer) {
+            $path .= '\\containers';
+        }
+
+        $files = FileManager::getFilesInFolder($path);
+
+        $releaseDate = null;
+        foreach($files as $filename => $fileFullPath) {
+            $fileparts = explode('_', $filename);
+
+            if($dbSchema == (string)$fileparts[2]) {
+                $releaseDate = $fileparts[1];
+            }
+        }
+
+        return $releaseDate;
+    }
 }
 
 ?>

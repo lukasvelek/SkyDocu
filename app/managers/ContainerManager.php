@@ -19,6 +19,11 @@ use App\Repositories\ContainerRepository;
 use App\Repositories\ContentRepository;
 use App\Repositories\UserRepository;
 
+/**
+ * ContainerManager is used for managing containers
+ * 
+ * @author Lukas Velek
+ */
 class ContainerManager extends AManager {
     public ContainerRepository $containerRepository;
     private DatabaseManager $dbManager;
@@ -116,7 +121,7 @@ class ContainerManager extends AManager {
      * @param string $dbName Container database name
      * @param string $containerId Container ID
      */
-    private function runContainerDatabaseMigrations(string $dbName, string $containerId) {
+    public function runContainerDatabaseMigrations(string $dbName, string $containerId) {
         try {
             $conn = $this->dbManager->getConnectionToDatabase($dbName);
         } catch(AException $e) {
@@ -126,13 +131,26 @@ class ContainerManager extends AManager {
         $migrationManager = new DatabaseMigrationManager($this->masterConn, $conn, $this->logger);
         $migrationManager->setContainer($containerId);
 
-        $migrationManager->runMigrations();
+        $migrationManager->runMigrations(true);
     }
 
-    public function checkContainerTitleExists(string $title) {
+    /**
+     * Checks if container's title exists
+     * 
+     * @param string $title Title
+     */
+    public function checkContainerTitleExists(string $title): bool {
         return $this->containerRepository->checkTitleExists($title);
     }
 
+    /**
+     * Changes container's status
+     * 
+     * @param string $containerId Container ID
+     * @param int $newStatus New status
+     * @param string $callingUserId Calling user ID
+     * @param string $description Description
+     */
     public function changeContainerStatus(string $containerId, int $newStatus, string $callingUserId, string $description) {
         $historyId = $this->createId(EntityManager::CONTAINER_STATUS_HISTORY);
 
@@ -155,6 +173,13 @@ class ContainerManager extends AManager {
         }
     }
 
+    /**
+     * Changes container's creation status
+     * 
+     * @param string $containerId Container ID
+     * @param int $percent Percent
+     * @param ?string $description Description
+     */
     public function changeContainerCreationStatus(string $containerId, int $percent, ?string $description) {
         $data = [
             'percentFinished' => (string)$percent,
@@ -166,6 +191,12 @@ class ContainerManager extends AManager {
         }
     }
 
+    /**
+     * Returns an instance of ContainerEntity for given container
+     * 
+     * @param string $containerId Container ID
+     * @param bool $force Force fetch data from the database (overrides cache and updates it)
+     */
     public function getContainerById(string $containerId, bool $force = false): ContainerEntity {
         $cache = $this->cacheFactory->getCache(CacheNames::CONTAINERS);
 
@@ -190,6 +221,12 @@ class ContainerManager extends AManager {
         return $containerEntity;
     }
 
+    /**
+     * Deletes container and all its data
+     * 
+     * @param string $containerId Container ID
+     * @param bool $isRequest False if it is a complete container or true if it is just a request
+     */
     public function deleteContainer(string $containerId, bool $isRequest = false) {
         $container = $this->getContainerById($containerId);
         
@@ -240,6 +277,12 @@ class ContainerManager extends AManager {
         $this->cacheFactory->invalidateAllCache();
     }
 
+    /**
+     * Adds user to given container
+     * 
+     * @param string $userId User ID
+     * @param string $containerId Container ID
+     */
     public function addUserToContainer(string $userId, string $containerId) {
         $container = $this->getContainerById($containerId);
 
@@ -255,6 +298,12 @@ class ContainerManager extends AManager {
         $groupManager->addUserToGroupTitle(SystemGroups::ALL_USERS, $userId);
     }
 
+    /**
+     * Updates container
+     * 
+     * @param string $containerId Container ID
+     * @param array $data New data
+     */
     public function updateContainer(string $containerId, array $data) {
         if(!$this->containerRepository->updateContainer($containerId, $data)) {
             throw new GeneralException('Database error.');
@@ -265,7 +314,12 @@ class ContainerManager extends AManager {
         }
     }
 
-    public function getContainerUsageStatisticsTotalCount(string $containerId) {
+    /**
+     * Returns the number of all usage statistics entries for given container
+     * 
+     * @param string $containerId Container ID
+     */
+    public function getContainerUsageStatisticsTotalCount(string $containerId): ?int {
         $qb = $this->containerRepository->composeQueryForContainerUsageStatistics($containerId);
 
         $qb->select(['COUNT(entryId) AS count'])
@@ -274,6 +328,13 @@ class ContainerManager extends AManager {
         return $qb->fetch('count');
     }
 
+    /**
+     * Deletes container usage statistics
+     * 
+     * @param string $containerId Container ID
+     * @param int $limit Number of entries to delete
+     * @param bool $deleteAll True if all usage statistics for given container should be deleted
+     */
     public function deleteContainerUsageStatistics(string $containerId, int $limit, bool $deleteAll) {
         $entries = [];
 
@@ -294,10 +355,21 @@ class ContainerManager extends AManager {
         }
     }
 
+    /**
+     * Declines container request
+     * 
+     * @param string $containerId Container ID
+     */
     public function declineContainerRequest(string $containerId) {
         $this->deleteContainer($containerId, true);
     }
 
+    /**
+     * Approves container request and adds it to the container creation queue
+     * 
+     * @param string $container Container ID
+     * @param string $callingUserId Calling user ID
+     */
     public function approveContainerRequest(string $containerId, string $callingUserId) {
         $container = $this->getContainerById($containerId);
 
@@ -317,6 +389,29 @@ class ContainerManager extends AManager {
             !$this->cacheFactory->invalidateCacheByNamespace(CacheNames::NAVBAR_CONTAINER_SWITCH_USER_MEMBERSHIPS)) {
             throw new GeneralException('Could not invalidate cache.');
         }
+    }
+
+    /**
+     * Returns all containers that are in distribution
+     * 
+     * @return array<int, \App\Entities\ContainerEntity>
+     */
+    public function getContainersInDistribution(): array {
+        $qb = $this->containerRepository->composeQueryForContainers();
+        $qb->andWhere('isInDistribution = ?', ['1'])
+            ->execute();
+
+        $containerIds = [];
+        while($row = $qb->fetchAssoc()) {
+            $containerIds[] = $row['containerId'];
+        }
+
+        $containers = [];
+        foreach($containerIds as $containerId) {
+            $containers[] = $this->getContainerById($containerId, true);
+        }
+
+        return $containers;
     }
 }
 

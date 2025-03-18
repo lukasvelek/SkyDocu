@@ -55,6 +55,44 @@ class AdvancedPresenter extends ASuperAdminSettingsPresenter {
         } else {
             $this->template->db_schema_update_link = '';
         }
+
+        $containers = $this->app->containerManager->getContainersInDistribution();
+
+        $this->template->containers_in_distribution = count($containers);
+        $this->template->current_db_schema_in_distribution = $containers[0]->getDefaultDatabase()->getDbSchema() . ' (' . DatabaseMigrationManager::getMigrationReleaseDateFromNumber($containers[0]->getDefaultDatabase()->getDbSchema(), true) . ')';
+
+        $dmm = new DatabaseMigrationManager($this->app->systemServicesRepository->conn, null, $this->logger);
+        $dmm->setContainer($containers[0]->getId());
+
+        $migrations = $dmm->getAvailableMigrations();
+        $dmm->filterOnlyUpstreamMigrations($migrations);
+
+        $lastMigration = '-';
+        $hasNewer = false;
+        if(count($migrations) > 0) {
+            $lastMigration = $migrations[count($migrations) - 1];
+            $lastMigration = FileManager::getFilenameFromPath($lastMigration);
+            $lastMigrationParts = explode('_', $lastMigration);
+            $schema = $lastMigrationParts[2];
+            $date = $lastMigrationParts[1];
+
+            $lastMigration = (int)$schema . " ($date)";
+            $hasNewer = true;
+        }
+
+        $this->template->available_db_schema_in_distribution = $lastMigration;
+
+        if($hasNewer) {
+            $el = HTML::el('a');
+            $el->text('Run migrations for distribution')
+                ->class('link')
+                ->style('color', 'red')
+                ->href($this->createURLString('runMigrationsForm', ['isDistribution' => '1']));
+
+            $this->template->distrib_db_schema_update_link = $el->toString();
+        } else {
+            $this->template->distrib_db_schema_update_link = '';
+        }
     }
 
     public function handleRunMigrationsForm(?FormRequest $fr = null) {
@@ -68,7 +106,13 @@ class AdvancedPresenter extends ASuperAdminSettingsPresenter {
 
                 $this->app->userAuth->authUser($fr->password);
 
-                $this->redirect($this->createURL('runMigrations'));
+                $url = $this->createURL('runMigrations');
+
+                if($this->httpRequest->get('isDistribution') == '1') {
+                    $url = $this->createURL('runMigrationsForDistribution');
+                }
+
+                $this->redirect($url);
             } catch(AException $e) {
                 $this->flashMessage('An error occured during processing your request. Reason: ' . $e->getMessage(), 'error', 10);
 
@@ -84,10 +128,16 @@ class AdvancedPresenter extends ASuperAdminSettingsPresenter {
 
         $hash = HashManager::createHash(8);
 
-        $form->setAction($this->createURL('runMigrationsForm', ['h' => md5($hash)]));
+        $form->setAction($this->createURL('runMigrationsForm', ['h' => md5($hash), 'isDistribution' => ($request->get('isDistribution') == '1' ? '1' : '0')]));
 
         $form->addLabel('lbl_text1', 'Are you sure you want to run the migrations now?');
-        $form->addLabel('lbl_text2', 'Running them will disable all currently running containers, run the migrations and finally enable all containers that had run before.');
+
+        if($request->get('isDistribution') == '1') {
+            $form->addLabel('lbl_text2', 'Running them will temporarily disable all currently running containers that are in distribution, run the migrations and finally enable all containers that had been disabled before.');
+        } else {
+            $form->addLabel('lbl_text2', 'Running them will temporarily disable all currently running containers, run the migrations and finally enable all containers that had been disabled before.');
+        }
+
         $form->addLabel('lbl_text3', 'If you are sure, please enter your password below to be authenticated.');
 
         $form->addPasswordInput('password', 'Your password:')
@@ -102,6 +152,55 @@ class AdvancedPresenter extends ASuperAdminSettingsPresenter {
         $form->addSubmit('Run migrations');
 
         return $form;
+    }
+
+    public function handleRunMigrationsForDistribution() {
+        try {
+            // get all containers in distribution
+            $containersInDistribution = $this->app->containerManager->getContainersInDistribution();
+
+            // get enabled containers
+            $qb = $this->app->containerRepository->composeQueryForContainers();
+            $qb->andWhere('status = ?', [ContainerStatus::RUNNING]);
+            $qb->execute();
+
+            $enabledContainers = [];
+            while($row = $qb->fetchAssoc()) {
+                $enabledContainers[] = $row['containerId'];
+            }
+
+            // disable them
+            $this->app->containerRepository->beginTransaction(__METHOD__);
+            foreach($enabledContainers as $containerId) {
+                $this->app->containerManager->changeContainerStatus($containerId, ContainerStatus::NOT_RUNNING, $this->app->serviceManager->getServiceUserId(), 'Status change due to migrations. Container was disabled by ' . $this->getUser()->getFullname() . ' (ID: ' . $this->getUserId() . ').');
+            }
+            $this->app->containerRepository->commit($this->getUserId(), __METHOD__);
+
+            // run migrations
+            $this->app->containerRepository->beginTransaction(__METHOD__);
+
+            foreach($containersInDistribution as $container) {
+                $this->app->containerManager->runContainerDatabaseMigrations($container->getDefaultDatabase()->getName(), $container->getId());
+            }
+
+            $this->app->containerRepository->commit($this->getUserId(), __METHOD__);
+
+            // enable before-enabled containers
+            $this->app->containerRepository->beginTransaction(__METHOD__);
+            foreach($enabledContainers as $containerId) {
+                $this->app->containerManager->changeContainerStatus($containerId, ContainerStatus::RUNNING, $this->app->serviceManager->getServiceUserId(), 'Status change due to migrations. Container was enabled by ' . $this->getUser()->getFullname() . ' (ID: ' . $this->getUserId() . ').');
+            }
+            $this->app->containerRepository->commit($this->getUserId(), __METHOD__);
+
+            // return
+            $this->flashMessage('Migrations ran successfully.', 'success');
+        } catch(AException $e) {
+            $this->app->containerRepository->rollback(__METHOD__);
+
+            $this->flashMessage('An error occurred during migrations. Error: ' . $e->getMessage(), 'error', 10);
+        }
+
+        $this->redirect($this->createURL('database'));
     }
 
     public function handleRunMigrations() {

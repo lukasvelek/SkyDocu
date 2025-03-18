@@ -12,12 +12,12 @@ use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
 use App\UI\HTML\HTML;
 
-class AdvancedPresenter extends ASuperAdminSettingsPresenter {
+class DatabasePresenter extends ASuperAdminSettingsPresenter {
     public function __construct() {
-        parent::__construct('AdvancedPresenter', 'Advanced');
+        parent::__construct('DatabasePresenter', 'Database');
     }
 
-    public function renderDatabase() {
+    public function renderHome() {
         $migration = FileManager::loadFile(APP_ABSOLUTE_DIR . 'app\\core\\migration');
         $migrationParts = explode('_', $migration);
         $schema = $migrationParts[2];
@@ -116,7 +116,7 @@ class AdvancedPresenter extends ASuperAdminSettingsPresenter {
             } catch(AException $e) {
                 $this->flashMessage('An error occured during processing your request. Reason: ' . $e->getMessage(), 'error', 10);
 
-                $this->redirect($this->createURL('database'));
+                $this->redirect($this->createURL('home'));
             }
         }
     }
@@ -150,6 +150,8 @@ class AdvancedPresenter extends ASuperAdminSettingsPresenter {
             ->setRequired();
 
         $form->addSubmit('Run migrations');
+        $form->addButton('Go back')
+            ->setOnClick('location.href = \'' . $this->createURLString('home') . '\';');
 
         return $form;
     }
@@ -200,7 +202,7 @@ class AdvancedPresenter extends ASuperAdminSettingsPresenter {
             $this->flashMessage('An error occurred during migrations. Error: ' . $e->getMessage(), 'error', 10);
         }
 
-        $this->redirect($this->createURL('database'));
+        $this->redirect($this->createURL('home'));
     }
 
     public function handleRunMigrations() {
@@ -243,7 +245,7 @@ class AdvancedPresenter extends ASuperAdminSettingsPresenter {
             $this->flashMessage('An error occurred during migrations. Error: ' . $e->getMessage(), 'error', 10);
         }
 
-        $this->redirect($this->createURL('database'));
+        $this->redirect($this->createURL('home'));
     }
 }
 

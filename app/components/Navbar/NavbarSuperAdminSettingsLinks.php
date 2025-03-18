@@ -14,7 +14,7 @@ class NavbarSuperAdminSettingsLinks {
     public const GROUPS = ['page' => 'SuperAdminSettings:Groups', 'action' => 'list'];
     public const BG_SERVICES = ['page' => 'SuperAdminSettings:BackgroundServices', 'action' => 'list'];
     public const FILE_STORAGE = ['page' => 'SuperAdminSettings:FileStorage', 'action' => 'dashboard'];
-    public const ADVANCED = ['page' => 'SuperAdminSettings:Advanced', 'action' => 'database'];
+    public const DATABASE = ['page' => 'SuperAdminSettings:Database', 'action' => 'home'];
     public const ABOUT_APP = ['page' => 'SuperAdminSettings:AboutApplication', 'action' => 'default'];
 
     public const USER_PROFILE = ['page' => 'SuperAdmin:UserProfile', 'action' => 'profile'];
@@ -33,7 +33,7 @@ class NavbarSuperAdminSettingsLinks {
             'Groups' => self::GROUPS,
             'Background services' => self::BG_SERVICES,
             'File storage' => self::FILE_STORAGE,
-            'Advanced' => self::ADVANCED,
+            'Database' => self::DATABASE,
             'About application' => self::ABOUT_APP
         ];
     }

@@ -44,7 +44,6 @@ class Navbar extends AComponent {
         $this->user = $user;
         $this->hideLinks = [];
         $this->groupManager = $groupManager;
-        $this->cacheFactory = new CacheFactory();
     }
 
     /**
@@ -54,6 +53,15 @@ class Navbar extends AComponent {
      */
     public function inject(GroupManager $groupManager) {
         $this->groupManager = $groupManager;
+    }
+
+    /**
+     * Sets CacheFactory instance
+     * 
+     * @param CacheFactory $cacheFactory CacheFactory instance
+     */
+    public function setCacheFactory(CacheFactory $cacheFactory) {
+        $this->cacheFactory = $cacheFactory;
     }
 
     public function startup() {

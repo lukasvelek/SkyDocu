@@ -192,6 +192,25 @@ class FileManager {
     public static function moveFile(string $oldPath, string $newPath) {
         return rename($oldPath, $newPath);
     }
+
+    /**
+     * Returns filename from given path
+     * 
+     * @param string $path Path to the file
+     * @param bool $returnExtension True if file extension should be returned as well
+     * @return string Filename
+     */
+    public static function getFilenameFromPath(string $path, bool $returnExtension = false): string {
+        $parts = explode('\\', $path);
+
+        $filenameWithExtension = $parts[count($parts) - 1];
+
+        if($returnExtension) {
+            return $filenameWithExtension;
+        } else {
+            return explode('.', $filenameWithExtension)[0];
+        }
+    }
 }
 
 ?>

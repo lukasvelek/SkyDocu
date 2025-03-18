@@ -27,7 +27,6 @@ abstract class AAuthorizator {
     protected function __construct(DatabaseConnection $db, Logger $logger) {
         $this->db = $db;
         $this->logger = $logger;
-        $this->cacheFactory = new CacheFactory();
     }
     
     /**

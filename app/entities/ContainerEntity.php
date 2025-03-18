@@ -19,7 +19,7 @@ class ContainerEntity extends AEntity {
     private int $environment;
     private bool $canShowContainerReferent;
     private ?string $permanentFlashMessage;
-    private int $dbSchema;
+    private bool $isInDistribution;
 
     /**
      * @var array<int, ContainerDatabaseEntity> $databases
@@ -38,7 +38,7 @@ class ContainerEntity extends AEntity {
      * @param int $environment
      * @param bool $canShowContainerReferent
      * @param ?string $permanentFlashMessage
-     * @param int $dbSchema
+     * @param bool $isInDistribution
      */
     public function __construct(
         string $containerId,
@@ -50,7 +50,7 @@ class ContainerEntity extends AEntity {
         int $environment,
         bool $canShowContainerReferent,
         ?string $permanentFlashMessage,
-        int $dbSchema
+        bool $isInDistribution
     ) {
         $this->containerId = $containerId;
         $this->title = $title;
@@ -61,7 +61,7 @@ class ContainerEntity extends AEntity {
         $this->environment = $environment;
         $this->canShowContainerReferent = $canShowContainerReferent;
         $this->permanentFlashMessage = $permanentFlashMessage;
-        $this->dbSchema = $dbSchema;
+        $this->isInDistribution = $isInDistribution;
 
         $this->databases = [];
     }
@@ -130,10 +130,10 @@ class ContainerEntity extends AEntity {
     }
 
     /**
-     * Returns container's database schema
+     * Returns true if the container is in distribution
      */
-    public function getDbSchema(): int {
-        return $this->dbSchema;
+    public function isInDistribution(): bool {
+        return $this->isInDistribution;
     }
 
     /**
@@ -189,7 +189,7 @@ class ContainerEntity extends AEntity {
             'environment' => 'int',
             'canShowContainerReferent' => 'bool',
             'permanentFlashMessage' => '?string',
-            'dbSchema' => 'int'
+            'isInDistribution' => 'bool'
         ]);
 
         $obj = new self(
@@ -202,7 +202,7 @@ class ContainerEntity extends AEntity {
             $row->environment,
             $row->canShowContainerReferent,
             $row->permanentFlashMessage,
-            $row->dbSchema
+            $row->isInDistribution
         );
 
         return $obj;

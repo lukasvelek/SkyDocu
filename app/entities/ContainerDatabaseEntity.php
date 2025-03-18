@@ -14,6 +14,7 @@ class ContainerDatabaseEntity extends AEntity {
     private bool $isDefault;
     private string $title;
     private string $description;
+    private int $dbSchema;
 
     /**
      * Class constructor
@@ -24,14 +25,16 @@ class ContainerDatabaseEntity extends AEntity {
      * @param bool $isDefault
      * @param string $title
      * @param string $description
+     * @param int $dbSchema
      */
-    public function __construct(string $entryId, string $containerId, string $name, bool $isDefault, string $title, string $description) {
+    public function __construct(string $entryId, string $containerId, string $name, bool $isDefault, string $title, string $description, int $dbSchema) {
         $this->entryId = $entryId;
         $this->containerId = $containerId;
         $this->name = $name;
         $this->isDefault = $isDefault;
         $this->title = $title;
         $this->description = $description;
+        $this->dbSchema = $dbSchema;
     }
 
     /**
@@ -76,6 +79,10 @@ class ContainerDatabaseEntity extends AEntity {
         return $this->description;
     }
 
+    public function getDbSchema(): int {
+        return $this->dbSchema;
+    }
+
     public static function createEntityFromDbRow(mixed $row): ?static {
         if($row === null) {
             return null;
@@ -88,10 +95,11 @@ class ContainerDatabaseEntity extends AEntity {
             'name' => 'string',
             'isDefault' => 'bool',
             'title' => 'string',
-            'description' => 'string'
+            'description' => 'string',
+            'dbSchema' => 'int'
         ]);
 
-        return new self($row->entryId, $row->containerId, $row->name, $row->isDefault, $row->title, $row->description);
+        return new self($row->entryId, $row->containerId, $row->name, $row->isDefault, $row->title, $row->description, $row->dbSchema);
     }
 }
 

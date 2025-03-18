@@ -61,6 +61,7 @@ class ComponentFactory {
     public function getGridBuilder(?string $containerId = null) {
         $grid = new GridBuilder($this->request);
         $helper = new GridHelper($this->presenter->logger, $this->presenter->getUserId(), $containerId);
+        $helper->setCacheFactory(clone $this->cacheFactory);
         $grid->setHelper($helper);
         $grid->setCacheFactory($this->getCacheFactory());
         $grid->setContainerId($containerId);

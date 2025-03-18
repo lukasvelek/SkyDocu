@@ -21,6 +21,7 @@ class EntityManager extends AManager {
     public const CONTAINERS = 'containers';
     public const CONTAINER_CREATION_STATUS = 'container_creation_status';
     public const CONTAINER_STATUS_HISTORY = 'container_status_history';
+    public const SYSTEM_SERVICES = 'system_services';
     public const SERVICE_HISTORY = 'system_services_history';
     public const CONTAINER_USAGE_STATISTICS = 'container_usage_statistics';
     public const CONTAINER_INVITES = 'container_invites';
@@ -133,7 +134,7 @@ class EntityManager extends AManager {
      * 
      * @return string Primary key
      */
-    private function getPrimaryKeyNameByCategory(string $category) {
+    public static function getPrimaryKeyNameByCategory(string $category) {
         return match($category) {
             self::USERS => 'userId',
             self::TRANSACTIONS => 'transactionId',
@@ -152,6 +153,7 @@ class EntityManager extends AManager {
             self::CONTAINER_DATABASES => 'entryId',
             self::CONTAINER_DATABASE_TABLES => 'entryId',
             self::CONTAINER_DATABASE_TABLE_COLUMNS => 'entryId',
+            self::SYSTEM_SERVICES => 'serviceId',
 
             self::C_GROUPS => 'groupId',
             self::C_DOCUMENT_CLASSES => 'classId',

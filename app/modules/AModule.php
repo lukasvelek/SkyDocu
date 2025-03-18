@@ -25,7 +25,7 @@ abstract class AModule extends AGUICore {
     private array $flashMessages;
     protected ?TemplateObject $template;
     protected ?Logger $logger;
-    protected HttpRequest $httpRequest;
+    protected CacheFactory $cacheFactory;
 
     private bool $isAjax;
 
@@ -63,12 +63,12 @@ abstract class AModule extends AGUICore {
     }
 
     /**
-     * Sets the http request instance
+     * Sets the CacheFactory instance
      * 
-     * @param HttpRequest $request HttpRequest instance
+     * @param CacheFactory $cacheFactory CacheFactory instance
      */
-    public function setHttpRequest(HttpRequest $request) {
-        $this->httpRequest = $request;
+    public function setCacheFactory(CacheFactory $cacheFactory) {
+        $this->cacheFactory = $cacheFactory;
     }
 
     /**
@@ -137,7 +137,7 @@ abstract class AModule extends AGUICore {
         }
 
         if(isset($_GET['_fm'])) {
-            $cacheFactory = new CacheFactory();
+            $cacheFactory = clone $this->cacheFactory;
 
             if(array_key_exists('container', $_SESSION)) {
                 $containerId = $_SESSION['container'];
@@ -221,6 +221,7 @@ abstract class AModule extends AGUICore {
         $this->presenter->setPresenter($this->presenter);
         $this->presenter->setModule($this);
         $this->presenter->lock();
+        $this->presenter->setCacheFactory(clone $this->cacheFactory);
         
         $this->presenter->startup();
     }
@@ -257,6 +258,7 @@ abstract class AModule extends AGUICore {
         $navbar = new Navbar($this->httpRequest, $mode, $this->app->currentUser, $groupManager);
         
         $navbar->setComponentName('navbar');
+        $navbar->setCacheFactory(clone $this->cacheFactory);
 
         return $navbar;
     }

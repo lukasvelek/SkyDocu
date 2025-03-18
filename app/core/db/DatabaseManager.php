@@ -171,13 +171,7 @@ class DatabaseManager {
      * @return bool True on success
      */
     public function dropDatabase(string $databaseName) {
-        /*try {
-            $conn = $this->getConnectionToDatabase($databaseName);
-        } catch(AException $e) {
-            throw $e;
-        }*/
-
-        $sql = "DROP DATABASE `" . $databaseName . "`";
+        $sql = "DROP DATABASE IF EXISTS `" . $databaseName . "`";
 
         try {
             $result = $this->db->query($sql);

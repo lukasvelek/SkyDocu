@@ -59,7 +59,7 @@ class Cache {
             try {
                 $result = $generator(...$generatorDependencies);
             } catch(Exception $e) {
-                throw new CacheException('Could not save data to cache.', $this->namespace, $e);
+                throw new CacheException('Could not save data to cache. Reason: ' . $e->getMessage(), $this->namespace, $e);
             }
 
             $this->logger->logHitMiss($key, $this->namespace, false, __METHOD__);

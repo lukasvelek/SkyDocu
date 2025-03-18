@@ -109,9 +109,18 @@ abstract class APresenter extends AGUICore {
      * Everything in startup() method is called after an instance of Presenter has been created and before other functionality-handling methods are called.
      */
     public function startup() {
-        $this->cacheFactory = new CacheFactory();
         $this->componentFactory = new ComponentFactory($this->httpRequest, $this);
+        $this->componentFactory->setCacheFactory(clone $this->cacheFactory);
         $this->router->inject($this, new ModuleManager());
+    }
+
+    /**
+     * Sets CacheFactory instance
+     * 
+     * @param CacheFactory $cacheFactory CacheFactory instance
+     */
+    public function setCacheFactory(CacheFactory $cacheFactory) {
+        $this->cacheFactory = $cacheFactory;
     }
 
     /**
@@ -399,9 +408,8 @@ abstract class APresenter extends AGUICore {
      * Here are also the macros of the common template filled.
      * 
      * @param string $moduleName Name of the current module
-     * @return string Presenter template content
      */
-    public function render(string $moduleName) {
+    public function render(string $moduleName): ?TemplateObject {
         $this->createContentTemplate($moduleName);
 
         if(!$this->isAjax) {

@@ -40,6 +40,7 @@ class DbAdminPresenter extends AAdminPresenter {
         $grid = $this->componentFactory->getGridBuilder($this->containerId);
 
         $qb = $this->app->containerDatabaseRepository->composeQueryForContainerDatabases();
+        $qb->andWhere('containerId = ?', [$this->containerId]);
 
         $grid->createDataSourceFromQueryBuilder($qb, 'entryId');
 

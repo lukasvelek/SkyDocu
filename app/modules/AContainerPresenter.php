@@ -287,7 +287,7 @@ abstract class AContainerPresenter extends APresenter {
      */
     private function getContainerCacheFactory() {
         if($this->containerCacheFactory === null) {
-            $cache = new CacheFactory();
+            $cache = clone $this->cacheFactory;
             $cache->setCustomNamespace($this->containerId);
 
             $this->containerCacheFactory = $cache;

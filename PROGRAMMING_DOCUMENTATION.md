@@ -128,13 +128,41 @@ E.g. core UI component is a GridBuilder that is used for creating tables with da
 
 Core UI components can therefore be used by multiple parts of the application. Whereas components usually are in a single-use scenario.
 
-### Background services
+## `4` Background services
+Background services have recently been reworked. Overview and management of background services is available only in Superadministration, however they access containers and operate on them.
 
-### Database
+Each background service is divided into two scripts. First is the entry point for the CMD and the second is the service process definition in the application. That means that the first one is run from the command line (executed straight by `php.exe`) and the second one defines what does the service actually do.
 
-#### Database table schema
-#### Database connection
+Currently there are several services but the most important are `LogRotateService` and `ContainerCreationService`.
 
-### Caching
+Some of the services are split to a master and a slave. When the service is run (either from UI or by scheduler) the master is started. The master then retrieves information needed and delegates it two separate slaves.
 
-### Logging
+The master-slave principle is best described in [`4.2` `ContainerCreationService` service section](#42-containercreationservice-service)
+
+### `4.1` `LogRotateService` service
+`LogRotateService` goes through all log files and those that were created before the current day are put into their separate folders.
+
+For example:
+Let's presume that today is June 1st.
+
+Log files older that June 1st will be grouped by their date and put into folders.
+
+So, all log files from May 31st would be put to _2025/05/31_ folder.
+
+This principle works for all log types.
+
+### `4.2` `ContainerCreationService` service
+This is one of the recently reworked services. Now it is divided into a master and a slave.
+
+Its purpose is to create containers.
+
+When the service is run (either from UI or by scheduler) the master is started. It retrieves all the containers that are meant to be created and starts a slave for each container. Each slave then creates the container itself.
+
+## Database
+
+### Database table schema
+### Database connection
+
+## Caching
+
+## Logging

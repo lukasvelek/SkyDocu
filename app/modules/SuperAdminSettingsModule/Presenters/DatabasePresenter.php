@@ -59,43 +59,50 @@ class DatabasePresenter extends ASuperAdminSettingsPresenter {
         $containers = $this->app->containerManager->getContainersInDistribution();
 
         $this->template->containers_in_distribution = count($containers);
-        $this->template->current_db_schema_in_distribution = $containers[0]->getDefaultDatabase()->getDbSchema() . ' (' . DatabaseMigrationManager::getMigrationReleaseDateFromNumber($containers[0]->getDefaultDatabase()->getDbSchema(), true) . ')';
+        if(count($containers) > 0) {
+            $this->template->current_db_schema_in_distribution = $containers[0]->getDefaultDatabase()->getDbSchema() . ' (' . DatabaseMigrationManager::getMigrationReleaseDateFromNumber($containers[0]->getDefaultDatabase()->getDbSchema(), true) . ')';
 
-        $dmm = new DatabaseMigrationManager($this->app->systemServicesRepository->conn, null, $this->logger);
-        $dmm->setContainer($containers[0]->getId());
+            $dmm = new DatabaseMigrationManager($this->app->systemServicesRepository->conn, null, $this->logger);
+            $dmm->setContainer($containers[0]->getId());
 
-        $migrations = $dmm->getAvailableMigrations();
-        $dmm->filterOnlyUpstreamMigrations($migrations);
+            $migrations = $dmm->getAvailableMigrations();
+            $dmm->filterOnlyUpstreamMigrations($migrations);
 
-        $lastMigration = '-';
-        $hasNewer = false;
-        if(count($migrations) > 0) {
-            $lastMigration = $migrations[count($migrations) - 1];
-            $lastMigration = FileManager::getFilenameFromPath($lastMigration);
-            $lastMigrationParts = explode('_', $lastMigration);
-            $schema = $lastMigrationParts[2];
-            $date = $lastMigrationParts[1];
+            $lastMigration = '-';
+            $hasNewer = false;
+            if(count($migrations) > 0) {
+                $lastMigration = $migrations[count($migrations) - 1];
+                $lastMigration = FileManager::getFilenameFromPath($lastMigration);
+                $lastMigrationParts = explode('_', $lastMigration);
+                $schema = $lastMigrationParts[2];
+                $date = $lastMigrationParts[1];
 
-            $lastMigration = (int)$schema . " ($date)";
-            $hasNewer = true;
-        }
+                $lastMigration = (int)$schema . " ($date)";
+                $hasNewer = true;
+            }
 
-        $this->template->available_db_schema_in_distribution = $lastMigration;
+            $this->template->available_db_schema_in_distribution = $lastMigration;
 
-        if($hasNewer) {
-            $el = HTML::el('a');
-            $el->text('Run migrations for distribution')
-                ->class('link')
-                ->style('color', 'red')
-                ->href($this->createURLString('runMigrationsForm', ['isDistribution' => '1']));
+            if($hasNewer) {
+                $el = HTML::el('a');
+                $el->text('Run migrations for distribution')
+                    ->class('link')
+                    ->style('color', 'red')
+                    ->href($this->createURLString('runMigrationsForm', ['isDistribution' => '1']));
 
-            $this->template->distrib_db_schema_update_link = $el->toString();
+                $this->template->distrib_db_schema_update_link = $el->toString();
+            } else {
+                $this->template->distrib_db_schema_update_link = '';
+            }
+
+            $allContainers = $this->app->containerManager->getAllContainers(false);
+            $this->template->containers_total = count($allContainers);
         } else {
+            $this->template->current_db_schema_in_distribution = '-';
+            $this->template->available_db_schema_in_distribution = '-';
             $this->template->distrib_db_schema_update_link = '';
+            $this->template->containers_total = 0;
         }
-
-        $allContainers = $this->app->containerManager->getAllContainers(false);
-        $this->template->containers_total = count($allContainers);
     }
 
     public function handleRunMigrationsForm(?FormRequest $fr = null) {

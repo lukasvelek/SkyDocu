@@ -413,6 +413,32 @@ class ContainerManager extends AManager {
 
         return $containers;
     }
+
+    /**
+     * Returns instances of all containers
+     * 
+     * @param bool $returnEntities If true then an array of entities is returned or if false an array of IDs is returned
+     */
+    public function getAllContainers(bool $returnEntities = true): array {
+        $qb = $this->containerRepository->composeQueryForContainers();
+        $qb->execute();
+
+        $containerIds = [];
+        while($row = $qb->fetchAssoc()) {
+            $containerIds[] = $row['containerId'];
+        }
+
+        if($returnEntities) {
+            $containers = [];
+            foreach($containerIds as $containerId) {
+                $containers[] = $this->getContainerById($containerId, true);
+            }
+
+            return $containers;
+        } else {
+            return $containerIds;
+        }
+    }
 }
 
 ?>

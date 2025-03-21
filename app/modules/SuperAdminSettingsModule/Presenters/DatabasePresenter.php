@@ -93,6 +93,9 @@ class DatabasePresenter extends ASuperAdminSettingsPresenter {
         } else {
             $this->template->distrib_db_schema_update_link = '';
         }
+
+        $allContainers = $this->app->containerManager->getAllContainers(false);
+        $this->template->containers_total = count($allContainers);
     }
 
     public function handleRunMigrationsForm(?FormRequest $fr = null) {

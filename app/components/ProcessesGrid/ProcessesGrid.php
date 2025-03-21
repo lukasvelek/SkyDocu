@@ -167,7 +167,7 @@ class ProcessesGrid extends GridBuilder implements IGridExtendingComponent {
 
                 $el->text($value . ' (<i title="Current officer\'s substitute">' . $username . '</i>)');
             } else {
-                $el->text($value);
+                return null;
             }
             return $el;
         };

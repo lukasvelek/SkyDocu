@@ -2,6 +2,8 @@
 
 namespace App\Components\DocumentsGrid;
 
+use App\Constants\AppDesignThemes;
+use App\Helpers\AppThemeHelper;
 use App\UI\AComponent;
 use App\UI\ModalBuilder\ModalBuilder;
 
@@ -24,6 +26,7 @@ class BulkActionsModal extends ModalBuilder {
     public function __construct(AComponent $grid) {
         parent::__construct($grid->httpRequest);
 
+        $this->app = $grid->app;
         $this->gridName = $grid->componentName;
         $this->grid = $grid;
         $this->bulkActions = [];
@@ -63,6 +66,31 @@ class BulkActionsModal extends ModalBuilder {
         $code .= '</tr></table>';
 
         $this->content = $code;
+
+        $this->processBackgroundColor();
+        $this->processTitle();
+    }
+
+    /**
+     * Implicitly sets modal's background color based on user's selected application theme
+     */
+    private function processBackgroundColor() {
+        if(AppThemeHelper::getAppThemeForUser($this->app) == AppDesignThemes::DARK) {
+            $this->template->background_color = 'rgba(70, 70, 70, 1)';
+        } else {
+            $this->template->background_color = 'rgba(225, 225, 225, 1)';
+        }
+    }
+
+    /**
+     * Implicitly sets modal's title based on user's selected application theme
+     */
+    private function processTitle() {
+        if(AppThemeHelper::getAppThemeForUser($this->app) == AppDesignThemes::LIGHT) {
+            $this->title = '<span style="color: black">' . $this->title . '</span>';
+        } else {
+            $this->title = '<span>' . $this->title . '</span>';
+        }
     }
 }
 

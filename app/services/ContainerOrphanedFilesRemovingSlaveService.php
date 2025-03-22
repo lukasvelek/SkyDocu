@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Core\DB\DatabaseManager;
 use App\Core\ServiceManager;
 use App\Exceptions\AException;
+use App\Exceptions\ServiceException;
 use App\Logger\Logger;
 use App\Managers\Container\FileStorageManager;
 use App\Managers\ContainerManager;
@@ -14,32 +15,33 @@ use App\Repositories\Container\FileStorageRepository;
 use App\Repositories\ContentRepository;
 use Exception;
 
-class ContainerOrphanedFilesRemovingService extends AService {
-    private ContainerManager $containerManager;
-    private DatabaseManager $databaseManager;
+class ContainerOrphanedFilesRemovingSlaveService extends AService {
+    private string $containerId;
 
-    public function __construct(
-        Logger $logger,
-        ServiceManager $serviceManager,
-        ContainerManager $containerManager,
-        DatabaseManager $databaseManager
-    ) {
-        parent::__construct('ContainerOrphanedFilesRemoving', $logger, $serviceManager);
+    private ContainerManager $containerManager;
+    private DatabaseManager $dbManager;
+
+    public function __construct(Logger $logger, ServiceManager $serviceManager, ContainerManager $containerManager, DatabaseManager $dbManager) {
+        parent::__construct('ContainerOrphanedFilesRemovingSlave', $logger, $serviceManager);
 
         $this->containerManager = $containerManager;
-        $this->databaseManager = $databaseManager;
+        $this->dbManager = $dbManager;
     }
 
     public function run() {
+        global $argv;
+        $_argv = $argv;
+        unset($_argv[0]);
+
         try {
             $this->serviceStart();
 
             $this->innerRun();
 
-            $this->serviceStop();
+            $this->serviceStop(null, $_argv);
         } catch(AException|Exception $e) {
             $this->logError($e->getMessage());
-            $this->serviceStop(true);
+            $this->serviceStop($e, $_argv);
             
             throw $e;
         }
@@ -47,27 +49,29 @@ class ContainerOrphanedFilesRemovingService extends AService {
 
     private function innerRun() {
         // Service executes all commands here
+        global $argv;
 
-        $this->logInfo('Obtaining containers...');
-
-        $containers = $this->getAllContainers();
-
-        $this->logInfo(sprintf('Found %d containers.', count($containers)));
-
-        foreach($containers as $containerId) {
-            $this->logInfo(sprintf('Starting processing container \'%s\'.', $containerId));
-            $container = $this->containerManager->getContainerById($containerId);
-            $containerConnection = $this->databaseManager->getConnectionToDatabase($container->databaseName);
-
-            $contentRepository = new ContentRepository($containerConnection, $this->logger);
-            $entityManager = new EntityManager($this->logger, $contentRepository);
-            $fileStorageRepository = new FileStorageRepository($containerConnection, $this->logger);
-            $fileStorageManager = new FileStorageManager($this->logger, $entityManager, $fileStorageRepository);
-            $documentRepository = new DocumentRepository($containerConnection, $this->logger);
-
-            $this->processFiles($fileStorageManager, $documentRepository);
-            $this->logInfo(sprintf('Container \'%s\' processed.', $containerId));
+        if(count($argv) == 1) {
+            throw new ServiceException('No arguments passed.');
         }
+
+        $this->containerId = $argv[1];
+
+        $container = $this->containerManager->getContainerById($this->containerId);
+
+        try {
+            $containerConn = $this->dbManager->getConnectionToDatabase($container->getDefaultDatabase()->getName());
+        } catch(AException|Exception $e) {
+            $this->logError(sprintf('Could not connect to database for container \'%s\'.', $this->containerId));
+        }
+
+        $contentRepository = new ContentRepository($containerConn, $this->logger);
+        $entityManager = new EntityManager($this->logger, $contentRepository);
+        $fileStorageRepository = new FileStorageRepository($containerConn, $this->logger);
+        $fileStorageManager = new FileStorageManager($this->logger, $entityManager, $fileStorageRepository);
+        $documentRepository = new DocumentRepository($containerConn, $this->logger);
+
+        $this->processFiles($fileStorageManager, $documentRepository);
     }
 
     private function processFiles(FileStorageManager $fileStorageManager, DocumentRepository $documentRepository) {
@@ -114,18 +118,6 @@ class ContainerOrphanedFilesRemovingService extends AService {
             $fileStorageManager->fileStorageRepository->deleteStoredFile($fileId);
             $fileStorageManager->fileStorageRepository->deleteDocumentFileRelation($documentId, $fileId);
         }
-    }
-
-    private function getAllContainers() {
-        $qb = $this->containerManager->containerRepository->composeQueryForContainers();
-        $qb->execute();
-
-        $containerIds = [];
-        while($row = $qb->fetchAssoc()) {
-            $containerIds[] = $row['containerId'];
-        }
-
-        return $containerIds;
     }
 }
 

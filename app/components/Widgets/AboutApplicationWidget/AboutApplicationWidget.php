@@ -4,6 +4,7 @@ namespace App\Components\Widgets\AboutApplicationWidget;
 
 use App\Components\Widgets\Widget;
 use App\Core\Application;
+use App\Core\FileManager;
 use App\Core\Http\HttpRequest;
 use App\Helpers\DateTimeFormatHelper;
 use App\UI\HTML\HTML;
@@ -72,7 +73,8 @@ class AboutApplicationWidget extends Widget {
     private function processData() {
         $data = [
             'Application version' => APP_VERSION,
-            'Version release date' => $this->getAppVersionReleaseDate()
+            'Version release date' => $this->getAppVersionReleaseDate(),
+            'Application database schema' => $this->getAppDbSchema()
         ];
 
         if(!$this->disableGithubLink) {
@@ -121,6 +123,22 @@ class AboutApplicationWidget extends Widget {
      */
     private function getPHPVersion() {
         return phpversion();
+    }
+
+    /**
+     * Returns the application database schema
+     * 
+     * @return string Application database schema
+     */
+    private function getAppDbSchema(): string {
+        $migration = FileManager::loadFile(APP_ABSOLUTE_DIR . 'app\\core\\migration');
+        $migrationParts = explode('_', $migration);
+        $schema = $migrationParts[2];
+        $date = $migrationParts[1];
+
+        $date = '<span title="' . $date . '">' . DateTimeFormatHelper::formatDateToUserFriendly($date, DateTimeFormatHelper::EUROPEAN_FORMAT_DATE_ONLY) . '</span>';
+
+        return (int)$schema . ' (' . $date . ')';
     }
 }
 

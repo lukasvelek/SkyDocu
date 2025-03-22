@@ -1,0 +1,492 @@
+body {
+    overflow-x: hidden;
+
+    background-color: rgba(70, 70, 70, 1);
+
+    color: rgb(200, 200, 200);
+}
+
+#form input, #form select, #form textarea, #form button {
+    width: 100%;
+
+    padding: 5px;
+
+    border: 1px solid black;
+}
+
+#form input[type=radio] {
+    width: auto;
+
+    margin-left: 15px;
+    margin-right: 5px;
+}
+
+#page-title {
+    font-size: 27px;
+
+    text-align: center;
+}
+
+#page-text {
+    font-size: 20px;
+}
+
+.page-text-link {
+    font-size: 20px;
+
+    text-decoration: underline;
+
+    color: black;
+}
+
+.page-text-link:hover {
+    color: black;
+}
+
+#flash-messages {
+    position: absolute;
+    z-index: 9999;
+    
+    width: 40%;
+    
+    margin-left: 1.5%;
+    margin-top: 43%;
+}
+
+.fm-info {
+    background-color: #133c55;
+    color: #84d2f6;
+
+    border: 1px solid #84d2f6;
+}
+
+.fm-error {
+    background-color: rgb(140, 0, 0);
+    color: rgb(255, 100, 100);
+
+    border: 1px solid rgb(255, 100, 100);
+}
+
+.fm-success {
+    background-color: rgb(1, 80, 1);
+    color: rgb(100, 200, 100);
+
+    border: 1px solid rgb(100, 200, 100);
+}
+
+.fm-warning {
+    background-color: red;
+    color: rgb(255, 190, 70);
+
+    border: 1px solid rgb(255, 190, 70);
+}
+
+div[class^="fm-"], div[class*="fm-"] {
+    padding-top: 20px;
+    padding-left: 20px;
+    padding-right: 20px;
+    padding-bottom: 5px;
+
+    border-radius: 5px;
+}
+
+.fm-link:hover {
+    color: black;
+}
+
+#left {
+    text-align: left;
+}
+
+#center {
+    text-align: center;
+}
+
+#right {
+    text-align: right;
+}
+
+#navbar {
+    background-color: rgba(30, 30, 30, 0.75);
+
+    color: white;
+
+    padding: 10px;
+    padding-left: 20px;
+    padding-right: 20px;
+
+    border: 0;
+    border-radius: 10px;
+
+    backdrop-filter: blur(5px);
+
+    position: fixed;
+    right: 1%;
+    top: 1%;
+
+    width: 98%;
+
+    z-index: 9990;
+}
+
+#navbar input[type=text] {
+    border: 0;
+
+    border-radius: 10px;
+    
+    padding-left: 10px;
+    padding-right: 10px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+}
+
+#navbar input[type=text]:focus {
+    border: 0;
+}
+
+#navbar button {
+    border: 0;
+
+    background-color: rgba(0, 0, 0, 0.75);
+
+    color: white;
+
+    border-radius: 10px;
+
+    padding-left: 10px;
+    padding-right: 10px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+
+    transition: background-color 0.25s;
+}
+
+#navbar button:hover {
+    background-color: rgb(50, 50, 50);
+}
+
+.navbar-link {
+    color: white;
+    text-decoration: none;
+    transition: color 0.25s;
+}
+
+.navbar-link:hover {
+    text-decoration: none;
+    color: rgb(200, 200, 200);
+}
+
+#left .navbar-link {
+    margin-right: 10px;
+}
+
+#right .navbar-link {
+    margin-left: 10px;
+}
+
+.post-title {
+    font-size: 24px;
+
+    color: rgb(200, 200, 200);
+}
+
+.link {
+    font-size: 16px;
+
+    color: rgb(200, 200, 200);
+
+    text-decoration: none;
+
+    transition: color 0.25s;
+}
+
+.link:hover {
+    text-decoration: none;
+
+    color: rgb(150, 150, 150);
+}
+
+.changelog-title {
+    font-size: 25px;
+}
+
+.changelog-item {
+    font-size: 20px;
+}
+
+.changelog-link {
+    font-size: 20px;
+    text-decoration: none;
+    color: black;
+    transition: color 0.25s;
+}
+
+.changelog-link:hover {
+    color: rgb(100, 100, 100);
+}
+
+.sidebar-link {
+    font-size: 20px;
+
+    color: rgb(200, 200, 200);
+
+    text-decoration: none;
+
+    margin-left: 10px;
+
+    transition: color 0.25s;
+}
+
+.sidebar-link:hover {
+    color: rgb(150, 150, 150);
+}
+
+#modal-grid table {
+    width: 100%;
+
+    text-align: center;
+}
+
+#modal-grid tr td {
+    border: 0;
+    border-collapse: inherit;
+    border-radius: 10px;
+
+    background-color: rgba(50, 50, 50, 0.75);
+}
+
+#grid table {
+    width: 100%;
+
+    text-align: center;
+
+    border: 0;
+    border-collapse: inherit;
+    border-radius: 10px;
+
+    background-color: rgba(50, 50, 50, 0.75);
+
+    color: rgb(200, 200, 200);
+}
+
+#flashMessage {
+    width: 97.5%;
+
+    margin-left: 1.5%;
+}
+
+#grid tr {
+    line-height: 30px;
+}
+
+#grid thead th {
+    background-color: rgba(30, 30, 30, 0.75);
+
+    border: 0;
+    border-collapse: inherit;
+    border-radius: 10px;
+}
+
+.grid-cell-action {
+    background-color: rgba(30, 30, 30, 0.75);
+
+    border: 0;
+    border-collapse: inherit;
+    border-radius: 10px;
+}
+
+.grid-control-button, .grid-control-button-last {
+    width: 50px;
+
+    border: 0;
+    border-radius: 10px;
+
+    color: rgb(200, 200, 200);
+
+    background-color: rgba(30, 30, 30, 0.75);
+
+    padding: 5px 0px 5px 0px;
+}
+
+.grid-control-button {
+    margin-right: 5px;
+}
+
+.grid-control-button2, #grid-control-button2 {
+    border: 1px solid black;
+
+    color: rgb(200, 200, 200);
+
+    border-radius: 5px;
+}
+
+.grid-link {
+    color: rgb(200, 200, 200);
+
+    text-decoration: underline;
+
+    transition: color 0.25s;
+}
+
+.grid-link:hover {
+    color: rgb(150, 150, 150);
+}
+
+#grid input {
+    background-color: rgb(85, 85, 85);
+
+    color: rgb(200, 200, 200);
+
+    border: 1px solid black;
+}
+
+#formSubmit, #form #formSubmit, #form .formSubmit, #form #formButton {
+    background-color: rgba(0, 0, 0, 0.75);
+
+    color: white;
+
+    transition: background-color 0.25s;
+
+    border: 1px solid rgba(0, 0, 0, 0.75);;
+    border-radius: 10px;
+}
+
+#formSubmit:hover, #form #formSubmit:hover, #form .formSubmit:hover, #form #formButton:hover {
+    background-color: rgb(50, 50, 50);
+    border: 1px solid rgb(50, 50, 50);
+}
+
+button #formSubmit {
+    padding: 3px 10px 3px 10px;
+}
+
+#form #formSubmit, #form #formButton {
+    width: 50%;
+
+    height: 40px;
+}
+
+#form input, #form textarea, #form select {
+    background-color: rgb(85, 85, 85);
+
+    color: rgb(200, 200, 200);
+}
+
+#page-content {
+    margin-top: 60px;
+}
+
+@media screen and (max-width: 1000px) {
+    #page-content {
+        margin-top: 100px;
+    }
+}
+
+#sidebar {
+    background-color: rgba(50, 50, 50, 0.75);
+
+    border: 0;
+    border-radius: 10px;
+
+    padding: 10px;
+
+    margin-left: 25px;
+}
+
+p.widget-title {
+    font-size: 24px;
+}
+
+a.widget-title {
+    font-size: 24px;
+
+    text-decoration: none;
+
+    color: rgb(200, 200, 200);
+}
+
+a.widget-title:hover {
+    text-decoration: underline;
+}
+
+#widget table {
+    width: 100%;
+
+    text-align: center;
+
+    border: 0;
+    border-collapse: inherit;
+    border-radius: 10px;
+    
+    background-color: rgba(50, 50, 50, 0.75);
+
+    color: rgb(200, 200, 200);
+}
+
+#widget tr {
+    line-height: 30px;
+}
+
+#widget thead th {
+    background-color: rgba(30, 30, 30, 0.75);
+
+    border: 0;
+    border-collapse: inherit;
+    border-radius: 10px;
+}
+
+#skeletonTextAnimation {
+    animation-name: skeletonTextAnimationX;
+    animation-duration: 0.75s;
+    animation-iteration-count: infinite;
+    animation-direction: alternate;
+
+    border-radius: 10px;
+}
+
+@keyframes skeletonTextAnimationX {
+    0% {
+        color: rgb(100, 100, 100);
+        background-color: rgb(100, 100, 100);
+    }
+
+    100% {
+        color: rgb(75, 75, 75);
+        background-color: rgb(75, 75, 75);
+    }
+}
+
+.process-action-link-finish, .process-action-link-accept, .process-action-link-cancel {
+    padding: 5px;
+    border-radius: 10px;
+    font-size: 20px; /* inherited from .changelog-item */
+    text-decoration: none;
+    transition: color 0.25s;
+}
+
+.process-action-link-finish {
+    color: green;
+    background-color: lightgreen;
+}
+
+.process-action-link-finish:hover {
+    color: darkgreen;
+}
+
+.process-action-link-accept {
+    color: blue;
+    background-color: lightblue;
+}
+
+.process-action-link-accept:hover {
+    color: darkblue;
+}
+
+.process-action-link-cancel {
+    color: red;
+    background-color: pink;
+}
+
+.process-action-link-cancel:hover {
+    color: darkred;
+}

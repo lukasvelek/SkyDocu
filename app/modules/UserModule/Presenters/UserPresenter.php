@@ -3,6 +3,7 @@
 namespace App\Modules\UserModule;
 
 use App\Components\UserSubstituteForm\UserSubstituteForm;
+use App\Constants\AppDesignThemes;
 use App\Constants\Container\SystemGroups;
 use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
@@ -70,6 +71,10 @@ class UserPresenter extends AUserPresenter {
                 $links[] = '<span>Your substitute: ' . $substituteUser->getFullname() . '.</span>';
                 $links[] = LinkBuilder::createSimpleLink('Set substitute', $this->createURL('substituteForm'), 'link');
             }
+
+            $links[] = '<span>|</span>';
+
+            $links[] = LinkBuilder::createSimpleLink('Change theme', $this->createURL('changeThemeForm', ['userId' => $userId]), 'link');
         }
 
         $this->saveToPresenterCache('links', implode('&nbsp;&nbsp;', $links));
@@ -194,6 +199,60 @@ class UserPresenter extends AUserPresenter {
 
         $form->setCurrentUserId($this->getUserId());
         $form->setAction($this->createURL('substituteForm'));
+
+        return $form;
+    }
+
+    public function handleChangeThemeForm(?FormRequest $fr = null) {
+        if($fr !== null) {
+            try {
+                $this->app->userRepository->beginTransaction(__METHOD__);
+
+                $this->app->userManager->updateUser($this->httpRequest->get('userId'), [
+                    'appDesignTheme' => $fr->appDesignTheme
+                ]);
+
+                $this->app->userRepository->commit($this->getUserId(), __METHOD__);
+
+                $this->flashMessage('Theme changed successfully.', 'success');
+            } catch(AException $e) {
+                $this->app->userRepository->rollback(__METHOD__);
+
+                $this->flashMessage('Could not change theme. Reason: ' . $e->getMessage(), 'error', 10);
+            }
+
+            $this->redirect($this->createURL('profile', ['userId' => $this->httpRequest->get('userId')]));
+        }
+    }
+
+    public function renderChangeThemeForm() {
+        $this->template->links = $this->createBackUrl('profile', ['userId' => $this->httpRequest->get('userId')]);
+    }
+
+    protected function createComponentChangeThemeForm(HttpRequest $request) {
+        $themes = [];
+        foreach(AppDesignThemes::getAll() as $key => $value) {
+            $theme = [
+                'value' => $key,
+                'text' => $value
+            ];
+
+            if($this->app->currentUser->getAppDesignTheme() == $key) {
+                $theme['selected'] = 'selected';
+            }
+
+            $themes[] = $theme;
+        }
+
+        $form = $this->componentFactory->getFormBuilder();
+
+        $form->setAction($this->createURL('changeThemeForm', ['userId' => $request->get('userId')]));
+
+        $form->addSelect('appDesignTheme', 'Theme:')
+            ->setRequired()
+            ->addRawOptions($themes);
+
+        $form->addSubmit('Save');
 
         return $form;
     }

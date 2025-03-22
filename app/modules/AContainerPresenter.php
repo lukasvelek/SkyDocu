@@ -5,6 +5,7 @@ namespace App\Modules;
 use App\Authorizators\DocumentBulkActionAuthorizator;
 use App\Authorizators\GroupStandardOperationsAuthorizator;
 use App\Authorizators\SupervisorAuthorizator;
+use App\Constants\SessionNames;
 use App\Core\Caching\CacheFactory;
 use App\Core\DatabaseConnection;
 use App\Lib\Processes\ProcessFactory;
@@ -86,9 +87,9 @@ abstract class AContainerPresenter extends APresenter {
     public function startup() {
         parent::startup();
 
-        $containerId = $this->httpSessionGet('container');
+        $containerId = $this->httpSessionGet(SessionNames::CONTAINER);
         $container = $this->app->containerManager->getContainerById($containerId);
-        $containerConnection = $this->app->dbManager->getConnectionToDatabase($container->databaseName);
+        $containerConnection = $this->app->dbManager->getConnectionToDatabase($container->getDefaultDatabase()->getName());
 
         $this->containerId = $containerId;
 
@@ -111,7 +112,7 @@ abstract class AContainerPresenter extends APresenter {
 
         $this->documentManager->enumManager = $this->enumManager;
 
-        $this->documentBulkActionAuthorizator = new DocumentBulkActionAuthorizator($containerConnection, $this->logger, $this->documentManager, $this->documentRepository, $this->app->userManager, $this->groupManager, $this->processManager, $this->archiveManager);
+        $this->documentBulkActionAuthorizator = new DocumentBulkActionAuthorizator($containerConnection, $this->logger, $this->documentManager, $this->documentRepository, $this->app->userManager, $this->groupManager, $this->processManager, $this->archiveManager, $this->folderManager);
         $this->groupStandardOperationsAuthorizator = new GroupStandardOperationsAuthorizator($containerConnection, $this->logger, $this->groupManager);
         $this->supervisorAuthorizator = new SupervisorAuthorizator($containerConnection, $this->logger, $this->groupManager);
 
@@ -287,7 +288,7 @@ abstract class AContainerPresenter extends APresenter {
      */
     private function getContainerCacheFactory() {
         if($this->containerCacheFactory === null) {
-            $cache = new CacheFactory();
+            $cache = $this->cacheFactory;
             $cache->setCustomNamespace($this->containerId);
 
             $this->containerCacheFactory = $cache;

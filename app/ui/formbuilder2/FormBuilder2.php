@@ -3,6 +3,7 @@
 namespace App\UI\FormBuilder2;
 
 use App\Core\AjaxRequestBuilder;
+use App\Core\HashManager;
 use App\Core\Http\Ajax\Operations\CustomOperation;
 use App\Core\Http\Ajax\Operations\HTMLPageOperation;
 use App\Core\Http\Ajax\Requests\AAjaxRequest;
@@ -352,6 +353,24 @@ class FormBuilder2 extends AComponent {
     }
 
     /**
+     * Adds easy security verification code check
+     * 
+     * @param string $name Element name
+     * @param ?string &$hash Already generated hash or implicitly generated hash
+     */
+    public function addSecurityVerificationCodeCheck(string $name, ?string &$hash) {
+        if($hash === null) {
+            $hash = HashManager::createHash(8);
+        }
+
+        $labelText = 'Enter this verification code below: <b>' . $hash . '</b>';
+
+        $this->addLabel('lbl_' . HashManager::createHash(4, false), $labelText);
+        $this->addTextInput($name, 'Verification code:')
+            ->setRequired();
+    }
+
+    /**
      * Adds label
      * 
      * @param string $name Element name
@@ -464,6 +483,23 @@ class FormBuilder2 extends AComponent {
         $this->processLabel($name, $label);
 
         return $di;
+    }
+
+    /**
+     * Adds time input
+     * 
+     * @param string $name Element name
+     * @param ?string $label Labet text or null
+     * @return TimeInput TimeInput instance
+     */
+    public function addTimeInput(string $name, ?string $label = null) {
+        $ti = new TimeInput($name);
+
+        $this->elements[$name] = &$ti;
+
+        $this->processLabel($name, $label);
+
+        return $ti;
     }
 
     /**

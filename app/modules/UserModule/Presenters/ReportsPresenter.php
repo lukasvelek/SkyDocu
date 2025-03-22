@@ -17,6 +17,8 @@ class ReportsPresenter extends AUserPresenter {
 
     protected function createComponentReportsSelect() {
         $select = new ProcessReportsSelect($this->httpRequest, $this->standaloneProcessManager);
+        $select->setApplication($this->app);
+        $select->setPresenter($this);
 
         return $select;
     }

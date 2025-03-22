@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Core\Caching\CacheFactory;
 use App\Core\ServiceManager;
 use App\Logger\Logger;
+use Exception;
 
 abstract class AService implements IRunnable {
     protected Logger $logger;
@@ -25,8 +26,8 @@ abstract class AService implements IRunnable {
         $this->logInfo('Service ' . $this->serviceName . ' started.');
     }
 
-    protected function serviceStop(bool $error = false) {
-        $this->serviceManager->stopService($this->serviceName, $error);
+    protected function serviceStop(?Exception $e = null, array $args = []) {
+        $this->serviceManager->stopService($this->serviceName, $e, $args);
         $this->logInfo('Service ' . $this->serviceName . ' ended.');
     }
 

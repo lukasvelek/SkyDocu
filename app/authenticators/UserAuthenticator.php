@@ -2,6 +2,7 @@
 
 namespace App\Authenticators;
 
+use App\Constants\SessionNames;
 use App\Core\HashManager;
 use App\Entities\UserEntity;
 use App\Exceptions\BadCredentialsException;
@@ -53,12 +54,12 @@ class UserAuthenticator {
         }
 
         if($user === null) {
-            throw new GeneralException('You have entered bad credentials.');
+            throw new GeneralException('Incorrect credentials entered.');
         }
 
-        $_SESSION['userId'] = $user->getId();
-        $_SESSION['username'] = $user->getUsername();
-        $_SESSION['fullname'] = $user->getFullname();
+        $_SESSION[SessionNames::USER_ID] = $user->getId();
+        $_SESSION[SessionNames::USERNAME] = $user->getUsername();
+        $_SESSION[SessionNames::FULLNAME] = $user->getFullname();
 
         $hash = HashManager::createHash(64);
 
@@ -67,10 +68,10 @@ class UserAuthenticator {
             throw new GeneralException('Could not save the generated hash.');
         }
 
-        $_SESSION['loginHash'] = $hash;
+        $_SESSION[SessionNames::LOGIN_HASH] = $hash;
 
-        if(isset($_SESSION['is_logging_in'])) {
-            unset($_SESSION['is_logging_in']);
+        if(isset($_SESSION[SessionNames::IS_LOGGING_IN])) {
+            unset($_SESSION[SessionNames::IS_LOGGING_IN]);
         }
 
         return true;
@@ -84,18 +85,18 @@ class UserAuthenticator {
      * @throws BadCredentialsException
      */
     public function authUser(string $password) {
-        $rows = $this->userRepository->getUserForAuthentication($_SESSION['username']);
+        $rows = $this->userRepository->getUserForAuthentication($_SESSION[SessionNames::USERNAME]);
 
         $result = false;
         while($row = $rows->fetchAssoc()) {
             if(password_verify($password, $row['password'])) {
-                $this->logger->warning('Authenticated user with username \'' . $_SESSION['username'] . '\'.', __METHOD__);
+                $this->logger->warning('Authenticated user with username \'' . $_SESSION[SessionNames::USERNAME] . '\'.', __METHOD__);
                 $result = true;
             }
         }
 
         if($result === false) {
-            throw new BadCredentialsException(null, $_SESSION['username']);
+            throw new BadCredentialsException(null, $_SESSION[SessionNames::USERNAME]);
         }
 
         return $result;
@@ -110,10 +111,10 @@ class UserAuthenticator {
      * @return bool True if successful or false if not
      */
     public function fastAuthUser(string &$message) {
-        if(isset($_SESSION['userId']) && isset($_SESSION['username']) && isset($_SESSION['loginHash'])) {
-            $dbLoginHash = $this->userRepository->getLoginHashForUserId($_SESSION['userId']);
+        if(isset($_SESSION[SessionNames::USER_ID]) && isset($_SESSION[SessionNames::USERNAME]) && isset($_SESSION[SessionNames::LOGIN_HASH])) {
+            $dbLoginHash = $this->userRepository->getLoginHashForUserId($_SESSION[SessionNames::USER_ID]);
 
-            if($dbLoginHash != $_SESSION['loginHash']) {
+            if($dbLoginHash != $_SESSION[SessionNames::LOGIN_HASH]) {
                 // mismatch
                 $message = 'Hash in this browser does not match hash on the server.';
                 return false;

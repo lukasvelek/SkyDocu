@@ -17,6 +17,7 @@ use App\Managers\Container\StandaloneProcessManager;
 use App\UI\AComponent;
 use App\UI\FormBuilder2\FormBuilder2;
 use App\UI\GridBuilder2\GridBuilder;
+use App\UI\ListBuilder\ListBuilder;
 
 /**
  * Component factory is used for getting instances of components
@@ -43,6 +44,16 @@ class ComponentFactory {
     }
 
     /**
+     * Returns a ListBuilder instance
+     * 
+     * @return ListBuilder ListBuilder instance
+     */
+    public function getListBuilder() {
+        $list = new ListBuilder($this->request);
+        return $list;
+    }
+
+    /**
      * Returns a GridBuilder instance
      * 
      * @return GridBuilder GridBuilder instance
@@ -50,6 +61,7 @@ class ComponentFactory {
     public function getGridBuilder(?string $containerId = null) {
         $grid = new GridBuilder($this->request);
         $helper = new GridHelper($this->presenter->logger, $this->presenter->getUserId(), $containerId);
+        $helper->setCacheFactory($this->cacheFactory);
         $grid->setHelper($helper);
         $grid->setCacheFactory($this->getCacheFactory());
         $grid->setContainerId($containerId);

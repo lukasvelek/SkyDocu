@@ -8,6 +8,7 @@ use App\Components\FoldersSidebar\FoldersSidebar;
 use App\Constants\Container\CustomMetadataTypes;
 use App\Constants\Container\DocumentStatus;
 use App\Constants\Container\GridNames;
+use App\Constants\SessionNames;
 use App\Core\Caching\CacheNames;
 use App\Core\DB\DatabaseRow;
 use App\Core\FileUploadManager;
@@ -32,7 +33,7 @@ class DocumentsPresenter extends AUserPresenter {
     public function startup() {
         parent::startup();
 
-        $this->currentFolderId = $this->httpSessionGet('current_document_folder_id');
+        $this->currentFolderId = $this->httpSessionGet(SessionNames::CURRENT_DOCUMENT_FOLDER_ID);
     }
 
     protected function createComponentFoldersSidebar(HttpRequest $request) {
@@ -374,6 +375,62 @@ class DocumentsPresenter extends AUserPresenter {
             ->setRequired();
 
         $form->addSubmit('Upload');
+
+        return $form;
+    }
+
+    public function handleMoveToFolderForm(?FormRequest $fr = null) {
+        if($fr !== null) {
+            $documentIds = $this->httpRequest->get('documentId');
+            
+            try {
+                $this->folderRepository->beginTransaction(__METHOD__);
+
+                foreach($documentIds as $documentId) {
+                    $this->documentManager->updateDocument($documentId, ['folderId' => $fr->folder]);
+                }
+
+                $this->folderRepository->commit($this->getUserId(), __METHOD__);
+
+                $this->flashMessage('Documents moved to selected folder successfully.', 'success');
+            } catch(AException $e) {
+                $this->folderRepository->rollback(__METHOD__);
+
+                $this->flashMessage('Could not move documents to selected folder. Reason: ' . $e->getMessage(), 'error', 10);
+            }
+
+            $this->redirect($this->createFullURL($this->httpRequest->get('backPage'), $this->httpRequest->get('backAction'), ['folderId' => $this->httpRequest->get('backFolderId')]));
+        }
+    }
+
+    public function renderMoveToFolderForm() {
+        $this->template->links = $this->createBackFullUrl($this->httpRequest->get('backPage'), $this->httpRequest->get('backAction'), ['folderId' => $this->httpRequest->get('backFolderId')]);
+    }
+
+    protected function createComponentMoveDocumentToFolderForm(HttpRequest $request) {
+        $folders = [];
+        $foldersDb = $this->folderManager->getVisibleFoldersForUser($this->getUserId());
+
+        foreach($foldersDb as $folder) {
+            if($this->folderManager->hasFolderCustomMetadata($folder->folderId, $this->getUserId())) {
+                continue;
+            }
+
+            $folders[] = [
+                'value' => $folder->folderId,
+                'text' => $folder->title
+            ];
+        }
+
+        $form = $this->componentFactory->getFormBuilder();
+
+        $form->setAction($this->createURL('moveToFolderForm', ['backPage' => $request->get('backPage'), 'backAction' => $request->get('backAction'), 'backFolderId' => $request->get('backFolderId'), 'documentId' => $request->get('documentId')]));
+
+        $form->addSelect('folder', 'Folder:')
+            ->setRequired()
+            ->addRawOptions($folders);
+
+        $form->addSubmit('Move');
 
         return $form;
     }

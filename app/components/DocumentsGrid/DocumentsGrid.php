@@ -646,8 +646,6 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
     }
 
     public function actionFilterClear(): JsonResponse {
-        $this->clearActiveFilters();
-        
         $this->prerender();
 
         return parent::actionFilterClear();

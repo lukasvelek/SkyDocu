@@ -11,17 +11,28 @@ class BackgroundServicesHistoryPresenter extends ASuperAdminSettingsPresenter {
     }
 
     public function renderList() {
-        $this->template->links = $this->createBackFullUrl('SuperAdminSettings:BackgroundServices', 'list');
+        $serviceId = $this->httpRequest->get('serviceId');
+        $service = $this->app->systemServicesRepository->getServiceById($serviceId);
+
+        if($service->getParentServiceId() !== null) {
+            $this->template->links = $this->createBackFullUrl('SuperAdminSettings:BackgroundServices', 'list', ['serviceId' => $service->getParentServiceId()]);
+        } else {
+            $this->template->links = $this->createBackFullUrl('SuperAdminSettings:BackgroundServices', 'list');
+        }
     }
 
     public function createComponentBgServiceHistoryGrid(HttpRequest $request) {
         $grid = $this->componentFactory->getGridBuilder();
 
-        $grid->createDataSourceFromQueryBuilder($this->app->systemServicesRepository->composeQueryForServiceHistory($request->get('serviceId')), 'historyId');
+        $qb = $this->app->systemServicesRepository->composeQueryForServiceHistory($request->get('serviceId'));
+        $qb->orderBy('dateCreated', 'DESC');
+
+        $grid->createDataSourceFromQueryBuilder($qb, 'historyId');
         $grid->addQueryDependency('serviceId', $request->get('serviceId'));
 
         $grid->addColumnConst('status', 'Status', SystemServiceHistoryStatus::class);
-
+        $grid->addColumnText('exception', 'Exception');
+        $grid->addColumnText('args', 'Arguments');
         $grid->addColumnDatetime('dateCreated', 'Date');
 
         return $grid;

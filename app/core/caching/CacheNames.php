@@ -32,6 +32,7 @@ class CacheNames {
     public const DOCUMENT_FILE_MAPPING = 'documentFileMapping';
     public const FILES = 'files';
     public const FILE_HASH_TO_ID_MAPPING = 'fileHashToIdMapping';
+    public const CONTAINER_DATABASES = 'containerDatabases';
 
     /**
      * Returns an array with all cache namespaces

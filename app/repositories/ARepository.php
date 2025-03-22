@@ -30,7 +30,6 @@ abstract class ARepository extends AMultipleDatabaseConnectionHandler {
     public function __construct(DatabaseConnection $conn, Logger $logger) {
         parent::__construct($conn);
         $this->logger = $logger;
-        $this->cacheFactory = new CacheFactory();
 
         $this->transactionLogRepository = new TransactionLogRepository($this->conn, $this->logger);
     }
@@ -125,10 +124,11 @@ abstract class ARepository extends AMultipleDatabaseConnectionHandler {
     /**
      * Returns instance of QueryBuilder
      * 
+     * @param string $method Calling method
      * @return QueryBuilder
      */
-    public function getQb() {
-        return $this->qb(__METHOD__);
+    public function getQb(string $method = __METHOD__) {
+        return $this->qb($method);
     }
 
     /**

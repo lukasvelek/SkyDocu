@@ -4,4 +4,7 @@ cache/
 config.php
 *.tmp
 install
-containers/
+migration
+/containers/
+service.bat
+User_Guide.md

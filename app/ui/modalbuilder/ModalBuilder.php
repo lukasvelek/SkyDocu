@@ -14,7 +14,7 @@ use App\UI\FormBuilder2\FormBuilder2;
  */
 class ModalBuilder extends AComponent {
     private string $id;
-    private string $title;
+    protected string $title;
     protected string $content;
     protected array $scripts;
     protected ?string $templateFile;

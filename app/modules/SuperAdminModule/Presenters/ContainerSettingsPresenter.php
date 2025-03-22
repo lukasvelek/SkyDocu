@@ -12,6 +12,7 @@ use App\Constants\ContainerInviteUsageStatus;
 use App\Constants\ContainerStatus;
 use App\Core\Caching\CacheNames;
 use App\Core\Datetypes\DateTime;
+use App\Core\DB\DatabaseMigrationManager;
 use App\Core\DB\DatabaseRow;
 use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
@@ -20,7 +21,6 @@ use App\Exceptions\GeneralException;
 use App\Exceptions\RequiredAttributeIsNotSetException;
 use App\Helpers\DateTimeFormatHelper;
 use App\Managers\Container\FileStorageManager;
-use App\Managers\Container\StandaloneProcessManager;
 use App\Managers\EntityManager;
 use App\Repositories\Container\FileStorageRepository;
 use App\Repositories\Container\ProcessRepository;
@@ -43,7 +43,7 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
         $container = $this->app->containerManager->getContainerById($request->get('containerId'));
 
         try {
-            $groupUsers = $this->app->groupManager->getGroupUsersForGroupTitle($container->title . ' - users');
+            $groupUsers = $this->app->groupManager->getGroupUsersForGroupTitle($container->getTitle() . ' - users');
         } catch(AException $e) {
             $groupUsers = [];
         }
@@ -52,23 +52,23 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
 
         $form->addTextInput('containerId', 'Container ID:')
             ->setDisabled()
-            ->setValue($container->containerId);
+            ->setValue($container->getId());
 
         $form->addTextInput('containerTitle', 'Container title:')
             ->setDisabled()
-            ->setValue($container->title);
+            ->setValue($container->getTitle());
 
         $form->addNumberInput('containerUserCount', 'Container users:')
             ->setDisabled()
             ->setValue(count($groupUsers));
 
-        $user = $this->app->userManager->getUserById($container->userId);
+        $user = $this->app->userManager->getUserById($container->getUserId());
 
         $form->addTextInput('containerReferent', 'Container referent:')
             ->setDisabled()
             ->setValue($user->getFullname());
 
-        $dateCreated = new DateTime(strtotime($container->dateCreated));
+        $dateCreated = new DateTime(strtotime($container->getDateCreated()));
 
         $form->addDateTimeInput('containerDateCreated', 'Date created:')
             ->setDisabled()
@@ -76,11 +76,15 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
 
         $form->addTextInput('containerEnvironment', 'Container environment:')
             ->setDisabled()
-            ->setValue(ContainerEnvironments::toString($container->environment));
+            ->setValue(ContainerEnvironments::toString($container->getEnvironment()));
 
         $form->addTextInput('containerDbSchema', 'Database schema:')
             ->setDisabled()
-            ->setValue($container->dbSchema);
+            ->setValue($container->getDefaultDatabase()->getDbSchema());
+
+        $form->addTextInput('containerIsInDistribution', 'Is container in distribution:')
+            ->setDisabled()
+            ->setValue($container->isInDistribution() ? 'Yes' : 'No');
 
         return $form;
     }
@@ -88,15 +92,15 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
     protected function createComponentContainerPendingInvitesGrid(HttpRequest $request) {
         $container = $this->app->containerManager->getContainerById($request->get('containerId'));
 
-        $grid = $this->componentFactory->getGridBuilder($container->containerId);
+        $grid = $this->componentFactory->getGridBuilder($container->getId());
 
-        $qb = $this->app->containerInviteManager->composeQueryForContainerInviteUsages($container->containerId);
+        $qb = $this->app->containerInviteManager->composeQueryForContainerInviteUsages($container->getId());
 
         $qb->andWhere('status = ?', [ContainerInviteUsageStatus::NEW])
             ->orderBy('dateCreated', 'DESC');
 
         $grid->createDataSourceFromQueryBuilder($qb, 'entryId');
-        $grid->addQueryDependency('containerId', $container->containerId);
+        $grid->addQueryDependency('containerId', $container->getId());
         $grid->setLimit(5);
 
         $col = $grid->addColumnText('userUsername', 'Username');
@@ -149,7 +153,7 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
 
             $container = $this->app->containerManager->getContainerById($containerId);
 
-            if($container->status != ContainerStatus::REQUESTED) {
+            if($container->getStatus() != ContainerStatus::REQUESTED) {
                 $links[] = LinkBuilder::createSimpleLink('Show history', $this->createURL('listStatusHistory', ['containerId' => $this->httpRequest->get('containerId')]), 'link');
             }
 
@@ -171,13 +175,13 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
         $disabled = false;
         $statuses = [];
         foreach(ContainerStatus::getAll() as $key => $value) {
-            if(in_array($container->status, [ContainerStatus::NEW, ContainerStatus::IS_BEING_CREATED, ContainerStatus::ERROR_DURING_CREATION, ContainerStatus::REQUESTED])) {
+            if(in_array($container->getStatus(), [ContainerStatus::NEW, ContainerStatus::IS_BEING_CREATED, ContainerStatus::ERROR_DURING_CREATION, ContainerStatus::REQUESTED])) {
                 $status = [
                     'text' => $value,
                     'value' => $key
                 ];
 
-                if($container->status == $key) {
+                if($container->getStatus() == $key) {
                     $status['selected'] = 'selected';
                 }
 
@@ -193,7 +197,7 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
                     'value' => $key
                 ];
 
-                if($container->status == $key) {
+                if($container->getStatus() == $key) {
                     $status['selected'] = 'selected';
                 }
 
@@ -223,7 +227,7 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
         $container = $this->app->containerManager->getContainerById($request->get('containerId'));
         $disabled = false;
 
-        if($container->status == ContainerStatus::REQUESTED) {
+        if($container->getStatus() == ContainerStatus::REQUESTED) {
             $disabled = true;
         }
 
@@ -235,12 +239,12 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
             ->setRequired()
             ->setDisabled($disabled);
 
-        $permanentFlashMessage->setContent($container->permanentFlashMessage);
+        $permanentFlashMessage->setContent($container->getPermanentFlashMessage());
 
         $form->addSubmit('Save')
             ->setDisabled($disabled);
         $form->addButton('Clear')
-            ->setOnClick('location.href = \'' . $this->createURLString('statusClearPermanentFlashMessage', ['containerId' => $container->containerId]) . '\';')
+            ->setOnClick('location.href = \'' . $this->createURLString('statusClearPermanentFlashMessage', ['containerId' => $container->getId()]) . '\';')
             ->setDisabled($disabled);
 
         return $form;
@@ -326,7 +330,7 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
         return $grid;
     }
 
-    public function handleAdvanced() {
+    public function renderAdvanced() {
         $containerId = $this->httpRequest->get('containerId');
         if($containerId === null) {
             throw new RequiredAttributeIsNotSetException('containerId');
@@ -341,11 +345,17 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
             ->toString()
         ;
 
-        $this->saveToPresenterCache('containerDeleteLink', $containerDeleteLink);
-    }
+        $this->template->container_delete_link = $containerDeleteLink;
 
-    public function renderAdvanced() {
-        $this->template->container_delete_link = $this->loadFromPresenterCache('containerDeleteLink');
+        $removeFromDistribLink = HTML::el('a')
+            ->class('link')
+            ->href($this->createURLString('containerRemoveFromDistributionForm', ['containerId' => $containerId]))
+            ->style('color', 'red')
+            ->text('Remove from distribution')
+            ->title('Remove from distribution')
+            ->toString();
+
+        $this->template->container_remove_from_distribution_link = $removeFromDistribLink;
     }
 
     public function handleContainerDeleteForm(?FormRequest $fr = null) {
@@ -357,7 +367,7 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
 
                 $container = $this->app->containerManager->getContainerById($containerId);
 
-                if($fr->title != $container->title) {
+                if($fr->title != $container->getTitle()) {
                     throw new GeneralException('Entered container title does not match with the container title.');
                 }
 
@@ -395,13 +405,64 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
 
         $form->setAction($this->createURL('containerDeleteForm', ['containerId' => $request->get('containerId')]));
 
-        $form->addTextInput('title', 'Container title (\'' . $container->title . '\'):')
+        $form->addTextInput('title', 'Container title (\'' . $container->getTitle() . '\'):')
             ->setRequired();
 
         $form->addPasswordInput('password', 'Password:')
             ->setRequired();
 
         $form->addSubmit('Delete');
+
+        return $form;
+    }
+
+    public function handleContainerRemoveFromDistributionForm(?FormRequest $fr = null) {
+        if($fr !== null) {
+            try {
+                $_hash = md5($fr->hash);
+
+                if($_hash !== $this->httpRequest->get('h')) {
+                    throw new GeneralException('Entered verification code does not match the code generated by the system.');
+                }
+                
+                $this->app->userAuth->authUser($fr->password);
+
+                $this->app->containerRepository->beginTransaction(__METHOD__);
+
+                $this->app->containerManager->updateContainer($this->httpRequest->get('containerId'), [
+                    'isInDistribution' => 0
+                ]);
+
+                $this->app->containerRepository->commit($this->getUserId(), __METHOD__);
+
+                $this->flashMessage('Container successfully removed from distribution.', 'success');
+            } catch(AException $e) {
+                $this->app->containerRepository->rollback(__METHOD__);
+
+                $this->flashMessage('Could not remove container from distribution. Reason: ' . $e->getMessage(), 'error', 10);
+            }
+
+            $this->redirect($this->createURL('advanced', ['containerId' => $this->httpRequest->get('containerId')]));
+        }
+    }
+
+    public function renderContainerRemoveFromDistributionForm() {}
+
+    protected function createComponentContainerRemoveFromDistributionForm(HttpRequest $request) {
+        $form = $this->componentFactory->getFormBuilder();
+        
+        $form->addLabel('lbl_text1', 'This action will permanently remove the container from distribution. That means that its database schema will not be updated automatically during SkyDocu update.');
+
+        $form->addPasswordInput('password', 'Your password:')
+            ->setRequired();
+
+        $hash = null;
+
+        $form->addSecurityVerificationCodeCheck('hash', $hash);
+
+        $form->addSubmit('Remove');
+
+        $form->setAction($this->createURL('containerRemoveFromDistributionForm', ['containerId' => $request->get('containerId'), 'h' => md5($hash)]));
 
         return $form;
     }
@@ -440,7 +501,7 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
     protected function createComponentFileStorageStatsWidget(HttpRequest $request) {
         $containerId = $request->get('containerId');
         $container = $this->app->containerManager->getContainerById($containerId);
-        $containerConnection = $this->app->dbManager->getConnectionToDatabase($container->databaseName);
+        $containerConnection = $this->app->dbManager->getConnectionToDatabase($container->getDefaultDatabase()->getName());
 
         $contentRepository = new ContentRepository($containerConnection, $this->logger);
         $fileStorageRepository = new FileStorageRepository($containerConnection, $this->logger);
@@ -789,7 +850,7 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
         
         $container = $this->app->containerManager->getContainerById($request->get('containerId'));
 
-        $containerConn = $this->app->dbManager->getConnectionToDatabase($container->databaseName);
+        $containerConn = $this->app->dbManager->getConnectionToDatabase($container->getDefaultDatabase()->getName());
 
         $transactionLogRepository = new TransactionLogRepository($containerConn, $this->logger);
 
@@ -818,7 +879,7 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
         $grid = $this->componentFactory->getGridBuilder($request->get('containerId'));
 
         $container = $this->app->containerManager->getContainerById($request->get('containerId'));
-        $containerConn = $this->app->dbManager->getConnectionToDatabase($container->databaseName);
+        $containerConn = $this->app->dbManager->getConnectionToDatabase($container->getDefaultDatabase()->getName());
 
         $processRepository = new ProcessRepository($containerConn, $this->logger);
         $qb = $processRepository->composeQueryForProcessTypes();
@@ -871,7 +932,7 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
         }
 
         $container = $this->app->containerManager->getContainerById($this->httpRequest->get('containerId'));
-        $containerConn = $this->app->dbManager->getConnectionToDatabase($container->databaseName);
+        $containerConn = $this->app->dbManager->getConnectionToDatabase($container->getDefaultDatabase()->getName());
 
         $processRepository = new ProcessRepository($containerConn, $this->logger);
         
@@ -897,7 +958,7 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
     public function handleAddProcessForm(?FormRequest $fr = null) {
         if($fr !== null) {
             $container = $this->app->containerManager->getContainerById($this->httpRequest->get('containerId'));
-            $containerConn = $this->app->dbManager->getConnectionToDatabase($container->databaseName);
+            $containerConn = $this->app->dbManager->getConnectionToDatabase($container->getDefaultDatabase()->getName());
 
             $processRepository = new ProcessRepository($containerConn, $this->logger);
             $contentRepository = new ContentRepository($containerConn, $this->logger);
@@ -944,7 +1005,7 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
         $form->setAction($this->createURL('addProcessForm', ['containerId' => $request->get('containerId')]));
 
         $container = $this->app->containerManager->getContainerById($request->get('containerId'));
-        $containerConn = $this->app->dbManager->getConnectionToDatabase($container->databaseName);
+        $containerConn = $this->app->dbManager->getConnectionToDatabase($container->getDefaultDatabase()->getName());
 
         $processRepository = new ProcessRepository($containerConn, $this->logger);
         $qb = $processRepository->composeQueryForProcessTypes()
@@ -965,13 +1026,109 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
             ];
         }
 
+        $empty = false;
+        if(empty($processSelect)) {
+            $empty = true;
+            $processSelect[] = [
+                'value' => 'none',
+                'text' => 'No processes found'
+            ];
+        }
+
         $form->addSelect('process', 'Process:')
             ->addRawOptions($processSelect)
-            ->setRequired();
+            ->setRequired()
+            ->setDisabled($empty);
 
-        $form->addSubmit('Add');
+        $form->addSubmit('Add')
+            ->setDisabled($empty);
 
         return $form;
+    }
+
+    public function renderListDatabases() {
+
+    }
+
+    protected function createComponentContainerDatabasesGrid(HttpRequest $request) {
+        $grid = $this->componentFactory->getGridBuilder($request->get('containerId'));
+
+        $container = $this->app->containerManager->getContainerById($request->get('containerId'));
+
+        $qb = $this->app->containerDatabaseRepository->composeQueryForContainerDatabases();
+        $qb->andWhere('containerId = ?', [$request->get('containerId')]);
+
+        $grid->createDataSourceFromQueryBuilder($qb, 'entryId');
+        $grid->addQueryDependency('containerId', $container->getId());
+
+        $grid->addColumnText('name', 'Database name');
+        $grid->addColumnBoolean('isDefault', 'System database');
+        $grid->addColumnText('title', 'Title');
+        $grid->addColumnText('description', 'Description');
+        $grid->addColumnText('dbSchema', 'Schema');
+
+        $runMigrations = $grid->addAction('runMigrations');
+        $runMigrations->setTitle('Run migrations');
+        $runMigrations->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) use ($container) {
+            if(!$container->isInDistribution()) {
+                return false;
+            }
+
+            if($row->isDefault == false) {
+                return false;
+            }
+
+            if(in_array($container->getStatus(), [
+                ContainerStatus::ERROR_DURING_CREATION,
+                ContainerStatus::IS_BEING_CREATED,
+                ContainerStatus::NEW,
+                ContainerStatus::REQUESTED,
+                ContainerStatus::RUNNING
+            ])) {
+                return false;
+            }
+
+            return true;
+        };
+        $runMigrations->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) use ($request) {
+            $el = HTML::el('a');
+            $el->text('Run migrations')
+                ->class('grid-link')
+                ->href($this->createURLString('runDatabaseMigrations', ['containerId' => $request->get('containerId'), 'entryId' => $primaryKey]));
+
+            return $el;
+        };
+
+        return $grid;
+    }
+
+    public function handleRunDatabaseMigrations() {
+        $containerId = $this->httpRequest->get('containerId');
+        $entryId = $this->httpRequest->get('entryId');
+
+        try {
+            if($containerId === null) {
+                throw new RequiredAttributeIsNotSetException('containerId');
+            }
+            if($entryId === null) {
+                throw new RequiredAttributeIsNotSetException('entryId');
+            }
+
+            $database = $this->app->containerDatabaseManager->getDatabaseByEntryId($entryId);
+
+            $containerDb = $this->app->dbManager->getConnectionToDatabase($database->getName());
+
+            $dmm = new DatabaseMigrationManager($this->app->containerDatabaseRepository->conn, $containerDb, $this->logger);
+            $dmm->setContainer($containerId);
+            
+            $dmm->runMigrations();
+
+            $this->flashMessage('Migrations on database \'' . $database->getName() . '\' successfully run.', 'success');
+        } catch(AException $e) {
+            $this->flashMessage('Could not run migrations on database \'' . $database->getName() . '\'. Reason: ' . $e->getMessage(), 'error', 10);
+        }
+
+        $this->redirect($this->createURL('listDatabases', ['containerId' => $containerId]));
     }
 }
 

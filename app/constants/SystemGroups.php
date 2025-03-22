@@ -6,10 +6,11 @@ class SystemGroups extends AConstant {
     public const SUPERADMINISTRATORS = 'superadministrators';
     public const CONTAINER_MANAGERS = 'containerManagers';
 
-    public static function toString(mixed $key): string {
+    public static function toString(mixed $key): ?string {
         return match($key) {
             self::SUPERADMINISTRATORS => 'Superadministrators',
-            self::CONTAINER_MANAGERS => 'Container managers'
+            self::CONTAINER_MANAGERS => 'Container managers',
+            default => null
         };
     }
 }

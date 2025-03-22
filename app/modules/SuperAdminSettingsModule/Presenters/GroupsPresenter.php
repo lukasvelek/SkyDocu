@@ -40,8 +40,8 @@ class GroupsPresenter extends ASuperAdminSettingsPresenter {
                 try {
                     $container = $this->app->containerManager->getContainerById($value);
     
-                    $el->title($container->title)
-                        ->text($container->title);
+                    $el->title($container->getTitle())
+                        ->text($container->getTitle());
                 } catch(AException $e) {
                     $el->title($e->getMessage())
                         ->text('?')
@@ -59,7 +59,7 @@ class GroupsPresenter extends ASuperAdminSettingsPresenter {
                 try {
                     $container = $this->app->containerManager->getContainerById($value);
     
-                    return $container->title;
+                    return $container->getTitle();
                 } catch(AException $e) {
                     return $value;
                 }

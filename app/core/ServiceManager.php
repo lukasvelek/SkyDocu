@@ -10,6 +10,7 @@ use App\Exceptions\ServiceException;
 use App\Managers\EntityManager;
 use App\Repositories\SystemServicesRepository;
 use App\Repositories\UserRepository;
+use Exception;
 
 /**
  * Service manager allows running background services
@@ -38,9 +39,10 @@ class ServiceManager {
      * Starts a background PHP CLI and runs the given script
      * 
      * @param string $scriptPath Script path to be run in background
+     * @param array $args Optional arguments
      * @return bool True if the script was run successfully or false if not
      */
-    public function runService(string $scriptPath) {
+    public function runService(string $scriptPath, array $args = []) {
         $phpExe = PHP_ABSOLUTE_DIR . 'php.exe';
 
         if(!FileManager::fileExists($phpExe)) {
@@ -55,6 +57,10 @@ class ServiceManager {
 
         $cmd = $phpExe . ' ' . $serviceFile;
 
+        if(!empty($args)) {
+            $cmd .= ' ' . implode(' ', $args);
+        }
+
         if(substr(php_uname(), 0, 7) == 'Windows') {
             $p = popen("start /B " . $cmd, "w");
             if($p === false) {
@@ -65,7 +71,7 @@ class ServiceManager {
                 return false;
             }
         } else {
-            $status = exec($cmd . " > /dev/null &");
+            $status = exec($cmd . implode(' ', $args) . " > /dev/null &");
             if($status === false) {
                 return false;
             }
@@ -91,10 +97,11 @@ class ServiceManager {
      * Updates service status to "Not running" and creates a service history entry
      * 
      * @param string $serviceTitle Service name
-     * @param bool $error Finished with error?
+     * @param ?Exception $e Exception or null
+     * @param array $args Arguments
      * @throws ServiceException
      */
-    public function stopService(string $serviceTitle, bool $error) {
+    public function stopService(string $serviceTitle, ?Exception $e, array $args = []) {
         $serviceId = $this->getServiceId($serviceTitle);
 
         if(!$this->systemServicesRepository->updateService($serviceId, ['dateEnded' => date('Y-m-d H:i:s'), 'status' => SystemServiceStatus::NOT_RUNNING])) {
@@ -104,9 +111,9 @@ class ServiceManager {
         try {
             $historyId = $this->entityManager->generateEntityId(EntityManager::SERVICE_HISTORY);
 
-            $status = $error ? SystemServiceHistoryStatus::ERROR : SystemServiceHistoryStatus::SUCCESS;
+            $status = ($e !== null) ? SystemServiceHistoryStatus::ERROR : SystemServiceHistoryStatus::SUCCESS;
 
-            if(!$this->systemServicesRepository->createHistoryEntry($historyId, $serviceId, $status)) {
+            if(!$this->systemServicesRepository->createHistoryEntry($historyId, $serviceId, $status, implode(' ', $args), ($e !== null) ? $e->getMessage() : null)) {
                 throw new ServiceException('Could not create service history entry.');
             }
         } catch(AException $e) {

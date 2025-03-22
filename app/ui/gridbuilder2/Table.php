@@ -6,6 +6,8 @@ use App\UI\HTML\HTML;
 
 /**
  * Class that represents the grid table
+ * 
+ * @author Lukas Velek
  */
 class Table extends AElement {
     /**

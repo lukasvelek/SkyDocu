@@ -9,14 +9,20 @@ class SystemServiceEntity extends AEntity {
     private ?string $dateStarted;
     private ?string $dateEnded;
     private int $status;
+    private ?string $parentServiceId;
+    private bool $isEnabled;
+    private ?string $schedule;
 
-    public function __construct(string $id, string $title, string $scriptPath, ?string $dateStarted, ?string $dateEnded, int $status) {
+    public function __construct(string $id, string $title, string $scriptPath, ?string $dateStarted, ?string $dateEnded, int $status, ?string $parentServiceId, bool $isEnabled, ?string $schedule) {
         $this->id = $id;
         $this->title = $title;
         $this->scriptPath = $scriptPath;
         $this->dateStarted = $dateStarted;
         $this->dateEnded = $dateEnded;
         $this->status = $status;
+        $this->parentServiceId = $parentServiceId;
+        $this->isEnabled = $isEnabled;
+        $this->schedule = $schedule;
     }
 
     public function getId() {
@@ -43,15 +49,40 @@ class SystemServiceEntity extends AEntity {
         return $this->status;
     }
 
-    public static function createEntityFromDbRow(mixed $row) {
+    public function getParentServiceId() {
+        return $this->parentServiceId;
+    }
+    
+    public function isEnabled() {
+        return $this->isEnabled;
+    }
+
+    public function getSchedule() {
+        if($this->schedule == '') {
+            return null;
+        }
+        return $this->schedule;
+    }
+
+    public static function createEntityFromDbRow(mixed $row): ?static {
         if($row === null) {
             return null;
         }
 
         $row = self::createRow($row);
-        self::checkTypes($row, ['serviceId' => 'string', 'title' => 'string', 'scriptPath' => 'string', 'dateStarted' => '?string', 'dateEnded' => '?string', 'status' => 'int']);
+        self::checkTypes($row, [
+            'serviceId' => 'string',
+            'title' => 'string',
+            'scriptPath' => 'string',
+            'dateStarted' => '?string',
+            'dateEnded' => '?string',
+            'status' => 'int',
+            'parentServiceId' => '?string',
+            'isEnabled' => 'bool',
+            'schedule' => '?string'
+        ]);
 
-        return new self($row->serviceId, $row->title, $row->scriptPath, $row->dateStarted, $row->dateEnded, $row->status);
+        return new self($row->serviceId, $row->title, $row->scriptPath, $row->dateStarted, $row->dateEnded, $row->status, $row->parentServiceId, $row->isEnabled, $row->schedule);
     }
 }
 

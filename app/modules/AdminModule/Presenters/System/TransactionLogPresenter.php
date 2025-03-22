@@ -16,7 +16,10 @@ class TransactionLogPresenter extends AAdminPresenter {
     public function createComponentTransactionLogGrid() {
         $grid = $this->componentFactory->getGridBuilder($this->containerId);
 
-        $grid->createDataSourceFromQueryBuilder($this->transactionLogRepository->composeQueryForTransactionLog(), 'transactionId');
+        $qb = $this->transactionLogRepository->composeQueryForTransactionLog();
+        $qb->orderBy('dateCreated', 'DESC');
+
+        $grid->createDataSourceFromQueryBuilder($qb, 'transactionId');
 
         $grid->addColumnUser('userId', 'User');
         $grid->addColumnText('callingMethod', 'Method');

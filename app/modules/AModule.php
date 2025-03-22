@@ -3,6 +3,7 @@
 namespace App\Modules;
 
 use App\Components\Navbar\Navbar;
+use App\Constants\SessionNames;
 use App\Core\Caching\CacheFactory;
 use App\Core\Caching\CacheNames;
 use App\Core\Http\HttpRequest;
@@ -25,7 +26,7 @@ abstract class AModule extends AGUICore {
     private array $flashMessages;
     protected ?TemplateObject $template;
     protected ?Logger $logger;
-    protected HttpRequest $httpRequest;
+    protected CacheFactory $cacheFactory;
 
     private bool $isAjax;
 
@@ -63,12 +64,12 @@ abstract class AModule extends AGUICore {
     }
 
     /**
-     * Sets the http request instance
+     * Sets the CacheFactory instance
      * 
-     * @param HttpRequest $request HttpRequest instance
+     * @param CacheFactory $cacheFactory CacheFactory instance
      */
-    public function setHttpRequest(HttpRequest $request) {
-        $this->httpRequest = $request;
+    public function setCacheFactory(CacheFactory $cacheFactory) {
+        $this->cacheFactory = $cacheFactory;
     }
 
     /**
@@ -132,36 +133,15 @@ abstract class AModule extends AGUICore {
      * Loads flash messages from cache to the local module cache and prepares it for rendering.
      */
     public function loadFlashMessagesFromCache() {
-        if(isset($_GET['page']) && ($_GET['page'] == 'Anonym:Login') && isset($_GET['action']) && ($_GET['action'] == 'checkLogin')) {
-            return;
-        }
-
-        if(isset($_GET['_fm'])) {
-            $cacheFactory = new CacheFactory();
-
-            if(array_key_exists('container', $_SESSION)) {
-                $containerId = $_SESSION['container'];
-                $cacheFactory->setCustomNamespace($containerId);
-            }
-
-            $cache = $cacheFactory->getCache(CacheNames::FLASH_MESSAGES);
-
-            $flashMessages = $cache->load($_GET['_fm'], function() { return []; });
-            
-            if(empty($flashMessages)) {
-                return;
-            }
-
+        $flashMessages = $this->httpSessionGet(SessionNames::FLASH_MESSAGES);
+        if($flashMessages !== null) {
             foreach($flashMessages as $flashMessage) {
                 $autoCloseLength = 5;
                 if(isset($flashMessage['autoClose'])) {
                     $autoCloseLength = $flashMessage['autoClose'];
                 }
-
                 $this->flashMessages[] = $this->createFlashMessage($flashMessage['type'], $flashMessage['text'], count($this->flashMessages), false, false, $autoCloseLength);
             }
-
-            $cache->invalidate();
         }
     }
 
@@ -178,6 +158,8 @@ abstract class AModule extends AGUICore {
         $fmCode .= $this->presenter->fillPermanentFlashMessages();
         
         $this->template->sys_flash_messages = $fmCode;
+
+        $this->httpSessionSet(SessionNames::FLASH_MESSAGES, []);
     }
 
     /**
@@ -221,6 +203,7 @@ abstract class AModule extends AGUICore {
         $this->presenter->setPresenter($this->presenter);
         $this->presenter->setModule($this);
         $this->presenter->lock();
+        $this->presenter->setCacheFactory($this->cacheFactory);
         
         $this->presenter->startup();
     }
@@ -257,6 +240,7 @@ abstract class AModule extends AGUICore {
         $navbar = new Navbar($this->httpRequest, $mode, $this->app->currentUser, $groupManager);
         
         $navbar->setComponentName('navbar');
+        $navbar->setCacheFactory($this->cacheFactory);
 
         return $navbar;
     }

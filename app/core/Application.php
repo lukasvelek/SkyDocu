@@ -3,6 +3,7 @@
 namespace App\Core;
 
 use App\Authenticators\UserAuthenticator;
+use App\Constants\SessionNames;
 use App\Core\Caching\CacheFactory;
 use App\Core\Caching\CacheNames;
 use App\Core\DB\DatabaseManager;
@@ -12,6 +13,7 @@ use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
 use App\Exceptions\ModuleDoesNotExistException;
 use App\Logger\Logger;
+use App\Managers\ContainerDatabaseManager;
 use App\Managers\ContainerInviteManager;
 use App\Managers\ContainerManager;
 use App\Managers\EntityManager;
@@ -20,6 +22,7 @@ use App\Managers\UserAbsenceManager;
 use App\Managers\UserManager;
 use App\Managers\UserSubstituteManager;
 use App\Modules\ModuleManager;
+use App\Repositories\ContainerDatabaseRepository;
 use App\Repositories\ContainerInviteRepository;
 use App\Repositories\ContainerRepository;
 use App\Repositories\ContentRepository;
@@ -73,6 +76,7 @@ class Application {
     public ContainerInviteRepository $containerInviteRepository;
     public UserAbsenceRepository $userAbsenceRepository;
     public UserSubstituteRepository $userSubstituteRepository;
+    public ContainerDatabaseRepository $containerDatabaseRepository;
 
     public ServiceManager $serviceManager;
     public UserManager $userManager;
@@ -82,8 +86,11 @@ class Application {
     public ContainerInviteManager $containerInviteManager;
     public UserAbsenceManager $userAbsenceManager;
     public UserSubstituteManager $userSubstituteManager;
+    public ContainerDatabaseManager $containerDatabaseManager;
 
     public array $repositories;
+
+    public CacheFactory $cacheFactory;
 
     /**
      * The Application constructor. It creates objects of all used classes.
@@ -107,6 +114,8 @@ class Application {
         }
         $this->logger->info('Database connection established', __METHOD__);
 
+        $this->cacheFactory = new CacheFactory();
+
         $this->initRepositories();
 
         $this->userAuth = new UserAuthenticator($this->userRepository, $this->logger);
@@ -117,10 +126,13 @@ class Application {
         $this->serviceManager = new ServiceManager($this->systemServicesRepository, $this->userRepository, $this->entityManager);
         $this->userManager = new UserManager($this->logger, $this->userRepository, $this->entityManager);
         $this->groupManager = new GroupManager($this->logger, $this->entityManager, $this->groupRepository, $this->groupMembershipRepository);
-        $this->containerManager = new ContainerManager($this->logger, $this->entityManager, $this->containerRepository, $this->dbManager, $this->groupManager, $this->db);
+        $this->containerDatabaseManager = new ContainerDatabaseManager($this->logger, $this->entityManager, $this->containerDatabaseRepository, $this->dbManager);
+        $this->containerManager = new ContainerManager($this->logger, $this->entityManager, $this->containerRepository, $this->dbManager, $this->groupManager, $this->db, $this->containerDatabaseManager);
         $this->containerInviteManager = new ContainerInviteManager($this->logger, $this->entityManager, $this->containerInviteRepository);
         $this->userAbsenceManager = new UserAbsenceManager($this->logger, $this->entityManager, $this->userAbsenceRepository);
         $this->userSubstituteManager = new UserSubstituteManager($this->logger, $this->entityManager, $this->userSubstituteRepository);
+
+        $this->initManagers();
 
         $this->isAjaxRequest = false;
 
@@ -134,6 +146,24 @@ class Application {
             } catch(AException $e) {
                 throw new GeneralException('Could not install database. Reason: ' . $e->getMessage(), $e);
             }
+        }
+    }
+
+    /**
+     * Initializes *Manager classes
+     */
+    private function initManagers() {
+        foreach([
+            $this->entityManager,
+            $this->userManager,
+            $this->groupManager,
+            $this->containerDatabaseManager,
+            $this->containerManager,
+            $this->containerInviteManager,
+            $this->userAbsenceManager,
+            $this->userSubstituteManager
+        ] as $manager) {
+            $manager->injectCacheFactory($this->cacheFactory);
         }
     }
 
@@ -155,6 +185,10 @@ class Application {
                 $className = (string)$rt;
 
                 $this->$name = new $className($this->db, $this->logger);
+                
+                if(method_exists($this->$name, 'injectCacheFactory')) {
+                    $this->$name->injectCacheFactory($this->cacheFactory);
+                }
 
                 $this->repositories[$name] = $this->$name;
             }
@@ -171,9 +205,9 @@ class Application {
         $message = '';
         if($this->userAuth->fastAuthUser($message)) {
             // login
-            $this->currentUser = $this->userRepository->getUserById($_SESSION['userId']);
+            $this->currentUser = $this->userRepository->getUserById($_SESSION[SessionNames::USER_ID]);
         } else {
-            if((!isset($_GET['page']) || (isset($_GET['page']) && $_GET['page'] != 'Anonym:Logout')) && !isset($_SESSION['is_logging_in']) && !isset($_SESSION['is_registering'])) {
+            if((!isset($_GET['page']) || (isset($_GET['page']) && $_GET['page'] != 'Anonym:Logout')) && !isset($_SESSION[SessionNames::IS_LOGGING_IN]) && !isset($_SESSION[SessionNames::IS_REGISTERING])) {
                 //$this->redirect(['page' => 'Anonym:Logout', 'action' => 'logout']); // had to be commented because it caused a overflow because of infinite redirects
 
                 if($message != '') {
@@ -267,10 +301,10 @@ class Application {
      * @param string $type Flash message type
      */
     public function flashMessage(string $text, string $type = 'info') {
-        $cacheFactory = new CacheFactory();
+        /*$cacheFactory = $this->cacheFactory;
 
-        if(array_key_exists('container', $_SESSION)) {
-            $containerId = $_SESSION['container'];
+        if(array_key_exists(SessionNames::CONTAINER, $_SESSION)) {
+            $containerId = $_SESSION[SessionNames::CONTAINER];
             $cacheFactory->setCustomNamespace($containerId);
         }
 
@@ -289,7 +323,9 @@ class Application {
             ];
         });
 
-        return $hash;
+        return $hash;*/
+
+        
     }
     
     /**
@@ -312,6 +348,7 @@ class Application {
         }
         $moduleObject->setLogger($this->logger);
         $moduleObject->setHttpRequest($this->getRequest());
+        $moduleObject->setCacheFactory($this->cacheFactory);
 
         $this->logger->info('Initializing render engine.', __METHOD__);
         $re = new RenderEngine($this->logger, $moduleObject, $this->currentPresenter, $this->currentAction, $this);

@@ -4,10 +4,13 @@ namespace App\Components\BackgroundServicesGrid;
 
 use App\Constants\SystemServiceStatus;
 use App\Core\Application;
+use App\Core\Datetypes\DateTime;
 use App\Core\DB\DatabaseRow;
 use App\Core\Http\JsonResponse;
+use App\Helpers\BackgroundServiceScheduleHelper;
 use App\Helpers\GridHelper;
 use App\Repositories\SystemServicesRepository;
+use App\UI\GridBuilder2\Cell;
 use App\UI\GridBuilder2\GridBuilder;
 use App\UI\GridBuilder2\IGridExtendingComponent;
 use App\UI\GridBuilder2\Row;
@@ -20,6 +23,8 @@ use App\UI\HTML\HTML;
  */
 class BackgroundServicesGrid extends GridBuilder implements IGridExtendingComponent {
     private SystemServicesRepository $systemServicesRepository;
+
+    private ?string $serviceId;
 
     /**
      * Class constructor
@@ -39,6 +44,12 @@ class BackgroundServicesGrid extends GridBuilder implements IGridExtendingCompon
         $this->setApplication($app);
         
         $this->systemServicesRepository = $systemServicesRepository;
+
+        $this->serviceId = null;
+    }
+
+    public function setServiceId(string $serviceId) {
+        $this->serviceId = $serviceId;
     }
 
     public function prerender() {
@@ -47,6 +58,11 @@ class BackgroundServicesGrid extends GridBuilder implements IGridExtendingCompon
         $this->fetchDataFromDb();
 
         $this->appendSystemMetadata();
+        
+        if($this->serviceId === null) {
+            $this->appendNextRunColumn();
+        }
+
         $this->appendActions();
 
         $this->setup();
@@ -56,6 +72,12 @@ class BackgroundServicesGrid extends GridBuilder implements IGridExtendingCompon
 
     public function createDataSource() {
         $qb = $this->systemServicesRepository->composeQueryForServices();
+        
+        if($this->serviceId === null) {
+            $qb->andWhere('parentServiceId IS NULL');
+        } else {
+            $qb->andWhere('parentServiceId = ?', [$this->serviceId]);
+        }
 
         $this->createDataSourceFromQueryBuilder($qb, 'serviceId');
     }
@@ -100,6 +122,34 @@ class BackgroundServicesGrid extends GridBuilder implements IGridExtendingCompon
 
             return $el;
         };
+
+        $children = $this->addAction('children');
+        $children->setTitle('Children');
+        $children->onCanRender[] = function(DatabaseRow $row, Row $_row) {
+            return $this->systemServicesRepository->getChildrenCountForServiceId($row->serviceId) > 0;
+        };
+        $children->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
+            $el = HTML::el('a')
+                ->class('grid-link')
+                ->href($this->createFullURLString('SuperAdminSettings:BackgroundServices', 'list', ['serviceId' => $primaryKey]))
+                ->text('Children');
+
+            return $el;
+        };
+
+        $edit = $this->addAction('edit');
+        $edit->setTitle('Edit');
+        $edit->onCanRender[] = function(DatabaseRow $row, Row $_row) {
+            return true;
+        };
+        $edit->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
+            $el = HTML::el('a')
+                ->class('grid-link')
+                ->href($this->createFullURLString('SuperAdminSettings:BackgroundServices', 'editForm', ['serviceId' => $primaryKey]))
+                ->text('Edit');
+
+            return $el;
+        };
     }
     
     /**
@@ -110,6 +160,31 @@ class BackgroundServicesGrid extends GridBuilder implements IGridExtendingCompon
         $this->addColumnDatetime('dateStarted', 'Service started');
         $this->addColumnDatetime('dateEnded', 'Service ended');
         $this->addColumnConst('status', 'Status', SystemServiceStatus::class);
+        $this->addColumnBoolean('isEnabled', 'Is enabled');
+    }
+
+    private function appendNextRunColumn() {
+        $col = $this->addColumnText('nextRun', 'Next run');
+        $col->onRenderColumn[] = function(DatabaseRow $row, Row $_row, Cell $cell, HTML $html, mixed $value) {
+            $schedule = json_decode($row->schedule, true);
+
+            $nextRun = BackgroundServiceScheduleHelper::getNextRun($schedule, $row);
+
+            if($nextRun === null) {
+                return null;
+            }
+
+            $title = $nextRun;
+            $_text = new DateTime(strtotime($nextRun));
+            $_text->format('d.m.Y H:i');
+            $text = $_text->getResult();
+
+            $el = HTML::el('span')
+                ->text($text)
+                ->title($title);
+
+            return $el;
+        };
     }
     
     public function actionQuickSearch(): JsonResponse {

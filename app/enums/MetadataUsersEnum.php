@@ -4,6 +4,7 @@ namespace App\Enums;
 
 use App\Core\Datatypes\ArrayList;
 use App\Core\DB\DatabaseRow;
+use App\Entities\ContainerEntity;
 use App\Managers\GroupManager;
 use App\Repositories\UserRepository;
 
@@ -15,7 +16,7 @@ use App\Repositories\UserRepository;
 class MetadataUserEnum extends AEnumForMetadata {
     private UserRepository $userRepository;
     private GroupManager $groupManager;
-    private DatabaseRow $container;
+    private ContainerEntity $container;
 
     /**
      * Class constructor
@@ -24,7 +25,7 @@ class MetadataUserEnum extends AEnumForMetadata {
      * @param GroupManager $groupManager GroupManager instance
      * @param DatabaseRow $container Container DB row
      */
-    public function __construct(UserRepository $userRepository, GroupManager $groupManager, DatabaseRow $container) {
+    public function __construct(UserRepository $userRepository, GroupManager $groupManager, ContainerEntity $container) {
         parent::__construct();
 
         $this->userRepository = $userRepository;
@@ -36,7 +37,7 @@ class MetadataUserEnum extends AEnumForMetadata {
         if($this->cache->isEmpty()) {
             $this->cache->add('null', [self::KEY => 'null', self::TITLE => '-']);
 
-            $containerUsers = $this->groupManager->getGroupUsersForGroupTitle($this->container->title . ' - users');
+            $containerUsers = $this->groupManager->getGroupUsersForGroupTitle($this->container->getTitle() . ' - users');
 
             $qb = $this->userRepository->composeQueryForUsers();
             $qb->andWhere('username <> ?', ['service_user']);

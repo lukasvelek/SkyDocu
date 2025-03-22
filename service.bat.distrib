@@ -1,0 +1,5 @@
+@echo off
+set php_path=
+set app_path=
+set cmd=%php_path%php.exe %app_path%services\service_scheduler.php
+start /B %cmd%

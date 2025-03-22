@@ -2,6 +2,7 @@
 
 namespace App\UI\GridBuilder2;
 
+use App\Constants\AppDesignThemes;
 use App\Core\AjaxRequestBuilder;
 use App\Core\Application;
 use App\Core\DB\DatabaseRow;
@@ -9,6 +10,7 @@ use App\Core\Http\Ajax\Operations\HTMLPageOperation;
 use App\Core\Http\Ajax\Requests\AAjaxRequest;
 use App\Core\Http\Ajax\Requests\PostAjaxRequest;
 use App\Core\Http\HttpRequest;
+use App\Helpers\AppThemeHelper;
 use App\Helpers\ArrayHelper;
 use App\Helpers\DateTimeFormatHelper;
 use App\Modules\APresenter;
@@ -469,20 +471,45 @@ class GridBuilderHelper {
         } else if($type == GridColumnTypes::COL_TYPE_BOOLEAN) {
             $col->onRenderColumn[] = function(DatabaseRow $row, Row $_row, Cell $cell, HTML $html, mixed $value) {
                 if($value === true || $value == 1) {
+                    $color = 'green';
+                    $bgColor = 'lightgreen';
+
                     $el = HTML::el('span')
-                            ->style('color', 'green')
-                            ->style('background-color', 'lightgreen')
                             ->style('border-radius', '10px')
                             ->style('padding', '5px')
                             ->text('&check;');
+
+                    if($this->app !== null &&
+                        $this->app->currentUser !== null &&
+                        $this->app->currentUser->getAppDesignTheme() == AppDesignThemes::DARK
+                    ) {
+                        $el->style('color', $bgColor)
+                            ->style('background-color', 'dark' . $color);
+                    } else {
+                        $el->style('color', $color)
+                            ->style('background-color', $bgColor);
+                    }
+
                     $cell->setContent($el);
                 } else {
+                    $color = 'red';
+                    $bgColor = 'pink';
+
                     $el = HTML::el('span')
-                            ->style('color', 'red')
-                            ->style('background-color', 'pink')
                             ->style('border-radius', '10px')
                             ->style('padding', '5px')
                             ->text('&times;');
+
+                    if($this->app !== null &&
+                        $this->app->currentUser !== null &&
+                        $this->app->currentUser->getAppDesignTheme() == AppDesignThemes::DARK
+                    ) {
+                        $el->style('color', $bgColor)
+                            ->style('background-color', 'dark' . $color);
+                    } else {
+                        $el->style('color', $color)
+                            ->style('background-color', $bgColor);
+                    }
                     $cell->setContent($el);
                 }
 
@@ -856,11 +883,7 @@ class GridBuilderHelper {
                 }
             }
 
-            if(!array_key_exists('isComponent', $checkboxHandler)) {
-                $arb->setAction($checkboxHandler['presenter'], $checkboxHandler['action']);
-            } else {
-                $arb->setComponentAction($checkboxHandler['presenter'], $this->componentName . '-' . $checkboxHandler['action']);
-            }
+            $arb->setComponentAction($checkboxHandler['presenter'], $this->componentName . '-' . $checkboxHandler['action']);
 
             $arb->setMethod()
                 ->setHeader($headerParams)
@@ -901,10 +924,16 @@ class GridBuilderHelper {
 
             $addScript($arb);
 
+            if(AppThemeHelper::getAppThemeForUser($this->app) == AppDesignThemes::DARK) {
+                $modalStyle = 'visibility: hidden; height: 0px; position: absolute; top: 5%; left: 5%; background-color: rgba(70, 70, 70, 1); z-index: 9999; border-radius: 5px;';
+            } else {
+                $modalStyle = 'visibility: hidden; height: 0px; position: absolute; top: 5%; left: 5%; background-color: rgba(225, 225, 225, 1); z-index: 9999; border-radius: 5px;';
+            }
+
             $scripts[] = '
                     function ' . $this->componentName . '_processBulkActionsModalOpen(_showLoading) {
                         if(_showLoading) {
-                            $("#modal").html(\'<div id="bulk-actions-modal-inner" style="visibility: hidden; height: 0px; position: absolute; top: 5%; left: 5%; background-color: rgba(225, 225, 225, 1); z-index: 9999; border-radius: 5px;"></div>\');
+                            $("#modal").html(\'<div id="bulk-actions-modal-inner" style="' . $modalStyle . '"></div>\');
                             $("#bulk-actions-modal-inner").html(\'<div id="center" style="margin-top: 20px"><img src="resources/loading.gif" width="64"><br>Loading...</div>\');
                         }
 

@@ -12,11 +12,33 @@
             </div>
 
             <div class="col-md col-lg">
-                <p id="page-text"><b>Delete container</b></p>
+                <div class="row">
+                    <div class="col-md">
+                        <p class="post-title">Remove container from distribution</p>
 
-                <hr>
+                        <hr>
 
-                $CONTAINER_DELETE_LINK$
+                        <p>This will permanently remove the container from distribution. That means that the container database schema will not be updated automatically during SkyDocu new version update.</p>
+
+                        $CONTAINER_REMOVE_FROM_DISTRIBUTION_LINK$
+                    </div>
+                </div>
+
+                <br>
+                <br>
+                <br>
+
+                <div class="row">
+                    <div class="col-md">
+                        <p class="post-title">Delete container</p>
+
+                        <hr>
+
+                        <p>This will permanently delete the container and all its data. Created users will remain created and have to be remove manually.</p>
+
+                        $CONTAINER_DELETE_LINK$
+                    </div>
+                </div>
             </div>
 
             <div class="col-md-1 col-lg-1"></div>

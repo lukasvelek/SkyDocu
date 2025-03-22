@@ -3,37 +3,32 @@
 namespace App\Repositories;
 
 use App\Core\Caching\CacheNames;
-use App\Core\Caching\Cache;
 use App\Core\DatabaseConnection;
 use App\Entities\UserEntity;
 use App\Logger\Logger;
 use QueryBuilder\QueryBuilder;
 
 class UserRepository extends ARepository {
-    private Cache $userCache;
-    private Cache $userUsername2IdCache;
-
     public function __construct(DatabaseConnection $conn, Logger $logger) {
         parent::__construct($conn, $logger);
-
-        $this->userCache = $this->cacheFactory->getCache(CacheNames::USERS);
-        $this->userUsername2IdCache = $this->cacheFactory->getCache(CacheNames::USERS_USERNAME_TO_ID_MAPPING);
     }
 
-    public function getUserById(string $id): UserEntity|null {
+    public function getUserById(string $id, bool $force = false): UserEntity|null {
         $qb = $this->qb(__METHOD__);
 
         $qb ->select(['*'])
             ->from('users')
             ->where('userId = ?', [$id]);
 
-        $entity = $this->userCache->load($id, function() use ($qb) {
+        $userCache = $this->cacheFactory->getCache(CacheNames::USERS);
+
+        $entity = $userCache->load($id, function() use ($qb) {
             $row = $qb->execute()->fetch();
 
             $entity = UserEntity::createEntityFromDbRow($row);
 
             return $entity;
-        });
+        }, [], $force);
 
         return $entity;
     }
@@ -93,7 +88,9 @@ class UserRepository extends ARepository {
             ->from('users')
             ->where('username = ?', [$username]);
 
-        $userId = $this->userUsername2IdCache->load($username, function() use ($qb) {
+        $userUsername2IdCache = $this->cacheFactory->getCache(CacheNames::USERS_USERNAME_TO_ID_MAPPING);
+
+        $userId = $userUsername2IdCache->load($username, function() use ($qb) {
             $qb->execute();
 
             return $qb->fetch('userId');

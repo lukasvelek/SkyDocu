@@ -44,7 +44,6 @@ class Navbar extends AComponent {
         $this->user = $user;
         $this->hideLinks = [];
         $this->groupManager = $groupManager;
-        $this->cacheFactory = new CacheFactory();
     }
 
     /**
@@ -54,6 +53,15 @@ class Navbar extends AComponent {
      */
     public function inject(GroupManager $groupManager) {
         $this->groupManager = $groupManager;
+    }
+
+    /**
+     * Sets CacheFactory instance
+     * 
+     * @param CacheFactory $cacheFactory CacheFactory instance
+     */
+    public function setCacheFactory(CacheFactory $cacheFactory) {
+        $this->cacheFactory = $cacheFactory;
     }
 
     public function startup() {
@@ -226,7 +234,7 @@ class Navbar extends AComponent {
                 if(str_contains($membership->title, ' - users')) {
                     $container = $this->app->containerManager->getContainerById($membership->containerId);
 
-                    if($container->status == ContainerStatus::RUNNING) {
+                    if($container->getStatus() == ContainerStatus::RUNNING) {
                         $count++;
                     }
                 } else if($membership->title == \App\Constants\SystemGroups::SUPERADMINISTRATORS) {
@@ -261,7 +269,7 @@ class Navbar extends AComponent {
                 if(str_contains($membership->title, ' - users')) {
                     $container = $this->app->containerManager->getContainerById($membership->containerId, true);
 
-                    if($container->status == ContainerStatus::RUNNING) {
+                    if($container->getStatus() == ContainerStatus::RUNNING) {
                         $count++;
                     }
                 } else if($membership->title == \App\Constants\SystemGroups::SUPERADMINISTRATORS) {

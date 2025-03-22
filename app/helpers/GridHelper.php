@@ -21,6 +21,7 @@ class GridHelper {
     private array $gridPageData;
     private string $currentUserId;
     private CacheFactory $cacheFactory;
+    private ?string $containerId;
 
     private Cache $gridPageDataCache;
 
@@ -34,13 +35,23 @@ class GridHelper {
     public function __construct(Logger $logger, string $currentUserId, ?string $containerId = null) {
         $this->logger = $logger;
         $this->currentUserId = $currentUserId;
+        $this->containerId = $containerId;
 
         $this->gridPageData = [];
+    }
 
-        $this->cacheFactory = new CacheFactory();
-        if($containerId !== null) {
-            $this->cacheFactory->setCustomNamespace($containerId);
+    /**
+     * Sets CacheFactory instance
+     * 
+     * @param CacheFactory $cacheFactory CacheFactory instance
+     */
+    public function setCacheFactory(CacheFactory $cacheFactory) {
+        $this->cacheFactory = $cacheFactory;
+
+        if($this->containerId !== null) {
+            $this->cacheFactory->setCustomNamespace($this->containerId);
         }
+
         $this->gridPageDataCache = $this->cacheFactory->getCache(CacheNames::GRID_PAGE_DATA);
     }
 

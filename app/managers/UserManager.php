@@ -31,8 +31,8 @@ class UserManager extends AManager {
         return $user;
     }
 
-    public function getUserById(string $userId) {
-        $user = $this->userRepository->getUserById($userId);
+    public function getUserById(string $userId, bool $force = false) {
+        $user = $this->userRepository->getUserById($userId, $force);
 
         if($user === null) {
             throw new NonExistingEntityException('User with ID \'' . $userId . '\' does not exist.');
@@ -66,7 +66,8 @@ class UserManager extends AManager {
             throw new GeneralException('Database error.');
         }
 
-        if(!$this->cacheFactory->invalidateCacheByNamespace(CacheNames::USERS) || !$this->cacheFactory->invalidateCacheByNamespace(CacheNames::USERS_USERNAME_TO_ID_MAPPING)) {
+        if(!$this->cacheFactory->invalidateCacheByNamespace(CacheNames::USERS)
+           || !$this->cacheFactory->invalidateCacheByNamespace(CacheNames::USERS_USERNAME_TO_ID_MAPPING)) {
             throw new GeneralException('Could not invalidate cache.');
         }
     }

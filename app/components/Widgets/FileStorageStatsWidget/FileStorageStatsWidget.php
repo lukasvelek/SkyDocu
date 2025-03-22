@@ -5,6 +5,8 @@ namespace App\Components\Widgets\FileStorageStatsWidget;
 use App\Components\Widgets\Widget;
 use App\Core\DB\DatabaseManager;
 use App\Core\Http\HttpRequest;
+use App\Exceptions\AException;
+use App\Exceptions\GeneralException;
 use App\Helpers\UnitConversionHelper;
 use App\Logger\Logger;
 use App\Managers\ContainerManager;
@@ -68,9 +70,17 @@ class FileStorageStatsWidget extends Widget {
      * Fetches data from database
      */
     private function fetchDataFromDb(): array {
-        $totalFiles = $this->fetchTotalFileCountFromDb();
-        $totalFileSize = $this->fetchTotalFileSizeFromDb();
-        $avgFileCountForContainers = $this->fetchAverageFileCountForContainersFromDb();
+        $totalFiles = 0.0;
+        $totalFileSize = 0.0;
+        $avgFileCountForContainers = 0.0;
+        
+        try {
+            $totalFiles = $this->fetchTotalFileCountFromDb();
+            $totalFileSize = $this->fetchTotalFileSizeFromDb();
+            $avgFileCountForContainers = $this->fetchAverageFileCountForContainersFromDb();
+        } catch(AException $e) {
+            
+        }
 
         return [
             'totalRows' => $totalFiles,
@@ -87,7 +97,11 @@ class FileStorageStatsWidget extends Widget {
 
         $storedFiles = 0;
         foreach($containers as $containerId => $container) {
-            $conn = $this->dbManager->getConnectionToDatabase($container->databaseName);
+            try {
+                $conn = $this->dbManager->getConnectionToDatabase($container->getDefaultDatabase()->getName());
+            } catch(AException $e) {
+                throw new GeneralException('Could not establish connection to database for container ID \'' . $containerId . '\'.', $e);
+            }
 
             $fileStorageRepository = new FileStorageRepository($conn, $this->logger);
 
@@ -116,7 +130,11 @@ class FileStorageStatsWidget extends Widget {
 
         $storedFiles = 0;
         foreach($containers as $containerId => $container) {
-            $conn = $this->dbManager->getConnectionToDatabase($container->databaseName);
+            try {
+                $conn = $this->dbManager->getConnectionToDatabase($container->getDefaultDatabase()->getName());
+            } catch(AException $e) {
+                throw new GeneralException('Could not establish connection to database for container ID \'' . $containerId . '\'.', $e);
+            }
 
             $fileStorageRepository = new FileStorageRepository($conn, $this->logger);
 
@@ -141,7 +159,11 @@ class FileStorageStatsWidget extends Widget {
 
         $filesize = 0;
         foreach($containers as $containerId => $container) {
-            $conn = $this->dbManager->getConnectionToDatabase($container->databaseName);
+            try {
+                $conn = $this->dbManager->getConnectionToDatabase($container->getDefaultDatabase()->getName());
+            } catch(AException $e) {
+                throw new GeneralException('Could not establish connection to database for container ID \'' . $containerId . '\'.', $e);
+            }
 
             $fileStorageRepository = new FileStorageRepository($conn, $this->logger);
 
@@ -158,6 +180,8 @@ class FileStorageStatsWidget extends Widget {
 
     /**
      * Returns an array with all containers
+     * 
+     * @return array<string, \App\Entities\ContainerEntity>
      */
     private function getAllContainers(): array {
         $qb = $this->containerManager->containerRepository->composeQueryForContainers();

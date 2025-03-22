@@ -20,12 +20,12 @@ class FileStoragePresenter extends AAdminPresenter {
         $this->setSystem();
     }
 
-    public function handleList() {
+    public function renderList() {
         // Get files stats
         $par = new PostAjaxRequest($this->httpRequest);
 
         $par->setUrl($this->createURL('getFilesStats'));
-        
+
         $op = new CustomOperation();
         $op->addCode('alert(data);');
 
@@ -34,9 +34,9 @@ class FileStoragePresenter extends AAdminPresenter {
 
         $this->addScript($par);
         $this->addScript('
-            async function getFileStats() {
-                await ' . $par->getFunctionName() . '();
-            }
+        async function getFileStats() {
+            await ' . $par->getFunctionName() . '();
+        }
         ');
 
         $el = HTML::el('a')
@@ -45,12 +45,7 @@ class FileStoragePresenter extends AAdminPresenter {
             ->onClick('getFileStats()')
             ->text('Storage stats');
 
-        $links[] = $el->toString();
-        $this->saveToPresenterCache('links', $links);
-    }
-
-    public function renderList() {
-        $this->template->links = $this->loadFromPresenterCache('links');
+        $this->template->links = $el->toString();
     }
 
     protected function createComponentStoredFilesGrid(HttpRequest $request) {

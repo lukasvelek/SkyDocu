@@ -9,6 +9,7 @@ use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
 use App\Exceptions\RequiredAttributeIsNotSetException;
+use App\Helpers\LinkHelper;
 use App\UI\GridBuilder2\Action;
 use App\UI\GridBuilder2\Cell;
 use App\UI\GridBuilder2\Row;
@@ -153,20 +154,22 @@ class ProcessListPresenter extends AAdminPresenter {
         return $grid;
     }
 
-    public function handleMetadataEnumList() {
+    public function renderMetadataEnumList() {
         $metadataId = $this->httpRequest->get('metadataId');
+        if($metadataId === null) {
+            throw new RequiredAttributeIsNotSetException('metadataId');
+        }
         $typeId = $this->httpRequest->get('typeId');
+        if($typeId === null) {
+            throw new RequiredAttributeIsNotSetException('typeId');
+        }
 
         $links = [
             $this->createBackUrl('metadataList', ['typeId' => $typeId]),
             LinkBuilder::createSimpleLink('New value', $this->createURL('newEnumValueForm', ['metadataId' => $metadataId, 'typeId' => $typeId]), 'link')
         ];
 
-        $this->saveToPresenterCache('links', implode('&nbsp;&nbsp;', $links));
-    }
-
-    public function renderMetadataEnumList() {
-        $this->template->links = $this->loadFromPresenterCache('links');
+        $this->template->links = LinkHelper::createLinksFromArray($links);
     }
 
     protected function createComponentProcessMetadataEnumGrid(HttpRequest $request) {

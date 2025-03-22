@@ -17,9 +17,7 @@ class UsersPresenter extends AAdminPresenter {
     }
 
     public function renderList() {
-        $this->template->links = [
-            LinkBuilder::createSimpleLink('New user', $this->createURL('newUserForm'), 'link')
-        ];
+        $this->template->links = LinkBuilder::createSimpleLink('New user', $this->createURL('newUserForm'), 'link');
     }
 
     protected function createComponentUsersGrid(HttpRequest $request) {
@@ -92,9 +90,7 @@ class UsersPresenter extends AAdminPresenter {
     }
 
     public function renderNewUserForm() {
-        $this->template->links = [
-            LinkBuilder::createSimpleLink('&larr; Back', $this->createURL('list'), 'link')
-        ];
+        $this->template->links = LinkBuilder::createSimpleLink('&larr; Back', $this->createURL('list'), 'link');
     }
 
     protected function createComponentNewUserForm(HttpRequest $request) {

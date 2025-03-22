@@ -25,6 +25,8 @@ Previously changelog for versions `1.0`-`1.4` has been located in README.md. How
     - Containers can now be removed from distribution
 - Multiple bugfixes
 - Renamed view names for container Process views
+- Cache bugfix
+- Flash messages update
 
 ## SkyDocu `1.3.1` (02/26/2025)
 - About application widget update

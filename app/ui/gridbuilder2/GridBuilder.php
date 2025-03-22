@@ -710,7 +710,10 @@ class GridBuilder extends AComponent {
             $lastPageCount = $totalCount;
         }
 
-        $firstPageCount = $this->resultLimit * $this->gridPage + 1;
+        $firstPageCount = $this->resultLimit * $this->gridPage;
+        if($firstPageCount != $lastPageCount) {
+            $firstPageCount++;
+        }
 
         // If the grid is empty, no page exists
         $displayGridPage = $this->gridPage;

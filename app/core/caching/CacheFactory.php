@@ -83,14 +83,8 @@ class CacheFactory {
      * @return bool True on success or false on failure
      */
     public function invalidateCacheByNamespace(string $namespace) {
-        $expire = new DateTime(time() - 60);
-        $cache = $this->getCache($namespace, $expire);
-        $cache->invalidate();
-
-        $messages = [];
-        $this->saveCaches($messages);
-
-        return true;
+        $messages1 = [];
+        return $this->deleteCache($namespace, $messages1);
     }
 
     /**
@@ -126,6 +120,7 @@ class CacheFactory {
         if($cacheData === null) {
             $this->cacheLogger->logCacheCreateOrGet($namespace, true, __METHOD__);
             $cache = new Cache([], $namespace, $this, $this->cacheLogger, $expiration, null);
+            $cache->setCustomNamespace($this->customNamespace);
             $this->persistentCaches[$cache->getHash()] = &$cache;
             return $cache;
         }
@@ -147,6 +142,7 @@ class CacheFactory {
 
             $this->cacheLogger->logCacheCreateOrGet($namespace, true, __METHOD__);
             $cache = new Cache([], $namespace, $this, $this->cacheLogger, $expiration, null);
+            $cache->setCustomNamespace($this->customNamespace);
             $this->persistentCaches[$cache->getHash()] = &$cache;
             return $cache;
         }
@@ -159,6 +155,7 @@ class CacheFactory {
         $this->cacheLogger->logCacheCreateOrGet($namespace, false, __METHOD__);
 
         $cache = new Cache($cacheData[self::I_NS_DATA], $namespace, $this, $this->cacheLogger, $expirationDate, $lastWriteDate);
+        $cache->setCustomNamespace($this->customNamespace);
         $this->persistentCaches[$cache->getHash()] = &$cache;
         return $cache;
     }
@@ -172,9 +169,9 @@ class CacheFactory {
     private function loadDataFromCache(string $namespace) {
         $path = APP_ABSOLUTE_DIR . CACHE_DIR . $namespace . '\\';
 
-        if($this->customNamespace !== null) {
+        /*if($this->customNamespace !== null) {
             $path .= $this->customNamespace . '\\';
-        }
+        }*/
         
         $date = new DateTime();
         $date->format('Y-m-d');
@@ -252,9 +249,9 @@ class CacheFactory {
     private function saveDataToCache(string $namespace, array $data, array &$messages) {
         $path = APP_ABSOLUTE_DIR . CACHE_DIR . $namespace . '\\';
 
-        if($this->customNamespace !== null) {
+        /*if($this->customNamespace !== null) {
             $path .= $this->customNamespace . '\\';
-        }
+        }*/
         
         $date = new DateTime();
         $date->format('Y-m-d');
@@ -295,9 +292,9 @@ class CacheFactory {
 
         $path = APP_ABSOLUTE_DIR . CACHE_DIR . $namespace . '\\';
 
-        if($this->customNamespace !== null) {
+        /*if($this->customNamespace !== null) {
             $path .= $this->customNamespace . '\\';
-        }
+        }*/
         
         $messages[] = 'Deleting \'' . $path . '\'. ';
 
@@ -306,9 +303,9 @@ class CacheFactory {
             return true;
         }
 
-        $result = FileManager::deleteFolderRecursively($path, false);
+        $result = FileManager::deleteFolderRecursively($path, true);
 
-        $messages[] = 'Result after deleting folder (resursively): ' . var_export($result, true);
+        $messages[] = 'Result after deleting folder (resursively): ' . $result;
         
         if($result === true) {
             $this->cacheLogger->logCacheNamespaceDeleted($namespace, __METHOD__);

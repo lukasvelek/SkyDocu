@@ -21,6 +21,7 @@ class Cache {
     private ?DateTime $lastWriteDate;
     private CacheFactory $cacheFactory;
     private CacheLogger $logger;
+    private ?string $customNamespace;
 
     /**
      * Class constructor
@@ -39,7 +40,18 @@ class Cache {
         $this->cacheFactory = $cacheFactory;
         $this->logger = $logger;
 
+        $this->customNamespace = null;
+
         $this->hash = HashManager::createHash(256);
+    }
+
+    /**
+     * Sets the custom namespace
+     * 
+     * @param ?string $customNamespace Custom namespace
+     */
+    public function setCustomNamespace(?string $customNamespace) {
+        $this->customNamespace = $customNamespace;
     }
 
     /**
@@ -52,9 +64,9 @@ class Cache {
      * @return mixed|null Data or null
      */
     public function load(mixed $key, callable $generator, array $generatorDependencies = [], bool $force = false) {
-        if(array_key_exists($key, $this->data) && !$force) {
-            $this->logger->logHitMiss($key, $this->namespace, true, __METHOD__);
-            return $this->data[$key];
+        if(array_key_exists(($this->customNamespace ?? '') . $key, $this->data) && !$force) {
+            $this->logger->logHitMiss(($this->customNamespace ?? '') . $key, $this->namespace, true, __METHOD__);
+            return $this->data[($this->customNamespace ?? '') . $key];
         } else {
             try {
                 $result = $generator(...$generatorDependencies);
@@ -62,7 +74,7 @@ class Cache {
                 throw new CacheException('Could not save data to cache. Reason: ' . $e->getMessage(), $this->namespace, $e);
             }
 
-            $this->logger->logHitMiss($key, $this->namespace, false, __METHOD__);
+            $this->logger->logHitMiss(($this->customNamespace ?? '') . $key, $this->namespace, false, __METHOD__);
 
             $this->data[$key] = $result;
             $this->lastWriteDate = new DateTime();
@@ -85,7 +97,7 @@ class Cache {
             throw new CacheException('Could not save data to cache.', $this->namespace, $e);
         }
 
-        $this->data[$key] = $result;
+        $this->data[($this->customNamespace ?? '') . $key] = $result;
 
         $this->lastWriteDate = new DateTime();
     }
@@ -108,8 +120,8 @@ class Cache {
 
         $isSave = false;
 
-        if(array_key_exists($key, $this->data)) {
-            if($this->data[$key] != $result) {
+        if(array_key_exists(($this->customNamespace ?? '') . $key, $this->data)) {
+            if($this->data[($this->customNamespace ?? '') . $key] != $result) {
                 // key exists and data is different
                 $isSave = true;
             }
@@ -119,7 +131,7 @@ class Cache {
         }
 
         if($isSave) {
-            $this->data[$key] = $result;
+            $this->data[($this->customNamespace ?? '') . $key] = $result;
             $this->lastWriteDate = new DateTime();
         }
     }
@@ -139,8 +151,8 @@ class Cache {
      * @param mixed $key Cache key
      */
     public function invalidateKey(mixed $key) {
-        if(array_key_exists($key, $this->data)) {
-            unset($this->data[$key]);
+        if(array_key_exists(($this->customNamespace ?? '') . $key, $this->data)) {
+            unset($this->data[($this->customNamespace ?? '') . $key]);
         }
     }
 

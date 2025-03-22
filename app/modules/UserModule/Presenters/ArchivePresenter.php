@@ -5,6 +5,7 @@ namespace App\Modules\UserModule;
 use App\Components\ArchiveFoldersSidebar\ArchiveFoldersSidebar;
 use App\Components\DocumentsGrid\DocumentsGrid;
 use App\Constants\Container\GridNames;
+use App\Constants\SessionNames;
 use App\Core\Http\HttpRequest;
 
 class ArchivePresenter extends AUserPresenter {
@@ -17,7 +18,7 @@ class ArchivePresenter extends AUserPresenter {
     public function startup() {
         parent::startup();
 
-        $this->currentFolderId = $this->httpSessionGet('current_archive_folder_id');
+        $this->currentFolderId = $this->httpSessionGet(SessionNames::CURRENT_ARCHIVE_FOLDER_ID);
     }
 
     public function handleList() {

@@ -214,8 +214,6 @@ class UserPresenter extends AUserPresenter {
 
                 $this->app->userRepository->commit($this->getUserId(), __METHOD__);
 
-                $this->app->userManager->getUserById($this->getUserId(), true); // for recache
-
                 $this->flashMessage('Theme changed successfully.', 'success');
             } catch(AException $e) {
                 $this->app->userRepository->rollback(__METHOD__);
@@ -232,8 +230,6 @@ class UserPresenter extends AUserPresenter {
     }
 
     protected function createComponentChangeThemeForm(HttpRequest $request) {
-        $user = $this->app->userManager->getUserById($request->get('userId'));
-
         $themes = [];
         foreach(AppDesignThemes::getAll() as $key => $value) {
             $theme = [
@@ -241,7 +237,7 @@ class UserPresenter extends AUserPresenter {
                 'text' => $value
             ];
 
-            if($user->getAppDesignTheme() == $key) {
+            if($this->app->currentUser->getAppDesignTheme() == $key) {
                 $theme['selected'] = 'selected';
             }
 

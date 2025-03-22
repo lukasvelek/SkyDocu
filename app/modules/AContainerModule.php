@@ -3,6 +3,7 @@
 namespace App\Modules;
 
 use App\Components\Navbar\Navbar;
+use App\Constants\SessionNames;
 use App\Managers\Container\GroupManager;
 use App\Managers\EntityManager;
 use App\Repositories\Container\GroupRepository;
@@ -22,7 +23,7 @@ abstract class AContainerModule extends AModule {
     protected function startup(string $presenterTitle, string $actionTitle) {
         parent::startup($presenterTitle, $actionTitle);
 
-        $containerId = $this->httpSessionGet('container');
+        $containerId = $this->httpSessionGet(SessionNames::CONTAINER);
         $container = $this->app->containerManager->getContainerById($containerId);
         $db = $this->app->dbManager->getConnectionToDatabase($container->getDefaultDatabase()->getName());
 

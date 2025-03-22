@@ -3,6 +3,7 @@
 namespace App\Modules\AdminModule;
 
 use App\Constants\Container\SystemGroups;
+use App\Constants\SessionNames;
 use App\Core\DB\DatabaseRow;
 use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
@@ -150,7 +151,7 @@ class GroupsPresenter extends AAdminPresenter {
     }
 
     protected function createComponentNewMemberForm(HttpRequest $request) {
-        $container = $this->app->containerManager->getContainerById($this->httpSessionGet('container'));
+        $container = $this->app->containerManager->getContainerById($this->httpSessionGet(SessionNames::CONTAINER));
 
         $containerUsers = $this->app->groupManager->getGroupUsersForGroupTitle($container->getTitle() . ' - users');
         $groupUsers = $this->groupRepository->getMembersForGroup($request->get('groupId'));

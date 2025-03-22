@@ -8,6 +8,7 @@ use App\Components\FoldersSidebar\FoldersSidebar;
 use App\Constants\Container\CustomMetadataTypes;
 use App\Constants\Container\DocumentStatus;
 use App\Constants\Container\GridNames;
+use App\Constants\SessionNames;
 use App\Core\Caching\CacheNames;
 use App\Core\DB\DatabaseRow;
 use App\Core\FileUploadManager;
@@ -32,7 +33,7 @@ class DocumentsPresenter extends AUserPresenter {
     public function startup() {
         parent::startup();
 
-        $this->currentFolderId = $this->httpSessionGet('current_document_folder_id');
+        $this->currentFolderId = $this->httpSessionGet(SessionNames::CURRENT_DOCUMENT_FOLDER_ID);
     }
 
     protected function createComponentFoldersSidebar(HttpRequest $request) {

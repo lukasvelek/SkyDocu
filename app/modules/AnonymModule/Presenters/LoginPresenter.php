@@ -5,6 +5,7 @@ namespace App\Modules\AnonymModule;
 use App\Components\ContainerSelectionForm\ContainerSelectionForm;
 use App\Constants\ContainerEnvironments;
 use App\Constants\ContainerStatus;
+use App\Constants\SessionNames;
 use App\Constants\SystemGroups;
 use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
@@ -20,10 +21,10 @@ class LoginPresenter extends AAnonymPresenter {
             try {
                 $this->app->userAuth->loginUser($fr->username, $fr->password);
                 
-                $this->app->logger->info('Logged in user #' . $this->httpSessionGet('userId') . '.', __METHOD__);
+                $this->app->logger->info('Logged in user #' . $this->httpSessionGet(SessionNames::USER_ID) . '.', __METHOD__);
                 $this->redirect($this->createURL('checkContainers'));
             } catch(AException $e) {
-                $this->flashMessage('Could not log in due to internal error. Reason: ' . $e->getMessage(), 'error', 15);
+                $this->flashMessage('Could not log in. Reason: ' . $e->getMessage(), 'error', 15);
                 $this->redirect($this->createURL('loginForm'));
             }
         }
@@ -105,8 +106,8 @@ class LoginPresenter extends AAnonymPresenter {
         if($fr !== null) {
             $this->httpSessionSet('container', $fr->container);
             
-            if(isset($_SESSION['is_choosing_container'])) {
-                unset($_SESSION['is_choosing_container']);
+            if(isset($_SESSION[SessionNames::IS_CHOOSING_CONTAINER])) {
+                unset($_SESSION[SessionNames::IS_CHOOSING_CONTAINER]);
             }
             
             if($fr->container == 'superadministrators') {
@@ -168,7 +169,7 @@ class LoginPresenter extends AAnonymPresenter {
     }
 
     public function handleSwitchContainer() {
-        $container = $this->httpSessionGet('container');
+        $container = $this->httpSessionGet(SessionNames::CONTAINER);
         $this->httpSessionSet('container', null);
         $this->httpSessionSet('is_choosing_container', true);
         $this->httpSessionSet('current_document_folder_id', null);

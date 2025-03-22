@@ -3,6 +3,7 @@
 namespace App\Core;
 
 use App\Authenticators\UserAuthenticator;
+use App\Constants\SessionNames;
 use App\Core\Caching\CacheFactory;
 use App\Core\Caching\CacheNames;
 use App\Core\DB\DatabaseManager;
@@ -162,7 +163,7 @@ class Application {
             $this->userAbsenceManager,
             $this->userSubstituteManager
         ] as $manager) {
-            $manager->injectCacheFactory(clone $this->cacheFactory);
+            $manager->injectCacheFactory($this->cacheFactory);
         }
     }
 
@@ -186,7 +187,7 @@ class Application {
                 $this->$name = new $className($this->db, $this->logger);
                 
                 if(method_exists($this->$name, 'injectCacheFactory')) {
-                    $this->$name->injectCacheFactory(clone $this->cacheFactory);
+                    $this->$name->injectCacheFactory($this->cacheFactory);
                 }
 
                 $this->repositories[$name] = $this->$name;
@@ -204,9 +205,9 @@ class Application {
         $message = '';
         if($this->userAuth->fastAuthUser($message)) {
             // login
-            $this->currentUser = $this->userRepository->getUserById($_SESSION['userId']);
+            $this->currentUser = $this->userRepository->getUserById($_SESSION[SessionNames::USER_ID]);
         } else {
-            if((!isset($_GET['page']) || (isset($_GET['page']) && $_GET['page'] != 'Anonym:Logout')) && !isset($_SESSION['is_logging_in']) && !isset($_SESSION['is_registering'])) {
+            if((!isset($_GET['page']) || (isset($_GET['page']) && $_GET['page'] != 'Anonym:Logout')) && !isset($_SESSION[SessionNames::IS_LOGGING_IN]) && !isset($_SESSION[SessionNames::IS_REGISTERING])) {
                 //$this->redirect(['page' => 'Anonym:Logout', 'action' => 'logout']); // had to be commented because it caused a overflow because of infinite redirects
 
                 if($message != '') {
@@ -300,10 +301,10 @@ class Application {
      * @param string $type Flash message type
      */
     public function flashMessage(string $text, string $type = 'info') {
-        $cacheFactory = clone $this->cacheFactory;
+        /*$cacheFactory = $this->cacheFactory;
 
-        if(array_key_exists('container', $_SESSION)) {
-            $containerId = $_SESSION['container'];
+        if(array_key_exists(SessionNames::CONTAINER, $_SESSION)) {
+            $containerId = $_SESSION[SessionNames::CONTAINER];
             $cacheFactory->setCustomNamespace($containerId);
         }
 
@@ -322,7 +323,9 @@ class Application {
             ];
         });
 
-        return $hash;
+        return $hash;*/
+
+        
     }
     
     /**

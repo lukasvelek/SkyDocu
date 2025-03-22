@@ -3,6 +3,7 @@
 namespace App\Modules;
 
 use App\Constants\AppDesignThemes;
+use App\Constants\SessionNames;
 use App\Core\AjaxRequestBuilder;
 use App\Core\Application;
 use App\Core\Caching\CacheFactory;
@@ -110,7 +111,7 @@ abstract class APresenter extends AGUICore {
      */
     public function startup() {
         $this->componentFactory = new ComponentFactory($this->httpRequest, $this);
-        $this->componentFactory->setCacheFactory(clone $this->cacheFactory);
+        $this->componentFactory->setCacheFactory($this->cacheFactory);
         $this->router->inject($this, new ModuleManager());
     }
 
@@ -294,7 +295,7 @@ abstract class APresenter extends AGUICore {
     }
 
     /**
-     * Saves a flash message to cache. Flash messages are automatically closed.
+     * Saves a flash message to the current session. Flash messages are automatically closed.
      * 
      * @param string $text Flash message text
      * @param string $type Flash message type
@@ -307,10 +308,6 @@ abstract class APresenter extends AGUICore {
         }
 
         $this->flashMessages[] = ['type' => $type, 'text' => $text, 'hash' => $hash, 'autoClose' => $autoCloseLengthInSeconds];
-        
-        if(!array_key_exists('_fm', $this->specialRedirectUrlParams)) {
-            $this->specialRedirectUrlParams['_fm'] = $hash;
-        }
     }
 
     /**
@@ -345,13 +342,6 @@ abstract class APresenter extends AGUICore {
         if(!empty($url) && is_array($url)) {    
             if(!array_key_exists('page', $url)) {
                 $url['page'] = $this->httpRequest->get('page');
-            }
-
-            if(!array_key_exists('_fm', $this->specialRedirectUrlParams)) {
-                $_fm = $this->httpRequest->get('_fm');
-                if($_fm !== null) {
-                    $this->specialRedirectUrlParams['_fm'] = $_fm;
-                }
             }
 
             if(!empty($this->specialRedirectUrlParams)) {
@@ -764,33 +754,12 @@ abstract class APresenter extends AGUICore {
     }
 
     /**
-     * Saves flash messages to cache and then saves the cache
+     * Saves flash messages to the session
      */
     private function saveFlashMessagesToCache() {
         if(!empty($this->flashMessages)) {
-            $containerId = $this->httpSessionGet('container');
-            if($containerId !== null) {
-                $cacheFactory = clone $this->cacheFactory;
-                $cacheFactory->setCustomNamespace($containerId);
-                $cache = $cacheFactory->getCache(CacheNames::FLASH_MESSAGES);
-            } else {
-                $cache = $this->cacheFactory->getCache(CacheNames::FLASH_MESSAGES);
-            }
-
-            $hash = $this->flashMessages[0]['hash'];
-
-            $cache->save($hash, function() {
-                return $this->flashMessages;
-            });
-
+            $this->httpSessionSet(SessionNames::FLASH_MESSAGES, $this->flashMessages);
             $this->logger->warning('Flash messages saved to cache: ' . var_export($this->flashMessages, true), __METHOD__);
-        }
-
-        $messages = [];
-        $result = $this->cacheFactory->saveCaches($messages);
-
-        if($result === false) {
-            throw new GeneralException('Could not save flash messages. Data: ' . implode("\r\n", $messages));
         }
     }
 

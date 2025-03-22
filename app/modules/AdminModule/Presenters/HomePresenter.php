@@ -3,6 +3,7 @@
 namespace App\Modules\AdminModule;
 
 use App\Constants\ContainerEnvironments;
+use App\Constants\SessionNames;
 use App\Core\Datetypes\DateTime;
 use App\Core\Http\HttpRequest;
 use App\Helpers\ColorHelper;
@@ -15,7 +16,7 @@ class HomePresenter extends AAdminPresenter {
     public function renderDashboard() {}
 
     protected function createComponentContainerInfoForm(HttpRequest $request) {
-        $containerId = $this->httpSessionGet('container');
+        $containerId = $this->httpSessionGet(SessionNames::CONTAINER);
         $container = $this->app->containerManager->getContainerById($containerId);
 
         $groupUsers = $this->app->groupManager->getGroupUsersForGroupTitle($container->getTitle() . ' - users');

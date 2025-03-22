@@ -13,9 +13,11 @@ use DateTime as GlobalDateTime;
  */
 class DateTimeFormatHelper {
     public const EUROPEAN_FORMAT = 'd.m.Y H:i';
-    public const AMERICAN_FORMAT = 'Y/m/d H:i';
+    public const AMERICAN_FORMAT = 'm/d/Y H:i';
     public const ATOM_FORMAT = GlobalDateTime::ATOM;
     public const TIME_ONLY_FORMAT = 'H:i';
+    public const EUROPEAN_FORMAT_DATE_ONLY = 'd.m.Y';
+    public const AMERICAN_FORMAT_DATE_ONLY = 'm/d/Y';
 
     /**
      * Formats date to user-friendly format

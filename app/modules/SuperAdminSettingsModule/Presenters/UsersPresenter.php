@@ -160,7 +160,7 @@ class UsersPresenter extends ASuperAdminSettingsPresenter {
         return $form;
     }
 
-    public function handleProfile() {
+    public function renderProfile() {
         $userId = $this->httpRequest->get('userId');
         if($userId === null) {
             throw new RequiredAttributeIsNotSetException('userId');
@@ -182,16 +182,9 @@ class UsersPresenter extends ASuperAdminSettingsPresenter {
         $addInfo('Full name', $user->getFullname());
         $addInfo('Email', ($user->getEmail() ?? '-'));
 
-        $this->saveToPresenterCache('userProfile', $userProfile);
-        $this->saveToPresenterCache('username', $user->getUsername());
-    }
-
-    public function renderProfile() {
-        $this->template->user_profile = $this->loadFromPresenterCache('userProfile');
-        $this->template->username = $this->loadFromPresenterCache('username');
-        $this->template->links = [
-            LinkBuilder::createSimpleLink('&larr; Back', $this->createURL('list'), 'link')
-        ];
+        $this->template->user_profile = $userProfile;
+        $this->template->username = $user->getUsername();
+        $this->template->links = LinkBuilder::createSimpleLink('&larr; Back', $this->createURL('list'), 'link');
     }
 
     public function handleEditUserForm(?FormRequest $fr = null) {

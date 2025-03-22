@@ -11,19 +11,15 @@ class HomePresenter extends AUserPresenter {
         parent::__construct('HomePresenter', 'Home');
     }
 
-    public function handleDashboard() {
+    public function renderDashboard() {
         $container = $this->app->containerManager->getContainerById($this->containerId);
 
+        $code = null;
         if($container->getPermanentFlashMessage() !== null) {
             $code = $this->createFlashMessage('info', $container->getPermanentFlashMessage(), 0, false, true);
-            $this->saveToPresenterCache('permanentFlashMessage', $code);
-        } else {
-            $this->saveToPresenterCache('permanentFlashMessage', '');
         }
-    }
 
-    public function renderDashboard() {
-        $this->template->permanent_flash_message = $this->loadFromPresenterCache('permanentFlashMessage');
+        $this->template->permanent_flash_message = $code ?? '';
     }
 
     protected function createComponentProcessesWaitingForMeGrid(HttpRequest $request) {

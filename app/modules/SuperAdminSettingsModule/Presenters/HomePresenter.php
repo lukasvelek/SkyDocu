@@ -11,8 +11,6 @@ class HomePresenter extends ASuperAdminSettingsPresenter {
         parent::__construct('HomePresenter', 'Home');
     }
 
-    public function handleDashboard() {}
-
     public function renderDashboard() {}
 
     protected function createComponentContainerStatsWidget(HttpRequest $request) {

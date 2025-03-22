@@ -10,6 +10,7 @@ use App\Core\Http\HttpRequest;
 use App\Core\Http\JsonResponse;
 use App\Exceptions\AException;
 use App\Exceptions\RequiredAttributeIsNotSetException;
+use App\Helpers\LinkHelper;
 use App\UI\GridBuilder2\Cell;
 use App\UI\GridBuilder2\Row;
 use App\UI\HTML\HTML;
@@ -83,7 +84,7 @@ class GroupsPresenter extends ASuperAdminSettingsPresenter {
         return $grid;
     }
 
-    public function handleListUsers() {
+    public function renderListUsers() {
         $groupId = $this->httpRequest->get('groupId');
         if($groupId === null) {
             throw new RequiredAttributeIsNotSetException('groupId');
@@ -96,19 +97,13 @@ class GroupsPresenter extends ASuperAdminSettingsPresenter {
             $this->redirect($this->createURL('list'));
         }
 
-        $this->saveToPresenterCache('groupName', SystemGroups::toString($group->title));
-
         $links = [
             LinkBuilder::createSimpleLink('&larr; Back', $this->createURL('list'), 'link'),
             LinkBuilder::createSimpleLink('Add user', $this->createURL('addUserForm', ['groupId' => $groupId]), 'link')
         ];
 
-        $this->saveToPresenterCache('links', implode('&nbsp;&nbsp;', $links));
-    }
-
-    public function renderListUsers() {
-        $this->template->links = $this->loadFromPresenterCache('links');
-        $this->template->group_name = $this->loadFromPresenterCache('groupName');
+        $this->template->links = LinkHelper::createLinksFromArray($links);
+        $this->template->group_name = SystemGroups::toString($group->title);
     }
 
     protected function createComponentGroupUsersGrid(HttpRequest $request) {
@@ -166,57 +161,50 @@ class GroupsPresenter extends ASuperAdminSettingsPresenter {
             }
 
             $this->redirect($this->createURL('listUsers', ['groupId' => $groupId]));
-        } else {
-            try {
-                $group = $this->app->groupManager->getGroupById($groupId);
-            } catch(AException $e) {
-                $this->flashMessage('This group does not exist.', 'error', 10);
-                $this->redirect($this->createURL('list'));
-            }
-    
-            $this->saveToPresenterCache('groupName', $group->title);
-    
-            $links = [
-                LinkBuilder::createSimpleLink('&larr; Back', $this->createURL('listUsers', ['groupId' => $groupId]), 'link')
-            ];
-    
-            $this->saveToPresenterCache('links', $links);
-    
-            $arb = new AjaxRequestBuilder();
-            $arb->setAction($this, 'searchUsersForAddUserForm')
-                ->setMethod()
-                ->setHeader(['groupId' => '_groupId', 'query' => '_query'])
-                ->setFunctionName('searchUsersAsync')
-                ->setFunctionArguments(['_groupId', '_query'])
-                ->addWhenDoneOperation('
-                    if(obj.users.length == 0) {
-                        alert("No users found.");
-                    } else {
-                        $("#user").html(obj.users);
-                        $("#formSubmit").removeAttr("disabled");
-                    }
-                ')
-            ;
-    
-            $this->addScript($arb);
-            $this->addScript('
-                async function searchUsers(groupId) {
-                    const query = $("#username").val();
-
-                    if(!query) {
-                        alert("No username entered.");
-                    } else {
-                        await searchUsersAsync(groupId, query);
-                    }
-                }
-            ');
         }
     }
 
     public function renderAddUserForm() {
-        $this->template->group_title = $this->loadFromPresenterCache('groupName');
-        $this->template->links = $this->loadFromPresenterCache('links');
-        $this->template->form = $this->loadFromPresenterCache('form');
+        $groupId = $this->httpRequest->get('groupId');
+
+        try {
+            $group = $this->app->groupManager->getGroupById($groupId);
+        } catch(AException $e) {
+            $this->flashMessage('This group does not exist.', 'error', 10);
+            $this->redirect($this->createURL('list'));
+        }
+
+        $arb = new AjaxRequestBuilder();
+        $arb->setAction($this, 'searchUsersForAddUserForm')
+            ->setMethod()
+            ->setHeader(['groupId' => '_groupId', 'query' => '_query'])
+            ->setFunctionName('searchUsersAsync')
+            ->setFunctionArguments(['_groupId', '_query'])
+            ->addWhenDoneOperation('
+                if(obj.users.length == 0) {
+                    alert("No users found.");
+                } else {
+                    $("#user").html(obj.users);
+                    $("#formSubmit").removeAttr("disabled");
+                }
+            ')
+        ;
+
+        $this->addScript($arb);
+        $this->addScript('
+            async function searchUsers(groupId) {
+                const query = $("#username").val();
+
+                if(!query) {
+                    alert("No username entered.");
+                } else {
+                    await searchUsersAsync(groupId, query);
+                }
+            }
+        ');
+
+        $this->template->group_title = $group->title;
+        $this->template->links = LinkBuilder::createSimpleLink('&larr; Back', $this->createURL('listUsers', ['groupId' => $groupId]), 'link');
     }
 
     protected function createComponentAddUserForm(HttpRequest $request) {

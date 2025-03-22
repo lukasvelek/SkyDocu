@@ -9,6 +9,7 @@ use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
 use App\Helpers\DateTimeFormatHelper;
+use App\Helpers\LinkHelper;
 use App\Lib\Forms\Reducers\UserOutOfOfficeFormReducer;
 use App\UI\LinkBuilder;
 
@@ -77,7 +78,7 @@ class UserPresenter extends AUserPresenter {
             $links[] = LinkBuilder::createSimpleLink('Change theme', $this->createURL('changeThemeForm', ['userId' => $userId]), 'link');
         }
 
-        $this->saveToPresenterCache('links', implode('&nbsp;&nbsp;', $links));
+        $this->saveToPresenterCache('links', LinkHelper::createLinksFromArray($links));
     }
 
     public function renderProfile() {

@@ -20,6 +20,7 @@ use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
 use App\Exceptions\RequiredAttributeIsNotSetException;
 use App\Helpers\DateTimeFormatHelper;
+use App\Helpers\LinkHelper;
 use App\Managers\Container\FileStorageManager;
 use App\Managers\EntityManager;
 use App\Repositories\Container\FileStorageRepository;
@@ -148,21 +149,21 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
             }
 
             $this->redirect($this->createURL('status', ['containerId' => $containerId]));
-        } else {
-            $links = [];
-
-            $container = $this->app->containerManager->getContainerById($containerId);
-
-            if($container->getStatus() != ContainerStatus::REQUESTED) {
-                $links[] = LinkBuilder::createSimpleLink('Show history', $this->createURL('listStatusHistory', ['containerId' => $this->httpRequest->get('containerId')]), 'link');
-            }
-
-            $this->saveToPresenterCache('links', $links);
         }
     }
 
     public function renderStatus() {
-        $this->template->links = $this->loadFromPresenterCache('links');
+        $containerId = $this->httpRequest->get('containerId');
+
+        $links = [];
+
+        $container = $this->app->containerManager->getContainerById($containerId);
+
+        if($container->getStatus() != ContainerStatus::REQUESTED) {
+            $links[] = LinkBuilder::createSimpleLink('Show history', $this->createURL('listStatusHistory', ['containerId' => $this->httpRequest->get('containerId')]), 'link');
+        }
+
+        $this->template->links = LinkHelper::createLinksFromArray($links);
     }
 
     protected function createComponentContainerStatusForm(HttpRequest $request) {
@@ -567,8 +568,27 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
         return $form;
     }
 
-    public function handleInvites() {
+    public function renderInvites() {
+        $this->addScript('
+            async function copyToClipboard(_link, _text) {
+                var copyText = $("#" + _link).html();
+
+                copyText = copyText.replaceAll("&amp;", "&");
+
+                navigator.clipboard.writeText(copyText);
+
+                $("#" + _text).html("Copied to clipboard!");
+
+                await sleep(1000);
+
+                $("#" + _text).html("Copy to clipboard");
+            }
+        ');
+
         $containerId = $this->httpRequest->get('containerId');
+        if($containerId === null) {
+            throw new RequiredAttributeIsNotSetException('containerId');
+        }
 
         try {
             $invite = $this->app->containerInviteManager->getInviteForContainer($containerId);
@@ -595,27 +615,8 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
             'Invite link valid until: ' . DateTimeFormatHelper::formatDateToUserFriendly($invite->dateValid),
             LinkBuilder::createSimpleLink('Regenerate invite link', $this->createURL('generateInviteLink', ['containerId' => $containerId, 'regenerate' => '1', 'oldInviteId' => $invite->inviteId]), 'link')
         ];
-        $this->saveToPresenterCache('links', implode('&nbsp;|&nbsp;', $links));
 
-        $this->addScript('
-            async function copyToClipboard(_link, _text) {
-                var copyText = $("#" + _link).html();
-
-                copyText = copyText.replaceAll("&amp;", "&");
-
-                navigator.clipboard.writeText(copyText);
-
-                $("#" + _text).html("Copied to clipboard!");
-
-                await sleep(1000);
-
-                $("#" + _text).html("Copy to clipboard");
-            }
-        ');
-    }
-
-    public function renderInvites() {
-        $this->template->links = $this->loadFromPresenterCache('links');
+        $this->template->links = LinkHelper::createLinksFromArray($links);
     }
 
     protected function createComponentContainerInvitesGrid(HttpRequest $request) {
@@ -692,18 +693,15 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
         return $grid;
     }
 
-    public function handleInvitesWithoutGrid() {
+    public function renderInvitesWithoutGrid() {
         $containerId = $this->httpRequest->get('containerId');
         if($containerId === null) {
             throw new RequiredAttributeIsNotSetException('containerId');
         }
 
         $inviteLink = LinkBuilder::createSimpleLink('Generate invite link', $this->createURL('generateInviteLink', ['containerId' => $containerId]), 'link');
-        $this->saveToPresenterCache('links', implode('&nbsp;&nbsp;', [$inviteLink]));
-    }
 
-    public function renderInvitesWithoutGrid() {
-        $this->template->links = $this->loadFromPresenterCache('links');
+        $this->template->links = $inviteLink;
     }
 
     public function handleGenerateInviteLink() {
@@ -864,15 +862,8 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
         return $grid;
     }
 
-    public function handleProcesses() {
-        $links = [
-            LinkBuilder::createSimpleLink('Add process', $this->createURL('addProcessForm', ['containerId' => $this->httpRequest->get('containerId')]), 'link')
-        ];
-        $this->saveToPresenterCache('links', $links);
-    }
-
     public function renderProcesses() {
-        $this->template->links = $this->loadFromPresenterCache('links');
+        $this->template->links = LinkBuilder::createSimpleLink('Add process', $this->createURL('addProcessForm', ['containerId' => $this->httpRequest->get('containerId')]), 'link');
     }
 
     protected function createComponentContainerProcessesGrid(HttpRequest $request) {

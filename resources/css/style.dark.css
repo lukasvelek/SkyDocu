@@ -402,7 +402,7 @@ a.widget-title {
 
     text-decoration: none;
 
-    color: black;
+    color: rgb(200, 200, 200);
 }
 
 a.widget-title:hover {

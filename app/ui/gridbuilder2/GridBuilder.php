@@ -710,13 +710,15 @@ class GridBuilder extends AComponent {
             $lastPageCount = $totalCount;
         }
 
+        $firstPageCount = $this->resultLimit * $this->gridPage + 1;
+
         // If the grid is empty, no page exists
         $displayGridPage = $this->gridPage;
         if($lastPage > 0) {
             $displayGridPage++;
         }
 
-        $text = 'Page ' . $displayGridPage . ' of ' . $lastPage . ' (' . ($this->resultLimit * $this->gridPage) . ' - ' . $lastPageCount . ')';
+        $text = 'Page ' . $displayGridPage . ' of ' . $lastPage . ' (' . $firstPageCount . ' - ' . $lastPageCount . ')';
 
         if($isSkeleton) {
             $text = '<div id="skeletonTextAnimation">' . $text . '</div>';

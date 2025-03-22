@@ -2,6 +2,11 @@
 
 namespace App\Constants;
 
+/**
+ * SessionNames contains names of all session variables used in the application
+ * 
+ * @author Lukas Velek
+ */
 class SessionNames {
     public const USER_ID = 'user_id';
     public const USERNAME = 'username';

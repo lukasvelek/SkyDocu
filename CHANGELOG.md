@@ -12,6 +12,7 @@ Previously changelog for versions `1.0`-`1.4` has been located in README.md. How
 
 ## SkyDocu `1.5` (__WIP__)
 - Added _Requested containers_ metric to superadministration Container statistics widget
+- Code cleanup
 
 ## SkyDocu `1.4` (03/22/2025)
 - In-container multiple database support

@@ -20,7 +20,7 @@ class ArchiveFoldersPresenter extends AAdminPresenter {
         $this->setArchive();
     }
 
-    public function handleList() {
+    public function renderList() {
         $links = [];
 
         $newFolderLink = LinkBuilder::createSimpleLink('New folder', $this->createURL('newFolderForm'), 'link');
@@ -54,13 +54,8 @@ class ArchiveFoldersPresenter extends AAdminPresenter {
         $folderPath = implode(' > ', $folderPathArray);
         $links[] = $newFolderLink;
 
-        $this->saveToPresenterCache('links', $links);
-        $this->saveToPresenterCache('folderPath', $folderPath);
-    }
-
-    public function renderList() {
-        $this->template->links = $this->loadFromPresenterCache('links');
-        $this->template->folder_path = $this->loadFromPresenterCache('folderPath');
+        $this->template->links = $links;
+        $this->template->folder_path = $folderPath;
     }
 
     protected function createComponentArchiveFoldersGrid(HttpRequest $request) {
@@ -291,20 +286,20 @@ class ArchiveFoldersPresenter extends AAdminPresenter {
             }
 
             $this->redirect($this->createURL('list'));
-        } else {
-            $backUrlParams = [];
-            if(!$this->archiveManager->isArchiveFolderRootFolder($folderId)) {
-                $folder = $this->archiveManager->getArchiveFolderById($folderId);
-
-                $backUrlParams['folderId'] = $folder->parentFolderId;
-            }
-
-            $this->saveToPresenterCache('links', $this->createBackUrl('list', $backUrlParams));
         }
     }
 
     public function renderFinalArchiveForm() {
-        $this->template->links = $this->loadFromPresenterCache('links');
+        $folderId = $this->httpRequest->get('folderId');
+
+        $backUrlParams = [];
+        if(!$this->archiveManager->isArchiveFolderRootFolder($folderId)) {
+            $folder = $this->archiveManager->getArchiveFolderById($folderId);
+
+            $backUrlParams['folderId'] = $folder->parentFolderId;
+        }
+
+        $this->template->links = $this->createBackUrl('list', $backUrlParams);;
     }
     
     protected function createComponentFinalArchiveFolderForm(HttpRequest $request) {

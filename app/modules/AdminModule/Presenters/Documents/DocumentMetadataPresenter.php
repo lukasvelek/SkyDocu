@@ -10,6 +10,7 @@ use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
 use App\Exceptions\RequiredAttributeIsNotSetException;
+use App\Helpers\LinkHelper;
 use App\UI\GridBuilder2\Action;
 use App\UI\GridBuilder2\Cell;
 use App\UI\GridBuilder2\Row;
@@ -23,16 +24,12 @@ class DocumentMetadataPresenter extends AAdminPresenter {
         $this->setDocuments();
     }
 
-    public function handleList() {
+    public function renderList() {
         $links = [
             LinkBuilder::createSimpleLink('New metadata', $this->createURL('newMetadataForm'), 'link')
         ];
 
-        $this->saveToPresenterCache('links', implode('&nbsp;&nbsp;', $links));
-    }
-
-    public function renderList() {
-        $this->template->links = $this->loadFromPresenterCache('links');
+        $this->template->links = LinkHelper::createLinksFromArray($links);
     }
 
     protected function createComponentMetadataGrid() {
@@ -255,7 +252,7 @@ class DocumentMetadataPresenter extends AAdminPresenter {
         return $form;
     }
 
-    public function handleListFolderRights() {
+    public function renderListFolderRights() {
         $metadataId = $this->httpRequest->get('metadataId');
         if($metadataId === null) {
             throw new RequiredAttributeIsNotSetException('metadataId');
@@ -266,11 +263,7 @@ class DocumentMetadataPresenter extends AAdminPresenter {
             LinkBuilder::createSimpleLink('Add folder', $this->createURL('newFolderRightForm', ['metadataId' => $metadataId]), 'link')
         ];
 
-        $this->saveToPresenterCache('links', implode('&nbsp;&nbsp;', $links));
-    }
-
-    public function renderListFolderRights() {
-        $this->template->links = $this->loadFromPresenterCache('links');
+        $this->template->links = LinkHelper::createLinksFromArray($links);
     }
 
     protected function createComponentMetadataFolderRightsGrid(HttpRequest $request) {
@@ -398,19 +391,18 @@ class DocumentMetadataPresenter extends AAdminPresenter {
         return $form;
     }
 
-    public function handleListEnumValues() {
+    public function renderListEnumValues() {
         $metadataId = $this->httpRequest->get('metadataId');
+        if($metadataId === null) {
+            throw new RequiredAttributeIsNotSetException('metadataId');
+        }
 
         $links = [
             $this->createBackUrl('list'),
             LinkBuilder::createSimpleLink('New value', $this->createURL('newEnumValueForm', ['metadataId' => $metadataId]), 'link')
         ];
 
-        $this->saveToPresenterCache('links', implode('&nbsp;&nbsp;', $links));
-    }
-
-    public function renderListEnumValues() {
-        $this->template->links = $this->loadFromPresenterCache('links');
+        $this->template->links = LinkHelper::createLinksFromArray($links);
     }
 
     protected function createComponentMetadataEnumValuesGrid(HttpRequest $request) {

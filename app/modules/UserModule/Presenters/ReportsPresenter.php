@@ -23,30 +23,20 @@ class ReportsPresenter extends AUserPresenter {
         return $select;
     }
 
-    public function handleShowReport() {
-        $name = $this->httpRequest->get('name') ?? $this->httpRequest->post('name');
+    public function renderShowReport() {
+        $name = $this->httpRequest->get('name');
         if($name === null) {
             throw new RequiredAttributeIsNotSetException('name');
         }
-        $view = $this->httpRequest->get('view') ?? $this->httpRequest->post('view');
+        $view = $this->httpRequest->get('view');
         if($view === null) {
             throw new RequiredAttributeIsNotSetException('view');
         }
 
         $pageTitle = ucfirst($view) . ' ' . StandaloneProcesses::toString($name) . ' requests';
 
-        $this->saveToPresenterCache('pageTitle', $pageTitle);
-
-        $links = [
-            $this->createBackUrl('list')
-        ];
-
-        $this->saveToPresenterCache('links', implode('&nbsp;&nbsp;', $links));
-    }
-
-    public function renderShowReport() {
-        $this->template->page_title = $this->loadFromPresenterCache('pageTitle');
-        $this->template->links = $this->loadFromPresenterCache('links');
+        $this->template->page_title = $pageTitle;
+        $this->template->links = $this->createBackUrl('list');
     }
 
     protected function createComponentReportGrid(HttpRequest $request) {

@@ -279,6 +279,7 @@ abstract class APresenter extends AGUICore {
      * 
      * @param string $key Data key
      * @param mixed $value Data value
+     * @deprecated
      */
     protected function saveToPresenterCache(string $key, mixed $value) {
         $this->presenterCache->set($key, $value);
@@ -289,6 +290,7 @@ abstract class APresenter extends AGUICore {
      * 
      * @param string $key Data key
      * @return mixed Data value or null
+     * @deprecated
      */
     protected function loadFromPresenterCache(string $key) {
         return $this->presenterCache->get($key);

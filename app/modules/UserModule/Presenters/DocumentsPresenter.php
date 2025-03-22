@@ -19,6 +19,7 @@ use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
 use App\Exceptions\RequiredAttributeIsNotSetException;
 use App\Helpers\DateTimeFormatHelper;
+use App\Helpers\LinkHelper;
 use App\Helpers\UnitConversionHelper;
 use App\UI\HTML\HTML;
 use App\UI\LinkBuilder;
@@ -56,20 +57,18 @@ class DocumentsPresenter extends AUserPresenter {
                 $this->redirect($this->createURL('list', ['folderId' => $this->folderManager->getDefaultFolder()->folderId]));
             }
         }
-
-        if($this->currentFolderId !== null) {
-            $folder = $this->folderManager->getFolderById($this->currentFolderId);
-
-            $this->saveToPresenterCache('folderTitle', $folder->title);
-        }
     }
 
     public function renderList() {
-        $this->template->sidebar = $this->loadFromPresenterCache('sidebar');
+        $folder = '';
+        if($this->currentFolderId !== null) {
+            $folder = $this->folderManager->getFolderById($this->currentFolderId)->title;
+        }
+
         $this->template->links = [
             LinkBuilder::createSimpleLink('New document', $this->createFullURL('User:CreateDocument', 'form', ['folderId' => $this->currentFolderId]), 'link')
         ];
-        $this->template->folder_title = $this->loadFromPresenterCache('folderTitle');
+        $this->template->folder_title = $folder;
     }
 
     protected function createComponentDocumentsGrid(HttpRequest $request) {
@@ -254,7 +253,7 @@ class DocumentsPresenter extends AUserPresenter {
             $links[] = LinkBuilder::createSimpleLink('Upload a file', $this->createURL('fileUploadForm', ['documentId' => $document->documentId]), 'link');
         }
 
-        $this->saveToPresenterCache('links', implode('&nbsp;&nbsp;', $links));
+        $this->saveToPresenterCache('links', LinkHelper::createLinksFromArray($links));
     }
 
     public function renderInfo() {

@@ -15,6 +15,7 @@ use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
 use App\Exceptions\RequiredAttributeIsNotSetException;
 use App\Helpers\DateTimeFormatHelper;
+use App\Helpers\LinkHelper;
 use App\Helpers\ProcessHelper;
 use App\UI\HTML\HTML;
 use App\UI\LinkBuilder;
@@ -250,7 +251,7 @@ class ProcessesPresenter extends AUserPresenter {
             ];
         }
 
-        $this->saveToPresenterCache('links', implode('&nbsp;&nbsp;', $links));
+        $this->saveToPresenterCache('links', LinkHelper::createLinksFromArray($links));
 
         $comments = '';
         if(StandaloneProcesses::isCommentingEnabled($process->type)) {

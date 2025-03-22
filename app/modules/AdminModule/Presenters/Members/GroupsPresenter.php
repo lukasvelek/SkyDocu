@@ -9,6 +9,7 @@ use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
 use App\Exceptions\RequiredAttributeIsNotSetException;
+use App\Helpers\LinkHelper;
 use App\UI\GridBuilder2\Cell;
 use App\UI\GridBuilder2\Row;
 use App\UI\HTML\HTML;
@@ -22,9 +23,7 @@ class GroupsPresenter extends AAdminPresenter {
     }
 
     public function renderList() {
-        $this->template->links = [
-            LinkBuilder::createSimpleLink('New group', $this->createURL('newForm'), 'link')
-        ];
+        $this->template->links = LinkBuilder::createSimpleLink('New group', $this->createURL('newForm'), 'link');
     }
 
     protected function createComponentGroupsGrid(HttpRequest $request) {
@@ -68,8 +67,11 @@ class GroupsPresenter extends AAdminPresenter {
         return $grid;
     }
 
-    public function handleListMembers() {
+    public function renderListMembers() {
         $groupId = $this->httpRequest->get('groupId');
+        if($groupId === null) {
+            throw new RequiredAttributeIsNotSetException('groupId');
+        }
         $group = $this->groupRepository->getGroupById($groupId);
 
         $links = [
@@ -79,12 +81,8 @@ class GroupsPresenter extends AAdminPresenter {
         if($group['title'] != 'All users') {
             $links[] = LinkBuilder::createSimpleLink('Add member', $this->createURL('addMemberForm', ['groupId' => $groupId]), 'link');
         }
-        
-        $this->saveToPresenterCache('links', implode('&nbsp;&nbsp;', $links));
-    }
 
-    public function renderListMembers() {
-        $this->template->links = $this->loadFromPresenterCache('links');
+        $this->template->links = LinkHelper::createLinksFromArray($links);
     }
 
     protected function createComponentGroupMembersGrid(HttpRequest $request) {

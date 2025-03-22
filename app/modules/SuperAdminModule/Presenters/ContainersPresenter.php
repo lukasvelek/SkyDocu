@@ -10,6 +10,7 @@ use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
 use App\Helpers\GridHelper;
+use App\Helpers\LinkHelper;
 use App\UI\GridBuilder2\Action;
 use App\UI\GridBuilder2\Row;
 use App\UI\HTML\HTML;
@@ -20,7 +21,7 @@ class ContainersPresenter extends ASuperAdminPresenter {
         parent::__construct('ContainersPresenter', 'Containers');
     }
 
-    public function handleList() {
+    public function renderList() {
         $links = [];
 
         if($this->app->groupManager->isUserMemberOfContainerManagers($this->getUserId())) {
@@ -29,11 +30,7 @@ class ContainersPresenter extends ASuperAdminPresenter {
             $links[] = LinkBuilder::createSimpleLink('New container request', $this->createURL('newContainerRequestForm'), 'link');
         }
 
-        $this->saveToPresenterCache('links', implode('&nbsp;&nbsp;', $links));
-    }
-
-    public function renderList() {
-        $this->template->links = $this->loadFromPresenterCache('links');
+        $this->template->links = LinkHelper::createLinksFromArray($links);
     }
 
     protected function createComponentContainersGrid(HttpRequest $request) {
@@ -123,9 +120,7 @@ class ContainersPresenter extends ASuperAdminPresenter {
     }
 
     public function renderNewContainerForm() {
-        $this->template->links = [
-            LinkBuilder::createSimpleLink('&larr; Back', $this->createURL('list'), 'link')
-        ];
+        $this->template->links = LinkBuilder::createSimpleLink('&larr; Back', $this->createURL('list'), 'link');
     }
 
     protected function createComponentForm(HttpRequest $request) {

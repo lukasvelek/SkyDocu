@@ -12,6 +12,7 @@ use App\Lib\Processes\ProcessFactory;
 use App\Managers\Container\ArchiveManager;
 use App\Managers\Container\DocumentManager;
 use App\Managers\Container\EnumManager;
+use App\Managers\Container\ExternalSystemsManager;
 use App\Managers\Container\FileStorageManager;
 use App\Managers\Container\FolderManager;
 use App\Managers\Container\GridManager;
@@ -23,6 +24,8 @@ use App\Managers\EntityManager;
 use App\Repositories\Container\ArchiveRepository;
 use App\Repositories\Container\DocumentClassRepository;
 use App\Repositories\Container\DocumentRepository;
+use App\Repositories\Container\ExternalSystemLogRepository;
+use App\Repositories\Container\ExternalSystemsRepository;
 use App\Repositories\Container\FileStorageRepository;
 use App\Repositories\Container\FolderRepository;
 use App\Repositories\Container\GridRepository;
@@ -50,6 +53,8 @@ abstract class AContainerPresenter extends APresenter {
     protected ProcessRepository $processRepository;
     protected ArchiveRepository $archiveRepository;
     protected FileStorageRepository $fileStorageRepository;
+    protected ExternalSystemsRepository $externalSystemsRepository;
+    protected ExternalSystemLogRepository $externalSystemLogRepository;
     
     protected EntityManager $entityManager;
     protected FolderManager $folderManager;
@@ -62,6 +67,7 @@ abstract class AContainerPresenter extends APresenter {
     protected StandaloneProcessManager $standaloneProcessManager;
     protected ArchiveManager $archiveManager;
     protected FileStorageManager $fileStorageManager;
+    protected ExternalSystemsManager $externalSystemsManager;
 
     protected DocumentBulkActionAuthorizator $documentBulkActionAuthorizator;
     protected GroupStandardOperationsAuthorizator $groupStandardOperationsAuthorizator;
@@ -159,6 +165,10 @@ abstract class AContainerPresenter extends APresenter {
                 'groupManager',
                 'folderManager'
             ],
+            'externalSystemsManager' => [
+                'externalSystemsRepository',
+                'externalSystemLogRepository'
+            ]
         ];
 
         $notFound = [];

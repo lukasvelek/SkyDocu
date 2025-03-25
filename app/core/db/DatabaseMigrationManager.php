@@ -53,6 +53,7 @@ class DatabaseMigrationManager {
      * Runs all migrations
      * 
      * @param bool $throwExceptions True if exceptions should be thrown
+     * @return int Database schema
      */
     public function runMigrations(bool $throwExceptions = false) {
         // get migrations
@@ -64,9 +65,12 @@ class DatabaseMigrationManager {
         $this->filterOnlyUpstreamMigrations($migrations);
         $this->logger->info(sprintf('Found %d migrations that must be run.', count($migrations)), __METHOD__);
 
+        $dbSchema = 0;
         foreach($migrations as $migration) {
-            $this->runSingleMigration($migration, $throwExceptions);
+            $dbSchema = $this->runSingleMigration($migration, $throwExceptions);
         }
+
+        return $dbSchema;
     }
 
     /**
@@ -160,6 +164,7 @@ class DatabaseMigrationManager {
      * 
      * @param string $migrationFilePath File path of the migration
      * @param bool $throwExceptions True if exceptions should be thrown
+     * @return int Migration number
      */
     private function runSingleMigration(string $migrationFilePath, bool $throwExceptions) {
         require_once($migrationFilePath);
@@ -249,6 +254,8 @@ class DatabaseMigrationManager {
         } catch(AException $e) {
             throw $e;
         }
+
+        return (int)$migrationNumber;
     }
 
     /**

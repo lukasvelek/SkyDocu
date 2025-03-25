@@ -131,7 +131,11 @@ class ContainerManager extends AManager {
         $migrationManager = new DatabaseMigrationManager($this->masterConn, $conn, $this->logger);
         $migrationManager->setContainer($containerId);
 
-        $migrationManager->runMigrations(true);
+        $dbSchema = $migrationManager->runMigrations(true);
+
+        if($this->containerDatabaseManager->updateContainerDatabase($containerId, $dbName, ['dbSchema' => $dbSchema])) {
+            throw new GeneralException('Could not update database schema after migrations.');
+        }
     }
 
     /**

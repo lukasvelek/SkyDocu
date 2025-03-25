@@ -139,6 +139,19 @@ class ContainerDatabaseManager extends AManager {
     }
 
     /**
+     * Updates container database
+     * 
+     * @param string $containerId Container ID
+     * @param string $databaseName Database name
+     * @param array $data Data
+     */
+    public function updateContainerDatabase(string $containerId, string $databaseName, array $data) {
+        if(!$this->containerDatabaseRepository->updateContainerDatabase($containerId, $databaseName, $data)) {
+            throw new GeneralException('Database error.');
+        }
+    }
+
+    /**
      * Inserts a new container database table
      * 
      * @param string $containerId Container ID

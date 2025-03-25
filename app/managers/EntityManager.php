@@ -57,6 +57,8 @@ class EntityManager extends AManager {
     public const C_DOCUMENT_FILE_RELATION = 'document_file_relation';
     public const C_PROCESS_CUSTOM_METADATA_LIST_VALUES = 'process_metadata_list_values';
     public const C_PROCESS_CUSTOM_METADATA = 'process_metadata';
+    public const C_EXTERNAL_SYSTEMS = 'external_systems';
+    public const C_EXTERNAL_SYSTEM_LOG = 'external_system_log';
 
     private const __MAX__ = 100;
 
@@ -179,7 +181,9 @@ class EntityManager extends AManager {
             self::C_FILE_STORAGE => 'fileId',
             self::C_DOCUMENT_FILE_RELATION => 'relationId',
             self::C_PROCESS_CUSTOM_METADATA_LIST_VALUES => 'valueId',
-            self::C_PROCESS_CUSTOM_METADATA => 'metadataId'
+            self::C_PROCESS_CUSTOM_METADATA => 'metadataId',
+            self::C_EXTERNAL_SYSTEMS => 'systemId',
+            self::C_EXTERNAL_SYSTEM_LOG => 'entryId'
         };
     }
 

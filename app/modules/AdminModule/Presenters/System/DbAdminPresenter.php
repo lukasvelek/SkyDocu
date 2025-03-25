@@ -2,7 +2,6 @@
 
 namespace App\Modules\AdminModule;
 
-use App\Core\DatabaseInstaller;
 use App\Core\DB\DatabaseRow;
 use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
@@ -11,7 +10,6 @@ use App\Exceptions\GeneralException;
 use App\Exceptions\RequiredAttributeIsNotSetException;
 use App\Helpers\ContainerCreationHelper;
 use App\Helpers\LinkHelper;
-use App\Managers\EntityManager;
 use App\UI\GridBuilder2\Action;
 use App\UI\GridBuilder2\Row;
 use App\UI\HTML\HTML;

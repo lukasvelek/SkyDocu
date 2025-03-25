@@ -5,7 +5,6 @@ namespace App\Core;
 use App\Authenticators\UserAuthenticator;
 use App\Constants\SessionNames;
 use App\Core\Caching\CacheFactory;
-use App\Core\Caching\CacheNames;
 use App\Core\DB\DatabaseManager;
 use App\Core\Http\HttpRequest;
 use App\Entities\UserEntity;
@@ -372,7 +371,7 @@ class Application {
      * 
      * @return HttpRequest HttpRequest instance
      */
-    private function getRequest() {
+    public function getRequest() {
         $request = new HttpRequest();
 
         foreach($_GET as $k => $v) {

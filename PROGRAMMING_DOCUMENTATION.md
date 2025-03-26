@@ -173,6 +173,13 @@ When the service is run (either from UI or by scheduler) the master is started. 
         - userId
         - properties
 
+- api/v1/documents/get/ - Get single document
+    - Required:
+        - containerId
+        - token
+        - documentId
+        - properties
+
 ## Database
 
 ### Database table schema

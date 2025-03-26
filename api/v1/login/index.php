@@ -11,7 +11,7 @@ try {
     $app = new Application();
 
     $apiLogin = new ApiLogin($app);
-    $apiLogin->run();
+    echo $apiLogin->run()->getResult();
 } catch(AException $e) {
     echo $e->getMessage();
 }

@@ -105,7 +105,7 @@ class DatabaseMigrationManager {
                 $className = FileManager::getFilenameFromPath($migration);
 
                 $migrationNameParts = explode('_', $className);
-                $migrationNumber = $migrationNameParts[count($migrationNameParts) - 2];
+                $migrationNumber = $migrationNameParts[2];
 
                 if(!$skip) {
                     $filteredMigrations[] = $migration;
@@ -175,8 +175,15 @@ class DatabaseMigrationManager {
         $this->logger->info(sprintf('Running migration \'%s\' located in (\'%s\').', $className, $migrationFilePath), __METHOD__);
 
         $migrationNameParts = explode('_', $fileName);
-        $migrationName = $migrationNameParts[count($migrationNameParts) - 1];
-        $migrationNumber = $migrationNameParts[count($migrationNameParts) - 2];
+        $migrationNumber = $migrationNameParts[2];
+        $migrationName = '';
+
+        $tmp = [];
+        for($i = 3; $i < (count($migrationNameParts) - 1); $i++) {
+            $tmp[] = $migrationNameParts[$i];
+        }
+
+        $migrationName = implode('_', $tmp);
 
         try {
             $fullClassName = '\\App\\Data\\Db\\Migrations\\' . ($this->containerId !== null ? 'Containers\\' : '') . $className;

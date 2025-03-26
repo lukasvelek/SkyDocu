@@ -2,6 +2,8 @@
 
 namespace App\Modules\AdminModule;
 
+use App\Constants\Container\ExternalSystemLogActionTypes;
+use App\Constants\Container\ExternalSystemLogObjectTypes;
 use App\Core\DB\DatabaseRow;
 use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
@@ -100,7 +102,7 @@ class ExternalSystemsPresenter extends AAdminPresenter {
             try {
                 $this->externalSystemsRepository->beginTransaction(__METHOD__);
 
-                $this->externalSystemsManager->createNewExternalSystem($fr->title, $fr->description, $this->getUserId());
+                $this->externalSystemsManager->createNewExternalSystem($fr->title, $fr->description, $fr->password);
 
                 $this->externalSystemsRepository->commit($this->getUserId(), __METHOD__);
 
@@ -130,17 +132,66 @@ class ExternalSystemsPresenter extends AAdminPresenter {
         $form->addTextArea('description', 'Description:')
             ->setRequired();
 
+        $form->addPasswordInput('password', 'Password:')
+            ->setRequired();
+
         $form->addSubmit('Create');
 
         return $form;
     }
 
     public function renderLog() {
+        $systemId = $this->httpRequest->get('systemId');
+        if($systemId === null) {
+            throw new RequiredAttributeIsNotSetException('systemId');
+        }
 
+        $this->template->links = $this->createBackUrl('list');
+    }
+
+    protected function createComponentContainerExternalSystemLogGrid(HttpRequest $request) {
+        $systemId = $request->get('systemId');
+
+        $grid = $this->componentFactory->getGridBuilder($this->containerId);
+
+        $qb = $this->externalSystemLogRepository->composeQueryForExternalSystemLog();
+        $qb->andWhere('systemId = ?', [$systemId])
+            ->orderBy('dateCreated', 'DESC');
+
+        $grid->createDataSourceFromQueryBuilder($qb, 'entryId');
+        $grid->addQueryDependency('systemId', $systemId);
+
+        $grid->addColumnText('message', 'Message');
+        $grid->addColumnConst('actionType', 'Action', ExternalSystemLogActionTypes::class);
+        $grid->addColumnConst('objectType', 'Object', ExternalSystemLogObjectTypes::class);
+        $grid->addColumnDatetime('dateCreated', 'Date created');
+
+        return $grid;
     }
 
     public function renderInfo() {
+        $systemId = $this->httpRequest->get('systemId');
+        if($systemId === null) {
+            throw new RequiredAttributeIsNotSetException('systemId');
+        }
 
+        $texts = [];
+
+        $add = function(string $title, string $text) use (&$texts) {
+            $texts[] = "<p><b>$title:</b> $text</p>";
+        };
+
+        $system = $this->externalSystemsManager->getExternalSystemById($systemId);
+
+        $add('Title', $system->title);
+        $add('Description', $system->description);
+        $add('Is enabled', ($system->isEnabled == true ? 'Yes' : 'No'));
+        $add('Login', $system->login);
+        $add('Password', LinkBuilder::createSimpleLink('Change password', $this->createURL('changePasswordForm', ['systemId' => $systemId]), 'link'));
+
+        $this->template->external_system_basic_info = implode('', $texts);
+
+        $this->template->links = $this->createBackUrl('list');
     }
 
     public function handleChange() {
@@ -169,6 +220,52 @@ class ExternalSystemsPresenter extends AAdminPresenter {
         }
 
         $this->redirect($this->createURL('list'));
+    }
+
+    public function handleChangePasswordForm(?FormRequest $fr = null) {
+        if($fr !== null) {
+            $systemId = $this->httpRequest->get('systemId');
+            if($systemId === null) {
+                throw new RequiredAttributeIsNotSetException('systemId');
+            }
+
+            try {
+                $this->externalSystemsRepository->beginTransaction(__METHOD__);
+
+                $password = password_hash($fr->password, PASSWORD_BCRYPT);
+
+                $this->externalSystemsManager->updateExternalSystem($systemId, ['password' => $password]);
+
+                $this->externalSystemsRepository->commit($this->getUserId(), __METHOD__);
+
+                $this->flashMessage('Successfully changed external system\'s password.', 'success');
+            } catch(AException $e) {
+                $this->externalSystemsRepository->rollback(__METHOD__);
+
+                $this->flashMessage('Could not change external system\'s password.', 'error', 10);
+            }
+
+            $this->redirect($this->createURL('info', ['systemId' => $systemId]));
+        }
+    }
+
+    public function renderChangePasswordForm() {
+        $systemId = $this->httpRequest->get('systemId');
+
+        $this->template->links = $this->createBackUrl('info', ['systemId' => $systemId]);
+    }
+
+    protected function createComponentChangePasswordForm(HttpRequest $request) {
+        $form = $this->componentFactory->getFormBuilder();
+
+        $form->setAction($this->createURL('changePasswordForm', ['systemId' => $request->get('systemId')]));
+
+        $form->addPasswordInput('password', 'Password:')
+            ->setRequired();
+
+        $form->addSubmit('Save');
+
+        return $form;
     }
 }
 

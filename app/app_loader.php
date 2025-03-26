@@ -82,7 +82,7 @@ function sortFilesByPriority(array &$files) {
 function createContainer($files) {
     $data = serialize(['files' => $files, 'created_on' => date('Y-m-d H:i:s')]);
 
-    file_put_contents(CACHE_DIR . 'Container_' . md5(date('Y-m-d')) . '.tmp', $data);
+    @file_put_contents(CACHE_DIR . 'Container_' . md5(date('Y-m-d')) . '.tmp', $data);
 }
 
 /**

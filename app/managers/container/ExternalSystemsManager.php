@@ -2,17 +2,27 @@
 
 namespace App\Managers\Container;
 
+use App\Constants\Container\ExternalSystemLogActionTypes;
+use App\Constants\Container\ExternalSystemLogMessages;
+use App\Constants\Container\ExternalSystemLogObjectTypes;
+use App\Core\Datetypes\DateTime;
+use App\Core\DB\DatabaseRow;
 use App\Core\HashManager;
+use App\Exceptions\AException;
+use App\Exceptions\ApiException;
 use App\Exceptions\GeneralException;
+use App\Exceptions\NonExistingEntityException;
 use App\Logger\Logger;
 use App\Managers\AManager;
 use App\Managers\EntityManager;
 use App\Repositories\Container\ExternalSystemLogRepository;
 use App\Repositories\Container\ExternalSystemsRepository;
+use App\Repositories\Container\ExternalSystemTokenRepository;
 
 class ExternalSystemsManager extends AManager {
     private ExternalSystemsRepository $externalSystemsRepository;
     private ExternalSystemLogRepository $externalSystemLogRepository;
+    private ExternalSystemTokenRepository $externalSystemTokenRepository;
 
     /**
      * Class constructor
@@ -21,12 +31,14 @@ class ExternalSystemsManager extends AManager {
         Logger $logger,
         EntityManager $entityManager,
         ExternalSystemsRepository $externalSystemsRepository,
-        ExternalSystemLogRepository $externalSystemLogRepository
+        ExternalSystemLogRepository $externalSystemLogRepository,
+        ExternalSystemTokenRepository $externalSystemTokenRepository
     ) {
         parent::__construct($logger, $entityManager);
 
         $this->externalSystemsRepository = $externalSystemsRepository;
         $this->externalSystemLogRepository = $externalSystemLogRepository;
+        $this->externalSystemTokenRepository = $externalSystemTokenRepository;
     }
 
     /**
@@ -35,11 +47,11 @@ class ExternalSystemsManager extends AManager {
      * @param string $title Title
      * @param string $description Description
      */
-    public function createNewExternalSystem(string $title, string $description) {
+    public function createNewExternalSystem(string $title, string $description, string $password) {
         $systemId = $this->createId(EntityManager::C_EXTERNAL_SYSTEMS);
 
         $login = $this->createUniqueHashForDb(32, EntityManager::C_EXTERNAL_SYSTEMS, 'login');
-        $password = HashManager::hashPassword($login);
+        $password = HashManager::hashPassword($password);
 
         if(!$this->externalSystemsRepository->insertNewExternalSystem($systemId, $title, $description, $login, $password)) {
             throw new GeneralException('Database error.');
@@ -72,6 +84,127 @@ class ExternalSystemsManager extends AManager {
      */
     public function updateExternalSystem(string $systemId, array $data) {
         if(!$this->externalSystemsRepository->updateExternalSystem($systemId, $data)) {
+            throw new GeneralException('Database error.');
+        }
+    }
+
+    /**
+     * Returns a database row for given system ID
+     * 
+     * @param string $systemId System ID
+     */
+    public function getExternalSystemById(string $systemId): DatabaseRow {
+        $row = $this->externalSystemsRepository->getExternalSystemById($systemId);
+
+        if($row === null) {
+            throw new NonExistingEntityException('External system with ID \'' . $systemId . '\' does not exist.');
+        }
+
+        return DatabaseRow::createFromDbRow($row);
+    }
+
+    /**
+     * Returns available token or throws exception if none exists
+     * 
+     * @param string $systemId System ID
+     */
+    public function getAvailableTokenForExternalSystem(string $systemId): string {
+        $row = $this->externalSystemTokenRepository->getAvailableTokenForExternalSystem($systemId);
+
+        if($row === null) {
+            throw new GeneralException('System has no available token.');
+        }
+
+        return $row['token'];
+    }
+
+    /**
+     * Returns external system by token
+     * 
+     * @param string $token Token
+     */
+    public function getExternalSystemByToken(string $token): string {
+        $row = $this->externalSystemTokenRepository->getSystemByToken($token);
+
+        if($row === null) {
+            throw new GeneralException('Token does not exist or is expired.');
+        }
+
+        return $row['systemId'];
+    }
+
+    /**
+     * Returns external system by login
+     * 
+     * @param string $login Login
+     */
+    public function getExternalSystemByLogin(string $login): DatabaseRow {
+        $row = $this->externalSystemsRepository->getExternalSystemByLogin($login);
+
+        if($row === null) {
+            throw new GeneralException('Bad credentials entered.');
+        }
+
+        return DatabaseRow::createFromDbRow($row);
+    }
+
+    /**
+     * Creates a new token for external system
+     * 
+     * @param string $systemId System ID
+     */
+    public function createNewToken(string $systemId): string {
+        $tokenId = $this->createId(EntityManager::C_EXTERNAL_SYSTEM_TOKENS);
+        $token = HashManager::createHash(256, false);
+        $dateValidUntil = new DateTime();
+        $dateValidUntil->modify('+1h');
+        $dateValidUntil = $dateValidUntil->getResult();
+
+        if(!$this->externalSystemTokenRepository->insertNewExternalSystemToken($tokenId, $systemId, $token, $dateValidUntil)) {
+            throw new GeneralException('Database error.');
+        }
+
+        return $token;
+    }
+
+    /**
+     * Tries to get an existing token or creates a new one
+     * 
+     * @param string $systemId System ID
+     * @param bool $createLogEntry Create log entry
+     */
+    public function createOrGetToken(string $systemId, bool $createLogEntry = true): string {
+        $token = null;
+
+        try {
+            $token = $this->getAvailableTokenForExternalSystem($systemId);
+
+            if($createLogEntry) {
+                $this->createLogEntry($systemId, ExternalSystemLogMessages::GET_EXISTING_TOKEN, ExternalSystemLogActionTypes::LOGIN, ExternalSystemLogObjectTypes::EXTERNAL_SYSTEM);
+            }
+        } catch(AException $e) {
+            $token = $this->createNewToken($systemId);
+
+            if($createLogEntry) {
+                $this->createLogEntry($systemId, ExternalSystemLogMessages::CREATE_NEW_TOKEN, ExternalSystemLogActionTypes::LOGIN, ExternalSystemLogObjectTypes::EXTERNAL_SYSTEM);
+            }
+        }
+
+        return $token;
+    }
+
+    /**
+     * Creates a log entry
+     * 
+     * @param string $systemId System ID
+     * @param string $message Message
+     * @param string $actionType Action type
+     * @param string $objectType Object type
+     */
+    public function createLogEntry(string $systemId, string $message, string $actionType, string $objectType) {
+        $entryId = $this->createId(EntityManager::C_EXTERNAL_SYSTEM_LOG);
+
+        if(!$this->externalSystemLogRepository->insertNewLogEntry($entryId, $systemId, $message, $actionType, $objectType)) {
             throw new GeneralException('Database error.');
         }
     }

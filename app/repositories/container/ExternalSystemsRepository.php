@@ -34,6 +34,28 @@ class ExternalSystemsRepository extends ARepository {
 
         return $qb->fetchBool();
     }
+
+    public function getExternalSystemById(string $systemId) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->select(['*'])
+            ->from('external_systems')
+            ->where('systemId = ?', [$systemId])
+            ->execute();
+
+        return $qb->fetch();
+    }
+
+    public function getExternalSystemByLogin(string $login) {
+        $qb = $this->qb(__METHOD__);
+        
+        $qb->select(['*'])
+            ->from('external_systems')
+            ->where('login = ?', [$login])
+            ->execute();
+
+        return $qb->fetch();
+    }
 }
 
 ?>

@@ -1,0 +1,37 @@
+<?php
+
+namespace App\Data\Db\Migrations\Containers;
+
+use App\Core\DB\ABaseMigration;
+use App\Core\DB\Helpers\TableSchema;
+use App\Core\DB\Helpers\TableSeeding;
+
+class migration_2025_03_26_0003_external_system_tokens extends ABaseMigration {
+    public function up(): TableSchema {
+        $table = $this->getTableSchema();
+
+        $table->create('external_system_tokens')
+            ->primaryKey('tokenId')
+            ->varchar('systemId')
+            ->varchar('token')
+            ->datetime('dateValidUntil')
+            ->datetimeAuto('dateCreated')
+            ->index(['token']);
+
+        return $table;
+    }
+
+    public function down(): TableSchema {
+        $table = $this->getTableSchema();
+
+        return $table;
+    }
+
+    public function seeding(): TableSeeding {
+        $seed = $this->getTableSeeding();
+
+        return $seed;
+    }
+}
+
+?>

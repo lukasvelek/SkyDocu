@@ -26,6 +26,7 @@ use App\Repositories\Container\DocumentClassRepository;
 use App\Repositories\Container\DocumentRepository;
 use App\Repositories\Container\ExternalSystemLogRepository;
 use App\Repositories\Container\ExternalSystemsRepository;
+use App\Repositories\Container\ExternalSystemTokenRepository;
 use App\Repositories\Container\FileStorageRepository;
 use App\Repositories\Container\FolderRepository;
 use App\Repositories\Container\GridRepository;
@@ -55,6 +56,7 @@ abstract class AContainerPresenter extends APresenter {
     protected FileStorageRepository $fileStorageRepository;
     protected ExternalSystemsRepository $externalSystemsRepository;
     protected ExternalSystemLogRepository $externalSystemLogRepository;
+    protected ExternalSystemTokenRepository $externalSystemTokenRepository;
     
     protected EntityManager $entityManager;
     protected FolderManager $folderManager;
@@ -167,7 +169,8 @@ abstract class AContainerPresenter extends APresenter {
             ],
             'externalSystemsManager' => [
                 'externalSystemsRepository',
-                'externalSystemLogRepository'
+                'externalSystemLogRepository',
+                'externalSystemTokenRepository'
             ]
         ];
 

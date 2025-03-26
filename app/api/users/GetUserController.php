@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Api\User;
+namespace App\Api\Users;
 
 use App\Api\ABaseApiClass;
 use App\Core\Http\JsonResponse;
@@ -30,7 +30,7 @@ class GetUserController extends ABaseApiClass {
                 if(in_array($property, ['password', 'loginHash'])) {
                     continue;
                 }
-                
+
                 $results[$property] = $user->$property;
             }
 
@@ -43,7 +43,7 @@ class GetUserController extends ABaseApiClass {
     /**
      * Returns user ID
      */
-    private function getUserId() {
+    private function getUserId(): string {
         $userId = $this->get('userId');
 
         if($userId === null) {
@@ -53,7 +53,10 @@ class GetUserController extends ABaseApiClass {
         return $userId;
     }
 
-    private function getProperties() {
+    /**
+     * Returns properties
+     */
+    private function getProperties(): array {
         $properties = $this->get('properties');
 
         if($properties === null || empty($properties)) {

@@ -158,6 +158,21 @@ Its purpose is to create containers.
 
 When the service is run (either from UI or by scheduler) the master is started. It retrieves all the containers that are meant to be created and starts a slave for each container. Each slave then creates the container itself.
 
+## API
+### API endpoints
+- api/v1/login/ - Login and get token
+    - Required:
+        - login
+        - password
+        - containerId
+
+- api/v1/users/get/ - Get single user
+    - Required:
+        - containerId
+        - token
+        - userId
+        - properties
+
 ## Database
 
 ### Database table schema

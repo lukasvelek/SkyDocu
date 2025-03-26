@@ -1,6 +1,6 @@
 <?php
 
-use App\Api\User\GetUserController;
+use App\Api\Documents\GetDocumentsController;
 use App\Core\Application;
 use App\Exceptions\AException;
 
@@ -10,7 +10,7 @@ require_once('../../../../app/app_loader.php');
 try {
     $app = new Application();
 
-    $controller = new GetUserController($app);
+    $controller = new GetDocumentsController($app);
     echo $controller->run()->getResult();
 } catch(AException $e) {
     echo $e->getMessage();

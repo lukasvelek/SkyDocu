@@ -1,34 +1,21 @@
 <?php
 
-namespace App\Api;
+namespace App\Api\Login;
 
-use App\Authenticators\ExternalSystemAuthenticator;
-use App\Core\Application;
+use App\Api\ABaseApiClass;
 use App\Core\Http\JsonResponse;
 use App\Exceptions\AException;
 use App\Exceptions\ApiException;
-use App\Exceptions\GeneralException;
-use App\Logger\Logger;
-use App\Managers\Container\ExternalSystemsManager;
-use App\Managers\EntityManager;
-use App\Repositories\Container\ExternalSystemLogRepository;
-use App\Repositories\Container\ExternalSystemsRepository;
-use App\Repositories\Container\ExternalSystemTokenRepository;
-use App\Repositories\ContentRepository;
 
 /**
  * API login controller
  * 
  * @author Lukas Velek
  */
-class ApiLogin extends ABaseApiClass {
-    public function __construct(Application $app) {
-        parent::__construct($app);
-    }
-
+class LoginController extends ABaseApiClass {
     public function run(): JsonResponse {
         try {
-            $this->startup($this->getContainerId());
+            $this->startup();
 
             $systemId = $this->externalSystemAuthenticator->auth($this->getLogin(), $this->getPassword());
 
@@ -47,11 +34,7 @@ class ApiLogin extends ABaseApiClass {
      * @throws ApiException
      */
     private function getLogin() {
-        if(!array_key_exists('login', $this->getPostData())) {
-            throw new GeneralException('Login is not set.');
-        }
-
-        $login = $this->getPostData()['login'];
+        $login = $this->get('login');
 
         if($login === null) {
             throw new ApiException('No login entered for authentication.');
@@ -67,11 +50,7 @@ class ApiLogin extends ABaseApiClass {
      * @throws ApiException
      */
     private function getPassword() {
-        if(!array_key_exists('password', $this->getPostData())) {
-            throw new GeneralException('Password is not set.');
-        }
-
-        $password = $this->getPostData()['password'];
+        $password = $this->get('password');
 
         if($password === null) {
             throw new ApiException('No password entered for authentication.');

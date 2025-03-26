@@ -58,11 +58,11 @@ abstract class ABaseApiClass {
 
     /**
      * Starts up the API backend
-     * 
-     * @param string $containerId Container ID
      */
-    protected function startup(string $containerId) {
+    protected function startup() {
         try {
+            $containerId = $this->getContainerId();
+
             $container = $this->app->containerManager->getContainerById($containerId, true);
 
             $conn = $this->app->dbManager->getConnectionToDatabase($container->getDefaultDatabase()->getName());
@@ -80,7 +80,7 @@ abstract class ABaseApiClass {
             $this->externalSystemsManager = new ExternalSystemsManager($logger, $entityManager, $externalSystemsRepository, $externalSystemLogRepository, $externalSystemTokenRepository);
             $this->externalSystemAuthenticator = new ExternalSystemAuthenticator($this->externalSystemsManager, $logger);
         } catch(AException $e) {
-            throw new GeneralException('Could not startup the API backend.');
+            throw new GeneralException('Could not startup the API backend. Reason: ' . $e->getMessage(), $e);
         }
     }
 
@@ -88,6 +88,7 @@ abstract class ABaseApiClass {
      * Returns processed POST data as an associative array
      * 
      * @return array Data
+     * @throws GeneralException
      */
     protected function getPostData() {
         $data = file_get_contents('php://input');
@@ -103,20 +104,58 @@ abstract class ABaseApiClass {
      * Returns container ID entered for authentication
      * 
      * @return string Container ID
+     * @throws GeneralException
      * @throws ApiException
      */
     protected function getContainerId() {
-        if(!array_key_exists('containerId', $this->getPostData())) {
-            throw new GeneralException('Container ID is not set.');
-        }
-            
-        $containerId = $this->getPostData()['containerId'];
+        $containerId = $this->get('containerId');
 
         if($containerId === null) {
             throw new ApiException('No container ID entered for authentication.');
         }
 
         return $containerId;
+    }
+
+    /**
+     * Returns token entered for authentication
+     * 
+     * @return string Token
+     * @throws GeneralException
+     * @throws ApiException
+     */
+    protected function getToken() {
+        $token = $this->get('token');
+
+        if($token === null) {
+            throw new ApiException('No token entered for authentication.');
+        }
+
+        return $token;
+    }
+
+    /**
+     * Gets raw value from POST
+     * 
+     * @param string $key Key
+     */
+    protected function get(string $key): mixed {
+        if(!array_key_exists($key, $this->getPostData())) {
+            throw new GeneralException($key . ' is not set.');
+        }
+
+        $value = $this->getPostData()[$key];
+
+        return $value;
+    }
+
+    /**
+     * Authenticates external system by token
+     */
+    protected function tokenAuth() {
+        $token = $this->getToken();
+
+        $this->externalSystemAuthenticator->authByToken($token);
     }
 }
 

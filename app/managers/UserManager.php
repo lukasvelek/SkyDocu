@@ -3,6 +3,7 @@
 namespace App\Managers;
 
 use App\Core\Caching\CacheNames;
+use App\Core\DB\DatabaseRow;
 use App\Exceptions\GeneralException;
 use App\Exceptions\NonExistingEntityException;
 use App\Logger\Logger;
@@ -81,6 +82,16 @@ class UserManager extends AManager {
            !$this->cacheFactory->invalidateCacheByNamespace(CacheNames::USERS_USERNAME_TO_ID_MAPPING)) {
             throw new GeneralException('Could not invalidate cache.');
         }
+    }
+
+    public function getUserRowById(string $userId) {
+        $user = $this->userRepository->getUserRowById($userId);
+
+        if($user === null) {
+            throw new NonExistingEntityException('No user found.');
+        }
+
+        return DatabaseRow::createFromDbRow($user);
     }
 }
 

@@ -1,6 +1,6 @@
 <?php
 
-use App\Api\ApiLogin;
+use App\Api\Login\LoginController;
 use App\Core\Application;
 use App\Exceptions\AException;
 
@@ -10,8 +10,8 @@ require_once('../../../app/app_loader.php');
 try {
     $app = new Application();
 
-    $apiLogin = new ApiLogin($app);
-    echo $apiLogin->run()->getResult();
+    $loginController = new LoginController($app);
+    echo $loginController->run()->getResult();
 } catch(AException $e) {
     echo $e->getMessage();
 }

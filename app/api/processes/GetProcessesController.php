@@ -16,7 +16,7 @@ class GetProcessesController extends AAuthenticatedApiController {
         if(array_key_exists('processId', $this->data)) {
             // single
 
-            $process = $this->getProcess($this->data['processId']);
+            $process = $this->getProcess($this->get('processId'));
 
             foreach($properties as $property) {
                 $results[$property] = $process->$property;

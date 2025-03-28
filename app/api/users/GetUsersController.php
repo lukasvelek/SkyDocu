@@ -15,7 +15,7 @@ class GetUsersController extends AAuthenticatedApiController {
         if(array_key_exists('userId', $this->data)) {
             // single
 
-            $user = $this->getUser($this->data['userId']);
+            $user = $this->getUser($this->get('userId'));
 
             foreach($properties as $property) {
                 $results[$property] = $user->$property;

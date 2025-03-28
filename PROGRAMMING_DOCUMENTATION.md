@@ -204,6 +204,18 @@ When the service is run (either from UI or by scheduler) the master is started. 
         - limit
         - offset
 
+- api/v1/documents/create/ - Create a document
+    - Parameters:
+        - token
+        - title
+        - classId
+        - authorUserId
+        - folderId
+    - Optional parameters:
+        - description
+    - Returns:
+        - documentId
+
 ## Database
 
 ### Database table schema

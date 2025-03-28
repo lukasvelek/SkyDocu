@@ -2,80 +2,82 @@
 
 namespace App\Api\Documents;
 
-use App\Api\ABaseApiClass;
+use App\Api\AAuthenticatedApiController;
 use App\Core\DB\DatabaseRow;
 use App\Core\Http\JsonResponse;
-use App\Exceptions\AException;
-use App\Exceptions\ApiException;
+use App\Exceptions\GeneralException;
 use App\Repositories\Container\DocumentRepository;
 
-/**
- * GetDocuments controller
- * 
- * @author Lukas Velek
- */
-class GetDocumentsController extends ABaseApiClass {
-    public function run(): JsonResponse {
-        try {
-            $this->startup();
+class GetDocumentsController extends AAuthenticatedApiController {
+    protected function run(): JsonResponse {
+        $results = [];
+        $properties = $this->get('properties');
 
-            $this->tokenAuth();
+        if(array_key_exists('documentId', $this->data)) {
+            // single
+            $document = $this->getDocument($this->get('documentId'));
 
-            $documentId = $this->getDocumentId();
-
-            $containerId = $this->getContainerId();
-
-            $container = $this->app->containerManager->getContainerById($containerId, true);
-
-            $conn = $this->app->dbManager->getConnectionToDatabase($container->getDefaultDatabase()->getName());
-
-            $documentRepository = new DocumentRepository($conn, $this->app->logger);
-
-            $document = $documentRepository->getDocumentById($documentId);
-
-            if($document === null) {
-                throw new ApiException('No document found.');
-            }
-
-            $document = DatabaseRow::createFromDbRow($document);
-
-            $properties = $this->getProperties();
-
-            $results = [];
             foreach($properties as $property) {
                 $results[$property] = $document->$property;
             }
+        } else {
+            // multiple
+            $documents = $this->getDocuments($this->get('limit'), $this->get('offset'));
 
-            return new JsonResponse(['data' => $results]);
-        } catch(AException $e) {
-            return $this->convertExceptionToJson($e);
+            foreach($documents as $document) {
+                foreach($properties as $property) {
+                    $results[$document->documentId][$property] = $document->$property;
+                }
+            }
         }
+
+        return new JsonResponse(['data' => $results]);
+    }
+    
+    /**
+     * Returns a document
+     * 
+     * @param string $documentId Document ID
+     */
+    private function getDocument(string $documentId): DatabaseRow {
+        $documentRepository = $this->getDocumentRepository();
+
+        $document = $documentRepository->getDocumentById($documentId);
+
+        if($document === null) {
+            throw new GeneralException('Document does not exist.');
+        }
+
+        return DatabaseRow::createFromDbRow($document);
     }
 
     /**
-     * Returns document ID
+     * Returns an array of documents
+     * 
+     * @param int $limit Limit
+     * @param int $offset Offset
      */
-    private function getDocumentId(): string {
-        $documentId = $this->get('documentId');
+    private function getDocuments(int $limit, int $offset): array {
+        $documentRepository = $this->getDocumentRepository();
 
-        if($documentId === null) {
-            throw new ApiException('No document ID entered.');
+        $qb = $documentRepository->composeQueryForDocuments()
+            ->limit($limit)
+            ->offset($offset)
+            ->execute();
+
+        $documents = [];
+        while($row = $qb->fetchAssoc()) {
+            $documents[] = DatabaseRow::createFromDbRow($row);
         }
 
-        return $documentId;
+        return $documents;
     }
 
     /**
-     * Returns properties
+     * Returns an instance of DocumentRepository
      */
-    private function getProperties(): array {
-        $properties = $this->get('properties');
-
-        if($properties === null || empty($properties)) {
-            throw new ApiException('No properties entered.');
-        }
-
-        return $properties;
+    private function getDocumentRepository(): DocumentRepository {
+        return new DocumentRepository($this->conn, $this->app->logger);
     }
 }
 

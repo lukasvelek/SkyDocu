@@ -2,61 +2,49 @@
 
 namespace App\Api\Login;
 
-use App\Api\ABaseApiClass;
+use App\Api\AApiClass;
+use App\Authenticators\ExternalSystemAuthenticator;
 use App\Core\Http\JsonResponse;
-use App\Exceptions\AException;
-use App\Exceptions\ApiException;
 
-/**
- * API login controller
- * 
- * @author Lukas Velek
- */
-class LoginController extends ABaseApiClass {
-    public function run(): JsonResponse {
-        try {
-            $this->startup();
+class LoginController extends AApiClass {
+    protected function startup() {
+        $this->containerId = $this->get('containerId');
 
-            $systemId = $this->externalSystemAuthenticator->auth($this->getLogin(), $this->getPassword());
-
-            $token = $this->externalSystemsManager->createOrGetToken($systemId);
-
-            return new JsonResponse(['token' => $token]);
-        } catch(AException $e) {
-            return $this->convertExceptionToJson($e);
-        }
+        parent::startup();
     }
 
-    /**
-     * Returns login entered for authentication
-     * 
-     * @return string Login
-     * @throws ApiException
-     */
-    private function getLogin() {
+    protected function run(): JsonResponse {
         $login = $this->get('login');
-
-        if($login === null) {
-            throw new ApiException('No login entered for authentication.');
-        }
-
-        return $login;
-    }
-
-    /**
-     * Returns password entered for authentication
-     * 
-     * @return string Password
-     * @throws ApiException
-     */
-    private function getPassword() {
         $password = $this->get('password');
 
-        if($password === null) {
-            throw new ApiException('No password entered for authentication.');
-        }
+        $token = $this->loginUser($login, $password);
 
-        return $password;
+        $this->processToken($token);
+
+        return new JsonResponse(['token' => $token]);
+    }
+
+    /**
+     * Logins user and returns token
+     * 
+     * @param string $login Login
+     * @param string $password Password
+     */
+    private function loginUser(string $login, string $password) {
+        $externalSystemAuthenticator = new ExternalSystemAuthenticator($this->externalSystemsManager, $this->app->logger);
+
+        $systemId = $externalSystemAuthenticator->auth($login, $password);
+
+        return $this->externalSystemsManager->createOrGetToken($systemId);
+    }
+
+    /**
+     * Processes token
+     * 
+     * @param string &$token Token
+     */
+    private function processToken(string &$token) {
+        $token = base64_encode($token . ';' . $this->containerId);
     }
 }
 

@@ -6,14 +6,16 @@ use App\Exceptions\AException;
 
 require_once('../../../../config.php');
 require_once('../../../../app/app_loader.php');
+require_once('../../common.php');
 
 try {
     $app = new Application();
 
     $controller = new GetDocumentsController($app);
-    echo $controller->run()->getResult();
+
+    echo $controller->getResult();
 } catch(AException $e) {
-    echo $e->getMessage();
+    echo convertExceptionToJson($e);
 }
 
 ?>

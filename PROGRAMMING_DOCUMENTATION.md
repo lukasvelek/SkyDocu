@@ -161,24 +161,48 @@ When the service is run (either from UI or by scheduler) the master is started. 
 ## API
 ### API endpoints
 - api/v1/login/ - Login and get token
-    - Required:
+    - Parameters:
         - login
         - password
         - containerId
+    - Returns:
+        - token
 
 - api/v1/users/get/ - Get single user
-    - Required:
-        - containerId
+    - Parameters:
         - token
         - userId
         - properties
 
+- api/v1/users/get/ - Get all users
+    - Parameters:
+        - token
+        - limit
+        - offset
+
 - api/v1/documents/get/ - Get single document
-    - Required:
-        - containerId
+    - Parameters:
         - token
         - documentId
         - properties
+
+- api/v1/documents/get/ - Get all documents
+    - Parameters:
+        - token
+        - limit
+        - offset
+
+- api/v1/processes/get/ - Get single process
+    - Parameters:
+        - token
+        - processId
+        - properties
+
+- api/v1/processes/get/ - Get all processes
+    - Parameters:
+        - token
+        - limit
+        - offset
 
 ## Database
 

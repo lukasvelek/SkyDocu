@@ -3,6 +3,7 @@
 namespace App\Api\Processes;
 
 use App\Api\AAuthenticatedApiController;
+use App\Constants\Container\ExternalSystemLogObjectTypes;
 use App\Core\DB\DatabaseRow;
 use App\Core\Http\JsonResponse;
 use App\Exceptions\GeneralException;
@@ -22,6 +23,8 @@ class GetProcessesController extends AAuthenticatedApiController {
 
                 $results[$property] = $process->$property;
             }
+
+            $this->logRead(false, ExternalSystemLogObjectTypes::PROCESS);
         } else {
             $processes = $this->getProcesses($this->get('limit'), $this->get('offset'));
 
@@ -32,6 +35,8 @@ class GetProcessesController extends AAuthenticatedApiController {
                     $results[$process->processId][$property] = $process->$property;
                 }
             }
+
+            $this->logRead(true, ExternalSystemLogObjectTypes::PROCESS);
         }
 
         return new JsonResponse(['data' => $results]);

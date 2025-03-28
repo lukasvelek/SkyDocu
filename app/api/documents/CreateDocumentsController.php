@@ -4,6 +4,7 @@ namespace App\Api\Documents;
 
 use App\Api\AAuthenticatedApiController;
 use App\Constants\Container\DocumentStatus;
+use App\Constants\Container\ExternalSystemLogObjectTypes;
 use App\Core\Http\JsonResponse;
 
 class CreateDocumentsController extends AAuthenticatedApiController {
@@ -14,6 +15,8 @@ class CreateDocumentsController extends AAuthenticatedApiController {
         }
 
         $result = $this->createDocument($this->get('title'), $this->get('classId'), $this->get('authorUserId'), $this->get('folderId'), $description);
+
+        $this->logCreate(ExternalSystemLogObjectTypes::DOCUMENT);
 
         return new JsonResponse(['documentId' => $result]);
     }

@@ -3,6 +3,7 @@
 namespace App\Api\Documents;
 
 use App\Api\AAuthenticatedApiController;
+use App\Constants\Container\ExternalSystemLogObjectTypes;
 use App\Core\DB\DatabaseRow;
 use App\Core\Http\JsonResponse;
 use App\Exceptions\GeneralException;
@@ -21,6 +22,8 @@ class GetDocumentsController extends AAuthenticatedApiController {
 
                 $results[$property] = $document->$property;
             }
+
+            $this->logRead(false, ExternalSystemLogObjectTypes::DOCUMENT);
         } else {
             // multiple
             $documents = $this->getDocuments($this->get('limit'), $this->get('offset'));
@@ -32,6 +35,8 @@ class GetDocumentsController extends AAuthenticatedApiController {
                     $results[$document->documentId][$property] = $document->$property;
                 }
             }
+
+            $this->logRead(true, ExternalSystemLogObjectTypes::DOCUMENT);
         }
 
         return new JsonResponse(['data' => $results]);

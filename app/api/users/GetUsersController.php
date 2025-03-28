@@ -3,6 +3,7 @@
 namespace App\Api\Users;
 
 use App\Api\AAuthenticatedApiController;
+use App\Constants\Container\ExternalSystemLogObjectTypes;
 use App\Core\DB\DatabaseRow;
 use App\Core\Http\JsonResponse;
 use App\Exceptions\GeneralException;
@@ -22,6 +23,8 @@ class GetUsersController extends AAuthenticatedApiController {
                 
                 $results[$property] = $user->$property;
             }
+
+            $this->logRead(false, ExternalSystemLogObjectTypes::USER);
         } else {
             $users = $this->getUsers($this->get('limit'), $this->get('offset'));
 
@@ -32,6 +35,8 @@ class GetUsersController extends AAuthenticatedApiController {
                     $results[$user->userId][$property] = $user->$property;
                 }
             }
+
+            $this->logRead(true, ExternalSystemLogObjectTypes::USER);
         }
 
         return new JsonResponse(['data' => $results]);

@@ -40,9 +40,7 @@ class GetDocumentsController extends AAuthenticatedApiController {
      * @param string $documentId Document ID
      */
     private function getDocument(string $documentId): DatabaseRow {
-        $documentRepository = $this->getDocumentRepository();
-
-        $document = $documentRepository->getDocumentById($documentId);
+        $document = $this->container->documentRepository->getDocumentById($documentId);
 
         if($document === null) {
             throw new GeneralException('Document does not exist.');
@@ -58,9 +56,7 @@ class GetDocumentsController extends AAuthenticatedApiController {
      * @param int $offset Offset
      */
     private function getDocuments(int $limit, int $offset): array {
-        $documentRepository = $this->getDocumentRepository();
-
-        $qb = $documentRepository->composeQueryForDocuments()
+        $qb = $this->container->documentRepository->composeQueryForDocuments()
             ->limit($limit)
             ->offset($offset)
             ->execute();
@@ -71,13 +67,6 @@ class GetDocumentsController extends AAuthenticatedApiController {
         }
 
         return $documents;
-    }
-
-    /**
-     * Returns an instance of DocumentRepository
-     */
-    private function getDocumentRepository(): DocumentRepository {
-        return new DocumentRepository($this->conn, $this->app->logger);
     }
 }
 

@@ -41,9 +41,7 @@ class GetProcessesController extends AAuthenticatedApiController {
      * @param int $offset Offset
      */
     private function getProcesses(int $limit, int $offset): array {
-        $processRepository = new ProcessRepository($this->conn, $this->app->logger);
-
-        $qb = $processRepository->commonComposeQuery(false)
+        $qb = $this->container->processRepository->commonComposeQuery(false)
             ->limit($limit)
             ->offset($offset)
             ->execute();
@@ -62,9 +60,7 @@ class GetProcessesController extends AAuthenticatedApiController {
      * @param string $processId Process ID
      */
     private function getProcess(string $processId): DatabaseRow {
-        $processRepository = new ProcessRepository($this->conn, $this->app->logger);
-
-        $process = $processRepository->getProcessById($processId);
+        $process = $this->container->processRepository->getProcessById($processId);
 
         if($process === null) {
             throw new GeneralException('Process does not exist.');

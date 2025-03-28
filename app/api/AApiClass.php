@@ -3,6 +3,7 @@
 namespace App\Api;
 
 use App\Core\Application;
+use App\Core\Container;
 use App\Core\DatabaseConnection;
 use App\Core\Http\JsonResponse;
 use App\Exceptions\GeneralException;
@@ -22,6 +23,7 @@ abstract class AApiClass {
     protected Application $app;
     protected ExternalSystemsManager $externalSystemsManager;
     protected DatabaseConnection $conn;
+    protected Container $container;
 
     protected ?array $data = null;
     protected string $containerId;
@@ -74,6 +76,8 @@ abstract class AApiClass {
             $externalSystemLogRepository,
             $externalSystemTokenRepository
         );
+
+        $this->container = new Container($this->app, $this->containerId);
     }
 
     /**

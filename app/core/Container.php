@@ -1,14 +1,14 @@
 <?php
 
-namespace App\Modules;
+namespace App\Core;
 
 use App\Authorizators\DocumentBulkActionAuthorizator;
 use App\Authorizators\GroupStandardOperationsAuthorizator;
 use App\Authorizators\SupervisorAuthorizator;
-use App\Constants\SessionNames;
 use App\Core\Caching\CacheFactory;
-use App\Core\DatabaseConnection;
+use App\Entities\ContainerEntity;
 use App\Lib\Processes\ProcessFactory;
+use App\Logger\Logger;
 use App\Managers\Container\ArchiveManager;
 use App\Managers\Container\DocumentManager;
 use App\Managers\Container\EnumManager;
@@ -38,93 +38,101 @@ use App\Repositories\ContentRepository;
 use ReflectionClass;
 
 /**
- * AContainerPresenter is common presenter ancestor for all container presenters. It contains useful variables and methods.
+ * Container contains all useful repositories, managers and authorizators for containers
  * 
  * @author Lukas Velek
  */
-abstract class AContainerPresenter extends APresenter {
-    protected FolderRepository $folderRepository;
-    protected GroupRepository $groupRepository;
-    protected ContentRepository $contentRepository;
-    protected DocumentRepository $documentRepository;
-    protected DocumentClassRepository $documentClassRepository;
-    protected MetadataRepository $metadataRepository;
-    protected TransactionLogRepository $transactionLogRepository;
-    protected GridRepository $gridRepository;
-    protected ProcessRepository $processRepository;
-    protected ArchiveRepository $archiveRepository;
-    protected FileStorageRepository $fileStorageRepository;
-    protected ExternalSystemsRepository $externalSystemsRepository;
-    protected ExternalSystemLogRepository $externalSystemLogRepository;
-    protected ExternalSystemTokenRepository $externalSystemTokenRepository;
-    
-    protected EntityManager $entityManager;
-    protected FolderManager $folderManager;
-    protected DocumentManager $documentManager;
-    protected GroupManager $groupManager;
-    protected MetadataManager $metadataManager;
-    protected EnumManager $enumManager;
-    protected GridManager $gridManager;
-    protected ProcessManager $processManager;
-    protected StandaloneProcessManager $standaloneProcessManager;
-    protected ArchiveManager $archiveManager;
-    protected FileStorageManager $fileStorageManager;
-    protected ExternalSystemsManager $externalSystemsManager;
-
-    protected DocumentBulkActionAuthorizator $documentBulkActionAuthorizator;
-    protected GroupStandardOperationsAuthorizator $groupStandardOperationsAuthorizator;
-    protected SupervisorAuthorizator $supervisorAuthorizator;
-
-    protected ProcessFactory $processFactory;
-
-    protected string $containerId;
+class Container {
+    private Application $app;
+    private CacheFactory $cacheFactory;
+    private Logger $logger;
 
     private array $_reflectionParamsCache;
-    private ?CacheFactory $containerCacheFactory;
 
-    protected function __construct(string $name, string $title) {
-        parent::__construct($name, $title);
+    public FolderRepository $folderRepository;
+    public GroupRepository $groupRepository;
+    public ContentRepository $contentRepository;
+    public DocumentRepository $documentRepository;
+    public DocumentClassRepository $documentClassRepository;
+    public MetadataRepository $metadataRepository;
+    public TransactionLogRepository $transactionLogRepository;
+    public GridRepository $gridRepository;
+    public ProcessRepository $processRepository;
+    public ArchiveRepository $archiveRepository;
+    public FileStorageRepository $fileStorageRepository;
+    public ExternalSystemsRepository $externalSystemsRepository;
+    public ExternalSystemLogRepository $externalSystemLogRepository;
+    public ExternalSystemTokenRepository $externalSystemTokenRepository;
+    
+    public EntityManager $entityManager;
+    public FolderManager $folderManager;
+    public DocumentManager $documentManager;
+    public GroupManager $groupManager;
+    public MetadataManager $metadataManager;
+    public EnumManager $enumManager;
+    public GridManager $gridManager;
+    public ProcessManager $processManager;
+    public StandaloneProcessManager $standaloneProcessManager;
+    public ArchiveManager $archiveManager;
+    public FileStorageManager $fileStorageManager;
+    public ExternalSystemsManager $externalSystemsManager;
 
-        $this->_reflectionParamsCache = [];
-        $this->containerCacheFactory = null;
-    }
+    public DocumentBulkActionAuthorizator $documentBulkActionAuthorizator;
+    public GroupStandardOperationsAuthorizator $groupStandardOperationsAuthorizator;
+    public SupervisorAuthorizator $supervisorAuthorizator;
+
+    public ProcessFactory $processFactory;
+
+    public string $containerId;
+    public ContainerEntity $container;
+    public DatabaseConnection $conn;
 
     /**
-     * Starts up the container presenter. Here are container repositories and managers and other classes instantiated.
+     * Class constructor
+     * 
+     * @param Application $app Application instance
+     * @param string $containerId Container ID
      */
-    public function startup() {
-        parent::startup();
-
-        $containerId = $this->httpSessionGet(SessionNames::CONTAINER);
-        $container = $this->app->containerManager->getContainerById($containerId);
-        $containerConnection = $this->app->dbManager->getConnectionToDatabase($container->getDefaultDatabase()->getName());
-
+    public function __construct(Application $app, string $containerId) {
+        $this->app = $app;
         $this->containerId = $containerId;
 
+        $this->container = $this->app->containerManager->getContainerById($this->containerId);
+        $this->conn = $this->app->dbManager->getConnectionToDatabase($this->container->getDefaultDatabase()->getName());
+
+        $cache = $this->app->cacheFactory;
+        $cache->setCustomNamespace($this->containerId);
+        $this->cacheFactory = $cache;
+
+        $this->logger = new Logger();
         $this->logger->setContainerId($this->containerId);
 
-        $this->initRepositories($containerConnection);
+        $this->_reflectionParamsCache = [];
+
+        $this->initRepositories();
 
         $this->entityManager = new EntityManager($this->logger, $this->contentRepository);
         $this->folderManager = new FolderManager($this->logger, $this->entityManager, $this->folderRepository, $this->groupRepository);
         $this->documentManager = new DocumentManager($this->logger, $this->entityManager, $this->documentRepository, $this->documentClassRepository, $this->groupRepository, $this->folderRepository);
         $this->groupManager = new GroupManager($this->logger, $this->entityManager, $this->groupRepository, $this->app->userRepository);
         $this->metadataManager = new MetadataManager($this->logger, $this->entityManager, $this->metadataRepository, $this->folderRepository);
-        $this->enumManager = new EnumManager($this->logger, $this->entityManager, $this->app->userRepository, $this->app->groupManager, $container);
+        $this->enumManager = new EnumManager($this->logger, $this->entityManager, $this->app->userRepository, $this->app->groupManager, $this->container);
         $this->gridManager = new GridManager($this->logger, $this->entityManager, $this->gridRepository);
 
         $this->initManagers();
         $this->injectCacheFactoryToManagers();
 
         $this->enumManager->standaloneProcessManager = $this->standaloneProcessManager;
-
         $this->documentManager->enumManager = $this->enumManager;
-
-        $this->documentBulkActionAuthorizator = new DocumentBulkActionAuthorizator($containerConnection, $this->logger, $this->documentManager, $this->documentRepository, $this->app->userManager, $this->groupManager, $this->processManager, $this->archiveManager, $this->folderManager);
-        $this->groupStandardOperationsAuthorizator = new GroupStandardOperationsAuthorizator($containerConnection, $this->logger, $this->groupManager);
-        $this->supervisorAuthorizator = new SupervisorAuthorizator($containerConnection, $this->logger, $this->groupManager);
+        
+        $this->documentBulkActionAuthorizator = new DocumentBulkActionAuthorizator($this->conn, $this->logger, $this->documentManager, $this->documentRepository, $this->app->userManager, $this->groupManager, $this->processManager, $this->archiveManager, $this->folderManager);
+        $this->groupStandardOperationsAuthorizator = new GroupStandardOperationsAuthorizator($this->conn, $this->logger, $this->groupManager);
+        $this->supervisorAuthorizator = new SupervisorAuthorizator($this->conn, $this->logger, $this->groupManager);
 
         $this->injectCacheFactoryToAuthorizators();
+
+        $user = $this->app->userManager->getServiceUserId();
+        $serviceUser = $this->app->userManager->getUserById($user);
 
         $this->processFactory = new ProcessFactory(
             $this->documentManager,
@@ -132,13 +140,34 @@ abstract class AContainerPresenter extends APresenter {
             $this->documentBulkActionAuthorizator,
             $this->app->userManager,
             $this->groupManager,
-            $this->app->currentUser,
+            $serviceUser,
             $this->containerId,
             $this->processManager,
             $this->archiveManager
         );
+    }
 
-        $this->componentFactory->setCacheFactory($this->getContainerCacheFactory());
+    /**
+     * Automatically creates instances of repositories
+     */
+    private function initRepositories() {
+        $rc = new ReflectionClass($this);
+
+        $rpa = $rc->getProperties();
+
+        foreach($rpa as $rp) {
+            $rt = $rp->getType();
+            $name = $rp->getName();
+
+            $this->_reflectionParamsCache[$name] = $rt;
+
+            if(str_contains($rt, 'Repository')) {
+                $className = (string)$rt;
+
+                $this->$name = new $className($this->conn, $this->logger);
+                $this->$name->injectCacheFactory($this->cacheFactory);
+            }
+        }
     }
 
     /**
@@ -186,6 +215,12 @@ abstract class AContainerPresenter extends APresenter {
                     $this->entityManager
                 ];
                 foreach($args as $arg) {
+                    if($arg == ':currentUser') {
+                        $user = $this->app->userManager->getServiceUserId();
+                        $realArgs[] = $this->app->userManager->getUserById($user);
+                        continue;
+                    }
+
                     if(str_starts_with($arg, ':')) {
                         $_arg = explode(':', $arg)[1];
                         $realArgs[] = $this->app->$_arg;
@@ -211,7 +246,7 @@ abstract class AContainerPresenter extends APresenter {
             foreach($rpa as $rp) {
                 $class = $rp->getType();
                 $name = $rp->getName();
-                
+
                 if(in_array($name, $notFound)) {
                     $className = (string)$class;
 
@@ -228,33 +263,6 @@ abstract class AContainerPresenter extends APresenter {
     }
 
     /**
-     * Automatically creates instances of repositories
-     * 
-     * @param DatabaseConnection $db Container DB connection
-     */
-    private function initRepositories(DatabaseConnection $db) {
-        $rc = new ReflectionClass($this);
-
-        $rpa = $rc->getProperties();
-
-        $cache = $this->getContainerCacheFactory();
-
-        foreach($rpa as $rp) {
-            $rt = $rp->getType();
-            $name = $rp->getName();
-
-            $this->_reflectionParamsCache[$name] = $rt;
-
-            if(str_contains($rt, 'Repository')) {
-                $className = (string)$rt;
-
-                $this->$name = new $className($db, $this->logger);
-                $this->$name->injectCacheFactory($cache);
-            }
-        }
-    }
-
-    /**
      * Injects container CacheFactory instance to managers
      */
     private function injectCacheFactoryToManagers() {
@@ -262,14 +270,12 @@ abstract class AContainerPresenter extends APresenter {
 
         $rpa = $rc->getProperties();
 
-        $cache = $this->getContainerCacheFactory();
-
         foreach($rpa as $rp) {
             $rt = $rp->getType();
             $name = $rp->getName();
 
             if(str_contains($rt, 'Manager')) {
-                $this->$name->injectCacheFactory($cache);
+                $this->$name->injectCacheFactory($this->cacheFactory);
             }
         }
     }
@@ -282,33 +288,14 @@ abstract class AContainerPresenter extends APresenter {
 
         $rpa = $rc->getProperties();
 
-        $cache = $this->getContainerCacheFactory();
-
         foreach($rpa as $rp) {
             $rt = $rp->getType();
             $name = $rp->getName();
 
             if(str_contains($rt, 'Authorizator')) {
-                $this->$name->injectCacheFactory($cache);
+                $this->$name->injectCacheFactory($this->cacheFactory);
             }
         }
-    }
-
-    /**
-     * Gets container CacheFactory instance
-     * 
-     * @return CacheFactory Container CacheFactory instance
-     */
-    private function getContainerCacheFactory() {
-        if($this->containerCacheFactory === null) {
-            $cache = $this->cacheFactory;
-            $cache->setCustomNamespace($this->containerId);
-
-            $this->containerCacheFactory = $cache;
-        }
-
-        $tmp = &$this->containerCacheFactory;
-        return $tmp;
     }
 }
 

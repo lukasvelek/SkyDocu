@@ -5,10 +5,6 @@ namespace App\Api\Documents;
 use App\Api\AAuthenticatedApiController;
 use App\Constants\Container\DocumentStatus;
 use App\Core\Http\JsonResponse;
-use App\Exceptions\GeneralException;
-use App\Managers\EntityManager;
-use App\Repositories\Container\DocumentRepository;
-use App\Repositories\ContentRepository;
 
 class CreateDocumentsController extends AAuthenticatedApiController {
     protected function run(): JsonResponse {
@@ -33,13 +29,6 @@ class CreateDocumentsController extends AAuthenticatedApiController {
      * @return string Document ID
      */
     private function createDocument(string $title, string $classId, string $authorUserId, string $folderId, ?string $description): string {
-        $contentRepository = new ContentRepository($this->conn, $this->app->logger);
-        $entityManager = new EntityManager($this->app->logger, $contentRepository);
-
-        $documentId = $entityManager->generateEntityId(EntityManager::C_DOCUMENTS);
-
-        $documentRepository = new DocumentRepository($this->conn, $this->app->logger);
-
         $data = [
             'title' => $title,
             'classId' => $classId,
@@ -52,9 +41,7 @@ class CreateDocumentsController extends AAuthenticatedApiController {
             $data['description'] = $description;
         }
 
-        if(!$documentRepository->createNewDocument($documentId, $data)) {
-            throw new GeneralException('Could not create a new document.');
-        }
+        $documentId = $this->container->documentManager->createNewDocument($data, []);
 
         return $documentId;
     }

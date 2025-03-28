@@ -9,6 +9,11 @@ use App\Constants\ContainerStatus;
 use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
 
+/**
+ * Common class for API endpoints authenticatable by token
+ * 
+ * @author Lukas Velek
+ */
 abstract class AAuthenticatedApiController extends AApiClass {
     protected string $token;
     protected string $systemId;

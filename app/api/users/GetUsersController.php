@@ -18,6 +18,8 @@ class GetUsersController extends AAuthenticatedApiController {
             $user = $this->getUser($this->get('userId'));
 
             foreach($properties as $property) {
+                if(!$this->checkProperty($property)) continue;
+                
                 $results[$property] = $user->$property;
             }
         } else {
@@ -25,12 +27,31 @@ class GetUsersController extends AAuthenticatedApiController {
 
             foreach($users as $user) {
                 foreach($properties as $property) {
+                    if(!$this->checkProperty($property)) continue;
+
                     $results[$user->userId][$property] = $user->$property;
                 }
             }
         }
 
         return new JsonResponse(['data' => $results]);
+    }
+
+    /**
+     * Checks if property is enabled
+     * 
+     * @param string $name Property name
+     */
+    private function checkProperty(string $name): bool {
+        return in_array($name, [
+            'userId',
+            'username',
+            'fullname',
+            'dateCreated',
+            'email',
+            'isTechnical',
+            'appDesignTheme'
+        ]);
     }
 
     /**

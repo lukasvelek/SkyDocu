@@ -173,36 +173,89 @@ When the service is run (either from UI or by scheduler) the master is started. 
         - token
         - userId
         - properties
+            - userId
+            - username
+            - fullname
+            - dateCreated
+            - email
+            - isTechnical
+            - appDesignTheme
 
 - api/v1/users/get/ - Get all users
     - Parameters:
         - token
         - limit
         - offset
+        - properties
+            - userId
+            - username
+            - fullname
+            - dateCreated
+            - email
+            - isTechnical
+            - appDesignTheme
 
 - api/v1/documents/get/ - Get single document
     - Parameters:
         - token
         - documentId
         - properties
+            - documentId
+            - title
+            - authorUserId
+            - description
+            - status
+            - classId
+            - folderId
+            - dateCreated
+            - dateModified
 
 - api/v1/documents/get/ - Get all documents
     - Parameters:
         - token
         - limit
         - offset
+        - properties
+            - documentId
+            - title
+            - authorUserId
+            - description
+            - status
+            - classId
+            - folderId
+            - dateCreated
+            - dateModified
 
 - api/v1/processes/get/ - Get single process
     - Parameters:
         - token
         - processId
         - properties
+            - processId
+            - documentId
+            - type
+            - authorUserId
+            - currentOfficerUserId
+            - workflowUserIds
+            - dateCreated
+            - status
+            - currentOfficerSubstituteUserId
 
 - api/v1/processes/get/ - Get all processes
     - Parameters:
         - token
         - limit
         - offset
+        - properties
+            - processId
+            - documentId
+            - type
+            - authorUserId
+            - currentOfficerUserId
+            - workflowUserIds
+            - dateCreated
+            - status
+            - currentOfficerSubstituteUserId
 
 - api/v1/documents/create/ - Create a document
     - Parameters:

@@ -6,7 +6,6 @@ use App\Api\AAuthenticatedApiController;
 use App\Core\DB\DatabaseRow;
 use App\Core\Http\JsonResponse;
 use App\Exceptions\GeneralException;
-use App\Repositories\Container\ProcessRepository;
 
 class GetProcessesController extends AAuthenticatedApiController {
     protected function run(): JsonResponse {
@@ -19,6 +18,8 @@ class GetProcessesController extends AAuthenticatedApiController {
             $process = $this->getProcess($this->get('processId'));
 
             foreach($properties as $property) {
+                if(!$this->checkProperty($property)) continue;
+
                 $results[$property] = $process->$property;
             }
         } else {
@@ -26,12 +27,33 @@ class GetProcessesController extends AAuthenticatedApiController {
 
             foreach($processes as $process) {
                 foreach($properties as $property) {
+                    if(!$this->checkProperty($property)) continue;
+                    
                     $results[$process->processId][$property] = $process->$property;
                 }
             }
         }
 
         return new JsonResponse(['data' => $results]);
+    }
+
+    /**
+     * Checks if property is enabled
+     * 
+     * @param string $name Property name
+     */
+    private function checkProperty(string $name): bool {
+        return in_array($name, [
+            'processId',
+            'documentId',
+            'type',
+            'authorUserId',
+            'currentOfficerUserId',
+            'workflowUserIds',
+            'dateCreated',
+            'status',
+            'currentOfficerSubstituteUserId'
+        ]);
     }
 
     /**

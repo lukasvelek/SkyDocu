@@ -6,7 +6,6 @@ use App\Api\AAuthenticatedApiController;
 use App\Core\DB\DatabaseRow;
 use App\Core\Http\JsonResponse;
 use App\Exceptions\GeneralException;
-use App\Repositories\Container\DocumentRepository;
 
 class GetDocumentsController extends AAuthenticatedApiController {
     protected function run(): JsonResponse {
@@ -18,6 +17,8 @@ class GetDocumentsController extends AAuthenticatedApiController {
             $document = $this->getDocument($this->get('documentId'));
 
             foreach($properties as $property) {
+                if(!$this->checkProperty($property)) continue;
+
                 $results[$property] = $document->$property;
             }
         } else {
@@ -26,12 +27,33 @@ class GetDocumentsController extends AAuthenticatedApiController {
 
             foreach($documents as $document) {
                 foreach($properties as $property) {
+                    if(!$this->checkProperty($property)) continue;
+                    
                     $results[$document->documentId][$property] = $document->$property;
                 }
             }
         }
 
         return new JsonResponse(['data' => $results]);
+    }
+
+    /**
+     * Checks if property is enabled
+     * 
+     * @param string $name Property name
+     */
+    private function checkProperty(string $name): bool {
+        return in_array($name, [
+            'documentId',
+            'title',
+            'authorUserId',
+            'description',
+            'status',
+            'classId',
+            'folderId',
+            'dateCreated',
+            'dateModified'
+        ]);
     }
     
     /**

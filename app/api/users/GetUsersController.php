@@ -2,53 +2,15 @@
 
 namespace App\Api\Users;
 
-use App\Api\AAuthenticatedApiController;
+use App\Api\AReadAPIOperation;
 use App\Constants\Container\ExternalSystemLogObjectTypes;
 use App\Core\DB\DatabaseRow;
 use App\Core\Http\JsonResponse;
 use App\Exceptions\GeneralException;
 
-class GetUsersController extends AAuthenticatedApiController {
+class GetUsersController extends AReadAPIOperation {
     protected function run(): JsonResponse {
-        $results = [];
-        $properties = $this->get('properties');
-
-        if(array_key_exists('userId', $this->data)) {
-            // single
-
-            $user = $this->getUser($this->get('userId'));
-
-            foreach($properties as $property) {
-                if(!$this->checkProperty($property)) continue;
-                
-                $results[$property] = $user->$property;
-            }
-
-            $this->logRead(false, ExternalSystemLogObjectTypes::USER);
-        } else {
-            $users = $this->getUsers($this->get('limit'), $this->get('offset'));
-
-            foreach($users as $user) {
-                foreach($properties as $property) {
-                    if(!$this->checkProperty($property)) continue;
-
-                    $results[$user->userId][$property] = $user->$property;
-                }
-            }
-
-            $this->logRead(true, ExternalSystemLogObjectTypes::USER);
-        }
-
-        return new JsonResponse(['data' => $results]);
-    }
-
-    /**
-     * Checks if property is enabled
-     * 
-     * @param string $name Property name
-     */
-    private function checkProperty(string $name): bool {
-        return in_array($name, [
+        $this->setAllowedProperties([
             'userId',
             'username',
             'fullname',
@@ -57,23 +19,21 @@ class GetUsersController extends AAuthenticatedApiController {
             'isTechnical',
             'appDesignTheme'
         ]);
-    }
 
-    /**
-     * Returns a single user
-     * 
-     * @param string $userId User ID
-     */
-    private function getUser(string $userId): DatabaseRow {
-        $container = $this->app->containerManager->getContainerById($this->containerId, true);
+        $results = [];
+        $properties = $this->processPropeties($this->get('properties'));
 
-        $userIds = $this->app->groupManager->getGroupUsersForGroupTitle($container->getTitle() . ' - users');
+        $users = $this->getUsers($this->get('limit'), $this->get('offset'));
 
-        if(!in_array($userId, $userIds)) {
-            throw new GeneralException('User does not exist.');
+        foreach($users as $user) {
+            foreach($properties as $property) {
+                $results[$user->userId][$property] = $user->$property;
+            }
         }
 
-        return $this->app->userManager->getUserRowById($userId);
+        $this->logRead(true, ExternalSystemLogObjectTypes::USER);
+
+        return new JsonResponse(['data' => $results]);
     }
 
     /**
@@ -88,6 +48,9 @@ class GetUsersController extends AAuthenticatedApiController {
         $userIds = $this->app->groupManager->getGroupUsersForGroupTitle($container->getTitle() . ' - users');
 
         $qb = $this->app->userRepository->composeQueryForUsers();
+
+        $this->appendWhereConditions($qb);
+
         $qb->andWhere($qb->getColumnInValues('userId', $userIds))
             ->limit($limit)
             ->offset($offset)

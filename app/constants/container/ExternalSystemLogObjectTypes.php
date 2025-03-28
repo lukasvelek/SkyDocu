@@ -16,6 +16,7 @@ class ExternalSystemLogObjectTypes extends AConstant implements IColorable, IBac
     public const PROCESS = 2;
     public const USER = 3;
     public const EXTERNAL_SYSTEM = 4;
+    public const PROCESS_TYPES = 5;
 
     public static function toString($key): ?string {
         return match((int)$key) {
@@ -23,7 +24,8 @@ class ExternalSystemLogObjectTypes extends AConstant implements IColorable, IBac
             self::DOCUMENT => 'Document',
             self::PROCESS => 'Process',
             self::USER => 'User',
-            self::EXTERNAL_SYSTEM => 'External system'
+            self::EXTERNAL_SYSTEM => 'External system',
+            self::PROCESS_TYPES => 'Process types'
         };
     }
 
@@ -32,6 +34,7 @@ class ExternalSystemLogObjectTypes extends AConstant implements IColorable, IBac
             default => 'black',
             self::DOCUMENT => 'blue',
             self::PROCESS => 'red',
+            self::PROCESS_TYPES => 'red',
             self::USER => 'green',
             self::EXTERNAL_SYSTEM => 'purple'
         };
@@ -42,6 +45,7 @@ class ExternalSystemLogObjectTypes extends AConstant implements IColorable, IBac
             default => null,
             self::DOCUMENT => 'lightblue',
             self::PROCESS => 'pink',
+            self::PROCESS_TYPES => 'pink',
             self::USER => 'lightgreen',
             self::EXTERNAL_SYSTEM => 'pink'
         };

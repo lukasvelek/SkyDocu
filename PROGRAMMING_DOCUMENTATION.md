@@ -168,19 +168,6 @@ When the service is run (either from UI or by scheduler) the master is started. 
     - Returns:
         - token
 
-- api/v1/users/get/ - Get single user
-    - Parameters:
-        - token
-        - userId
-        - properties
-            - userId
-            - username
-            - fullname
-            - dateCreated
-            - email
-            - isTechnical
-            - appDesignTheme
-
 - api/v1/users/get/ - Get all users
     - Parameters:
         - token
@@ -194,21 +181,8 @@ When the service is run (either from UI or by scheduler) the master is started. 
             - email
             - isTechnical
             - appDesignTheme
-
-- api/v1/documents/get/ - Get single document
-    - Parameters:
-        - token
-        - documentId
-        - properties
-            - documentId
-            - title
-            - authorUserId
-            - description
-            - status
-            - classId
-            - folderId
-            - dateCreated
-            - dateModified
+    - Optional parameters:
+        - where
 
 - api/v1/documents/get/ - Get all documents
     - Parameters:
@@ -225,21 +199,8 @@ When the service is run (either from UI or by scheduler) the master is started. 
             - folderId
             - dateCreated
             - dateModified
-
-- api/v1/processes/get/ - Get single process
-    - Parameters:
-        - token
-        - processId
-        - properties
-            - processId
-            - documentId
-            - type
-            - authorUserId
-            - currentOfficerUserId
-            - workflowUserIds
-            - dateCreated
-            - status
-            - currentOfficerSubstituteUserId
+    - Optional parameters:
+        - where
 
 - api/v1/processes/get/ - Get all processes
     - Parameters:
@@ -256,6 +217,22 @@ When the service is run (either from UI or by scheduler) the master is started. 
             - dateCreated
             - status
             - currentOfficerSubstituteUserId
+    - Optional parameters:
+        - where
+
+- api/v1/processes/types/get/ - Get all process types
+    - Parameters:
+        - token
+        - limit
+        - offset
+        - properties
+            - typeId
+            - typeKey
+            - title
+            - description
+            - isEnabled
+    - Optional parameters:
+        - where
 
 - api/v1/documents/create/ - Create a document
     - Parameters:

@@ -83,7 +83,7 @@ class DatabaseMigrationManager {
             $migrationDir .= '\\containers';
         }
 
-        $migrations = FileManager::getFilesInFolder($migrationDir);
+        $migrations = FileManager::getFilesInFolder($migrationDir, false);
 
         return $migrations;
     }

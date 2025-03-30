@@ -301,6 +301,33 @@ When the service is run (either from UI or by scheduler) the master is started. 
     - Optional parameters:
         - where
 
+- api/v1/archive/folders/get/ - Get all archive folders
+    - Parameters:
+        - token
+        - limit
+        - offset
+        - properties
+            - folderId
+            - title
+            - isSystem
+            - parentFolderId
+            - status
+    - Optional parameters:
+        - where
+
+- api/v1/transactionLog/get/ - Get all entries from transaction log
+    - Parameters:
+        - token
+        - limit
+        - offset
+        - properties
+            - transactionId
+            - userId
+            - callingMethod
+            - dateCreated
+    - Optional parameters:
+        - where
+
 ## Database
 
 ### Database table schema

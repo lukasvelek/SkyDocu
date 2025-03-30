@@ -4,11 +4,16 @@ namespace App\Api\Documents\Sharing;
 
 use App\Api\AReadAPIOperation;
 use App\Constants\Container\ExternalSystemLogObjectTypes;
+use App\Constants\Container\ExternalSystemRightsOperations;
 use App\Core\DB\DatabaseRow;
 use App\Core\Http\JsonResponse;
 
 class GetDocumentSharingController extends AReadAPIOperation {
     protected function run(): JsonResponse {
+        if(!$this->checkRight(ExternalSystemRightsOperations::READ_DOCUMENT_SHARINGS)) {
+            return new JsonResponse(['error' => 'Operation is not allowed.']);
+        }
+
         $this->setAllowedProperties([
             'sharingId',
             'documentId',

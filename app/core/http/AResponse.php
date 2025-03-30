@@ -23,6 +23,13 @@ abstract class AResponse {
      * @return string
      */
     public abstract function getResult(): string;
+
+    /**
+     * Returns raw data that will be converted to JSON
+     */
+    public function getData(): mixed {
+        return $this->data;
+    }
 }
 
 ?>

@@ -4,11 +4,16 @@ namespace App\Api\Processes;
 
 use App\Api\AReadAPIOperation;
 use App\Constants\Container\ExternalSystemLogObjectTypes;
+use App\Constants\Container\ExternalSystemRightsOperations;
 use App\Core\DB\DatabaseRow;
 use App\Core\Http\JsonResponse;
 
 class GetProcessesController extends AReadAPIOperation {
     protected function run(): JsonResponse {
+        if(!$this->checkRight(ExternalSystemRightsOperations::READ_PROCESSES)) {
+            return new JsonResponse(['error' => 'Operation is not allowed.']);
+        }
+
         $this->setAllowedProperties([
             'processId',
             'documentId',

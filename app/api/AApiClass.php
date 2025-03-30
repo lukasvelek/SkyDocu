@@ -10,6 +10,7 @@ use App\Exceptions\GeneralException;
 use App\Managers\Container\ExternalSystemsManager;
 use App\Managers\EntityManager;
 use App\Repositories\Container\ExternalSystemLogRepository;
+use App\Repositories\Container\ExternalSystemRightsRepository;
 use App\Repositories\Container\ExternalSystemsRepository;
 use App\Repositories\Container\ExternalSystemTokenRepository;
 use App\Repositories\ContentRepository;
@@ -68,13 +69,15 @@ abstract class AApiClass {
         $externalSystemsRepository = new ExternalSystemsRepository($this->conn, $this->app->logger);
         $externalSystemLogRepository = new ExternalSystemLogRepository($this->conn, $this->app->logger);
         $externalSystemTokenRepository = new ExternalSystemTokenRepository($this->conn, $this->app->logger);
+        $externalSystemRightsRepository = new ExternalSystemRightsRepository($this->conn, $this->app->logger);
 
         $this->externalSystemsManager = new ExternalSystemsManager(
             $this->app->logger,
             $entityManager,
             $externalSystemsRepository,
             $externalSystemLogRepository,
-            $externalSystemTokenRepository
+            $externalSystemTokenRepository,
+            $externalSystemRightsRepository
         );
 
         $this->container = new Container($this->app, $this->containerId);
@@ -106,7 +109,20 @@ abstract class AApiClass {
 
         $result = $this->run();
 
+        if(array_key_exists('error', $result->getData())) {
+            $this->setResponseCode(500);
+        }
+
         return $result->getResult();
+    }
+
+    /**
+     * Sets the response code
+     * 
+     * @param int $code Code
+     */
+    protected function setResponseCode(int $code) {
+        http_response_code($code);
     }
 
     /**

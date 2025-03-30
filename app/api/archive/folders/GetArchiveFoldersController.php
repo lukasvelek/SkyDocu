@@ -4,11 +4,16 @@ namespace App\Api\Archive\Folders;
 
 use App\Api\AReadAPIOperation;
 use App\Constants\Container\ExternalSystemLogObjectTypes;
+use App\Constants\Container\ExternalSystemRightsOperations;
 use App\Core\DB\DatabaseRow;
 use App\Core\Http\JsonResponse;
 
 class GetArchiveFoldersController extends AReadAPIOperation {
     protected function run(): JsonResponse {
+        if(!$this->checkRight(ExternalSystemRightsOperations::READ_ARCHIVE_FOLDERS)) {
+            return new JsonResponse(['error' => 'Operation is not allowed.']);
+        }
+
         $this->setAllowedProperties([
             'folderId',
             'title',

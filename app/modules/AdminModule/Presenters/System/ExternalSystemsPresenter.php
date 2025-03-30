@@ -382,9 +382,11 @@ class ExternalSystemsPresenter extends AAdminPresenter {
         }
 
         $form->addSelect('operation', 'Operation:')
-            ->addRawOptions($operationSelect);
+            ->addRawOptions($operationSelect)
+            ->setDisabled(empty($operationSelect));
 
-        $form->addSubmit('Allow');
+        $form->addSubmit('Allow')
+            ->setDisabled(empty($operationSelect));
 
         return $form;
     }

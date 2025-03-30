@@ -121,6 +121,24 @@ abstract class AAuthenticatedApiController extends AApiClass {
 
         $this->createLog($message, ExternalSystemLogActionTypes::DELETE, $objectType);
     }
+    
+    /**
+     * Checks right
+     * 
+     * @param string $operationName Operation name
+     */
+    protected function checkRight(string $operationName) {
+        $operations = $this->container->externalSystemsManager->getAllowedOperationsForSystem($this->systemId);
+
+        $allowed = false;
+        foreach($operations as $operation) {
+            if($operation->operationName == $operationName) {
+                $allowed = true;
+            }
+        }
+
+        return $allowed;
+    }
 }
 
 ?>

@@ -158,8 +158,9 @@ Its purpose is to create containers.
 
 When the service is run (either from UI or by scheduler) the master is started. It retrieves all the containers that are meant to be created and starts a slave for each container. Each slave then creates the container itself.
 
-## API
-### API endpoints
+## `5` API
+### `5.1` API endpoints
+#### `5.1.1` Authentication
 - api/v1/login/ - Login and get token
     - Parameters:
         - login
@@ -168,22 +169,7 @@ When the service is run (either from UI or by scheduler) the master is started. 
     - Returns:
         - token
 
-- api/v1/users/get/ - Get all users
-    - Parameters:
-        - token
-        - limit
-        - offset
-        - properties
-            - userId
-            - username
-            - fullname
-            - dateCreated
-            - email
-            - isTechnical
-            - appDesignTheme
-    - Optional parameters:
-        - where
-
+#### `5.1.2` Documents
 - api/v1/documents/get/ - Get all documents
     - Parameters:
         - token
@@ -199,38 +185,6 @@ When the service is run (either from UI or by scheduler) the master is started. 
             - folderId
             - dateCreated
             - dateModified
-    - Optional parameters:
-        - where
-
-- api/v1/processes/get/ - Get all processes
-    - Parameters:
-        - token
-        - limit
-        - offset
-        - properties
-            - processId
-            - documentId
-            - type
-            - authorUserId
-            - currentOfficerUserId
-            - workflowUserIds
-            - dateCreated
-            - status
-            - currentOfficerSubstituteUserId
-    - Optional parameters:
-        - where
-
-- api/v1/processes/types/get/ - Get all process types
-    - Parameters:
-        - token
-        - limit
-        - offset
-        - properties
-            - typeId
-            - typeKey
-            - title
-            - description
-            - isEnabled
     - Optional parameters:
         - where
 
@@ -285,6 +239,57 @@ When the service is run (either from UI or by scheduler) the master is started. 
     - Optional parameters:
         - where
 
+#### `5.1.3` Users
+- api/v1/users/get/ - Get all users
+    - Parameters:
+        - token
+        - limit
+        - offset
+        - properties
+            - userId
+            - username
+            - fullname
+            - dateCreated
+            - email
+            - isTechnical
+            - appDesignTheme
+    - Optional parameters:
+        - where
+
+#### `5.1.4` Processes
+- api/v1/processes/get/ - Get all processes
+    - Parameters:
+        - token
+        - limit
+        - offset
+        - properties
+            - processId
+            - documentId
+            - type
+            - authorUserId
+            - currentOfficerUserId
+            - workflowUserIds
+            - dateCreated
+            - status
+            - currentOfficerSubstituteUserId
+    - Optional parameters:
+        - where
+
+- api/v1/processes/types/get/ - Get all process types
+    - Parameters:
+        - token
+        - limit
+        - offset
+        - properties
+            - typeId
+            - typeKey
+            - title
+            - description
+            - isEnabled
+    - Optional parameters:
+        - where
+
+#### `5.1.5` Files
 - api/v1/files/get/ - Get all files
     - Parameters:
         - token
@@ -301,6 +306,7 @@ When the service is run (either from UI or by scheduler) the master is started. 
     - Optional parameters:
         - where
 
+#### `5.1.6` Archive
 - api/v1/archive/folders/get/ - Get all archive folders
     - Parameters:
         - token
@@ -315,6 +321,7 @@ When the service is run (either from UI or by scheduler) the master is started. 
     - Optional parameters:
         - where
 
+#### `5.1.7` Transaction log
 - api/v1/transactionLog/get/ - Get all entries from transaction log
     - Parameters:
         - token

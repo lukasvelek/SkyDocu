@@ -127,7 +127,7 @@ abstract class AAuthenticatedApiController extends AApiClass {
      * 
      * @param string $operationName Operation name
      */
-    protected function checkRight(string $operationName) {
+    protected function checkRight(string $operationName): bool {
         $operations = $this->container->externalSystemsManager->getAllowedOperationsForSystem($this->systemId);
 
         $allowed = false;

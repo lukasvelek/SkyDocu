@@ -6,6 +6,7 @@ use App\Core\Application;
 use App\Core\Container;
 use App\Core\DatabaseConnection;
 use App\Core\Http\JsonResponse;
+use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
 use App\Managers\Container\ExternalSystemsManager;
 use App\Managers\EntityManager;
@@ -105,7 +106,12 @@ abstract class AApiClass {
      * Returns API result
      */
     public function getResult(): string {
-        $this->startup();
+        try {
+            $this->startup();
+        } catch(AException $e) {
+            $this->setResponseCode(500);
+            throw $e;
+        }
 
         $result = $this->run();
 

@@ -270,6 +270,37 @@ When the service is run (either from UI or by scheduler) the master is started. 
     - Optional parameters:
         - where
 
+- api/v1/documents/sharing/get/ - Get all document sharings
+    - Parameters:
+        - token
+        - limit
+        - offset
+        - properties
+            - sharingId
+            - documentId
+            - authorUserId
+            - userId
+            - dateValidUntil
+            - dateCreated
+    - Optional parameters:
+        - where
+
+- api/v1/files/get/ - Get all files
+    - Parameters:
+        - token
+        - limit
+        - offset
+        - properties
+            - fileId
+            - filename
+            - filepath
+            - filesize
+            - userId
+            - hash
+            - dateCreated
+    - Optional parameters:
+        - where
+
 ## Database
 
 ### Database table schema

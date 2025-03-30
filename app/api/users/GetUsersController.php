@@ -31,7 +31,7 @@ class GetUsersController extends AReadAPIOperation {
             }
         }
 
-        $this->logRead(true, ExternalSystemLogObjectTypes::USER);
+        $this->logRead(ExternalSystemLogObjectTypes::USER);
 
         return new JsonResponse(['data' => $results]);
     }

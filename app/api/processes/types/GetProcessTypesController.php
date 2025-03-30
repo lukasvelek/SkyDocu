@@ -28,7 +28,7 @@ class GetProcessTypesController extends AReadAPIOperation {
             }
         }
 
-        $this->logRead(true, ExternalSystemLogObjectTypes::PROCESS_TYPES);
+        $this->logRead(ExternalSystemLogObjectTypes::PROCESS_TYPES);
 
         return new JsonResponse(['data' => $results]);
     }

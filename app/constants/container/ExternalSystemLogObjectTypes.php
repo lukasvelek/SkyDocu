@@ -27,9 +27,9 @@ class ExternalSystemLogObjectTypes extends AConstant implements IColorable, IBac
             self::PROCESS => 'Process',
             self::USER => 'User',
             self::EXTERNAL_SYSTEM => 'External system',
-            self::PROCESS_TYPES => 'Process types',
-            self::DOCUMENT_FOLDERS => 'Document folders',
-            self::DOCUMENT_CLASSES => 'Document classes'
+            self::PROCESS_TYPES => 'Process type',
+            self::DOCUMENT_FOLDERS => 'Document folder',
+            self::DOCUMENT_CLASSES => 'Document class'
         };
     }
 

@@ -4,6 +4,7 @@ namespace App\Api;
 
 use App\Authenticators\ExternalSystemAuthenticator;
 use App\Constants\Container\ExternalSystemLogActionTypes;
+use App\Constants\Container\ExternalSystemLogMessages;
 use App\Constants\Container\ExternalSystemLogObjectTypes;
 use App\Constants\ContainerStatus;
 use App\Exceptions\AException;
@@ -72,23 +73,12 @@ abstract class AAuthenticatedApiController extends AApiClass {
     /**
      * Logs API read
      * 
-     * @param bool $readAll Read all
      * @param int $objectType Object type
      */
-    protected function logRead(bool $readAll, int $objectType) {
+    protected function logRead(int $objectType) {
         $entity = strtolower(ExternalSystemLogObjectTypes::toString($objectType));
 
-        if($objectType == ExternalSystemLogObjectTypes::PROCESS) {
-            if($readAll) {
-                $entity .= 'es';
-            }
-        } else {
-            if($readAll) {
-                $entity .= 's';
-            }
-        }
-        
-        $message = sprintf('Reading %s %s.', ($readAll ? 'all' : 'single'), $entity);
+        $message = sprintf(ExternalSystemLogMessages::READ_DATA, $entity);
 
         $this->createLog($message, ExternalSystemLogActionTypes::READ, $objectType);
     }
@@ -99,7 +89,9 @@ abstract class AAuthenticatedApiController extends AApiClass {
      * @param int $objectType Object type
      */
     protected function logCreate(int $objectType) {
-        $message = sprintf('Creating %s.', strtolower(ExternalSystemLogObjectTypes::toString($objectType)));
+        $entity = strtolower(ExternalSystemLogObjectTypes::toString($objectType));
+
+        $message = sprintf(ExternalSystemLogMessages::CREATE_DATA, $entity);
 
         $this->createLog($message, ExternalSystemLogActionTypes::CREATE, $objectType);
     }
@@ -110,7 +102,9 @@ abstract class AAuthenticatedApiController extends AApiClass {
      * @param int $objectType Object type
      */
     protected function logUpdate(int $objectType) {
-        $message = sprintf('Updating %s.', strtolower(ExternalSystemLogObjectTypes::toString($objectType)));
+        $entity = strtolower(ExternalSystemLogObjectTypes::toString($objectType));
+
+        $message = sprintf(ExternalSystemLogMessages::UPDATE_DATA, $entity);
 
         $this->createLog($message, ExternalSystemLogActionTypes::UPDATE, $objectType);
     }
@@ -121,7 +115,9 @@ abstract class AAuthenticatedApiController extends AApiClass {
      * @param int $objectType Object type
      */
     protected function logDelete(int $objectType) {
-        $message = sprintf('Deleting %s.', strtolower(ExternalSystemLogObjectTypes::toString($objectType)));
+        $entity = strtolower(ExternalSystemLogObjectTypes::toString($objectType));
+
+        $message = sprintf(ExternalSystemLogMessages::DELETE_DATA, $entity);
 
         $this->createLog($message, ExternalSystemLogActionTypes::DELETE, $objectType);
     }

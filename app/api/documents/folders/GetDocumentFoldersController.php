@@ -27,7 +27,7 @@ class GetDocumentFoldersController extends AReadAPIOperation {
             }
         }
 
-        $this->logRead(true, ExternalSystemLogObjectTypes::DOCUMENT_FOLDERS);
+        $this->logRead(ExternalSystemLogObjectTypes::DOCUMENT_FOLDERS);
 
         return new JsonResponse(['data' => $results]);
     }

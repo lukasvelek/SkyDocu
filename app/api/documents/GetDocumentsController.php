@@ -32,7 +32,7 @@ class GetDocumentsController extends AReadAPIOperation {
             }
         }
 
-        $this->logRead(true, ExternalSystemLogObjectTypes::DOCUMENT);
+        $this->logRead(ExternalSystemLogObjectTypes::DOCUMENT);
 
         return new JsonResponse(['data' => $results]);
     }

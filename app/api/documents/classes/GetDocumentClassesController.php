@@ -25,7 +25,7 @@ class GetDocumentClassesController extends AReadAPIOperation {
             }
         }
 
-        $this->logRead(true, ExternalSystemLogObjectTypes::DOCUMENT_CLASSES);
+        $this->logRead(ExternalSystemLogObjectTypes::DOCUMENT_CLASSES);
 
         return new JsonResponse(['data' => $results]);
     }

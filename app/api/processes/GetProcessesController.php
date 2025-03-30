@@ -33,7 +33,7 @@ class GetProcessesController extends AReadAPIOperation {
             }
         }
 
-        $this->logRead(true, ExternalSystemLogObjectTypes::PROCESS);
+        $this->logRead(ExternalSystemLogObjectTypes::PROCESS);
 
         return new JsonResponse(['data' => $results]);
     }

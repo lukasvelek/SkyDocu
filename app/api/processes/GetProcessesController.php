@@ -6,7 +6,6 @@ use App\Api\AReadAPIOperation;
 use App\Constants\Container\ExternalSystemLogObjectTypes;
 use App\Core\DB\DatabaseRow;
 use App\Core\Http\JsonResponse;
-use App\Exceptions\GeneralException;
 
 class GetProcessesController extends AReadAPIOperation {
     protected function run(): JsonResponse {
@@ -22,16 +21,7 @@ class GetProcessesController extends AReadAPIOperation {
             'currentOfficerSubstituteUserId'
         ]);
 
-        $results = [];
-        $properties = $this->processPropeties($this->get('properties'));
-
-        $processes = $this->getProcesses($this->get('limit'), $this->get('offset'));
-
-        foreach($processes as $process) {
-            foreach($properties as $property) {
-                $results[$process->processId][$property] = $process->$property;
-            }
-        }
+        $results = $this->getResults([$this, 'getProcesses'], 'processId', $this->get('limit'), $this->get('offset'));
 
         $this->logRead(ExternalSystemLogObjectTypes::PROCESS);
 
@@ -44,7 +34,7 @@ class GetProcessesController extends AReadAPIOperation {
      * @param int $limit Limit
      * @param int $offset Offset
      */
-    private function getProcesses(int $limit, int $offset): array {
+    protected function getProcesses(int $limit, int $offset): array {
         $qb = $this->container->processRepository->commonComposeQuery(false);
 
         $this->appendWhereConditions($qb);

@@ -92,6 +92,31 @@ abstract class AReadAPIOperation extends AAuthenticatedApiController {
             $this->processConditions($conditions['or'], $sql, false);
         }
     }
+
+    /**
+     * Processes results
+     * 
+     * @param array $handler Result handler - class, method
+     * @param string $primaryKey Primary key
+     * @param array ...$params Parameters
+     */
+    protected function getResults(array $handler, string $primaryKey, ...$params): array {
+        $obj = $handler[0];
+        $method = $handler[1];
+
+        $results = [];
+        $properties = $this->processPropeties($this->get('properties'));
+
+        $entries = $obj->$method(...$params);
+
+        foreach($entries as $entry) {
+            foreach($properties as $property) {
+                $results[$entry->$primaryKey][$property] = $entry->$property;
+            }
+        }
+
+        return $results;
+    }
 }
 
 ?>

@@ -6,7 +6,6 @@ use App\Api\AReadAPIOperation;
 use App\Constants\Container\ExternalSystemLogObjectTypes;
 use App\Core\DB\DatabaseRow;
 use App\Core\Http\JsonResponse;
-use App\Exceptions\GeneralException;
 
 class GetUsersController extends AReadAPIOperation {
     protected function run(): JsonResponse {
@@ -20,16 +19,7 @@ class GetUsersController extends AReadAPIOperation {
             'appDesignTheme'
         ]);
 
-        $results = [];
-        $properties = $this->processPropeties($this->get('properties'));
-
-        $users = $this->getUsers($this->get('limit'), $this->get('offset'));
-
-        foreach($users as $user) {
-            foreach($properties as $property) {
-                $results[$user->userId][$property] = $user->$property;
-            }
-        }
+        $results = $this->getResults([$this, 'getUsers'], 'userId', $this->get('limit'), $this->get('offset'));
 
         $this->logRead(ExternalSystemLogObjectTypes::USER);
 
@@ -42,7 +32,7 @@ class GetUsersController extends AReadAPIOperation {
      * @param int $limit Limit
      * @param int $offset Offset
      */
-    private function getUsers(int $limit, int $offset): array {
+    protected function getUsers(int $limit, int $offset): array {
         $container = $this->app->containerManager->getContainerById($this->containerId, true);
 
         $userIds = $this->app->groupManager->getGroupUsersForGroupTitle($container->getTitle() . ' - users');

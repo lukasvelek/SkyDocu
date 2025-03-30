@@ -21,16 +21,7 @@ class GetDocumentsController extends AReadAPIOperation {
             'dateModified'
         ]);
 
-        $results = [];
-        $properties = $this->processPropeties($this->get('properties'));
-
-        $documents = $this->getDocuments($this->get('limit'), $this->get('offset'));
-
-        foreach($documents as $document) {
-            foreach($properties as $property) {
-                $results[$document->documentId][$property] = $document->$property;
-            }
-        }
+        $results = $this->getResults([$this, 'getDocuments'], 'documentId', $this->get('limit'), $this->get('offset'));
 
         $this->logRead(ExternalSystemLogObjectTypes::DOCUMENT);
 
@@ -43,7 +34,7 @@ class GetDocumentsController extends AReadAPIOperation {
      * @param int $limit Limit
      * @param int $offset Offset
      */
-    private function getDocuments(int $limit, int $offset): array {
+    protected function getDocuments(int $limit, int $offset): array {
         $qb = $this->container->documentRepository->composeQueryForDocuments();
 
         $this->appendWhereConditions($qb);

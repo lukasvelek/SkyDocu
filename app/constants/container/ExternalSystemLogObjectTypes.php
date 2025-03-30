@@ -19,6 +19,8 @@ class ExternalSystemLogObjectTypes extends AConstant implements IColorable, IBac
     public const PROCESS_TYPES = 5;
     public const DOCUMENT_FOLDERS = 6;
     public const DOCUMENT_CLASSES = 7;
+    public const DOCUMENT_SHARING = 8;
+    public const FILES = 9;
 
     public static function toString($key): ?string {
         return match((int)$key) {
@@ -29,7 +31,9 @@ class ExternalSystemLogObjectTypes extends AConstant implements IColorable, IBac
             self::EXTERNAL_SYSTEM => 'External system',
             self::PROCESS_TYPES => 'Process type',
             self::DOCUMENT_FOLDERS => 'Document folder',
-            self::DOCUMENT_CLASSES => 'Document class'
+            self::DOCUMENT_CLASSES => 'Document class',
+            self::DOCUMENT_SHARING => 'Document sharing',
+            self::FILES => 'File'
         };
     }
 
@@ -41,6 +45,7 @@ class ExternalSystemLogObjectTypes extends AConstant implements IColorable, IBac
             case self::DOCUMENT:
             case self::DOCUMENT_FOLDERS:
             case self::DOCUMENT_CLASSES:
+            case self::DOCUMENT_SHARING:
                 return 'blue';
 
             case self::PROCESS:
@@ -51,6 +56,7 @@ class ExternalSystemLogObjectTypes extends AConstant implements IColorable, IBac
                 return 'green';
 
             case self::EXTERNAL_SYSTEM:
+            case self::FILES:
                 return 'purple';
         }
     }
@@ -63,6 +69,7 @@ class ExternalSystemLogObjectTypes extends AConstant implements IColorable, IBac
             case self::DOCUMENT:
             case self::DOCUMENT_FOLDERS:
             case self::DOCUMENT_CLASSES:
+            case self::DOCUMENT_SHARING:
                 return 'lightblue';
 
             case self::PROCESS:
@@ -73,6 +80,7 @@ class ExternalSystemLogObjectTypes extends AConstant implements IColorable, IBac
                 return 'lightgreen';
 
             case self::EXTERNAL_SYSTEM:
+            case self::FILES:
                 return 'pink';
         }
     }

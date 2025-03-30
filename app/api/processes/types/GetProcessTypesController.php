@@ -17,16 +17,7 @@ class GetProcessTypesController extends AReadAPIOperation {
             'isEnabled'
         ]);
 
-        $results = [];
-        $properties = $this->processPropeties($this->get('properties'));
-
-        $types = $this->getProcessTypes($this->get('limit'), $this->get('offset'));
-
-        foreach($types as $type) {
-            foreach($properties as $property) {
-                $results[$type->typeId][$property] = $type->$property;
-            }
-        }
+        $results = $this->getResults([$this, 'getProcessTypes'], 'typeId', $this->get('limit'), $this->get('offset'));
 
         $this->logRead(ExternalSystemLogObjectTypes::PROCESS_TYPES);
 
@@ -39,7 +30,7 @@ class GetProcessTypesController extends AReadAPIOperation {
      * @param int $limit Limit
      * @param int $offset Offset
      */
-    private function getProcessTypes(int $limit, int $offset): array {
+    protected function getProcessTypes(int $limit, int $offset): array {
         $qb = $this->container->processRepository->composeQueryForProcessTypes();
 
         $this->appendWhereConditions($qb);

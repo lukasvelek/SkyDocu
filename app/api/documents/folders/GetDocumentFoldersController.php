@@ -16,23 +16,14 @@ class GetDocumentFoldersController extends AReadAPIOperation {
             'parentFolderId'
         ]);
 
-        $results = [];
-        $properties = $this->processPropeties($this->get('properties'));
-
-        $folders = $this->getFolders($this->get('limit'), $this->get('offset'));
-
-        foreach($folders as $folder) {
-            foreach($properties as $property) {
-                $results[$folder->folderId][$property] = $folder->$property;
-            }
-        }
+        $results = $this->getResults([$this, 'getFolders'], 'folderId', $this->get('limit'), $this->get('offset'));
 
         $this->logRead(ExternalSystemLogObjectTypes::DOCUMENT_FOLDERS);
 
         return new JsonResponse(['data' => $results]);
     }
 
-    private function getFolders(int $limit, int $offset): array {
+    protected function getFolders(int $limit, int $offset): array {
         $qb = $this->container->folderRepository->composeQueryForFolders();
 
         $this->appendWhereConditions($qb);

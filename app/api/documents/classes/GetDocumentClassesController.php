@@ -14,23 +14,14 @@ class GetDocumentClassesController extends AReadAPIOperation {
             'title'
         ]);
 
-        $results = [];
-        $properties = $this->processPropeties($this->get('properties'));
-
-        $classes = $this->getClasses($this->get('limit'), $this->get('offset'));
-
-        foreach($classes as $class) {
-            foreach($properties as $property) {
-                $results[$class->classId][$property] = $class->$property;
-            }
-        }
+        $results = $this->getResults([$this, 'getClasses'], 'classId', $this->get('limit'), $this->get('offset'));
 
         $this->logRead(ExternalSystemLogObjectTypes::DOCUMENT_CLASSES);
 
         return new JsonResponse(['data' => $results]);
     }
 
-    private function getClasses(int $limit, int $offset): array {
+    protected function getClasses(int $limit, int $offset): array {
         $qb = $this->container->documentClassRepository->composeQueryForClasses();
 
         $this->appendWhereConditions($qb);

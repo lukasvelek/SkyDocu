@@ -21,6 +21,8 @@ class ExternalSystemLogObjectTypes extends AConstant implements IColorable, IBac
     public const DOCUMENT_CLASSES = 7;
     public const DOCUMENT_SHARING = 8;
     public const FILES = 9;
+    public const ARCHIVE_FOLDERS = 10;
+    public const TRANSACTION_LOG = 11;
 
     public static function toString($key): ?string {
         return match((int)$key) {
@@ -33,7 +35,9 @@ class ExternalSystemLogObjectTypes extends AConstant implements IColorable, IBac
             self::DOCUMENT_FOLDERS => 'Document folder',
             self::DOCUMENT_CLASSES => 'Document class',
             self::DOCUMENT_SHARING => 'Document sharing',
-            self::FILES => 'File'
+            self::FILES => 'File',
+            self::ARCHIVE_FOLDERS => 'Archive folder',
+            self::TRANSACTION_LOG => 'Transaction log'
         };
     }
 
@@ -46,6 +50,7 @@ class ExternalSystemLogObjectTypes extends AConstant implements IColorable, IBac
             case self::DOCUMENT_FOLDERS:
             case self::DOCUMENT_CLASSES:
             case self::DOCUMENT_SHARING:
+            case self::ARCHIVE_FOLDERS:
                 return 'blue';
 
             case self::PROCESS:
@@ -57,6 +62,7 @@ class ExternalSystemLogObjectTypes extends AConstant implements IColorable, IBac
 
             case self::EXTERNAL_SYSTEM:
             case self::FILES:
+            case self::TRANSACTION_LOG:
                 return 'purple';
         }
     }
@@ -70,6 +76,7 @@ class ExternalSystemLogObjectTypes extends AConstant implements IColorable, IBac
             case self::DOCUMENT_FOLDERS:
             case self::DOCUMENT_CLASSES:
             case self::DOCUMENT_SHARING:
+            case self::ARCHIVE_FOLDERS:
                 return 'lightblue';
 
             case self::PROCESS:
@@ -81,6 +88,7 @@ class ExternalSystemLogObjectTypes extends AConstant implements IColorable, IBac
 
             case self::EXTERNAL_SYSTEM:
             case self::FILES:
+            case self::TRANSACTION_LOG:
                 return 'pink';
         }
     }

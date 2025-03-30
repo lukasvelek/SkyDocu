@@ -16,6 +16,7 @@ use App\Logger\Logger;
 use App\Managers\AManager;
 use App\Managers\EntityManager;
 use App\Repositories\Container\ExternalSystemLogRepository;
+use App\Repositories\Container\ExternalSystemRightsRepository;
 use App\Repositories\Container\ExternalSystemsRepository;
 use App\Repositories\Container\ExternalSystemTokenRepository;
 
@@ -23,6 +24,7 @@ class ExternalSystemsManager extends AManager {
     private ExternalSystemsRepository $externalSystemsRepository;
     private ExternalSystemLogRepository $externalSystemLogRepository;
     private ExternalSystemTokenRepository $externalSystemTokenRepository;
+    private ExternalSystemRightsRepository $externalSystemRightsRepository;
 
     /**
      * Class constructor
@@ -32,13 +34,15 @@ class ExternalSystemsManager extends AManager {
         EntityManager $entityManager,
         ExternalSystemsRepository $externalSystemsRepository,
         ExternalSystemLogRepository $externalSystemLogRepository,
-        ExternalSystemTokenRepository $externalSystemTokenRepository
+        ExternalSystemTokenRepository $externalSystemTokenRepository,
+        ExternalSystemRightsRepository $externalSystemRightsRepository
     ) {
         parent::__construct($logger, $entityManager);
 
         $this->externalSystemsRepository = $externalSystemsRepository;
         $this->externalSystemLogRepository = $externalSystemLogRepository;
         $this->externalSystemTokenRepository = $externalSystemTokenRepository;
+        $this->externalSystemRightsRepository = $externalSystemRightsRepository;
     }
 
     /**
@@ -205,6 +209,50 @@ class ExternalSystemsManager extends AManager {
         $entryId = $this->createId(EntityManager::C_EXTERNAL_SYSTEM_LOG);
 
         if(!$this->externalSystemLogRepository->insertNewLogEntry($entryId, $systemId, $message, $actionType, $objectType)) {
+            throw new GeneralException('Database error.');
+        }
+    }
+
+    /**
+     * Returns all allowed operations for system
+     * 
+     * @param string $systemId System ID
+     */
+    public function getAllowedOperationsForSystem(string $systemId): array {
+        $qb = $this->externalSystemRightsRepository->composeQueryForExternalSystemRights();
+        $qb->andWhere('systemId = ?', [$systemId])
+            ->execute();
+
+        $operations = [];
+        while($row = $qb->fetchAssoc()) {
+            $operations[] = DatabaseRow::createFromDbRow($row);
+        }
+
+        return $operations;
+    }
+
+    /**
+     * Allows external system operation
+     * 
+     * @param string $systemId System ID
+     * @param string $operationName Operation name
+     */
+    public function allowExternalSystemOperation(string $systemId, string $operationName) {
+        $rightId = $this->createId(EntityManager::C_EXTERNAL_SYSTEM_RIGHTS);
+
+        if(!$this->externalSystemRightsRepository->insertAllowedExternalSystemOperation($rightId, $systemId, $operationName)) {
+            throw new GeneralException('Database error.');
+        }
+    }
+
+    /**
+     * Disallow external system operation
+     * 
+     * @param string $rightId Right ID
+     * @param string $systemId System ID
+     */
+    public function disallowExternalSystemOperation(string $rightId, string $systemId) {
+        if(!$this->externalSystemRightsRepository->deleteExternalSystemOperation($rightId, $systemId)) {
             throw new GeneralException('Database error.');
         }
     }

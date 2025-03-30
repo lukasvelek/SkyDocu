@@ -4,6 +4,7 @@ namespace App\Modules\AdminModule;
 
 use App\Constants\Container\ExternalSystemLogActionTypes;
 use App\Constants\Container\ExternalSystemLogObjectTypes;
+use App\Constants\Container\ExternalSystemRightsOperations;
 use App\Core\DB\DatabaseRow;
 use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
@@ -62,6 +63,20 @@ class ExternalSystemsPresenter extends AAdminPresenter {
             $el->href($this->createURLString('log', ['systemId' => $primaryKey]))
                 ->class('grid-link')
                 ->text('Log');
+
+            return $el;
+        };
+
+        $rights = $grid->addAction('rights');
+        $rights->setTitle('Rights');
+        $rights->onCanRender[] = function() {
+            return true;
+        };
+        $rights->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
+            $el = HTML::el('a');
+            $el->href($this->createURLString('rightsList', ['systemId' => $primaryKey]))
+                ->class('grid-link')
+                ->text('Rights');
 
             return $el;
         };
@@ -266,6 +281,139 @@ class ExternalSystemsPresenter extends AAdminPresenter {
         $form->addSubmit('Save');
 
         return $form;
+    }
+
+    public function renderRightsList() {
+        $systemId = $this->httpRequest->get('systemId');
+        if($systemId === null) {
+            throw new RequiredAttributeIsNotSetException('systemId');
+        }
+
+        $links = [
+            $this->createBackUrl('list'),
+            LinkBuilder::createSimpleLink('Allow operation', $this->createURL('allowRightForm', ['systemId' => $systemId]), 'link')
+        ];
+
+        $this->template->links = LinkHelper::createLinksFromArray($links);
+    }
+
+    protected function createComponentContainerExternalSystemRightsGrid(HttpRequest $request) {
+        $grid = $this->componentFactory->getGridBuilder($this->containerId);
+
+        $qb = $this->externalSystemRightsRepository->composeQueryForExternalSystemRights();
+        $qb->andWhere('systemId = ?', [$request->get('systemId')]);
+
+        $grid->createDataSourceFromQueryBuilder($qb, 'rightId');
+        $grid->addQueryDependency('systemId', $request->get('systemId'));
+
+        $grid->addColumnConst('operationName', 'Operation', ExternalSystemRightsOperations::class);
+        $grid->addColumnBoolean('isEnabled', 'Allowed');
+
+        $disallow = $grid->addAction('disallow');
+        $disallow->setTitle('Disallow');
+        $disallow->onCanRender[] = function() {
+            return true;
+        };
+        $disallow->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
+            $el = HTML::el('a');
+            $el->href($this->createURLString('disallowRight', ['systemId' => $row->systemId, 'rightId' => $primaryKey]))
+                ->class('grid-link')
+                ->text('Disallow');
+
+            return $el;
+        };
+
+        return $grid;
+    }
+
+    public function handleAllowRightForm(?FormRequest $fr = null) {
+        $systemId = $this->httpRequest->get('systemId');
+        if($systemId === null) {
+            throw new RequiredAttributeIsNotSetException('systemId');
+        }
+
+        if($fr !== null) {
+            try {
+                $this->externalSystemRightsRepository->beginTransaction(__METHOD__);
+
+                $this->externalSystemsManager->allowExternalSystemOperation($systemId, $fr->operation);
+
+                $this->externalSystemRightsRepository->commit($this->getUserId(), __METHOD__);
+
+                $this->flashMessage('Successfully allowed external system selected operation.', 'success');
+            } catch(AException $e) {
+                $this->externalSystemRightsRepository->rollback(__METHOD__);
+
+                $this->flashMessage('Could not allow external system selected operation.', 'error', 10);
+            }
+
+            $this->redirect($this->createURL('rightsList', ['systemId' => $systemId]));
+        }
+    }
+
+    public function renderAllowRightForm() {
+        $systemId = $this->httpRequest->get('systemId');
+
+        $this->template->links = $this->createBackUrl('rightsList', ['systemId' => $systemId]);
+    }
+
+    protected function createComponentAllowRightForm(HttpRequest $request) {
+        $form = $this->componentFactory->getFormBuilder();
+
+        $form->setAction($this->createURL('allowRightForm', ['systemId' => $request->get('systemId')]));
+
+        $allowedOperations = $this->externalSystemsManager->getAllowedOperationsForSystem($request->get('systemId'));
+
+        $allowedOperationNames = [];
+        foreach($allowedOperations as $operation) {
+            $allowedOperationNames[] = $operation->operationName;
+        }
+
+        $operations = ExternalSystemRightsOperations::getAll();
+
+        $operationSelect = [];
+        foreach($operations as $value => $text) {
+            if(in_array($value, $allowedOperationNames)) continue;
+
+            $operationSelect[] = [
+                'value' => $value,
+                'text' => $text
+            ];
+        }
+
+        $form->addSelect('operation', 'Operation:')
+            ->addRawOptions($operationSelect);
+
+        $form->addSubmit('Allow');
+
+        return $form;
+    }
+
+    public function handleDisallowRight() {
+        $systemId = $this->httpRequest->get('systemId');
+        if($systemId === null) {
+            throw new RequiredAttributeIsNotSetException('systemId');
+        }
+        $rightId = $this->httpRequest->get('rightId');
+        if($rightId === null) {
+            throw new RequiredAttributeIsNotSetException('rightId');
+        }
+
+        try {
+            $this->externalSystemRightsRepository->beginTransaction(__METHOD__);
+
+            $this->externalSystemsManager->disallowExternalSystemOperation($rightId, $systemId);
+
+            $this->externalSystemRightsRepository->commit($this->getUserId(), __METHOD__);
+
+            $this->flashMessage('Successfully disallowed external system operation.', 'success');
+        } catch(AException $e) {
+            $this->externalSystemRightsRepository->rollback(__METHOD__);
+
+            $this->flashMessage('Could not disallow external system operation.', 'error', 10);
+        }
+
+        $this->redirect($this->createURL('rightsList', ['systemId' => $systemId]));
     }
 }
 

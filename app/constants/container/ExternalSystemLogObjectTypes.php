@@ -17,6 +17,8 @@ class ExternalSystemLogObjectTypes extends AConstant implements IColorable, IBac
     public const USER = 3;
     public const EXTERNAL_SYSTEM = 4;
     public const PROCESS_TYPES = 5;
+    public const DOCUMENT_FOLDERS = 6;
+    public const DOCUMENT_CLASSES = 7;
 
     public static function toString($key): ?string {
         return match((int)$key) {
@@ -25,30 +27,54 @@ class ExternalSystemLogObjectTypes extends AConstant implements IColorable, IBac
             self::PROCESS => 'Process',
             self::USER => 'User',
             self::EXTERNAL_SYSTEM => 'External system',
-            self::PROCESS_TYPES => 'Process types'
+            self::PROCESS_TYPES => 'Process types',
+            self::DOCUMENT_FOLDERS => 'Document folders',
+            self::DOCUMENT_CLASSES => 'Document classes'
         };
     }
 
     public static function getColor($key): ?string {
-        return match((int)$key) {
-            default => 'black',
-            self::DOCUMENT => 'blue',
-            self::PROCESS => 'red',
-            self::PROCESS_TYPES => 'red',
-            self::USER => 'green',
-            self::EXTERNAL_SYSTEM => 'purple'
-        };
+        switch((int)$key) {
+            default:
+                return 'black';
+
+            case self::DOCUMENT:
+            case self::DOCUMENT_FOLDERS:
+            case self::DOCUMENT_CLASSES:
+                return 'blue';
+
+            case self::PROCESS:
+            case self::PROCESS_TYPES:
+                return 'red';
+
+            case self::USER:
+                return 'green';
+
+            case self::EXTERNAL_SYSTEM:
+                return 'purple';
+        }
     }
 
     public static function getBackgroundColor($key): ?string {
-        return match((int)$key) {
-            default => null,
-            self::DOCUMENT => 'lightblue',
-            self::PROCESS => 'pink',
-            self::PROCESS_TYPES => 'pink',
-            self::USER => 'lightgreen',
-            self::EXTERNAL_SYSTEM => 'pink'
-        };
+        switch((int)$key) {
+            default:
+                return null;
+
+            case self::DOCUMENT:
+            case self::DOCUMENT_FOLDERS:
+            case self::DOCUMENT_CLASSES:
+                return 'lightblue';
+
+            case self::PROCESS:
+            case self::PROCESS_TYPES:
+                return 'pink';
+
+            case self::USER:
+                return 'lightgreen';
+
+            case self::EXTERNAL_SYSTEM:
+                return 'pink';
+        }
     }
 }
 

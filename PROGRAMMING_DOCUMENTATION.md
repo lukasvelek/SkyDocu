@@ -246,6 +246,30 @@ When the service is run (either from UI or by scheduler) the master is started. 
     - Returns:
         - documentId
 
+- api/v1/documents/folders/get/ - Get all document folders
+    - Parameters:
+        - token
+        - limit
+        - offset
+        - properties
+            - folderId
+            - title
+            - isSystem
+            - parentFolderId
+    - Optional parameters:
+        - where
+
+- api/v1/documents/classes/get/ - Get all document classes
+    - Parameters:
+        - token
+        - limit
+        - offset
+        - properties
+            - classId
+            - title
+    - Optional parameters:
+        - where
+
 ## Database
 
 ### Database table schema

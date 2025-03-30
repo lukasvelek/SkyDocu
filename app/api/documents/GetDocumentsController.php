@@ -6,7 +6,6 @@ use App\Api\AReadAPIOperation;
 use App\Constants\Container\ExternalSystemLogObjectTypes;
 use App\Core\DB\DatabaseRow;
 use App\Core\Http\JsonResponse;
-use App\Exceptions\GeneralException;
 
 class GetDocumentsController extends AReadAPIOperation {
     protected function run(): JsonResponse {

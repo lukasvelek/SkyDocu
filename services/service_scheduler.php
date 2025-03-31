@@ -8,6 +8,7 @@ use App\Exceptions\ServiceException;
 use App\Helpers\BackgroundServiceScheduleHelper;
 
 require_once('config.php');
+require_once('version.php');
 require_once('app/app_loader.php');
 
 const RUN_ALL_EXPLICITLY = false;

@@ -56,6 +56,17 @@ class ExternalSystemsRepository extends ARepository {
 
         return $qb->fetch();
     }
+
+    public function deleteExternalSystem(string $systemId) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->delete()
+            ->from('external_systems')
+            ->where('systemId = ?', [$systemId])
+            ->execute();
+
+        return $qb->fetchBool();
+    }
 }
 
 ?>

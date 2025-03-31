@@ -5,6 +5,7 @@ namespace App\Managers\Container;
 use App\Constants\Container\ExternalSystemLogActionTypes;
 use App\Constants\Container\ExternalSystemLogMessages;
 use App\Constants\Container\ExternalSystemLogObjectTypes;
+use App\Constants\Container\ExternalSystemRightsOperations;
 use App\Core\Datetypes\DateTime;
 use App\Core\DB\DatabaseRow;
 use App\Core\HashManager;
@@ -20,6 +21,11 @@ use App\Repositories\Container\ExternalSystemRightsRepository;
 use App\Repositories\Container\ExternalSystemsRepository;
 use App\Repositories\Container\ExternalSystemTokenRepository;
 
+/**
+ * ExternalSystemsManager contains useful methods for managing external systems
+ * 
+ * @author Lukas Velek
+ */
 class ExternalSystemsManager extends AManager {
     private ExternalSystemsRepository $externalSystemsRepository;
     private ExternalSystemLogRepository $externalSystemLogRepository;
@@ -60,6 +66,8 @@ class ExternalSystemsManager extends AManager {
         if(!$this->externalSystemsRepository->insertNewExternalSystem($systemId, $title, $description, $login, $password)) {
             throw new GeneralException('Database error.');
         }
+
+        $this->allowAllExternalSystemOperations($systemId);
     }
 
     /**
@@ -238,21 +246,70 @@ class ExternalSystemsManager extends AManager {
      * @param string $operationName Operation name
      */
     public function allowExternalSystemOperation(string $systemId, string $operationName) {
-        $rightId = $this->createId(EntityManager::C_EXTERNAL_SYSTEM_RIGHTS);
-
-        if(!$this->externalSystemRightsRepository->insertAllowedExternalSystemOperation($rightId, $systemId, $operationName)) {
+        if(!$this->externalSystemRightsRepository->updateExternalSystemOperation($systemId, $operationName, true)) {
             throw new GeneralException('Database error.');
         }
     }
 
     /**
-     * Disallow external system operation
+     * Disallows external system operation
      * 
-     * @param string $rightId Right ID
+     * @param string $systemId System ID
+     * @param string $operationName Operation name
+     */
+    public function disallowExternalSystemOperation(string $systemId, string $operationName) {
+        if(!$this->externalSystemRightsRepository->updateExternalSystemOperation($systemId, $operationName, false)) {
+            throw new GeneralException('Database error.');
+        }
+    }
+
+    /**
+     * Allows all external system operations
+     * 
      * @param string $systemId System ID
      */
-    public function disallowExternalSystemOperation(string $rightId, string $systemId) {
-        if(!$this->externalSystemRightsRepository->deleteExternalSystemOperation($rightId, $systemId)) {
+    public function allowAllExternalSystemOperations(string $systemId) {
+        foreach(ExternalSystemRightsOperations::getAll() as $operation => $text) {
+            $rightId = $this->createId(EntityManager::C_EXTERNAL_SYSTEM_RIGHTS);
+
+            if(!$this->externalSystemRightsRepository->insertAllowedExternalSystemOperation($rightId, $systemId, $operation)) {
+                throw new GeneralException('Database error.');
+            }
+        }
+    }
+
+    /**
+     * Removes all external system rights
+     * 
+     * @param string $systemId System ID
+     */
+    public function removeAllExternalSystemRights(string $systemId) {
+        if(!$this->externalSystemRightsRepository->deleteAllExternalSystemOperations($systemId)) {
+            throw new GeneralException('Database error');
+        }
+    }
+
+    /**
+     * Deletes external system
+     * 
+     * @param string $systemId System ID
+     */
+    public function deleteExternalSystem(string $systemId) {
+        // delete rights
+        $this->removeAllExternalSystemRights($systemId);
+
+        // delete tokens
+        if(!$this->externalSystemTokenRepository->deleteExternalSystemTokens($systemId)) {
+            throw new GeneralException('Database error.');
+        }
+
+        // delete logs
+        if(!$this->externalSystemLogRepository->deleteExternalSystemLogs($systemId)) {
+            throw new GeneralException('Database error.');
+        }
+
+        // delete system
+        if(!$this->externalSystemsRepository->deleteExternalSystem($systemId)) {
             throw new GeneralException('Database error.');
         }
     }

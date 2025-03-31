@@ -24,13 +24,26 @@ class ExternalSystemRightsRepository extends ARepository {
         return $qb->fetchBool();
     }
 
-    public function deleteExternalSystemOperation(string $rightId, string $systemId) {
+    public function deleteAllExternalSystemOperations(string $systemId) {
         $qb = $this->qb(__METHOD__);
 
         $qb->delete()
             ->from('external_system_rights')
             ->where('systemId = ?', [$systemId])
-            ->andWhere('rightId = ?', [$rightId])
+            ->execute();
+
+        return $qb->fetchBool();
+    }
+
+    public function updateExternalSystemOperation(string $systemId, string $operationName, bool $enable) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->update('external_system_rights')
+            ->set([
+                'isEnabled' => $enable
+            ])
+            ->where('systemId = ?', [$systemId])
+            ->andWhere('operationName = ?', [$operationName])
             ->execute();
 
         return $qb->fetchBool();

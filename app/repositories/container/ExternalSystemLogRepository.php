@@ -23,6 +23,17 @@ class ExternalSystemLogRepository extends ARepository {
 
         return $qb->fetchBool();
     }
+
+    public function deleteExternalSystemLogs(string $systemId) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->delete()
+            ->from('external_system_log')
+            ->where('systemId = ?', [$systemId])
+            ->execute();
+
+        return $qb->fetchBool();
+    }
 }
 
 ?>

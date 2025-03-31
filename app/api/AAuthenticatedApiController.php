@@ -133,7 +133,7 @@ abstract class AAuthenticatedApiController extends AApiClass {
         $allowed = false;
         foreach($operations as $operation) {
             if($operation->operationName == $operationName) {
-                $allowed = true;
+                $allowed = $operation->isEnabled;
             }
         }
 

@@ -25,7 +25,11 @@ class Configuration {
      * Returns current version
      */
     public static function getCurrentVersion(): string {
-        return APP_VERSION . '+Build_' . APP_VERSION_BUILD . '+Branch_' . APP_BRANCH;
+        if(APP_BRANCH == 'TEST') {
+            return APP_VERSION . '+Build_' . APP_VERSION_BUILD . '+Branch_' . APP_BRANCH;
+        } else {
+            return APP_VERSION . ' (' . APP_VERSION . '+Build_' . APP_VERSION_BUILD . '+Branch_' . APP_BRANCH . ')';
+        }
     }
 }
 

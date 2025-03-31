@@ -92,12 +92,14 @@ abstract class AAdminPresenter extends AContainerPresenter {
             $gridConfiguration = $this->checkActivePage('GridConfiguration');
             $fileStorage = $this->checkActivePage('FileStorage');
             $dbAdmin = $this->checkActivePage('DbAdmin');
+            $externalSystems = $this->checkActivePage('ExternalSystems');
 
             $addLink('Dashboard', $this->createFullURL('Admin:System', 'dashboard'), $system);
             $addLink('Transaction log', $this->createFullURL('Admin:TransactionLog', 'list'), $transactionLog);
             $addLink('Grid configuration', $this->createFullURL('Admin:GridConfiguration', 'list'), $gridConfiguration);
             $addLink('File storage', $this->createFullURL('Admin:FileStorage', 'list'), $fileStorage);
             $addLink('Database administration', $this->createFullURL('Admin:DbAdmin', 'list'), $dbAdmin);
+            $addLink('External systems', $this->createFullURL('Admin:ExternalSystems', 'list'), $externalSystems);
         }
 
         if($this->isProcesses) {

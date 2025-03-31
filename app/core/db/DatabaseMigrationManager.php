@@ -53,6 +53,7 @@ class DatabaseMigrationManager {
      * Runs all migrations
      * 
      * @param bool $throwExceptions True if exceptions should be thrown
+     * @return int Database schema
      */
     public function runMigrations(bool $throwExceptions = false) {
         // get migrations
@@ -64,9 +65,12 @@ class DatabaseMigrationManager {
         $this->filterOnlyUpstreamMigrations($migrations);
         $this->logger->info(sprintf('Found %d migrations that must be run.', count($migrations)), __METHOD__);
 
+        $dbSchema = 0;
         foreach($migrations as $migration) {
-            $this->runSingleMigration($migration, $throwExceptions);
+            $dbSchema = $this->runSingleMigration($migration, $throwExceptions);
         }
+
+        return $dbSchema;
     }
 
     /**
@@ -79,7 +83,7 @@ class DatabaseMigrationManager {
             $migrationDir .= '\\containers';
         }
 
-        $migrations = FileManager::getFilesInFolder($migrationDir);
+        $migrations = FileManager::getFilesInFolder($migrationDir, false);
 
         return $migrations;
     }
@@ -101,7 +105,7 @@ class DatabaseMigrationManager {
                 $className = FileManager::getFilenameFromPath($migration);
 
                 $migrationNameParts = explode('_', $className);
-                $migrationNumber = $migrationNameParts[count($migrationNameParts) - 2];
+                $migrationNumber = $migrationNameParts[2];
 
                 if(!$skip) {
                     $filteredMigrations[] = $migration;
@@ -160,6 +164,7 @@ class DatabaseMigrationManager {
      * 
      * @param string $migrationFilePath File path of the migration
      * @param bool $throwExceptions True if exceptions should be thrown
+     * @return int Migration number
      */
     private function runSingleMigration(string $migrationFilePath, bool $throwExceptions) {
         require_once($migrationFilePath);
@@ -170,8 +175,15 @@ class DatabaseMigrationManager {
         $this->logger->info(sprintf('Running migration \'%s\' located in (\'%s\').', $className, $migrationFilePath), __METHOD__);
 
         $migrationNameParts = explode('_', $fileName);
-        $migrationName = $migrationNameParts[count($migrationNameParts) - 1];
-        $migrationNumber = $migrationNameParts[count($migrationNameParts) - 2];
+        $migrationNumber = $migrationNameParts[2];
+        $migrationName = '';
+
+        $tmp = [];
+        for($i = 3; $i < (count($migrationNameParts) - 1); $i++) {
+            $tmp[] = $migrationNameParts[$i];
+        }
+
+        $migrationName = implode('_', $tmp);
 
         try {
             $fullClassName = '\\App\\Data\\Db\\Migrations\\' . ($this->containerId !== null ? 'Containers\\' : '') . $className;
@@ -249,6 +261,8 @@ class DatabaseMigrationManager {
         } catch(AException $e) {
             throw $e;
         }
+
+        return (int)$migrationNumber;
     }
 
     /**

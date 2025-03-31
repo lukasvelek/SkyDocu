@@ -33,6 +33,17 @@ class UserRepository extends ARepository {
         return $entity;
     }
 
+    public function getUserRowById(string $userId) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->select(['*'])
+            ->from('users')
+            ->where('userId = ?', [$userId])
+            ->execute();
+
+        return $qb->fetch();
+    }
+
     public function getUserForAuthentication(string $username) {
         $qb = $this->qb(__METHOD__);
 

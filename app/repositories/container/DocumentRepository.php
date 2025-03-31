@@ -15,6 +15,16 @@ class DocumentRepository extends ARepository {
         return $qb;
     }
 
+    public function composeQueryForSharedDocuments() {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->select(['*'])
+            ->from('document_sharing')
+            ->orderBy('dateCreated', 'DESC');
+
+        return $qb;
+    }
+
     public function getSharedDocumentsForUser(string $userId) {
         $qb = $this->qb(__METHOD__);
 

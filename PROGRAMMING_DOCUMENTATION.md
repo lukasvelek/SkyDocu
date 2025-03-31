@@ -23,6 +23,9 @@ Here is the list of all chapters.
 [`3.2.4` ModalBuilder](#324-modalbuilder)  
 [`3.2.5` HTML](#325-html)  
 [`3.3` Components](#33-components)  
+[`4` Background services](#4-background-services)  
+[`4.1` LogRotateService service](#41-logrotateservice-service)  
+[`4.2` ContainerCreationService service](#42-containercreationservice-service)  
 
 ## `1` About SkyDocu
 SkyDocu is a Document Management System (further referred to as "DMS"). It is not a traditional DMS because it is created as a cloud application.
@@ -157,6 +160,190 @@ This is one of the recently reworked services. Now it is divided into a master a
 Its purpose is to create containers.
 
 When the service is run (either from UI or by scheduler) the master is started. It retrieves all the containers that are meant to be created and starts a slave for each container. Each slave then creates the container itself.
+
+## `5` API
+SkyDocu API is a REST API. Only external systems that are created in containers can use the API.
+
+### `5.1` External systems
+External system is an essential entity that is used for authentication and authorization when using API. Each external system has their own rights - document reading, process reading etc...
+
+Logging individual operations is an obvious feature.
+
+### `5.2` API endpoints
+#### `5.2.1` Authentication
+- api/v1/login/ - Login and get token
+    - Parameters:
+        - login
+        - password
+        - containerId
+    - Returns:
+        - token
+
+#### `5.2.2` Documents
+- api/v1/documents/get/ - Get all documents
+    - Parameters:
+        - token
+        - limit
+        - offset
+        - properties
+            - documentId
+            - title
+            - authorUserId
+            - description
+            - status
+            - classId
+            - folderId
+            - dateCreated
+            - dateModified
+    - Optional parameters:
+        - where
+
+- api/v1/documents/create/ - Create a document
+    - Parameters:
+        - token
+        - title
+        - classId
+        - authorUserId
+        - folderId
+    - Optional parameters:
+        - description
+    - Returns:
+        - documentId
+
+- api/v1/documents/folders/get/ - Get all document folders
+    - Parameters:
+        - token
+        - limit
+        - offset
+        - properties
+            - folderId
+            - title
+            - isSystem
+            - parentFolderId
+    - Optional parameters:
+        - where
+
+- api/v1/documents/classes/get/ - Get all document classes
+    - Parameters:
+        - token
+        - limit
+        - offset
+        - properties
+            - classId
+            - title
+    - Optional parameters:
+        - where
+
+- api/v1/documents/sharing/get/ - Get all document sharings
+    - Parameters:
+        - token
+        - limit
+        - offset
+        - properties
+            - sharingId
+            - documentId
+            - authorUserId
+            - userId
+            - dateValidUntil
+            - dateCreated
+    - Optional parameters:
+        - where
+
+#### `5.2.3` Users
+- api/v1/users/get/ - Get all users
+    - Parameters:
+        - token
+        - limit
+        - offset
+        - properties
+            - userId
+            - username
+            - fullname
+            - dateCreated
+            - email
+            - isTechnical
+            - appDesignTheme
+    - Optional parameters:
+        - where
+
+#### `5.2.4` Processes
+- api/v1/processes/get/ - Get all processes
+    - Parameters:
+        - token
+        - limit
+        - offset
+        - properties
+            - processId
+            - documentId
+            - type
+            - authorUserId
+            - currentOfficerUserId
+            - workflowUserIds
+            - dateCreated
+            - status
+            - currentOfficerSubstituteUserId
+    - Optional parameters:
+        - where
+
+- api/v1/processes/types/get/ - Get all process types
+    - Parameters:
+        - token
+        - limit
+        - offset
+        - properties
+            - typeId
+            - typeKey
+            - title
+            - description
+            - isEnabled
+    - Optional parameters:
+        - where
+
+#### `5.2.5` Files
+- api/v1/files/get/ - Get all files
+    - Parameters:
+        - token
+        - limit
+        - offset
+        - properties
+            - fileId
+            - filename
+            - filepath
+            - filesize
+            - userId
+            - hash
+            - dateCreated
+    - Optional parameters:
+        - where
+
+#### `5.2.6` Archive
+- api/v1/archive/folders/get/ - Get all archive folders
+    - Parameters:
+        - token
+        - limit
+        - offset
+        - properties
+            - folderId
+            - title
+            - isSystem
+            - parentFolderId
+            - status
+    - Optional parameters:
+        - where
+
+#### `5.2.7` Transaction log
+- api/v1/transactionLog/get/ - Get all entries from transaction log
+    - Parameters:
+        - token
+        - limit
+        - offset
+        - properties
+            - transactionId
+            - userId
+            - callingMethod
+            - dateCreated
+    - Optional parameters:
+        - where
 
 ## Database
 

@@ -2,6 +2,7 @@
 
 namespace App\Managers;
 
+use App\Constants\AuditLogActionTypes;
 use App\Exceptions\GeneralException;
 use App\Logger\Logger;
 use App\Repositories\AuditLogRepository;
@@ -65,6 +66,60 @@ class AuditLogManager extends AManager {
         )) {
             throw new GeneralException('Database error.');
         }
+    }
+
+    /**
+     * Creates a new read audit log entry
+     * 
+     * @param ?string $containerId Container ID
+     * @param string $userId User ID
+     * @param ?int $object1Type Object 1 type
+     * @param ?int $object2Type Object 2 type
+     * @param ?int $object3Type Object 3 type
+     */
+    public function createReadAuditLogEntry(
+        ?string $containerId,
+        string $userId,
+        ?int $object1Type,
+        ?int $object2Type,
+        ?int $object3Type
+    ) {
+        $this->createAuditLogEntry(
+            $containerId,
+            $userId,
+            AuditLogActionTypes::READ,
+            $object1Type,
+            $object2Type,
+            $object3Type,
+            sprintf('User "%s" read given information.', $userId)
+        );
+    }
+
+    /**
+     * Create a new create audit log entry
+     * 
+     * @param ?string $containerId Container ID
+     * @param string $userId User ID
+     * @param ?int $object1Type Object 1 type
+     * @param ?int $object2Type Object 2 type
+     * @param ?int $object3Type Object 3 type
+     */
+    public function createCreateAuditLogEntry(
+        ?string $containerId,
+        string $userId,
+        ?int $object1Type,
+        ?int $object2Type,
+        ?int $object3Type
+    ) {
+        $this->createAuditLogEntry(
+            $containerId,
+            $userId,
+            AuditLogActionTypes::CREATE,
+            $object1Type,
+            $object2Type,
+            $object3Type,
+            sprintf('User "%s" create given object.', $userId)
+        );
     }
 }
 

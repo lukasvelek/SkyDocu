@@ -12,6 +12,7 @@ use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
 use App\Exceptions\ModuleDoesNotExistException;
 use App\Logger\Logger;
+use App\Managers\AuditLogManager;
 use App\Managers\ContainerDatabaseManager;
 use App\Managers\ContainerInviteManager;
 use App\Managers\ContainerManager;
@@ -21,6 +22,7 @@ use App\Managers\UserAbsenceManager;
 use App\Managers\UserManager;
 use App\Managers\UserSubstituteManager;
 use App\Modules\ModuleManager;
+use App\Repositories\AuditLogRepository;
 use App\Repositories\ContainerDatabaseRepository;
 use App\Repositories\ContainerInviteRepository;
 use App\Repositories\ContainerRepository;
@@ -76,6 +78,7 @@ class Application {
     public UserAbsenceRepository $userAbsenceRepository;
     public UserSubstituteRepository $userSubstituteRepository;
     public ContainerDatabaseRepository $containerDatabaseRepository;
+    public AuditLogRepository $auditLogRepository;
 
     public ServiceManager $serviceManager;
     public UserManager $userManager;
@@ -86,6 +89,7 @@ class Application {
     public UserAbsenceManager $userAbsenceManager;
     public UserSubstituteManager $userSubstituteManager;
     public ContainerDatabaseManager $containerDatabaseManager;
+    public AuditLogManager $auditLogManager;
 
     public array $repositories;
 
@@ -130,6 +134,7 @@ class Application {
         $this->containerInviteManager = new ContainerInviteManager($this->logger, $this->entityManager, $this->containerInviteRepository);
         $this->userAbsenceManager = new UserAbsenceManager($this->logger, $this->entityManager, $this->userAbsenceRepository);
         $this->userSubstituteManager = new UserSubstituteManager($this->logger, $this->entityManager, $this->userSubstituteRepository);
+        $this->auditLogManager = new AuditLogManager($this->logger, $this->entityManager, $this->auditLogRepository);
 
         $this->initManagers();
 
@@ -208,10 +213,6 @@ class Application {
         } else {
             if((!isset($_GET['page']) || (isset($_GET['page']) && $_GET['page'] != 'Anonym:Logout')) && !isset($_SESSION[SessionNames::IS_LOGGING_IN]) && !isset($_SESSION[SessionNames::IS_REGISTERING])) {
                 //$this->redirect(['page' => 'Anonym:Logout', 'action' => 'logout']); // had to be commented because it caused a overflow because of infinite redirects
-
-                if($message != '') {
-                    $fmHash = $this->flashMessage($message);
-                }
             }
         }
 
@@ -291,40 +292,6 @@ class Application {
      */
     public function composeURL(array $params) {
         return LinkBuilder::convertUrlArrayToString($params);
-    }
-
-    /**
-     * Saves a flash message to persistent cache
-     * 
-     * @param string $text Flash message text
-     * @param string $type Flash message type
-     */
-    public function flashMessage(string $text, string $type = 'info') {
-        /*$cacheFactory = $this->cacheFactory;
-
-        if(array_key_exists(SessionNames::CONTAINER, $_SESSION)) {
-            $containerId = $_SESSION[SessionNames::CONTAINER];
-            $cacheFactory->setCustomNamespace($containerId);
-        }
-
-        $cache = $cacheFactory->getCache(CacheNames::FLASH_MESSAGES);
-
-        $hash = HashManager::createHash(8, false);
-
-        $cache->save($hash, function() use ($type, $text, $hash) {
-            return [
-                [
-                    'type' => $type,
-                    'text' => $text,
-                    'hash' => $hash,
-                    'autoClose' => '5'
-                ]
-            ];
-        });
-
-        return $hash;*/
-
-        
     }
     
     /**

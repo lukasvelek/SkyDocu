@@ -55,6 +55,9 @@ class AuditLogObjectTypes extends AConstant {
     public const C_PROCESS_COMMENT = 2625;
     public const C_PROCESS_TYPE = 2626;
 
+    public const REQUEST = -1;
+    public const INFORMATION = -2;
+
     public static function toString($key): ?string {
         return match((int)$key) {
             default => null,
@@ -84,7 +87,10 @@ class AuditLogObjectTypes extends AConstant {
             self::C_GROUP_USER_RELATION => 'Group user relation',
             self::C_PROCESS => 'Process',
             self::C_PROCESS_COMMENT => 'Process comment',
-            self::C_PROCESS_TYPE => 'Process type'
+            self::C_PROCESS_TYPE => 'Process type',
+
+            self::REQUEST => 'Request',
+            self::INFORMATION => 'Information'
         };
     }
 }

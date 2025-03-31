@@ -6,6 +6,7 @@ use App\Components\ContainerUsageAverageResponseTimeGraph\ContainerUsageAverageR
 use App\Components\ContainerUsageStatsGraph\ContainerUsageStatsGraph;
 use App\Components\ContainerUsageTotalResponseTimeGraph\ContainerUsageTotalResponseTimeGraph;
 use App\Components\Widgets\FileStorageStatsForContainerWidget\FileStorageStatsForContainerWidget;
+use App\Constants\AuditLogObjectTypes;
 use App\Constants\Container\StandaloneProcesses;
 use App\Constants\ContainerEnvironments;
 use App\Constants\ContainerInviteUsageStatus;
@@ -38,7 +39,10 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
         parent::__construct('ContainerSettingsPresenter', 'Container settings');
     }
 
-    public function renderHome() {}
+    public function renderHome() {
+        $this->app->auditLogManager->createReadAuditLogEntry(null, $this->getUserId(), AuditLogObjectTypes::SUPERADMINISTRATION, AuditLogObjectTypes::SA_CONTAINER, AuditLogObjectTypes::INFORMATION);
+        $this->app->auditLogManager->createReadAuditLogEntry(null, $this->getUserId(), AuditLogObjectTypes::SUPERADMINISTRATION, AuditLogObjectTypes::SA_CONTAINER_INVITE, null);
+    }
 
     protected function createComponentContainerInfoForm(HttpRequest $request) {
         $container = $this->app->containerManager->getContainerById($request->get('containerId'));
@@ -617,6 +621,8 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
         ];
 
         $this->template->links = LinkHelper::createLinksFromArray($links);
+
+        $this->app->auditLogManager->createReadAuditLogEntry(null, $this->getUserId(), AuditLogObjectTypes::SUPERADMINISTRATION, AuditLogObjectTypes::SA_CONTAINER_INVITE, null);
     }
 
     protected function createComponentContainerInvitesGrid(HttpRequest $request) {
@@ -702,6 +708,8 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
         $inviteLink = LinkBuilder::createSimpleLink('Generate invite link', $this->createURL('generateInviteLink', ['containerId' => $containerId]), 'link');
 
         $this->template->links = $inviteLink;
+
+        $this->app->auditLogManager->createReadAuditLogEntry(null, $this->getUserId(), AuditLogObjectTypes::SUPERADMINISTRATION, AuditLogObjectTypes::SA_CONTAINER_INVITE, null);
     }
 
     public function handleGenerateInviteLink() {

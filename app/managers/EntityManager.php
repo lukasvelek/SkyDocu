@@ -31,6 +31,7 @@ class EntityManager extends AManager {
     public const CONTAINER_DATABASES = 'container_databases';
     public const CONTAINER_DATABASE_TABLES = 'container_database_tables';
     public const CONTAINER_DATABASE_TABLE_COLUMNS = 'container_database_table_columns';
+    public const AUDIT_LOG = 'audit_log';
 
     public const C_GROUPS = 'groups';
     public const C_DOCUMENT_CLASSES = 'document_classes';
@@ -158,6 +159,7 @@ class EntityManager extends AManager {
             self::CONTAINER_DATABASE_TABLES => 'entryId',
             self::CONTAINER_DATABASE_TABLE_COLUMNS => 'entryId',
             self::SYSTEM_SERVICES => 'serviceId',
+            self::AUDIT_LOG => 'entryId',
 
             self::C_GROUPS => 'groupId',
             self::C_DOCUMENT_CLASSES => 'classId',

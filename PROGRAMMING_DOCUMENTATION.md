@@ -23,6 +23,9 @@ Here is the list of all chapters.
 [`3.2.4` ModalBuilder](#324-modalbuilder)  
 [`3.2.5` HTML](#325-html)  
 [`3.3` Components](#33-components)  
+[`4` Background services](#4-background-services)  
+[`4.1` LogRotateService service](#41-logrotateservice-service)  
+[`4.2` ContainerCreationService service](#42-containercreationservice-service)  
 
 ## `1` About SkyDocu
 SkyDocu is a Document Management System (further referred to as "DMS"). It is not a traditional DMS because it is created as a cloud application.
@@ -159,8 +162,15 @@ Its purpose is to create containers.
 When the service is run (either from UI or by scheduler) the master is started. It retrieves all the containers that are meant to be created and starts a slave for each container. Each slave then creates the container itself.
 
 ## `5` API
-### `5.1` API endpoints
-#### `5.1.1` Authentication
+SkyDocu API is a REST API. Only external systems that are created in containers can use the API.
+
+### `5.1` External systems
+External system is an essential entity that is used for authentication and authorization when using API. Each external system has their own rights - document reading, process reading etc...
+
+Logging individual operations is an obvious feature.
+
+### `5.2` API endpoints
+#### `5.2.1` Authentication
 - api/v1/login/ - Login and get token
     - Parameters:
         - login
@@ -169,7 +179,7 @@ When the service is run (either from UI or by scheduler) the master is started. 
     - Returns:
         - token
 
-#### `5.1.2` Documents
+#### `5.2.2` Documents
 - api/v1/documents/get/ - Get all documents
     - Parameters:
         - token
@@ -239,7 +249,7 @@ When the service is run (either from UI or by scheduler) the master is started. 
     - Optional parameters:
         - where
 
-#### `5.1.3` Users
+#### `5.2.3` Users
 - api/v1/users/get/ - Get all users
     - Parameters:
         - token
@@ -256,7 +266,7 @@ When the service is run (either from UI or by scheduler) the master is started. 
     - Optional parameters:
         - where
 
-#### `5.1.4` Processes
+#### `5.2.4` Processes
 - api/v1/processes/get/ - Get all processes
     - Parameters:
         - token
@@ -289,7 +299,7 @@ When the service is run (either from UI or by scheduler) the master is started. 
     - Optional parameters:
         - where
 
-#### `5.1.5` Files
+#### `5.2.5` Files
 - api/v1/files/get/ - Get all files
     - Parameters:
         - token
@@ -306,7 +316,7 @@ When the service is run (either from UI or by scheduler) the master is started. 
     - Optional parameters:
         - where
 
-#### `5.1.6` Archive
+#### `5.2.6` Archive
 - api/v1/archive/folders/get/ - Get all archive folders
     - Parameters:
         - token
@@ -321,7 +331,7 @@ When the service is run (either from UI or by scheduler) the master is started. 
     - Optional parameters:
         - where
 
-#### `5.1.7` Transaction log
+#### `5.2.7` Transaction log
 - api/v1/transactionLog/get/ - Get all entries from transaction log
     - Parameters:
         - token

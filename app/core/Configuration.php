@@ -20,6 +20,13 @@ class Configuration {
 
         return APP_BRANCH;
     }
+
+    /**
+     * Returns current version
+     */
+    public static function getCurrentVersion(): string {
+        return APP_VERSION . '+Build_' . APP_VERSION_BUILD . '+Branch_' . APP_BRANCH;
+    }
 }
 
 ?>

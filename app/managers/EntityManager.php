@@ -159,7 +159,6 @@ class EntityManager extends AManager {
             self::CONTAINER_DATABASE_TABLES => 'entryId',
             self::CONTAINER_DATABASE_TABLE_COLUMNS => 'entryId',
             self::SYSTEM_SERVICES => 'serviceId',
-            self::AUDIT_LOG => 'entryId',
 
             self::C_GROUPS => 'groupId',
             self::C_DOCUMENT_CLASSES => 'classId',

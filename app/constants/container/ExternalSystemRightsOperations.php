@@ -7,7 +7,6 @@ use App\Constants\AConstant;
 class ExternalSystemRightsOperations extends AConstant {
     public const READ_DOCUMENTS = 'readDocuments';
     public const READ_DOCUMENT_FOLDERS = 'readDocumentFolders';
-
     public const READ_USERS = 'readUsers';
     public const READ_PROCESSES = 'readProcesses';
     public const READ_PROCESS_TYPES = 'readProcessTypes';
@@ -17,6 +16,7 @@ class ExternalSystemRightsOperations extends AConstant {
     public const READ_FILES = 'readFiles';
     public const READ_ARCHIVE_FOLDERS = 'readArchiveFolders';
     public const READ_TRANSACTION_LOG = 'readTransactionLog';
+    public const UPLOAD_FILES = 'uploadFiles';
 
     public static function toString($key): ?string {
         return match($key) {
@@ -30,7 +30,8 @@ class ExternalSystemRightsOperations extends AConstant {
             self::READ_DOCUMENT_SHARINGS => 'Read document sharings',
             self::READ_FILES => 'Read files',
             self::READ_ARCHIVE_FOLDERS => 'Read archive folders',
-            self::READ_TRANSACTION_LOG => 'Read transaction log'
+            self::READ_TRANSACTION_LOG => 'Read transaction log',
+            self::UPLOAD_FILES => 'Upload files'
         };
     }
 }

@@ -59,6 +59,42 @@ class FileUploadManager {
     }
 
     /**
+     * Creates a file
+     * 
+     * @param string $name File name
+     * @param string $content File content
+     * @param ?string $documentId Document ID
+     * @param string $userId User ID
+     */
+    public function createFile(string $name, string $content, ?string $documentId, string $userId): array {
+        $dirpath = $this->generateFolderPath($documentId, $userId);
+        $filename = $this->generateFilename($name, $documentId, $userId);
+        $filepath = $dirpath . $this->generateFilename($name, $documentId, $userId);
+
+        // CHECKS
+        if(!$this->checkType($filepath)) {
+            throw new GeneralException('File extension for file \'' . $filepath . '\' is not supported. Supported file extensions are: ' . implode(', ', self::$ALLOWED_EXTENSIONS));
+        }
+        // END OF CHECKS
+
+        if(!$this->createFolderPath($dirpath)) {
+            throw new GeneralException('Could not create end file path.');
+        }
+
+        $filesize = FileManager::saveFile($dirpath, $filename, $content, false, false);
+
+        if($filesize !== false) {
+            return [
+                self::FILE_FILENAME => $name,
+                self::FILE_FILEPATH => $filepath,
+                self::FILE_FILESIZE => $filesize
+            ];
+        } else {
+            throw new GeneralException('File creation error.');
+        }
+    }
+
+    /**
      * Checks file extension
      * 
      * @param string $filepath Filepath

@@ -88,15 +88,20 @@ abstract class AApiClass {
      * Returns key from passed data
      * 
      * @param string $key Key
+     * @param bool $throw Throw exception
      * @throws GeneralException
      */
-    protected function get(string $key) {
+    protected function get(string $key, bool $throw = true) {
         if($this->data === null) {
             $this->loadData();
         }
 
         if(!array_key_exists($key, $this->data)) {
-            throw new GeneralException('\'' . $key . '\' is not defined.');
+            if($throw) {
+                throw new GeneralException('\'' . $key . '\' is not defined.');
+            } else {
+                return null;
+            }
         }
 
         return $this->data[$key];

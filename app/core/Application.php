@@ -78,7 +78,6 @@ class Application {
     public UserAbsenceRepository $userAbsenceRepository;
     public UserSubstituteRepository $userSubstituteRepository;
     public ContainerDatabaseRepository $containerDatabaseRepository;
-    public AuditLogRepository $auditLogRepository;
 
     public ServiceManager $serviceManager;
     public UserManager $userManager;
@@ -89,7 +88,6 @@ class Application {
     public UserAbsenceManager $userAbsenceManager;
     public UserSubstituteManager $userSubstituteManager;
     public ContainerDatabaseManager $containerDatabaseManager;
-    public AuditLogManager $auditLogManager;
 
     public array $repositories;
 
@@ -134,7 +132,6 @@ class Application {
         $this->containerInviteManager = new ContainerInviteManager($this->logger, $this->entityManager, $this->containerInviteRepository);
         $this->userAbsenceManager = new UserAbsenceManager($this->logger, $this->entityManager, $this->userAbsenceRepository);
         $this->userSubstituteManager = new UserSubstituteManager($this->logger, $this->entityManager, $this->userSubstituteRepository);
-        $this->auditLogManager = new AuditLogManager($this->logger, $this->entityManager, $this->auditLogRepository);
 
         $this->initManagers();
 

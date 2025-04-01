@@ -3,9 +3,11 @@
 namespace App\Modules;
 
 use App\Components\Navbar\Navbar;
+use App\Components\Navbar\NavbarModes;
 use App\Constants\SessionNames;
 use App\Core\Caching\CacheFactory;
 use App\Core\Caching\CacheNames;
+use App\Core\HashManager;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
 use App\Exceptions\TemplateDoesNotExistException;
@@ -237,6 +239,12 @@ abstract class AModule extends AGUICore {
      * @return Navbar Navbar instance
      */
     protected function createNavbarInstance(?int $mode, ?GroupManager $groupManager) {
+        if($mode !== null && $mode != NavbarModes::ANONYM) {
+            if($this->app->currentUser === null) {
+                $this->app->redirect($this->createFullURL('Anonym:Logout', 'logout', ['reason' => 'authenticationError']));
+            }
+        }
+
         $navbar = new Navbar($this->httpRequest, $mode, $this->app->currentUser, $groupManager);
         
         $navbar->setComponentName('navbar');

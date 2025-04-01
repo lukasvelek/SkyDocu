@@ -206,8 +206,11 @@ class Application {
             // login
             $this->currentUser = $this->userRepository->getUserById($_SESSION[SessionNames::USER_ID]);
         } else {
-            if((!isset($_GET['page']) || (isset($_GET['page']) && $_GET['page'] != 'Anonym:Logout')) && !isset($_SESSION[SessionNames::IS_LOGGING_IN]) && !isset($_SESSION[SessionNames::IS_REGISTERING])) {
-                //$this->redirect(['page' => 'Anonym:Logout', 'action' => 'logout']); // had to be commented because it caused a overflow because of infinite redirects
+            if((!isset($_GET['page']) || (isset($_GET['page']) && !in_array($_GET['page'], [
+                'Anonym:Logout',
+                'Anonym:AutoLogin'
+            ]))) && !isset($_SESSION[SessionNames::IS_LOGGING_IN]) && !isset($_SESSION[SessionNames::IS_REGISTERING])) {
+                $this->redirect(['page' => 'Anonym:Logout', 'action' => 'logout', 'reason' => 'authenticationError']);
             }
         }
 

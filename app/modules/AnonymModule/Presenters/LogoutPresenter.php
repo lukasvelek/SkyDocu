@@ -10,7 +10,12 @@ class LogoutPresenter extends AAnonymPresenter {
     public function handleLogout() {
         session_destroy();
 
-        $this->redirect($this->createFullURL('Anonym:AutoLogin', 'checkLogin'));
+        $params = [];
+        if($this->httpRequest->get('reason') !== null) {
+            $params['reason'] = $this->httpRequest->get('reason');
+        }
+
+        $this->redirect($this->createFullURL('Anonym:AutoLogin', 'checkLogin', $params));
     }
 }
 

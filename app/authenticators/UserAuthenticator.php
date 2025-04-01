@@ -102,7 +102,7 @@ class UserAuthenticator {
 
     /**
      * Checks if all the necessary information about the user is saved in the session.
-     * Checks if login hash in session matches the on saved in the database.
+     * Checks if login hash in session matches the one saved in the database.
      * Checks if user is not banned or permanently banned.
      * 
      * @param string &$message Message returned

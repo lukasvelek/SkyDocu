@@ -19,6 +19,9 @@ Previously changelog for versions `1.0`-`1.4` has been located in README.md. How
     - Logging
 - New application version format implementation
     - Build and branch are now contained
+- ContainerFileRemovingSlaveService update
+- General services update
+- Bugfixes
 
 ## SkyDocu `1.4` (03/22/2025)
 - In-container multiple database support

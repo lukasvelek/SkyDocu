@@ -69,7 +69,7 @@ class FileUploadManager {
     public function createFile(string $name, string $content, ?string $documentId, string $userId): array {
         $dirpath = $this->generateFolderPath($documentId, $userId);
         $filename = $this->generateFilename($name, $documentId, $userId);
-        $filepath = $dirpath . $this->generateFilename($name, $documentId, $userId);
+        $filepath = $dirpath . $filename;
 
         // CHECKS
         if(!$this->checkType($filepath)) {

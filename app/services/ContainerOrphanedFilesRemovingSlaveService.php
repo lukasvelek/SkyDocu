@@ -2,9 +2,13 @@
 
 namespace App\Services;
 
+use App\Constants\Container\DocumentStatus;
+use App\Core\Datetypes\DateTime;
 use App\Core\DB\DatabaseManager;
+use App\Core\FileManager;
 use App\Core\ServiceManager;
 use App\Exceptions\AException;
+use App\Exceptions\GeneralException;
 use App\Exceptions\ServiceException;
 use App\Logger\Logger;
 use App\Managers\Container\FileStorageManager;
@@ -75,48 +79,118 @@ class ContainerOrphanedFilesRemovingSlaveService extends AService {
     }
 
     private function processFiles(FileStorageManager $fileStorageManager, DocumentRepository $documentRepository) {
-        // get all document file relations
         
+        /**
+         * 1. get all files
+         * 2. get all document-file relations
+         * 3. get all documents from document-file relations
+         * 4. delete those files that have a document-file relation and the document does not exist or is shredded
+         * 5. delete those files that don't have a document-file relation and are at least 30 days old
+         */
+
+        $fileIdsToDelete = [];
+
+        // get all files
+        $qb = $fileStorageManager->fileStorageRepository->composeQueryForStoredFiles();
+        $qb->execute();
+
+        $fileIds = [];
+        while($row = $qb->fetchAssoc()) {
+            $fileIds[] = $row['fileId'];
+        }
+
+        $this->logInfo(sprintf('Found %d files stored for container.', count($fileIds)));
+
+        // get all document-file relations
         $qb = $fileStorageManager->fileStorageRepository->composeQueryForFileDocumentRelations();
         $qb->execute();
-        
+
         $documentIds = [];
         $documentToFileMapping = [];
         while($row = $qb->fetchAssoc()) {
             $documentIds[] = $row['documentId'];
             $documentToFileMapping[$row['documentId']] = $row['fileId'];
         }
-        
-        $this->logInfo(sprintf('Found %d files stored for container.', count($documentToFileMapping)));
-        
-        // find documents by all document ids from previous step
+
+        $this->logInfo(sprintf('Found %d document-file relations for container.', count($documentIds)));
+
+        // get all documents
         $qb = $documentRepository->composeQueryForDocuments();
         $qb->andWhere($qb->getColumnInValues('documentId', $documentIds))
             ->regenerateSQL()
             ->execute();
 
-        $existing = [];
+        $documentsToDelete = [];
         while($row = $qb->fetchAssoc()) {
-            $documentId = $row['documentId'];
+            if(!in_array($row['status'], [DocumentStatus::DELETED, DocumentStatus::SHREDDED])) {
+                continue;
+            }
 
-            $existing[] = $documentId;
+            $documentsToDelete[] = $row['documentId'];
         }
 
-        // remove not found files
-        $filesToDelete = [];
-        foreach($documentIds as $documentId) {
-            if(!in_array($documentId, $existing)) {
-                $fileId = $documentToFileMapping[$documentId];
-                $filesToDelete[] = $fileId;
+        $this->logInfo(sprintf('Found %d documents that are shredded or deleted and contain a file for container.', count($documentsToDelete)));
+
+        // delete those files that have a document-file relation and the document does not exist or is shredded
+        foreach($documentsToDelete as $documentId) {
+            $fileIdsToDelete[] = $documentToFileMapping[$documentId];
+        }
+
+        // delete those files that don't have a document-file relation and are at least 30 days old
+        $fileToFilePathMapping = [];
+
+        foreach($fileIds as $fileId) {
+            $this->logInfo(sprintf('Processing file \'%s\'.', $fileId));
+            if(in_array($fileId, $documentToFileMapping)) {
+                continue;
+            }
+
+            $file = $fileStorageManager->fileStorageRepository->getFileById($fileId);
+            
+            $fileToFilePathMapping[$fileId] = $file['filepath'];
+
+            $date = new DateTime(strtotime($file['dateCreated']));
+            $date->modify('+30d');
+            $date = strtotime($date->getResult());
+
+            if($date > time()) {
+                $this->logInfo(sprintf('File \'%s\' is older than maximum timestamp of creation.', $fileId));
+                $fileIdsToDelete[] = $fileId;
             }
         }
 
-        $this->logInfo(sprintf('Found %d files that are orphaned and can be deleted.', count($filesToDelete)));
-        
-        foreach($filesToDelete as $fileId) {
-            $documentId = array_search($fileId, $documentToFileMapping);
-            $fileStorageManager->fileStorageRepository->deleteStoredFile($fileId);
-            $fileStorageManager->fileStorageRepository->deleteDocumentFileRelation($documentId, $fileId);
+        // delete files
+        $this->logInfo(sprintf('Found total of %d files to delete.', count($fileIdsToDelete)));
+
+        foreach($fileIdsToDelete as $fileId) {
+            try {
+                $fileStorageManager->fileStorageRepository->beginTransaction(__METHOD__);
+
+                $documentId = array_search($fileId, $documentToFileMapping);
+
+                if(!$fileStorageManager->fileStorageRepository->deleteDocumentFileRelation($documentId, $fileId)) {
+                    throw new GeneralException('Database error 1.');
+                }
+
+                if(!$fileStorageManager->fileStorageRepository->deleteStoredFile($fileId)) {
+                    throw new GeneralException('Database error 2.');
+                }
+
+                $filepath = $fileToFilePathMapping[$fileId];
+
+                $this->logInfo(sprintf('Deleting file \'%s\'.', $filepath));
+                if(!FileManager::deleteFile($filepath)) {
+                    throw new GeneralException('File error.');
+                }
+
+                $fileStorageManager->fileStorageRepository->commit($this->serviceManager->getServiceUserId(), __METHOD__);
+
+                $this->logInfo(sprintf('File \'%s\' deleted.', $fileId));
+            } catch(AException $e) {
+                $fileStorageManager->fileStorageRepository->rollback(__METHOD__);
+
+                $this->logInfo(sprintf('File \'%s\' could not be deleted. Reason: ' . $e->getMessage(), $fileId));
+            }
         }
     }
 }

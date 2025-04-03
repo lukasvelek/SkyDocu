@@ -33,7 +33,7 @@ class DateTime {
     /**
      * Returns the datetime result
      * 
-     * @return string Datetimer result
+     * @return string Datetime result
      */
     public function getResult() {
         return date($this->format, $this->timestamp);

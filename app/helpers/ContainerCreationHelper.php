@@ -2,6 +2,8 @@
 
 namespace App\Helpers;
 
+use App\Entities\ContainerEntity;
+
 /**
  * ContainerCreationHelper contains methods useful for container creation
  * 
@@ -253,6 +255,23 @@ class ContainerCreationHelper {
                 'gridName'
             ]
         ];
+    }
+
+    /**
+     * Creates container configuration JSON
+     * 
+     * @param ContainerEntity $container Container entity
+     */
+    public static function createContainerConfigurationJson(ContainerEntity $container): string {
+        $configuration = [
+            'title' => $container->getTitle(),
+            'description' => $container->getDescription(),
+            'environment' => $container->getEnvironment(),
+            'canShowContainerReferent' => $container->canShowContainerReferent(),
+            'isInDistribution' => $container->isInDistribution()
+        ];
+
+        return json_encode($configuration);
     }
 }
 

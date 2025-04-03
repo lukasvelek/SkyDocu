@@ -58,10 +58,14 @@ class StandaloneProcesses extends AConstant implements IColorable, IBackgroundCo
      * @param mixed $key
      */
     public static function isDisabled($key): bool {
-        return match($key) {
-            default => false,
-            self::CONTAINER_REQUEST => true
-        };
+        if($key == self::CONTAINER_REQUEST) {
+            return true;
+        }
+        if($key == self::FUNCTION_REQUEST && APP_BRANCH == 'PROD') {
+            return true;
+        }
+
+        return false;
     }
 
     /**

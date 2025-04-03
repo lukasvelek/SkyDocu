@@ -25,8 +25,6 @@ abstract class AAuthenticatedApiController extends AApiClass {
         parent::startup();
 
         $this->auth();
-
-        $this->systemId = $this->externalSystemsManager->getExternalSystemByToken($this->token);
     }
 
     /**
@@ -39,6 +37,7 @@ abstract class AAuthenticatedApiController extends AApiClass {
 
         $this->token = $tokenParts[0];
         $this->containerId = $tokenParts[1];
+        $this->systemId = $tokenParts[2];
     }
 
     /**

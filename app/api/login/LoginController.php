@@ -7,6 +7,8 @@ use App\Authenticators\ExternalSystemAuthenticator;
 use App\Core\Http\JsonResponse;
 
 class LoginController extends AApiClass {
+    private string $systemId;
+
     protected function startup() {
         $this->containerId = $this->get('containerId');
 
@@ -33,18 +35,18 @@ class LoginController extends AApiClass {
     private function loginUser(string $login, string $password) {
         $externalSystemAuthenticator = new ExternalSystemAuthenticator($this->externalSystemsManager, $this->app->logger);
 
-        $systemId = $externalSystemAuthenticator->auth($login, $password);
+        $this->systemId = $externalSystemAuthenticator->auth($login, $password);
 
-        return $this->externalSystemsManager->createOrGetToken($systemId);
+        return $this->externalSystemsManager->createOrGetToken($this->systemId);
     }
 
     /**
-     * Processes token
+     * Processes token - adds other mandatory variables and encodes it to Base64
      * 
      * @param string &$token Token
      */
     private function processToken(string &$token) {
-        $token = base64_encode($token . ';' . $this->containerId);
+        $token = base64_encode($token . ';' . $this->containerId . ';' . $this->systemId);
     }
 }
 

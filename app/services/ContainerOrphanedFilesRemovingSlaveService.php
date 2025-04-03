@@ -153,7 +153,7 @@ class ContainerOrphanedFilesRemovingSlaveService extends AService {
             $date->modify('+30d');
             $date = strtotime($date->getResult());
 
-            if($date > time()) {
+            if($date < time()) {
                 $this->logInfo(sprintf('File \'%s\' is older than maximum timestamp of creation.', $fileId));
                 $fileIdsToDelete[] = $fileId;
             }

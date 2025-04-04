@@ -138,7 +138,7 @@ class DocumentFoldersPresenter extends AAdminPresenter {
         $deleteFolder = $grid->addAction('deleteFolder');
         $deleteFolder->setTitle('Delete folder');
         $deleteFolder->onCanRender[] = function(DatabaseRow $row, Row $_row) {
-            if($row->isSystem === true) {
+            if($row->isSystem == true) {
                 return false;
             }
             

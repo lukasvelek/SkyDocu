@@ -50,6 +50,22 @@ class ArchiveManager extends AManager {
     }
 
     /**
+     * Deletes an archive folder
+     * 
+     * @param string $folderId Folder ID
+     * @param string $callingUserId Calling user's ID
+     */
+    public function deleteFolder(string $folderId, string $callingUserId) {
+        if(!$this->archiveRepository->removeArchiveFolder($folderId)) {
+            throw new GeneralException('Database error.');
+        }
+
+        if(!$this->cacheFactory->invalidateCacheByNamespace(CacheNames::ARCHIVE_FOLDERS)) {
+            throw new GeneralException('Cache invalidation error.');
+        }
+    }
+
+    /**
      * Returns all archive folders until root is hit
      * 
      * @param string $folderId Beginning folder ID

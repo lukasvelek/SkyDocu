@@ -48,7 +48,7 @@ class ContainerManager extends AManager {
      */
     public function generateContainerDatabaseName(string $containerId): string {
         $prefix = CONTAINER_DB_NAME_PREFIX;
-        if(!str_ends_with($prefix, '_')) {
+        if(!str_ends_with($prefix, '_') && $prefix != '') {
             $prefix .= '_';
         }
         return $prefix . 'sd_db_' . $containerId . '_' . HashManager::createHash(8, false);

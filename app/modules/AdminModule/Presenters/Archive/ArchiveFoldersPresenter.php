@@ -197,6 +197,31 @@ class ArchiveFoldersPresenter extends AAdminPresenter {
         return $grid;
     }
 
+    public function handleDeleteFolder() {
+        $folderId = $this->httpRequest->get('folderId');
+        $parentFolderId = $this->httpRequest->get('parentFolderId'); // for returning purposes
+
+        try {
+            $this->archiveRepository->beginTransaction(__METHOD__);
+
+            $this->archiveManager->deleteFolder($folderId, $this->getUserId());
+
+            $this->archiveRepository->commit($this->getUserId(), __METHOD__);
+
+            $this->flashMessage('Successfully deleted archive folder.', 'success');
+        } catch(AException $e) {
+            $this->archiveRepository->rollback(__METHOD__);
+
+            $this->flashMessage('Could not delete archive folder. Reason: ' . $e->getMessage(), 'error', 10);
+        }
+
+        if($parentFolderId !== null) {
+            $this->redirect($this->createURL('list', ['folderId' => $parentFolderId]));
+        } else {
+            $this->redirect($this->createURL('list'));
+        }
+    }
+
     public function handleNewFolderForm(?FormRequest $fr = null) {
         $folderId = $this->httpRequest->get('folderId');
 

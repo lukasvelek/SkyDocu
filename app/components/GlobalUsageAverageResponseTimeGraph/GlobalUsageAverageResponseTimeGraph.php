@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Components\GlobalUsageStatsGraph;
+namespace App\Components\GlobalUsageAverageResponseTimeGraph;
 
 use App\Components\Graph\AGraph;
 use App\Constants\ContainerStatus;
@@ -9,7 +9,7 @@ use App\Core\Http\HttpRequest;
 use App\Repositories\ContainerRepository;
 use App\UI\AComponent;
 
-class GlobalUsageStatsGraph extends AGraph {
+class GlobalUsageAverageResponseTimeGraph extends AGraph {
     private ContainerRepository $containerRepository;
 
     public function __construct(HttpRequest $request, ContainerRepository $containerRepository) {
@@ -17,12 +17,11 @@ class GlobalUsageStatsGraph extends AGraph {
 
         $this->containerRepository = $containerRepository;
 
-        $this->title = 'Global usage statistics';
+        $this->title = 'Global usage average response time';
         $this->numberOfColumns = 7;
 
-        $this->setCanvasName('globalUsageStatistics');
-        $this->setBarGraph();
-        $this->setValueDescription('Database queries');
+        $this->setCanvasName('globalUsageAverageResponseTime');
+        $this->setValueDescription('[ms] Response time');
     }
 
     public static function createFromComponent(AComponent $component) {}
@@ -56,9 +55,9 @@ class GlobalUsageStatsGraph extends AGraph {
 
             while($row = $qb->fetchAssoc()) {
                 if(array_key_exists($row['date'], $entries)) {
-                    $entries[$row['date']] = (int)($entries[$row['date']] + $row['totalSqlQueries']);
+                    $entries[$row['date']] = (int)($entries[$row['date']] + $row['averageTimeTaken']);
                 } else {
-                    $entries[$row['date']] = (int)$row['totalSqlQueries'];
+                    $entries[$row['date']] = (int)$row['averageTimeTaken'];
                 }
             }
         }

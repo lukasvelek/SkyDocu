@@ -7,7 +7,6 @@ use App\Constants\SessionNames;
 use App\Core\AjaxRequestBuilder;
 use App\Core\Application;
 use App\Core\Caching\CacheFactory;
-use App\Core\Caching\CacheNames;
 use App\Core\Configuration;
 use App\Core\Datatypes\ArrayList;
 use App\Core\Datetypes\DateTime;

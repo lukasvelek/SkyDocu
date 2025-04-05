@@ -3,40 +3,28 @@
 namespace App\Modules\UserModule;
 
 use App\Components\ProcessReportsGrid\ProcessReportsGrid;
-use App\Components\ProcessReportsSelect\ProcessReportsSelect;
-use App\Constants\Container\StandaloneProcesses;
+use App\Components\ProcessReportsSidebar\ProcessReportsSidebar;
 use App\Core\Http\HttpRequest;
-use App\Exceptions\RequiredAttributeIsNotSetException;
 
 class ReportsPresenter extends AUserPresenter {
     public function __construct() {
         parent::__construct('ReportsPresenter', 'Reports');
     }
 
-    public function renderList() {}
-
-    protected function createComponentReportsSelect() {
-        $select = new ProcessReportsSelect($this->httpRequest, $this->standaloneProcessManager);
-        $select->setApplication($this->app);
-        $select->setPresenter($this);
-
-        return $select;
+    public function renderList() {
+        if($this->httpRequest->get('view') === null) {
+            $processType = $this->standaloneProcessManager->getEnabledProcessTypes()[0];
+            $view = $processType->typeKey . '-my';
+            $url = $this->httpRequest->getCurrentPageActionAsArray();
+            $url['view'] = $view;
+            $this->redirect($url);
+        }
     }
 
-    public function renderShowReport() {
-        $name = $this->httpRequest->get('name');
-        if($name === null) {
-            throw new RequiredAttributeIsNotSetException('name');
-        }
-        $view = $this->httpRequest->get('view');
-        if($view === null) {
-            throw new RequiredAttributeIsNotSetException('view');
-        }
+    protected function createComponentProcessReportsSidebar(HttpRequest $request) {
+        $sidebar = new ProcessReportsSidebar($request, $this->standaloneProcessManager, $this->supervisorAuthorizator);
 
-        $pageTitle = ucfirst($view) . ' ' . StandaloneProcesses::toString($name) . ' requests';
-
-        $this->template->page_title = $pageTitle;
-        $this->template->links = $this->createBackUrl('list');
+        return $sidebar;
     }
 
     protected function createComponentReportGrid(HttpRequest $request) {
@@ -47,8 +35,13 @@ class ReportsPresenter extends AUserPresenter {
             $this->standaloneProcessManager
         );
 
-        $grid->setView($request->get('view') ?? $request->post('view'));
-        $grid->setProcessType($request->get('name') ?? $request->post('name'));
+        if($request->get('view') !== null) {
+            $viewParts = $request->get('view');
+            $viewParts = explode('-', $viewParts);
+
+            $grid->setView($viewParts[1]);
+            $grid->setProcessType($viewParts[0]);
+        }
 
         return $grid;
     }

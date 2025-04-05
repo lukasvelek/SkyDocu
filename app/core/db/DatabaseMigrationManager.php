@@ -194,9 +194,9 @@ class DatabaseMigrationManager {
             $object = new $fullClassName($fileName, $migrationName, $migrationNumber);
             
             if($this->containerId !== null) {
-                $object->inject($this->conn, $this->masterConn);
+                $object->inject($this->conn, $this->masterConn, $this->logger);
             } else {
-                $object->inject($this->masterConn, $this->masterConn);
+                $object->inject($this->masterConn, $this->masterConn, $this->logger);
             }
 
             $tableSchema = $object->up();

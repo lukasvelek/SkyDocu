@@ -109,7 +109,7 @@ abstract class APresenter extends AGUICore {
      * Everything in startup() method is called after an instance of Presenter has been created and before other functionality-handling methods are called.
      */
     public function startup() {
-        $this->componentFactory = new ComponentFactory($this->httpRequest, $this);
+        $this->componentFactory = new ComponentFactory($this->httpRequest, $this, $this->app);
         $this->componentFactory->setCacheFactory($this->cacheFactory);
         $this->router->inject($this, new ModuleManager());
     }

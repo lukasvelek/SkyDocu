@@ -166,6 +166,23 @@ class StandaloneProcessManager extends AManager {
         }
     }
 
+    public function startRequestPropertyMove(array $data) {
+        $propertyManager = $this->groupManager->getFirstGroupMemberForGroupTitle(SystemGroups::PROPERTY_MANAGERS);
+
+        if($propertyManager === null) {
+            throw new GeneralException('Role \'Property manager\' is empty. At least one user must be member.');
+        }
+
+        $currentOfficerId = $propertyManager;
+        $workflow = [
+            $propertyManager
+        ];
+
+        $processId = $this->processManager->startProcess(null, StandaloneProcesses::REQUEST_PROPERTY_MOVE, $this->currentUser->getId(), $currentOfficerId, $workflow);
+
+        $this->saveProcessData($processId, $data);
+    }
+
     /**
      *                  END OF PROCESSSES
      */
@@ -243,13 +260,25 @@ class StandaloneProcessManager extends AManager {
         $qb->where('typeKey = ?', [$processTitle])
             ->execute();
 
-        $type = DatabaseRow::createFromDbRow($qb->fetch());
+        $result = $qb->fetch();
+
+        if($result === null) {
+            return [];
+        }
+
+        $type = DatabaseRow::createFromDbRow($result);
 
         $qb = $this->composeQueryForProcessMetadataForProcess($type->typeId);
         $qb->andWhere('title = ?', [$metadataTitle])
             ->execute();
 
-        $metadata = DatabaseRow::createFromDbRow($qb->fetch());
+        $result = $qb->fetch();
+
+        if($result === null) {
+            return [];
+        }
+
+        $metadata = DatabaseRow::createFromDbRow($result);
 
         $qb = $this->composeQueryForProcessMetadataEnumForMetadata($metadata->metadataId);
 
@@ -271,7 +300,7 @@ class StandaloneProcessManager extends AManager {
         return $values;
     }
 
-    public function createMetadataEnumValue(string $metadataId, string $title) {
+    public function createMetadataEnumValue(string $metadataId, string $title, ?string $title2, ?string $title3) {
         $valueId = $this->createId(EntityManager::C_PROCESS_CUSTOM_METADATA_LIST_VALUES);
 
         $data = [
@@ -279,6 +308,13 @@ class StandaloneProcessManager extends AManager {
             'metadataId' => $metadataId,
             'title' => $title
         ];
+
+        if($title2 !== null) {
+            $data['title2'] = $title2;
+        }
+        if($title3 !== null) {
+            $data['title3'] = $title3;
+        }
 
         $lastKey = $this->processManager->processRepository->getLastMetadataEnumValueKey($metadataId);
         if($lastKey !== null) {

@@ -6,7 +6,9 @@ use App\Core\DatabaseConnection;
 use App\Core\DB\Helpers\TableSchema;
 use App\Core\DB\Helpers\TableSeeding;
 use App\Core\HashManager;
+use App\Logger\Logger;
 use App\Managers\EntityManager;
+use QueryBuilder\QueryBuilder;
 
 /**
  * Common class for all database migrations
@@ -19,6 +21,7 @@ abstract class ABaseMigration {
     private string $migrationNumber;
     private ?TableSchema $tableSchema = null;
     private DatabaseConnection $conn;
+    private Logger $logger;
 
     protected DatabaseConnection $masterConn;
 
@@ -40,10 +43,12 @@ abstract class ABaseMigration {
      * 
      * @param DatabaseConnection $conn DatabaseConnection instance
      * @param DatabaseConnection $masterConn Master DatabaseConnection instance
+     * @param Logger $logger Logger instance
      */
-    public function inject(DatabaseConnection $conn, DatabaseConnection $masterConn) {
+    public function inject(DatabaseConnection $conn, DatabaseConnection $masterConn, Logger $logger) {
         $this->conn = $conn;
         $this->masterConn = $masterConn;
+        $this->logger = $logger;
     }
 
     /**
@@ -112,6 +117,17 @@ abstract class ABaseMigration {
         }
 
         return $final;
+    }
+
+    protected function getValueFromTableByConditions(string $tableName, string $columnName, string $conditionColumnName, string|int|bool $conditionColumnValue) {
+        $qb = new QueryBuilder($this->conn, $this->logger, __METHOD__);
+
+        $qb->select([$columnName])
+            ->from($tableName)
+            ->where($conditionColumnName . ' = ?', [$conditionColumnValue])
+            ->execute();
+
+        return $qb->fetch($columnName);
     }
 }
 

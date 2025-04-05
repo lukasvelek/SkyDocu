@@ -185,6 +185,8 @@ class ProcessListPresenter extends AAdminPresenter {
         $grid->addQueryDependency('metadataId', $metadataId);
 
         $grid->addColumnText('title', 'Title');
+        $grid->addColumnText('title2', 'Subtitle 1');
+        $grid->addColumnText('title3', 'Subtitle 2');
 
         $edit = $grid->addAction('edit');
         $edit->setTitle('Edit');
@@ -211,7 +213,17 @@ class ProcessListPresenter extends AAdminPresenter {
             try {
                 $this->standaloneProcessManager->processManager->processRepository->beginTransaction(__METHOD__);
 
-                $this->standaloneProcessManager->createMetadataEnumValue($metadataId, $fr->title);
+                $title2 = null;
+                if(empty($fr->title2)) {
+                    $title2 = $fr->title2;
+                }
+
+                $title3 = null;
+                if(!empty($fr->title3)) {
+                    $title3 = $fr->title3;
+                }
+
+                $this->standaloneProcessManager->createMetadataEnumValue($metadataId, $fr->title, $title2, $title3);
 
                 $this->standaloneProcessManager->processManager->processRepository->commit($this->getUserId(), __METHOD__);
 
@@ -237,6 +249,10 @@ class ProcessListPresenter extends AAdminPresenter {
 
         $form->addTextInput('title', 'Title:')
             ->setRequired();
+
+        $form->addTextInput('title2', 'Subtitle 1:');
+
+        $form->addTextInput('title3', 'Subtitle 2:');
 
         $form->addSubmit('Create');
 
@@ -281,6 +297,12 @@ class ProcessListPresenter extends AAdminPresenter {
         $form->addTextInput('title', 'Title:')
             ->setRequired()
             ->setValue($value->title);
+
+        $form->addTextInput('title2', 'Subtitle 1:')
+            ->setValue($value->title2);
+
+        $form->addTextInput('title3', 'Subtitle 2:')
+            ->setValue($value->title3);
 
         $form->addSubmit('Save');
 

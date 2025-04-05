@@ -11,7 +11,7 @@ class SuperAdminSettingsModule extends AModule {
     }
 
     protected function createComponentSysNavbar() {
-        return $this->createNavbarInstance(NavbarModes::SUPERADMINISTRATION_SETTINGS, null);
+        return $this->createNavbarInstance(NavbarModes::SUPERADMINISTRATION_SETTINGS);
     }
 }
 

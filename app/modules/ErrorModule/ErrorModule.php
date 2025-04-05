@@ -49,7 +49,7 @@ class ErrorModule extends AModule {
         }
 
         if($this->navbar === null) {
-            $this->navbar = $this->createNavbarInstance($mode, null);
+            $this->navbar = $this->createNavbarInstance($mode);
         }
 
         return $this->navbar;

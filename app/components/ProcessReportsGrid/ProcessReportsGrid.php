@@ -81,8 +81,8 @@ class ProcessReportsGrid extends GridBuilder implements IGridExtendingComponent 
      */
     private function setup() {
         $this->setGridName(GridNames::PROCESS_REPORTS_GRID);
-        $this->addQueryDependency('view', $this->view);
-        $this->addQueryDependency('name', $this->processType);
+        $view = $this->processType . '-' . $this->view;
+        $this->addQueryDependency('view', $view);
     }
 
     public function createDataSource() {

@@ -21,7 +21,7 @@ class SuperAdminModule extends AModule {
 
     private function createNavbar() {
         if($this->navbar === null) {
-            $this->navbar = $this->createNavbarInstance(NavbarModes::SUPERADMINISTRATION, null);
+            $this->navbar = $this->createNavbarInstance(NavbarModes::SUPERADMINISTRATION);
         }
 
         return $this->navbar;

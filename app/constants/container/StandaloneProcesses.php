@@ -84,6 +84,14 @@ class StandaloneProcesses extends AConstant implements IColorable, IBackgroundCo
             self::CONTAINER_REQUEST => true
         };
     }
+
+    public static function areDefaultReportsEnabled($key): bool {
+        if($key == self::REQUEST_PROPERTY_MOVE) {
+            return false;
+        }
+
+        return true;
+    }
 }
 
 ?>

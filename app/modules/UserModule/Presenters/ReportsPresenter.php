@@ -4,7 +4,10 @@ namespace App\Modules\UserModule;
 
 use App\Components\ProcessReportsGrid\ProcessReportsGrid;
 use App\Components\ProcessReportsSidebar\ProcessReportsSidebar;
+use App\Components\PropertyItemsReportsGrid\PropertyItemsReportsGrid;
+use App\Constants\Container\StandaloneProcesses;
 use App\Core\Http\HttpRequest;
+use App\Repositories\Container\PropertyItemsRepository;
 
 class ReportsPresenter extends AUserPresenter {
     public function __construct() {
@@ -19,6 +22,8 @@ class ReportsPresenter extends AUserPresenter {
             $url['view'] = $view;
             $this->redirect($url);
         }
+
+        $this->template->links = '';
     }
 
     protected function createComponentProcessReportsSidebar(HttpRequest $request) {
@@ -28,19 +33,34 @@ class ReportsPresenter extends AUserPresenter {
     }
 
     protected function createComponentReportGrid(HttpRequest $request) {
-        $grid = new ProcessReportsGrid(
-            $this->componentFactory->getGridBuilder($this->containerId),
-            $this->app,
-            $this->processManager,
-            $this->standaloneProcessManager
-        );
-
         if($request->get('view') !== null) {
             $viewParts = $request->get('view');
             $viewParts = explode('-', $viewParts);
+        }
 
-            $grid->setView($viewParts[1]);
-            $grid->setProcessType($viewParts[0]);
+        if($viewParts[0] == 'propertyItems') {
+            $grid = new PropertyItemsReportsGrid(
+                $this->componentFactory->getGridBuilder($this->containerId),
+                $this->app,
+                new PropertyItemsRepository($this->gridRepository->conn, $this->logger),
+                $this->standaloneProcessManager
+            );
+
+            if($request->get('view') !== null) {
+                $grid->setView($request->get('view'));
+            }
+        } else {
+            $grid = new ProcessReportsGrid(
+                $this->componentFactory->getGridBuilder($this->containerId),
+                $this->app,
+                $this->processManager,
+                $this->standaloneProcessManager
+            );
+    
+            if($request->get('view') !== null) {
+                $grid->setView($viewParts[1]);
+                $grid->setProcessType($viewParts[0]);
+            }
         }
 
         return $grid;

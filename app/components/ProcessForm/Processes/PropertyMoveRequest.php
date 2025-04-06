@@ -9,42 +9,25 @@ use App\Core\Http\HttpRequest;
 use App\Core\Http\JsonResponse;
 use App\Managers\Container\StandaloneProcessManager;
 use App\Managers\UserManager;
+use App\Repositories\Container\PropertyItemsRepository;
 use App\UI\AComponent;
 use App\UI\FormBuilder2\SelectOption;
 
 class PropertyMoveRequest extends AProcessForm {
     private UserManager $userManager;
     private StandaloneProcessManager $standaloneProcessManager;
+    private PropertyItemsRepository $propertyItemsRepository;
 
     public function __construct(HttpRequest $request, UserManager $userManager, StandaloneProcessManager $standaloneProcessManager) {
         parent::__construct($request);
 
         $this->userManager = $userManager;
         $this->standaloneProcessManager = $standaloneProcessManager;
+
+        $this->propertyItemsRepository = new PropertyItemsRepository($this->standaloneProcessManager->processManager->processRepository->conn, $this->standaloneProcessManager->processManager->processRepository->getLogger());
     }
 
     public function startup() {
-        $par = new PostAjaxRequest($this->httpRequest);
-        $par->setComponentUrl($this, 'searchItems');
-        $par->setData(['query' => '_query', 'name' => 'requestPropertyMove']);
-        $par->addArgument('_query');
-
-        $updateOperation = new HTMLPageOperation();
-        $updateOperation->setHtmlEntityId('item')
-            ->setJsonResponseObjectName('items');
-
-        $par->addOnFinishOperation($updateOperation);
-
-        $this->addScript($par);
-
-        $this->addScript('
-            async function searchItems() {
-                const query = $("#itemSearch").val();
-
-                await ' . $par->getFunctionName() . '(query);
-            }
-        ');
-
         $par = new PostAjaxRequest($this->httpRequest);
         $par->setComponentUrl($this, 'searchUsers');
         $par->setData(['query' => '_query', 'name' => 'requestPropertyMove']);
@@ -70,14 +53,9 @@ class PropertyMoveRequest extends AProcessForm {
     }
 
     protected function createForm() {
-        $this->addTextInput('itemSearch', 'Search property items:')
-            ->setRequired();
-
-        $this->addButton('Search items')
-            ->setOnClick('searchItems()');
-
         $this->addSelect('item', 'Property item:')
-            ->setRequired();
+            ->setRequired()
+            ->addRawOptions($this->getMyPropertyItems());
         
         $this->addTextInput('userSearch', 'Search users:')
             ->setRequired();
@@ -99,6 +77,29 @@ class PropertyMoveRequest extends AProcessForm {
     }
 
     public static function createFromComponent(AComponent $component) {}
+    
+    private function getMyPropertyItems(): array {
+        $myItems = $this->propertyItemsRepository->getPropertyItemsForUser($this->app->currentUser->getId());
+
+        $myItemIds = [];
+        foreach($myItems as $item) {
+            $myItemIds[] = $item['itemId'];
+        }
+
+        $allItems = $this->standaloneProcessManager->getProcessMetadataEnumValues(StandaloneProcesses::REQUEST_PROPERTY_MOVE, 'items');
+
+        $items = [];
+        foreach($allItems as $item) {
+            if(in_array($item->valueId, $myItemIds)) {
+                $items[] = [
+                    'value' => $item->title2,
+                    'text' => $item->title . ' (' . $item->title2 . ')'
+                ];
+            }
+        }
+
+        return $items;
+    }
 
     public function actionSearchItems() {
         $query = $this->httpRequest->get('query');

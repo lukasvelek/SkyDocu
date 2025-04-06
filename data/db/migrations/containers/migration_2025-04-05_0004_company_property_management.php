@@ -24,6 +24,8 @@ class migration_2025_04_05_0004_company_property_management extends ABaseMigrati
             ->primaryKey('relationId')
             ->varchar('userId')
             ->varchar('itemId')
+            ->bool('isActive')
+            ->default('isActive', 1)
             ->datetimeAuto('dateCreated');
 
         $table->update('process_metadata_list_values')

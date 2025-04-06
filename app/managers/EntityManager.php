@@ -61,6 +61,7 @@ class EntityManager extends AManager {
     public const C_EXTERNAL_SYSTEM_LOG = 'external_system_log';
     public const C_EXTERNAL_SYSTEM_TOKENS = 'external_system_tokens';
     public const C_EXTERNAL_SYSTEM_RIGHTS = 'external_system_rights';
+    public const C_PROPERTY_ITEMS_USER_RELATION = 'property_items_user_relation';
 
     private const __MAX__ = 100;
 
@@ -187,7 +188,8 @@ class EntityManager extends AManager {
             self::C_EXTERNAL_SYSTEMS => 'systemId',
             self::C_EXTERNAL_SYSTEM_LOG => 'entryId',
             self::C_EXTERNAL_SYSTEM_TOKENS => 'tokenId',
-            self::C_EXTERNAL_SYSTEM_RIGHTS => 'rightId'
+            self::C_EXTERNAL_SYSTEM_RIGHTS => 'rightId',
+            self::C_PROPERTY_ITEMS_USER_RELATION => 'relationId'
         };
     }
 

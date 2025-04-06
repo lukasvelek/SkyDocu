@@ -14,6 +14,7 @@ use App\Logger\Logger;
 use App\Managers\AManager;
 use App\Managers\EntityManager;
 use App\Managers\UserManager;
+use App\Repositories\Container\PropertyItemsRepository;
 
 class StandaloneProcessManager extends AManager {
     public ProcessManager $processManager;
@@ -23,6 +24,7 @@ class StandaloneProcessManager extends AManager {
     private FileStorageManager $fileStorageManager;
     private GroupManager $groupManager;
     private FolderManager $folderManager;
+    private PropertyItemsRepository $propertyItemsRepository;
 
     public function __construct(
         Logger $logger,
@@ -44,6 +46,8 @@ class StandaloneProcessManager extends AManager {
         $this->fileStorageManager = $fileStorageManager;
         $this->groupManager = $groupManager;
         $this->folderManager = $folderManager;
+
+        $this->propertyItemsRepository = new PropertyItemsRepository($this->processManager->processRepository->conn, $this->logger);
     }
 
     /**
@@ -181,6 +185,37 @@ class StandaloneProcessManager extends AManager {
         $processId = $this->processManager->startProcess(null, StandaloneProcesses::REQUEST_PROPERTY_MOVE, $this->currentUser->getId(), $currentOfficerId, $workflow);
 
         $this->saveProcessData($processId, $data);
+    }
+
+    public function finishRequestPropertyMove(string $processId) {
+        $processData = $this->getProcessData($processId);
+        $process = $this->processManager->getProcessById($processId);
+        
+        $enumValues = $this->getProcessMetadataEnumValues($process->type, 'items');
+
+        // create user-property relation
+        $relationId = $this->createId(EntityManager::C_PROPERTY_ITEMS_USER_RELATION);
+
+        $userId = $processData['user'];
+        $itemId = null;
+
+        foreach($enumValues as $row) {
+            if($processData['item'] == $row->title2) {
+                $itemId = $row->valueId;
+            }
+        }
+        
+        if($itemId === null) {
+            throw new GeneralException('Item does not exist.');
+        }
+
+        if(!$this->propertyItemsRepository->updateExistingUserItemRelationsForItemId($itemId, ['isActive' => 0])) {
+            throw new GeneralException('Database error.');
+        }
+
+        if(!$this->propertyItemsRepository->createNewUserItemRelation($relationId, $userId, $itemId)) {
+            throw new GeneralException('Database error.');
+        }
     }
 
     /**
@@ -326,6 +361,8 @@ class StandaloneProcessManager extends AManager {
         if(!$this->processManager->processRepository->createNewMetadataEnumValue($data)) {
             throw new GeneralException('Database error.');
         }
+
+        return $valueId;
     }
 
     public function getMetadataEnumValueById(string $valueId) {
@@ -346,6 +383,34 @@ class StandaloneProcessManager extends AManager {
 
     public function composeQueryForProcessData() {
         return $this->processManager->processRepository->composeQueryForProcessData();
+    }
+
+    public function getProcessMetadataByTitleAndProcessTitle(string $metadataTitle, string $processTitle) {
+        $processTypes = $this->getEnabledProcessTypes();
+
+        $processTypeId = null;
+        foreach($processTypes as $processType) {
+            if($processType->typeKey == $processTitle) {
+                $processTypeId = $processType->typeId;
+            }
+        }
+
+        if($processTypeId === null) {
+            throw new NonExistingEntityException('Process type does not exist.');
+        }
+
+        $qb = $this->processManager->processRepository->composeQueryForProcessMetadata();
+        $qb->andWhere('title = ?', [$metadataTitle])
+            ->andWhere('typeId = ?', [$processTypeId])
+            ->execute();
+
+        $row = $qb->fetch();
+
+        if($row === null) {
+            throw new NonExistingEntityException('Process metadata does not exist.');
+        }
+
+        return DatabaseRow::createFromDbRow($row);
     }
 }
 

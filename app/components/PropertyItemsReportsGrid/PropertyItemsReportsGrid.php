@@ -6,6 +6,7 @@ use App\Constants\Container\GridNames;
 use App\Constants\Container\StandaloneProcesses;
 use App\Core\Application;
 use App\Core\DB\DatabaseRow;
+use App\Helpers\DateTimeFormatHelper;
 use App\Managers\Container\StandaloneProcessManager;
 use App\Repositories\Container\PropertyItemsRepository;
 use App\UI\GridBuilder2\Cell;
@@ -66,7 +67,7 @@ class PropertyItemsReportsGrid extends GridBuilder implements IGridExtendingComp
         $qb = $this->propertyItemsRepository->composeQueryForPropertyItems();
         
         if($this->isMy) {
-            $qb->where('userId = ?', [$this->currentUserId]);
+            $qb->andWhere('userId = ?', [$this->currentUserId]);
         }
 
         $this->createDataSourceFromQueryBuilder($qb, 'relationId');
@@ -84,20 +85,46 @@ class PropertyItemsReportsGrid extends GridBuilder implements IGridExtendingComp
 
         $col = $this->addColumnText('title', 'Title');
         $col->onRenderColumn[] = function(DatabaseRow $row, Row $_row, Cell $cell, HTML $html, mixed $value) {
-            $item = $this->getItem($value);
+            $item = $this->getItem($row->itemId);
 
             return $item['title'];
         };
 
-        $col = $this->addColumnText('itemCode', 'Code');
+        $col = $this->addColumnText('itemCode', 'Inventory number');
         $col->onRenderColumn[] = function(DatabaseRow $row, Row $_row, Cell $cell, HTML $html, mixed $value) {
-            $item = $this->getItem($value);
+            $item = $this->getItem($row->itemId);
 
             return $item['title2'];
         };
+
+        $col = $this->addColumnText('registrationDate', 'Registration date');
+        $col->onRenderColumn[] = function(DatabaseRow $row, Row $_row, Cell $cell, HTML $html, mixed $value) {
+            $entry = $this->propertyItemsRepository->getFirstEntryForPropertyItem($row->itemId);
+
+            if($entry !== null) {
+                return DateTimeFormatHelper::formatDateToUserFriendly($entry['dateCreated']);
+            } else {
+                return null;
+            }
+        };
     }
 
-    private function appendActions() {}
+    private function appendActions() {
+        // history
+        $history = $this->addAction('history');
+        $history->setTitle('History');
+        $history->onCanRender[] = function() {
+            return !$this->isMy;
+        };
+        $history->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
+            $el = HTML::el('a');
+            $el->class('grid-link')
+                ->href($this->createFullURLString('User:PropertyItems', 'historyList', ['itemId' => $row->itemId]))
+                ->text('History');
+
+            return $el;
+        };
+    }
 
     private function getAllPropertyItems() {
         if(empty($this->itemsCache)) {

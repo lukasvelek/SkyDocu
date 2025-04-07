@@ -67,6 +67,23 @@ class GroupsPresenter extends AAdminPresenter {
         return $grid;
     }
 
+    private function getContainerDeletedUsers() {
+        $container = $this->app->containerManager->getContainerById($this->containerId);
+        $groupUsers = $this->app->groupManager->getGroupUsersForGroupTitle($container->getTitle() . ' - users');
+
+        $qb = $this->app->userRepository->composeQueryForUsers();
+        $qb->andWhere($qb->getColumnInValues('userId', $groupUsers))
+            ->andWhere('isDeleted = 1')
+            ->execute();
+
+        $users = [];
+        while($row = $qb->fetchAssoc()) {
+            $users[] = $row['userId'];
+        }
+
+        return $users;
+    }
+
     public function renderListMembers() {
         $groupId = $this->httpRequest->get('groupId');
         if($groupId === null) {
@@ -90,16 +107,29 @@ class GroupsPresenter extends AAdminPresenter {
 
         $group = $this->groupRepository->getGroupById($request->get('groupId'));
 
-        $grid->createDataSourceFromQueryBuilder($this->groupRepository->composeQueryForGroupMembers($request->get('groupId')), 'relationId');
+        $qb = $this->groupRepository->composeQueryForGroupMembers($request->get('groupId'));
+        $qb->execute();
+        
+        $members = [];
+        while($row = $qb->fetchAssoc()) {
+            $members[] = $row['userId'];
+        }
+
+        $qb = $this->groupRepository->composeQueryForGroupMembers($request->get('groupId'));
+        $qb->andWhere($qb->getColumnNotInValues('userId', $this->getContainerDeletedUsers()));
+
+        $grid->createDataSourceFromQueryBuilder($qb, 'relationId');
         $grid->addQueryDependency('groupId', $request->get('groupId'));
 
         $grid->addColumnUser('userId', 'User');
 
         if($group['title'] != SystemGroups::ALL_USERS) {
             $remove = $grid->addAction('remove');
-            $remove->onCanRender[] = function(DatabaseRow $row, Row $_row) use ($group) {
-                if($this->app->groupManager->isUserMemberOfSuperadministrators($row->userId) && $group['title'] == SystemGroups::ADMINISTRATORS) {
-                    return false;
+            $remove->onCanRender[] = function(DatabaseRow $row, Row $_row) use ($group, $members) {
+                if($group['title'] == SystemGroups::ADMINISTRATORS) {
+                    if(count($members) == 1) {
+                        return false;
+                    }
                 }
 
                 return true;

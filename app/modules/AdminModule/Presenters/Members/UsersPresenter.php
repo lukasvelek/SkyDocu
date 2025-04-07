@@ -4,9 +4,12 @@ namespace App\Modules\AdminModule;
 
 use App\Constants\Container\SystemGroups;
 use App\Core\Caching\CacheNames;
+use App\Core\DB\DatabaseRow;
 use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
+use App\UI\GridBuilder2\Row;
+use App\UI\HTML\HTML;
 use App\UI\LinkBuilder;
 
 class UsersPresenter extends AAdminPresenter {
@@ -39,6 +42,34 @@ class UsersPresenter extends AAdminPresenter {
         $grid->addQuickSearch('username', 'Username');
 
         $grid->addFilter('isTechnical', 0, ['0' => 'False', '1' => 'True']);
+
+        $edit = $grid->addAction('edit');
+        $edit->setTitle('Edit');
+        $edit->onCanRender[] = function() {
+            return true;
+        };
+        $edit->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
+            $el = HTML::el('a');
+            $el->class('grid-link')
+                ->text('Edit')
+                ->href($this->createURLString('editUserForm', ['userId' => $primaryKey]));
+
+            return $el;
+        };
+
+        $delete = $grid->addAction('delete');
+        $delete->setTitle('Delete');
+        $delete->onCanRender[] = function() {
+            return true;
+        };
+        $delete->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
+            $el = HTML::el('a');
+            $el->class('grid-link')
+                ->text('Delete')
+                ->href($this->createURLString('deleteUser', ['userId' => $primaryKey]));
+
+            return $el;
+        };
 
         return $grid;
     }
@@ -113,6 +144,10 @@ class UsersPresenter extends AAdminPresenter {
 
         return $form;
     }
+
+    public function handleEditUserForm() {}
+
+    public function handleDeleteUser() {}
 }
 
 ?>

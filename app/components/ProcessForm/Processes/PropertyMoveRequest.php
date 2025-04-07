@@ -66,6 +66,8 @@ class PropertyMoveRequest extends AProcessForm {
         $this->addSelect('user', 'User:')
             ->setRequired();
 
+        $this->addTextArea('comment', 'Comment');
+
         $this->addSubmit('Request');
     }
 

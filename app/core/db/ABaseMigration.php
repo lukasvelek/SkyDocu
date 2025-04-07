@@ -119,7 +119,15 @@ abstract class ABaseMigration {
         return $final;
     }
 
-    protected function getValueFromTableByConditions(string $tableName, string $columnName, string $conditionColumnName, string|int|bool $conditionColumnValue) {
+    /**
+     * Returns a value from given table by single condition
+     * 
+     * @param string $tableName Table name
+     * @param string $columnName Column name
+     * @param string $conditionColumnName Condition column name
+     * @param string|int|bool $conditionColumnValue Condition column value
+     */
+    protected function getValueFromTableByConditions(string $tableName, string $columnName, string $conditionColumnName, string|int|bool $conditionColumnValue): mixed {
         $qb = new QueryBuilder($this->conn, $this->logger, __METHOD__);
 
         $qb->select([$columnName])

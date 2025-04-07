@@ -42,6 +42,9 @@ class UsersPresenter extends AAdminPresenter {
         $grid->addQuickSearch('username', 'Username');
 
         $grid->addFilter('isTechnical', 0, ['0' => 'False', '1' => 'True']);
+        $grid->addFilter('isDeleted', 0, ['0' => 'False', '1' => 'True']);
+
+        $grid->addFilterLabel('isDeleted', 'Is deleted');
 
         $edit = $grid->addAction('edit');
         $edit->setTitle('Edit');
@@ -147,7 +150,25 @@ class UsersPresenter extends AAdminPresenter {
 
     public function handleEditUserForm() {}
 
-    public function handleDeleteUser() {}
+    public function handleDeleteUser() {
+        $userId = $this->httpRequest->get('userId');
+
+        try {
+            $this->app->userRepository->beginTransaction(__METHOD__);
+
+            $this->app->userManager->updateUser($userId, ['isDeleted' => 1]);
+
+            $this->app->userRepository->commit($this->getUserId(), __METHOD__);
+
+            $this->flashMessage('Successfully deleted user.', 'success');
+        } catch(AException $e) {
+            $this->app->userRepository->rollback(__METHOD__);
+
+            $this->flashMessage('Could not delete user. Reason: ' . $e->getMessage(), 'error', 10);
+        }
+
+        $this->redirect($this->createURL('list'));
+    }
 }
 
 ?>

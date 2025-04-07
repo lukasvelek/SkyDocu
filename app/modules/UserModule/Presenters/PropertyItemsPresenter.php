@@ -55,7 +55,7 @@ class PropertyItemsPresenter extends AUserPresenter {
     }
 
     public function renderNewPropertyItemForm() {
-        $this->template->links = $this->createBackUrl('list', ['view' => 'propertyItems-all']);
+        $this->template->links = $this->createBackFullUrl('User:Reports', 'list', ['view' => 'propertyItems-all']);
     }
 
     protected function createComponentNewPropertyItemForm(HttpRequest $request) {
@@ -101,7 +101,8 @@ class PropertyItemsPresenter extends AUserPresenter {
         }
 
         $qb = $propertyItemsRepository->composeQueryForPropertyItems(false);
-        $qb->orderBy('dateCreated', 'DESC');
+        $qb->andWhere('itemId = ?', [$request->get('itemId')])
+            ->orderBy('dateCreated', 'DESC');
 
         $qb2 = clone $qb;
         $dataDb = $qb2->execute()->fetchAll();

@@ -177,10 +177,12 @@ class StandaloneProcessManager extends AManager {
             throw new GeneralException('Role \'Property manager\' is empty. At least one user must be member.');
         }
 
-        $currentOfficerId = $propertyManager;
         $workflow = [
+            $data['user'],
             $propertyManager
         ];
+
+        $currentOfficerId = $workflow[0];
 
         $processId = $this->processManager->startProcess(null, StandaloneProcesses::REQUEST_PROPERTY_MOVE, $this->currentUser->getId(), $currentOfficerId, $workflow);
 

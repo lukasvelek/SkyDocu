@@ -8,6 +8,7 @@ use App\Core\DB\DatabaseRow;
 use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
+use App\UI\GridBuilder2\Action;
 use App\UI\GridBuilder2\Row;
 use App\UI\HTML\HTML;
 use App\UI\LinkBuilder;
@@ -37,6 +38,7 @@ class UsersPresenter extends AAdminPresenter {
         $grid->addColumnText('username', 'Username');
         $grid->addColumnText('email', 'Email');
         $grid->addColumnBoolean('isTechnical', 'Technical user');
+        $grid->addColumnBoolean('isDeleted', 'Is deleted');
 
         $grid->addQuickSearch('fullname', 'Fullname');
         $grid->addQuickSearch('username', 'Username');
@@ -44,12 +46,12 @@ class UsersPresenter extends AAdminPresenter {
         $grid->addFilter('isTechnical', 0, ['0' => 'False', '1' => 'True']);
         $grid->addFilter('isDeleted', 0, ['0' => 'False', '1' => 'True']);
 
-        $grid->addFilterLabel('isDeleted', 'Is deleted');
+        //$grid->addFilterLabel('isDeleted', 'Is deleted');
 
         $edit = $grid->addAction('edit');
         $edit->setTitle('Edit');
-        $edit->onCanRender[] = function() {
-            return true;
+        $edit->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) {
+            return !(bool)$row->isDeleted;
         };
         $edit->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
             $el = HTML::el('a');
@@ -62,14 +64,28 @@ class UsersPresenter extends AAdminPresenter {
 
         $delete = $grid->addAction('delete');
         $delete->setTitle('Delete');
-        $delete->onCanRender[] = function() {
-            return true;
+        $delete->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) {
+            return !(bool)$row->isDeleted;
         };
         $delete->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
             $el = HTML::el('a');
             $el->class('grid-link')
                 ->text('Delete')
                 ->href($this->createURLString('deleteUser', ['userId' => $primaryKey]));
+
+            return $el;
+        };
+
+        $restore = $grid->addAction('restore');
+        $restore->setTitle('Restore');
+        $restore->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) {
+            return (bool)$row->isDeleted;
+        };
+        $restore->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
+            $el = HTML::el('a');
+            $el->class('grid-link')
+                ->text('Restore')
+                ->href($this->createURLString('restoreUser', ['userId' => $primaryKey]));
 
             return $el;
         };
@@ -165,6 +181,26 @@ class UsersPresenter extends AAdminPresenter {
             $this->app->userRepository->rollback(__METHOD__);
 
             $this->flashMessage('Could not delete user. Reason: ' . $e->getMessage(), 'error', 10);
+        }
+
+        $this->redirect($this->createURL('list'));
+    }
+
+    public function handleRestoreUser() {
+        $userId = $this->httpRequest->get('userId');
+
+        try {
+            $this->app->userRepository->beginTransaction(__METHOD__);
+
+            $this->app->userManager->updateUser($userId, ['isDeleted' => 0]);
+
+            $this->app->userRepository->commit($this->getUserId(), __METHOD__);
+
+            $this->flashMessage('Successfully restored user.', 'success');
+        } catch(AException $e) {
+            $this->app->userRepository->rollback(__METHOD__);
+
+            $this->flashMessage('Could not restore user. Reason: ' . $e->getMessage(), 'error', 10);
         }
 
         $this->redirect($this->createURL('list'));

@@ -63,6 +63,8 @@ class UserManager extends AManager {
     }
 
     public function updateUser(string $userId, array $data) {
+        $data['dateModified'] = date('Y-m-d H:i:s');
+
         if(!$this->userRepository->updateUser($userId, $data)) {
             throw new GeneralException('Database error.');
         }

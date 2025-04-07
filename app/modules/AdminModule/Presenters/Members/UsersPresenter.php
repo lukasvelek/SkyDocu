@@ -46,8 +46,6 @@ class UsersPresenter extends AAdminPresenter {
         $grid->addFilter('isTechnical', 0, ['0' => 'False', '1' => 'True']);
         $grid->addFilter('isDeleted', 0, ['0' => 'False', '1' => 'True']);
 
-        //$grid->addFilterLabel('isDeleted', 'Is deleted');
-
         $edit = $grid->addAction('edit');
         $edit->setTitle('Edit');
         $edit->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) {
@@ -65,7 +63,14 @@ class UsersPresenter extends AAdminPresenter {
         $delete = $grid->addAction('delete');
         $delete->setTitle('Delete');
         $delete->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) {
-            return !(bool)$row->isDeleted;
+            if($row->isDeleted == true) {
+                return false;
+            }
+            if($row->userId == $this->getUserId()) {
+                return false;
+            }
+
+            return true;
         };
         $delete->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
             $el = HTML::el('a');

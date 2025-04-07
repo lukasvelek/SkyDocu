@@ -138,7 +138,7 @@ class PropertyItemsPresenter extends AUserPresenter {
             return $item['title'] . ' (' . $item['title2'] . ')';
         };
 
-        $grid->addColumnDatetime('dateCreated', 'Date created');
+        $grid->addColumnDatetime('dateCreated', 'Date assigned');
 
         return $grid;
     }

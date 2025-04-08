@@ -46,7 +46,7 @@ class UsersPresenter extends AAdminPresenter {
         $grid->addFilter('isTechnical', 0, ['0' => 'False', '1' => 'True']);
         $grid->addFilter('isDeleted', 0, ['0' => 'False', '1' => 'True']);
 
-        $edit = $grid->addAction('edit');
+        /*$edit = $grid->addAction('edit');
         $edit->setTitle('Edit');
         $edit->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) {
             return !(bool)$row->isDeleted;
@@ -58,7 +58,7 @@ class UsersPresenter extends AAdminPresenter {
                 ->href($this->createURLString('editUserForm', ['userId' => $primaryKey]));
 
             return $el;
-        };
+        };*/
 
         $delete = $grid->addAction('delete');
         $delete->setTitle('Delete');

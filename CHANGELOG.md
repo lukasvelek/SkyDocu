@@ -2,6 +2,7 @@
 Previously changelog for versions `1.0`-`1.4` has been located in README.md. However that location wasn't a very good option and therefore it has been moved here.
 
 ## Index
+[SkyDocu `1.7` (_WIP_)](#skydocu-16-wip)
 [SkyDocu `1.5` (04/08/2025)](#skydocu-15-04082025)  
 [SkyDocu `1.4` (03/22/2025)](#skydocu-14-03222025)  
 [SkyDocu `1.3.1` (02/26/2025)](#skydocu-131-02262025)  
@@ -9,6 +10,8 @@ Previously changelog for versions `1.0`-`1.4` has been located in README.md. How
 [SkyDocu `1.2` (01/27/2025)](#skydocu-12-01272025)  
 [SkyDocu `1.1` (01/07/2025)](#skydocu-11-01072025)  
 [SkyDocu `1.0` (11/29/2024)](#skydocu-10-11292024)
+
+## SkyDocu `1.6` (_WIP_)
 
 ## SkyDocu `1.5` (04/08/2025)
 - Added _Requested containers_ metric to superadministration Container statistics widget

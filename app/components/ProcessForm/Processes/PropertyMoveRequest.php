@@ -68,6 +68,11 @@ class PropertyMoveRequest extends AProcessForm {
 
         $this->addTextArea('comment', 'Comment');
 
+        $this->addSelect('action', 'Action:')
+            ->setRequired()
+            ->addRawOption('move', 'Move', true)
+            ->addRawOption('remove', 'Request remove');
+
         $this->addSubmit('Request');
     }
 

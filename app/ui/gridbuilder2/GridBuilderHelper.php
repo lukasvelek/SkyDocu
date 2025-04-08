@@ -630,7 +630,7 @@ class GridBuilderHelper {
         $scripts[] = '
             async function ' . $this->componentName . '_gridRefresh(' . implode(', ', $args) . ') {
                 await ' . $getSkeletonPar->getFunctionName() . '(' . implode(', ', $args) . ');
-                await sleep(2500);
+                await sleep(1000);
                 await ' . $par->getFunctionName() . '(' . implode(', ', $args) . ');
             }
         ';

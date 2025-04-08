@@ -5,7 +5,6 @@ namespace App\Components\Widgets\ContainerStatsWidget;
 use App\Components\Widgets\Widget;
 use App\Constants\ContainerStatus;
 use App\Core\Http\HttpRequest;
-use App\Core\Http\JsonResponse;
 use App\Managers\ContainerManager;
 
 /**
@@ -53,6 +52,7 @@ class ContainerStatsWidget extends Widget {
             'New containers' => $data['newCount'],
             'Running containers' => $data['runningCount'],
             'Not running containers' => $data['notRunningCount'],
+            'Requested containers' => $data['requestedCount']
         ];
 
         return $rows;
@@ -68,12 +68,14 @@ class ContainerStatsWidget extends Widget {
         $newCount = $this->fetchNewContainerCountFromDb();
         $runningCount = $this->fetchRunningContainerCountFromDb();
         $notRunningCount = $this->fetchNotRunningContainerCountFromDb();
+        $requestedCount = $this->fetchRequestedContainerCountFromDb();
 
         return [
             'totalCount' => $totalCount,
             'newCount' => $newCount,
             'runningCount' => $runningCount,
-            'notRunningCount' => $notRunningCount
+            'notRunningCount' => $notRunningCount,
+            'requestedCount' => $requestedCount
         ];
     }
 
@@ -82,7 +84,7 @@ class ContainerStatsWidget extends Widget {
      * 
      * @return mixed Data from the database
      */
-    private function fetchTotalContainerCountFromDb() {
+    private function fetchTotalContainerCountFromDb(): mixed {
         $qb = $this->containerManager->containerRepository->composeQueryForContainers();
         $qb->select(['COUNT(*) AS cnt']);
         return $qb->execute()->fetch('cnt');
@@ -93,7 +95,7 @@ class ContainerStatsWidget extends Widget {
      * 
      * @return mixed Data from the database
      */
-    private function fetchNewContainerCountFromDb() {
+    private function fetchNewContainerCountFromDb(): mixed {
         $qb = $this->containerManager->containerRepository->composeQueryForContainers();
         $qb->select(['COUNT(*) AS cnt'])
             ->andWhere('status = ?', [ContainerStatus::NEW]);
@@ -105,7 +107,7 @@ class ContainerStatsWidget extends Widget {
      * 
      * @return mixed Data from the database
      */
-    private function fetchRunningContainerCountFromDb() {
+    private function fetchRunningContainerCountFromDb(): mixed {
         $qb = $this->containerManager->containerRepository->composeQueryForContainers();
         $qb->select(['COUNT(*) AS cnt'])
             ->andWhere('status = ?', [ContainerStatus::RUNNING]);
@@ -117,10 +119,22 @@ class ContainerStatsWidget extends Widget {
      * 
      * @return mixed Data from the database
      */
-    private function fetchNotRunningContainerCountFromDb() {
+    private function fetchNotRunningContainerCountFromDb(): mixed {
         $qb = $this->containerManager->containerRepository->composeQueryForContainers();
         $qb->select(['COUNT(*) AS cnt'])
             ->andWhere('status = ?', [ContainerStatus::NOT_RUNNING]);
+        return $qb->execute()->fetch('cnt');
+    }
+
+    /**
+     * Fetches requested container count from the database
+     * 
+     * @return mixed Data from the database
+     */
+    private function fetchRequestedContainerCountFromDb(): mixed {
+        $qb = $this->containerManager->containerRepository->composeQueryForContainers();
+        $qb->select(['COUNT(*) AS cnt'])
+            ->andWhere('status = ?', [ContainerStatus::REQUESTED]);
         return $qb->execute()->fetch('cnt');
     }
 

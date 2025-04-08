@@ -203,6 +203,25 @@ class ContainerDatabaseRepository extends ARepository {
 
         return $qb;
     }
+
+    /**
+     * Updates container database
+     * 
+     * @param string $containerId Container ID
+     * @param string $databaseName Database name
+     * @param array $data Data
+     */
+    public function updateContainerDatabase(string $containerId, string $databaseName, array $data): bool {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->update('container_databases')
+            ->set($data)
+            ->where('containerId = ?', [$containerId])
+            ->andWhere('name = ?', [$databaseName])
+            ->execute();
+
+        return $qb->fetchBool();
+    }
 }
 
 ?>

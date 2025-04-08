@@ -47,7 +47,11 @@ class ContainerManager extends AManager {
      * @param string $containerId
      */
     public function generateContainerDatabaseName(string $containerId): string {
-        return 'sd_db_' . $containerId . '_' . HashManager::createHash(8, false);
+        $prefix = CONTAINER_DB_NAME_PREFIX;
+        if(!str_ends_with($prefix, '_') && $prefix != '') {
+            $prefix .= '_';
+        }
+        return $prefix . 'sd_db_' . $containerId . '_' . HashManager::createHash(8, false);
     }
 
     /**
@@ -131,7 +135,11 @@ class ContainerManager extends AManager {
         $migrationManager = new DatabaseMigrationManager($this->masterConn, $conn, $this->logger);
         $migrationManager->setContainer($containerId);
 
-        $migrationManager->runMigrations(true);
+        $dbSchema = $migrationManager->runMigrations(true);
+
+        if($this->containerDatabaseManager->updateContainerDatabase($containerId, $dbName, ['dbSchema' => $dbSchema])) {
+            throw new GeneralException('Could not update database schema after migrations.');
+        }
     }
 
     /**

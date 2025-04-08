@@ -35,32 +35,7 @@ class ContainerOrphanedFilesRemovingMasterService extends AService {
 
     private function innerRun() {
         // Service executes all commands here
-        $containerIds = $this->getContainers();
-
-        $this->logInfo(sprintf('Found %d containers.', count($containerIds)));
-
-        foreach($containerIds as $containerId) {
-            $result = $this->serviceManager->runService('cofrs_slave.php', [$containerId]);
-
-            if($result) {
-                $this->logInfo('Slave started.');
-            } else {
-                $this->logError('Could not start slave.');
-            }
-        }
-    }
-
-    private function getContainers() {
-        $qb = $this->containerManager->containerRepository->composeQueryForContainers();
-        $qb->andWhere($qb->getColumnInValues('status', [ContainerStatus::NOT_RUNNING, ContainerStatus::RUNNING]))
-            ->execute();
-
-        $containerIds = [];
-        while($row = $qb->fetchAssoc()) {
-            $containerIds[] = $row['containerId'];
-        }
-        
-        return $containerIds;
+        $this->startSlaveServiceForAllContainers($this->containerManager, 'cofrs_slave.php');
     }
 }
 

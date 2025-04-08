@@ -144,6 +144,11 @@ class GroupManager extends AManager {
 
         return $userId;
     }
+
+    public function isUserMemberOfGroupTitle(string $userId, string $groupTitle) {
+        $users = $this->getUsersForGroupTitle($groupTitle);
+        return in_array($userId, $users);
+    }
 }
 
 ?>

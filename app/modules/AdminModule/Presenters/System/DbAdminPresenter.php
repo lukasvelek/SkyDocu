@@ -2,14 +2,14 @@
 
 namespace App\Modules\AdminModule;
 
-use App\Core\DatabaseInstaller;
 use App\Core\DB\DatabaseRow;
 use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
+use App\Exceptions\RequiredAttributeIsNotSetException;
 use App\Helpers\ContainerCreationHelper;
-use App\Managers\EntityManager;
+use App\Helpers\LinkHelper;
 use App\UI\GridBuilder2\Action;
 use App\UI\GridBuilder2\Row;
 use App\UI\HTML\HTML;
@@ -25,15 +25,8 @@ class DbAdminPresenter extends AAdminPresenter {
         $this->setSystem();
     }
 
-    public function handleList() {
-        $links = [
-            LinkBuilder::createSimpleLink('New database', $this->createURL('newDatabaseForm'), 'link')
-        ];
-        $this->saveToPresenterCache('links', $links);
-    }
-
     public function renderList() {
-        $this->template->links = $this->loadFromPresenterCache('links');
+        $this->template->links = LinkBuilder::createSimpleLink('New database', $this->createURL('newDatabaseForm'), 'link');
     }
 
     protected function createComponentContainerDatabasesGrid(HttpRequest $request) {
@@ -124,6 +117,9 @@ class DbAdminPresenter extends AAdminPresenter {
             $this->redirect($this->createURL('list'));
         } else {
             $entryId = $this->httpRequest->get('entryId');
+            if($entryId === null) {
+                throw new RequiredAttributeIsNotSetException('entryId');
+            }
 
             $container = $this->app->containerManager->getContainerById($this->containerId);
 
@@ -265,11 +261,13 @@ class DbAdminPresenter extends AAdminPresenter {
         return $form;
     }
 
-    public function handleTableList() {
+    public function renderTableList() {
         $entryId = $this->httpRequest->get('entryId');
+        if($entryId === null) {
+            throw new RequiredAttributeIsNotSetException('entryId');
+        }
         $database = $this->app->containerDatabaseManager->getDatabaseByEntryId($entryId);
-
-        $this->saveToPresenterCache('path', $database->getName());
+        $path = $database->getName();
 
         $links = [
             $this->createBackUrl('list')
@@ -279,12 +277,8 @@ class DbAdminPresenter extends AAdminPresenter {
             $links[] = LinkBuilder::createSimpleLink('New table', $this->createURL('newTableForm', ['entryId' => $entryId]), 'link');
         }
 
-        $this->saveToPresenterCache('links', implode('&nbsp;&nbsp;', $links));
-    }
-
-    public function renderTableList() {
-        $this->template->links = $this->loadFromPresenterCache('links');
-        $this->template->path = $this->loadFromPresenterCache('path');
+        $this->template->links = LinkHelper::createLinksFromArray($links);
+        $this->template->path = $path;
     }
 
     protected function createComponentDatabaseTablesList(HttpRequest $request) {
@@ -376,12 +370,14 @@ class DbAdminPresenter extends AAdminPresenter {
         return $list;
     }
 
-    public function handleTableSchemeList() {
+    public function renderTableSchemeList() {
         $entryId = $this->httpRequest->get('entryId');
+        if($entryId === null) {
+            throw new RequiredAttributeIsNotSetException('entryId');
+        }
         $table = $this->httpRequest->get('table');
         $database = $this->app->containerDatabaseManager->getDatabaseByEntryId($entryId);
-
-        $this->saveToPresenterCache('path', $database->getName() . ' > ' . $table . ' > Scheme');
+        $path = $database->getName() . ' > ' . $table  . ' > Schema';
 
         $links = [
             $this->createBackUrl('tableList', ['entryId' => $this->httpRequest->get('entryId')])
@@ -395,12 +391,8 @@ class DbAdminPresenter extends AAdminPresenter {
             }
         }
 
-        $this->saveToPresenterCache('links', implode('&nbsp;&nbsp;', $links));
-    }
-
-    public function renderTableSchemeList() {
-        $this->template->links = $this->loadFromPresenterCache('links');
-        $this->template->path = $this->loadFromPresenterCache('path');
+        $this->template->links = LinkHelper::createLinksFromArray($links);
+        $this->template->path = $path;
     }
 
     protected function createComponentDatabaseTableSchemeList(HttpRequest $request) {
@@ -453,7 +445,9 @@ class DbAdminPresenter extends AAdminPresenter {
 
     public function handleNewTableForm(?FormRequest $fr = null) {
         $entryId = $this->httpRequest->get('entryId');
-        $database = $this->app->containerDatabaseManager->getDatabaseByEntryId($entryId);
+        if($entryId === null) {
+            throw new RequiredAttributeIsNotSetException('entryId');
+        }
 
         if($fr !== null) {
             try {
@@ -475,14 +469,16 @@ class DbAdminPresenter extends AAdminPresenter {
             }
 
             $this->redirect($this->createURL('tableList', ['entryId' => $entryId]));
-        } else {
-            $this->saveToPresenterCache('path', $database->getName() . ' > New table');
         }
     }
 
     public function renderNewTableForm() {
-        $this->template->links = $this->createBackUrl('tableList', ['entryId' => $this->httpRequest->get('entryId')]);
-        $this->template->path = $this->loadFromPresenterCache('path');
+        $entryId = $this->httpRequest->get('entryId');
+        $database = $this->app->containerDatabaseManager->getDatabaseByEntryId($entryId);
+        $path = $database->getName() . ' > New table';
+
+        $this->template->links = $this->createBackUrl('tableList', ['entryId' => $entryId]);
+        $this->template->path = $path;
     }
 
     protected function createComponentNewTableForm(HttpRequest $request) {
@@ -499,9 +495,17 @@ class DbAdminPresenter extends AAdminPresenter {
 
     public function handleNewTableColumnForm(?FormRequest $fr = null) {
         $entryId = $this->httpRequest->get('entryId');
-        $database = $this->app->containerDatabaseManager->getDatabaseByEntryId($entryId);
+        if($entryId === null) {
+            throw new RequiredAttributeIsNotSetException('entryId');
+        }
         $tableId = $this->httpRequest->get('tableId');
+        if($tableId === null) {
+            throw new RequiredAttributeIsNotSetException('tableId');
+        }
         $table = $this->httpRequest->get('table');
+        if($table === null) {
+            throw new RequiredAttributeIsNotSetException('table');
+        }
 
         if($fr !== null) {
             try {
@@ -526,14 +530,17 @@ class DbAdminPresenter extends AAdminPresenter {
             }
 
             $this->redirect($this->createURL('tableSchemeList', ['entryId' => $entryId, 'table' => $table]));
-        } else {
-            $this->saveToPresenterCache('path', $database->getName() . ' > ' . $table . ' > New column');
         }
     }
 
     public function renderNewTableColumnForm() {
-        $this->template->links = $this->createBackUrl('tableSchemeList', ['entryId' => $this->httpRequest->get('entryId'), 'table' => $this->httpRequest->get('table')]);
-        $this->template->path = $this->loadFromPresenterCache('path');
+        $entryId = $this->httpRequest->get('entryId');
+        $database = $this->app->containerDatabaseManager->getDatabaseByEntryId($entryId);
+        $table = $this->httpRequest->get('table');
+        $path = $database->getName() . ' > ' . $table . ' > New column';
+
+        $this->template->links = $this->createBackUrl('tableSchemeList', ['entryId' => $entryId, 'table' => $table]);
+        $this->template->path = $path;
     }
 
     protected function createComponentNewTableColumnForm(HttpRequest $request) {
@@ -592,17 +599,20 @@ class DbAdminPresenter extends AAdminPresenter {
         $this->redirect($this->createURL('tableList', ['entryId' => $entryId]));
     }
 
-    public function handleTableDataList() {
-        $entryId = $this->httpRequest->get('entryId');
-        $table = $this->httpRequest->get('table');
-        $database = $this->app->containerDatabaseManager->getDatabaseByEntryId($entryId);
-
-        $this->saveToPresenterCache('path', $database->getName() . ' > ' . $table . ' > Data');
-    }
-
     public function renderTableDataList() {
-        $this->template->links = $this->createBackUrl('tableList', ['entryId' => $this->httpRequest->get('entryId')]);
-        $this->template->path = $this->loadFromPresenterCache('path');
+        $entryId = $this->httpRequest->get('entryId');
+        if($entryId === null) {
+            throw new RequiredAttributeIsNotSetException('entryId');
+        }
+        $table = $this->httpRequest->get('table');
+        if($table === null) {
+            throw new RequiredAttributeIsNotSetException('table');
+        }
+        $database = $this->app->containerDatabaseManager->getDatabaseByEntryId($entryId);
+        $path = $database->getName() . ' > ' . $table . ' > Data';
+
+        $this->template->links = $this->createBackUrl('tableList', ['entryId' => $entryId]);
+        $this->template->path = $path;
     }
 
     protected function createComponentTableDataGrid(HttpRequest $request) {

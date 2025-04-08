@@ -1,12 +1,14 @@
 <?php
 
 use App\Core\Application;
+use App\Core\Configuration;
 use App\Core\DB\DatabaseRow;
 use App\Exceptions\AException;
 use App\Exceptions\ServiceException;
 use App\Helpers\BackgroundServiceScheduleHelper;
 
 require_once('config.php');
+require_once('version.php');
 require_once('app/app_loader.php');
 
 const RUN_ALL_EXPLICITLY = false;
@@ -102,7 +104,9 @@ function getServicesThatShouldBeExecuted(): array {
 function say(string $text, bool $newLine = true) {
     global $app;
 
-    echo('[' . date('Y-m-d H:i:s') . '] ' . $text . ($newLine ? "\r\n" : ''));
+    $version = '[' . Configuration::getCurrentVersion() . ']';
+
+    echo('[' . date('Y-m-d H:i:s') . '] ' . $version . ' ' . $text . ($newLine ? "\r\n" : ''));
 
     $app->logger->serviceInfo($text, 'service_scheduler');
 }

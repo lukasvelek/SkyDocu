@@ -3,6 +3,7 @@
 namespace App\Managers;
 
 use App\Core\Caching\CacheNames;
+use App\Core\DB\DatabaseRow;
 use App\Exceptions\GeneralException;
 use App\Exceptions\NonExistingEntityException;
 use App\Logger\Logger;
@@ -62,6 +63,8 @@ class UserManager extends AManager {
     }
 
     public function updateUser(string $userId, array $data) {
+        $data['dateModified'] = date('Y-m-d H:i:s');
+
         if(!$this->userRepository->updateUser($userId, $data)) {
             throw new GeneralException('Database error.');
         }
@@ -81,6 +84,31 @@ class UserManager extends AManager {
            !$this->cacheFactory->invalidateCacheByNamespace(CacheNames::USERS_USERNAME_TO_ID_MAPPING)) {
             throw new GeneralException('Could not invalidate cache.');
         }
+    }
+
+    public function getUserRowById(string $userId) {
+        $user = $this->userRepository->getUserRowById($userId);
+
+        if($user === null) {
+            throw new NonExistingEntityException('No user found.');
+        }
+
+        return DatabaseRow::createFromDbRow($user);
+    }
+
+    public function searchUsersByUsernameAndFullname(string $query, array $exceptUsers = []): array {
+        $users = [];
+        $usernameEntities = $this->userRepository->searchUsersByUsername($query, $exceptUsers);
+        $fullnameEntities = $this->userRepository->searchUsersByFullname($query, $exceptUsers);
+
+        foreach($usernameEntities as $user) {
+            $users[$user->getId()] = $user->getFullname();
+        }
+        foreach($fullnameEntities as $user) {
+            $users[$user->getId()] = $user->getFullname();
+        }
+
+        return $users;
     }
 }
 

@@ -9,6 +9,7 @@ use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
 use App\Exceptions\RequiredAttributeIsNotSetException;
+use App\Helpers\LinkHelper;
 use App\UI\GridBuilder2\Action;
 use App\UI\GridBuilder2\Cell;
 use App\UI\GridBuilder2\Row;
@@ -22,7 +23,7 @@ class DocumentFoldersPresenter extends AAdminPresenter {
         $this->setDocuments();
     }
 
-    public function handleList() {
+    public function renderList() {
         $links = [];
 
         $newFolderLink = LinkBuilder::createSimpleLink('New folder', $this->createURL('newFolderForm'), 'link');
@@ -55,13 +56,8 @@ class DocumentFoldersPresenter extends AAdminPresenter {
         $folderPath = implode(' > ', $folderPathArray);
         $links[] = $newFolderLink;
 
-        $this->saveToPresenterCache('links', implode('&nbsp;&nbsp;', $links));
-        $this->saveToPresenterCache('folderPath', $folderPath);
-    }
-
-    public function renderList() {
-        $this->template->links = $this->loadFromPresenterCache('links');
-        $this->template->folder_path = $this->loadFromPresenterCache('folderPath');
+        $this->template->links = LinkHelper::createLinksFromArray($links);
+        $this->template->folder_path = $folderPath;
     }
 
     protected function createComponentDocumentFoldersGrid(HttpRequest $request) {
@@ -142,7 +138,7 @@ class DocumentFoldersPresenter extends AAdminPresenter {
         $deleteFolder = $grid->addAction('deleteFolder');
         $deleteFolder->setTitle('Delete folder');
         $deleteFolder->onCanRender[] = function(DatabaseRow $row, Row $_row) {
-            if($row->isSystem === true) {
+            if($row->isSystem == true) {
                 return false;
             }
             
@@ -202,6 +198,10 @@ class DocumentFoldersPresenter extends AAdminPresenter {
     public function handleNewFolderForm(?FormRequest $fr = null) {
         $folderId = $this->httpRequest->get('folderId');
 
+        if($folderId === null) {
+            throw new RequiredAttributeIsNotSetException('folderId');
+        }
+
         if($fr !== null) {
             try {
                 $this->folderRepository->beginTransaction(__METHOD__);
@@ -222,20 +222,20 @@ class DocumentFoldersPresenter extends AAdminPresenter {
             } else {
                 $this->redirect($this->createURL('list'));
             }
-        } else {
-            $backLink = '';
-            if($folderId !== null) {
-                $backLink = $this->createBackUrl('list', ['folderId' => $folderId]);
-            } else {
-                $backLink = $this->createBackUrl('list');
-            }
-
-            $this->saveToPresenterCache('links', $backLink);
         }
     }
 
     public function renderNewFolderForm() {
-        $this->template->links = $this->loadFromPresenterCache('links');
+        $folderId = $this->httpRequest->get('folderId');
+
+        $backLink = '';
+        if($folderId !== null) {
+            $backLink = $this->createBackUrl('list', ['folderId' => $folderId]);
+        } else {
+            $backLink = $this->createBackUrl('list');
+        }
+
+        $this->template->links = $backLink;
     }
 
     protected function createComponentNewDocumentFolderForm(HttpRequest $request) {
@@ -258,7 +258,7 @@ class DocumentFoldersPresenter extends AAdminPresenter {
         return $form;
     }
 
-    public function handleListGroupRights() {
+    public function renderListGroupRights() {
         $folderId = $this->httpRequest->get('folderId');
 
         if($folderId === null) {
@@ -266,10 +266,7 @@ class DocumentFoldersPresenter extends AAdminPresenter {
         }
 
         $parentFolderId = $this->httpRequest->get('parentFolderId') ?? $folderId;
-
         $folder = $this->folderManager->getFolderById($folderId);
-
-        $this->saveToPresenterCache('folderTitle', $folder->title);
 
         $params = ['folderId' => $folderId];
         if($parentFolderId != $folderId) {
@@ -281,12 +278,8 @@ class DocumentFoldersPresenter extends AAdminPresenter {
             LinkBuilder::createSimpleLink('Add group', $this->createURL('newFolderGroupRightsForm', $params), 'link')
         ];
 
-        $this->saveToPresenterCache('links', implode('&nbsp;&nbsp;', $links));
-    }
-
-    public function renderListGroupRights() {
-        $this->template->folder_title = $this->loadFromPresenterCache('folderTitle');
-        $this->template->links = $this->loadFromPresenterCache('links');
+        $this->template->folder_title = $folder->title;
+        $this->template->links = LinkHelper::createLinksFromArray($links);
     }
 
     protected function createComponentDocumentFoldersGroupRightsGrid(HttpRequest $request) {
@@ -449,9 +442,11 @@ class DocumentFoldersPresenter extends AAdminPresenter {
             $params['parentFolderId'] = $parentFolderId;
         }
 
-        $this->template->links = [
+        $links = [
             LinkBuilder::createSimpleLink('&larr; Back', $this->createURL('listGroupRights', $params), 'link')
         ];
+
+        $this->template->links = LinkHelper::createLinksFromArray($links);
     }
 
     protected function createComponentNewFolderGroupRightsForm(HttpRequest $request) {
@@ -619,7 +614,7 @@ class DocumentFoldersPresenter extends AAdminPresenter {
         return $form;
     }
 
-    public function handleListMetadata() {
+    public function renderListMetadata() {
         $folderId = $this->httpRequest->get('folderId');
         if($folderId === null) {
             throw new RequiredAttributeIsNotSetException('folderId');
@@ -636,11 +631,7 @@ class DocumentFoldersPresenter extends AAdminPresenter {
             LinkBuilder::createSimpleLink('Add metadata', $this->createURL('addMetadataToFolderForm', $params), 'link')
         ];
 
-        $this->saveToPresenterCache('links', implode('&nbsp;&nbsp;', $links));
-    }
-
-    public function renderListMetadata() {
-        $this->template->links = $this->loadFromPresenterCache('links');
+        $this->template->links = LinkHelper::createLinksFromArray($links);
     }
 
     protected function createComponentFolderMetadataGrid(HttpRequest $request) {

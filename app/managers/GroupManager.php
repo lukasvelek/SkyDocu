@@ -161,6 +161,43 @@ class GroupManager extends AManager {
             throw new GeneralException('Could not remove group.');
         }
     }
+
+    public function getAllContainerGroups() {
+        $qb = $this->groupRepository->composeQueryForGroups();
+        $qb->andWhere('containerId IS NOT NULL')
+            ->execute();
+
+        $groups = [];
+        while($row = $qb->fetchAssoc()) {
+            $groups[] = $row['groupId'];
+        }
+
+        return $groups;
+    }
+
+    public function getAllContainersOnlyUsers() {
+        $groups = $this->getAllContainerGroups();
+
+        $superAdministrators = $this->getAllSuperadministrators();
+        $users = [];
+        foreach($groups as $groupId) {
+            $members = $this->getGroupUsersForGroupId($groupId);
+
+            foreach($members as $memberId) {
+                if(!in_array($memberId, $superAdministrators)) {
+                    $users[] = $memberId;
+                }
+            }
+        }
+
+        return $users;
+    }
+
+    public function getAllSuperadministrators() {
+        $users = $this->getGroupUsersForGroupTitle('superadministrators');
+
+        return $users;
+    }
 }
 
 ?>

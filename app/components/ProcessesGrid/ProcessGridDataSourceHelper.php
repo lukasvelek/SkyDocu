@@ -99,7 +99,7 @@ class ProcessGridDataSourceHelper {
         $qb = $this->processRepository->commonComposeQuery(false);
         $qb->andWhere('authorUserId = :author OR currentOfficerUserId = :currentOfficer OR workflowUserIds LIKE :workflow OR currentOfficerSubstituteUserId = :currentOfficer');
         $qb->setParams([':author' => $currentUserId, ':currentOfficer' => $currentUserId, ':workflow' => '%' . $currentUserId . '%']);
-        $qb->andWhere('status = ?', [ProcessStatus::FINISHED]);
+        $qb->andWhere($qb->getColumnInValues('status', [ProcessStatus::CANCELED, ProcessStatus::FINISHED]));
         return $qb;
     }
 

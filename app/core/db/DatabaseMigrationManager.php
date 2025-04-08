@@ -53,6 +53,7 @@ class DatabaseMigrationManager {
      * Runs all migrations
      * 
      * @param bool $throwExceptions True if exceptions should be thrown
+     * @return int Database schema
      */
     public function runMigrations(bool $throwExceptions = false) {
         // get migrations
@@ -64,9 +65,12 @@ class DatabaseMigrationManager {
         $this->filterOnlyUpstreamMigrations($migrations);
         $this->logger->info(sprintf('Found %d migrations that must be run.', count($migrations)), __METHOD__);
 
+        $dbSchema = 0;
         foreach($migrations as $migration) {
-            $this->runSingleMigration($migration, $throwExceptions);
+            $dbSchema = $this->runSingleMigration($migration, $throwExceptions);
         }
+
+        return $dbSchema;
     }
 
     /**
@@ -79,7 +83,7 @@ class DatabaseMigrationManager {
             $migrationDir .= '\\containers';
         }
 
-        $migrations = FileManager::getFilesInFolder($migrationDir);
+        $migrations = FileManager::getFilesInFolder($migrationDir, false);
 
         return $migrations;
     }
@@ -101,7 +105,7 @@ class DatabaseMigrationManager {
                 $className = FileManager::getFilenameFromPath($migration);
 
                 $migrationNameParts = explode('_', $className);
-                $migrationNumber = $migrationNameParts[count($migrationNameParts) - 2];
+                $migrationNumber = $migrationNameParts[2];
 
                 if(!$skip) {
                     $filteredMigrations[] = $migration;
@@ -160,6 +164,7 @@ class DatabaseMigrationManager {
      * 
      * @param string $migrationFilePath File path of the migration
      * @param bool $throwExceptions True if exceptions should be thrown
+     * @return int Migration number
      */
     private function runSingleMigration(string $migrationFilePath, bool $throwExceptions) {
         require_once($migrationFilePath);
@@ -170,8 +175,15 @@ class DatabaseMigrationManager {
         $this->logger->info(sprintf('Running migration \'%s\' located in (\'%s\').', $className, $migrationFilePath), __METHOD__);
 
         $migrationNameParts = explode('_', $fileName);
-        $migrationName = $migrationNameParts[count($migrationNameParts) - 1];
-        $migrationNumber = $migrationNameParts[count($migrationNameParts) - 2];
+        $migrationNumber = $migrationNameParts[2];
+        $migrationName = '';
+
+        $tmp = [];
+        for($i = 3; $i < (count($migrationNameParts) - 1); $i++) {
+            $tmp[] = $migrationNameParts[$i];
+        }
+
+        $migrationName = implode('_', $tmp);
 
         try {
             $fullClassName = '\\App\\Data\\Db\\Migrations\\' . ($this->containerId !== null ? 'Containers\\' : '') . $className;
@@ -182,73 +194,79 @@ class DatabaseMigrationManager {
             $object = new $fullClassName($fileName, $migrationName, $migrationNumber);
             
             if($this->containerId !== null) {
-                $object->inject($this->conn, $this->masterConn);
+                $object->inject($this->conn, $this->masterConn, $this->logger);
             } else {
-                $object->inject($this->masterConn, $this->masterConn);
+                $object->inject($this->masterConn, $this->masterConn, $this->logger);
             }
 
             $tableSchema = $object->up();
-            $tables = $tableSchema->getTableSchemas();
+            if(!$tableSchema->isEmpty()) {
+                $tables = $tableSchema->getTableSchemas();
 
-            foreach($tables as $name => $table) {
-                /** @var \App\Core\DB\Helpers\Schema\ABaseTableSchema $table */
-                
-                $sqls = $table->getSQL();
-                
-                try {
-                    $this->masterConn->beginTransaction();
+                foreach($tables as $name => $table) {
+                    /** @var \App\Core\DB\Helpers\Schema\ABaseTableSchema $table */
+                    
+                    $sqls = $table->getSQL();
+                    
+                    try {
+                        $this->masterConn->beginTransaction();
 
-                    foreach($sqls as $sql) {
-                        $this->query($sql, __METHOD__, ($this->containerId === null));
-                    }
-
-                    if($this->containerId !== null) {
-                        $this->query($this->getContainerUpdateDbSchemaSQL((int)$migrationNumber), __METHOD__);
-                    } else {
-                        if(!$this->saveSystemLastMigration($fileName)) {
-                            throw new GeneralException('Could not save last migration run for system.');
+                        foreach($sqls as $sql) {
+                            $this->query($sql, __METHOD__, ($this->containerId === null));
                         }
-                    }
 
-                    $this->masterConn->commit();
-                } catch(Exception|mysqli_sql_exception $e) {
-                    $this->masterConn->rollback();
-                    $this->logger->error('An error occurred during running migration. Exception: ' . $e->getMessage(), __METHOD__);
+                        if($this->containerId !== null) {
+                            $this->query($this->getContainerUpdateDbSchemaSQL((int)$migrationNumber), __METHOD__);
+                        } else {
+                            if(!$this->saveSystemLastMigration($fileName)) {
+                                throw new GeneralException('Could not save last migration run for system.');
+                            }
+                        }
 
-                    if($throwExceptions) {
-                        throw new GeneralException('Database error.', $e);
+                        $this->masterConn->commit();
+                    } catch(Exception|mysqli_sql_exception $e) {
+                        $this->masterConn->rollback();
+                        $this->logger->error('An error occurred during running migration. Exception: ' . $e->getMessage(), __METHOD__);
+
+                        if($throwExceptions) {
+                            throw new GeneralException('Database error.', $e);
+                        }
                     }
                 }
             }
 
             $tableSeeds = $object->seeding();
-            $seeds = $tableSeeds->getSeeds();
+            if(!$tableSeeds->isEmpty()) {
+                $seeds = $tableSeeds->getSeeds();
 
-            foreach($seeds as $tableName => $seed) {
-                /** @var \App\Core\DB\Helpers\Seeding\CreateTableSeeding $seed */
-
-                $sqls = $seed->getSQL();
-
-                try {
-                    $this->masterConn->beginTransaction();
-
-                    foreach($sqls as $sql) {
-                        $this->query($sql, __METHOD__, ($this->containerId === null));
-                    }
-
-                    $this->masterConn->commit();
-                } catch(Exception $e) {
-                    $this->masterConn->rollback();
-                    $this->logger->error('An error occurred during running seeding for table \'' . $tableName . '\'. Exception: ' . $e->getMessage(), __METHOD__);
-
-                    if($throwExceptions) {
-                        throw $e;
+                foreach($seeds as $tableName => $seed) {
+                    /** @var \App\Core\DB\Helpers\Seeding\CreateTableSeeding $seed */
+    
+                    $sqls = $seed->getSQL();
+    
+                    try {
+                        $this->masterConn->beginTransaction();
+    
+                        foreach($sqls as $sql) {
+                            $this->query($sql, __METHOD__, ($this->containerId === null));
+                        }
+    
+                        $this->masterConn->commit();
+                    } catch(Exception $e) {
+                        $this->masterConn->rollback();
+                        $this->logger->error('An error occurred during running seeding for table \'' . $tableName . '\'. Exception: ' . $e->getMessage(), __METHOD__);
+    
+                        if($throwExceptions) {
+                            throw $e;
+                        }
                     }
                 }
             }
         } catch(AException $e) {
             throw $e;
         }
+
+        return (int)$migrationNumber;
     }
 
     /**

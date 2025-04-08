@@ -9,6 +9,7 @@ use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
 use App\Exceptions\RequiredAttributeIsNotSetException;
+use App\Helpers\LinkHelper;
 use App\UI\GridBuilder2\Action;
 use App\UI\GridBuilder2\Cell;
 use App\UI\GridBuilder2\Row;
@@ -153,20 +154,22 @@ class ProcessListPresenter extends AAdminPresenter {
         return $grid;
     }
 
-    public function handleMetadataEnumList() {
+    public function renderMetadataEnumList() {
         $metadataId = $this->httpRequest->get('metadataId');
+        if($metadataId === null) {
+            throw new RequiredAttributeIsNotSetException('metadataId');
+        }
         $typeId = $this->httpRequest->get('typeId');
+        if($typeId === null) {
+            throw new RequiredAttributeIsNotSetException('typeId');
+        }
 
         $links = [
             $this->createBackUrl('metadataList', ['typeId' => $typeId]),
             LinkBuilder::createSimpleLink('New value', $this->createURL('newEnumValueForm', ['metadataId' => $metadataId, 'typeId' => $typeId]), 'link')
         ];
 
-        $this->saveToPresenterCache('links', implode('&nbsp;&nbsp;', $links));
-    }
-
-    public function renderMetadataEnumList() {
-        $this->template->links = $this->loadFromPresenterCache('links');
+        $this->template->links = LinkHelper::createLinksFromArray($links);
     }
 
     protected function createComponentProcessMetadataEnumGrid(HttpRequest $request) {
@@ -182,6 +185,8 @@ class ProcessListPresenter extends AAdminPresenter {
         $grid->addQueryDependency('metadataId', $metadataId);
 
         $grid->addColumnText('title', 'Title');
+        $grid->addColumnText('title2', 'Subtitle 1');
+        $grid->addColumnText('title3', 'Subtitle 2');
 
         $edit = $grid->addAction('edit');
         $edit->setTitle('Edit');
@@ -208,7 +213,17 @@ class ProcessListPresenter extends AAdminPresenter {
             try {
                 $this->standaloneProcessManager->processManager->processRepository->beginTransaction(__METHOD__);
 
-                $this->standaloneProcessManager->createMetadataEnumValue($metadataId, $fr->title);
+                $title2 = null;
+                if(empty($fr->title2)) {
+                    $title2 = $fr->title2;
+                }
+
+                $title3 = null;
+                if(!empty($fr->title3)) {
+                    $title3 = $fr->title3;
+                }
+
+                $this->standaloneProcessManager->createMetadataEnumValue($metadataId, $fr->title, $title2, $title3);
 
                 $this->standaloneProcessManager->processManager->processRepository->commit($this->getUserId(), __METHOD__);
 
@@ -234,6 +249,10 @@ class ProcessListPresenter extends AAdminPresenter {
 
         $form->addTextInput('title', 'Title:')
             ->setRequired();
+
+        $form->addTextInput('title2', 'Subtitle 1:');
+
+        $form->addTextInput('title3', 'Subtitle 2:');
 
         $form->addSubmit('Create');
 
@@ -278,6 +297,12 @@ class ProcessListPresenter extends AAdminPresenter {
         $form->addTextInput('title', 'Title:')
             ->setRequired()
             ->setValue($value->title);
+
+        $form->addTextInput('title2', 'Subtitle 1:')
+            ->setValue($value->title2);
+
+        $form->addTextInput('title3', 'Subtitle 2:')
+            ->setValue($value->title3);
 
         $form->addSubmit('Save');
 

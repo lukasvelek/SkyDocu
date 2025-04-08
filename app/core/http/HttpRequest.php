@@ -102,6 +102,28 @@ class HttpRequest {
         $result = $this->query($key) ?? $this->post($key);
         return $result;
     }
+
+    /**
+     * Returns current Page and Action as an array for URL creation
+     * 
+     * Custom parameters can be passed
+     * 
+     * @param array $customParams Custom parameters
+     */
+    public function getCurrentPageActionAsArray(array $customParams = []): array {
+        $url = [
+            'page' => $this->get('page'),
+            'action' => $this->get('action')
+        ];
+
+        foreach($customParams as $customParam) {
+            if($this->get($customParam) !== null) {
+                $url[$customParam] = $this->get($customParam);
+            }
+        }
+
+        return $url;
+    }
 }
 
 ?>

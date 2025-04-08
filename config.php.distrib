@@ -61,6 +61,7 @@ define('MAX_CONTAINER_ARCHIVE_FOLDER_NESTING_LEVEL', 5);
  * If entered anything else then PROD is used implicitly
  */
 define('APP_BRANCH', 'PROD');
+define('CONTAINER_DB_NAME_PREFIX', '');
 
 //
 //                      DATABASE

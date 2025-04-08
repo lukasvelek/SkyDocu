@@ -17,6 +17,14 @@ class AutoLoginPresenter extends AAnonymPresenter {
             $url = $this->calculateUserNextDestination();
         }
 
+        if($this->httpRequest->get('reason')) {
+            switch($this->httpRequest->get('reason')) {
+                case 'authenticationError':
+                    $this->flashMessage('Could not authenticate user.', 'error');
+                    break;
+            }
+        }
+
         $this->redirect($url);
     }
 

@@ -86,7 +86,8 @@ class ProcessRepository extends ARepository {
         $qb->select(['documentId', 'COUNT(processId) AS cnt'])
             ->from('processes')
             ->where($qb->getColumnInValues('documentId', $documentIds))
-            ->andWhere($qb->getColumnNotInValues('status', [ProcessStatus::FINISHED, ProcessStatus::CANCELED]) . ' OR ' . $qb->getColumnInValues('type', $types));
+            ->andWhere($qb->getColumnNotInValues('status', [ProcessStatus::FINISHED, ProcessStatus::CANCELED]))
+            ->andWhere($qb->getColumnInValues('type', $types));
 
         $qb->execute();
 
@@ -334,6 +335,17 @@ class ProcessRepository extends ARepository {
         $qb->delete()
             ->from('process_comments')
             ->where('commentId = ?', [$commentId])
+            ->execute();
+
+        return $qb->fetchBool();
+    }
+
+    public function deleteProcessMetadataEnumValue(string $valueId) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->delete()
+            ->from('process_metadata_list_values')
+            ->where('valueId = ?', [$valueId])
             ->execute();
 
         return $qb->fetchBool();

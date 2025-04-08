@@ -8,8 +8,10 @@ use App\Components\ProcessForm\Processes\ContainerRequest;
 use App\Components\ProcessForm\Processes\FunctionRequest;
 use App\Components\ProcessForm\Processes\HomeOffice;
 use App\Components\ProcessForm\Processes\Invoice;
+use App\Components\ProcessForm\Processes\PropertyMoveRequest;
 use App\Components\Sidebar\Sidebar2;
 use App\Constants\Container\StandaloneProcesses;
+use App\Core\Application;
 use App\Core\Caching\CacheFactory;
 use App\Core\Http\HttpRequest;
 use App\Helpers\GridHelper;
@@ -29,16 +31,19 @@ class ComponentFactory {
     protected APresenter $presenter;
 
     private ?CacheFactory $cacheFactory;
+    private Application $app;
 
     /**
      * Class constructor
      * 
      * @param HttpRequest $request HTTP request
      * @param APresenter $presenter Current presenter instance
+     * @param Application $app Applicaiton instance
      */
-    public function __construct(HttpRequest $request, APresenter $presenter) {
+    public function __construct(HttpRequest $request, APresenter $presenter, Application $app) {
         $this->request = $request;
         $this->presenter = $presenter;
+        $this->app = $app;
 
         $this->cacheFactory = null;
     }
@@ -147,6 +152,11 @@ class ComponentFactory {
 
             case StandaloneProcesses::CONTAINER_REQUEST:
                 $form = new ContainerRequest($this->request);
+                $this->injectDefault($form, $name);
+                return $form;
+
+            case StandaloneProcesses::REQUEST_PROPERTY_MOVE:
+                $form = new PropertyMoveRequest($this->request, $this->app->userManager, $standaloneProcessManager);
                 $this->injectDefault($form, $name);
                 return $form;
 

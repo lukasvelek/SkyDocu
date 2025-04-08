@@ -3,7 +3,7 @@
 namespace App\Components\Widgets\AboutApplicationWidget;
 
 use App\Components\Widgets\Widget;
-use App\Core\Application;
+use App\Core\Configuration;
 use App\Core\FileManager;
 use App\Core\Http\HttpRequest;
 use App\Helpers\DateTimeFormatHelper;
@@ -72,7 +72,7 @@ class AboutApplicationWidget extends Widget {
      */
     private function processData() {
         $data = [
-            'Application version' => APP_VERSION,
+            'Application version' => Configuration::getCurrentVersion(),
             'Version release date' => $this->getAppVersionReleaseDate(),
             'Application database schema' => $this->getAppDbSchema()
         ];

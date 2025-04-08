@@ -8,7 +8,6 @@ use App\Entities\UserEntity;
 use App\Exceptions\BadCredentialsException;
 use App\Exceptions\GeneralException;
 use App\Logger\Logger;
-use App\Repositories\UserProsecutionRepository;
 use App\Repositories\UserRepository;
 
 /**
@@ -25,7 +24,6 @@ class UserAuthenticator {
      * 
      * @param UserRepository $userRepository UserRepository instance
      * @param Logger $logger Logger instance
-     * @param UserProsecutionRepository $userProsecutionRepository UserProsecutionRepository instance
      */
     public function __construct(UserRepository $userRepository, Logger $logger) {
         $this->userRepository = $userRepository;
@@ -104,7 +102,7 @@ class UserAuthenticator {
 
     /**
      * Checks if all the necessary information about the user is saved in the session.
-     * Checks if login hash in session matches the on saved in the database.
+     * Checks if login hash in session matches the one saved in the database.
      * Checks if user is not banned or permanently banned.
      * 
      * @param string &$message Message returned

@@ -20,7 +20,7 @@ class ArchiveFoldersPresenter extends AAdminPresenter {
         $this->setArchive();
     }
 
-    public function handleList() {
+    public function renderList() {
         $links = [];
 
         $newFolderLink = LinkBuilder::createSimpleLink('New folder', $this->createURL('newFolderForm'), 'link');
@@ -54,13 +54,8 @@ class ArchiveFoldersPresenter extends AAdminPresenter {
         $folderPath = implode(' > ', $folderPathArray);
         $links[] = $newFolderLink;
 
-        $this->saveToPresenterCache('links', $links);
-        $this->saveToPresenterCache('folderPath', $folderPath);
-    }
-
-    public function renderList() {
-        $this->template->links = $this->loadFromPresenterCache('links');
-        $this->template->folder_path = $this->loadFromPresenterCache('folderPath');
+        $this->template->links = $links;
+        $this->template->folder_path = $folderPath;
     }
 
     protected function createComponentArchiveFoldersGrid(HttpRequest $request) {
@@ -170,7 +165,7 @@ class ArchiveFoldersPresenter extends AAdminPresenter {
         $deleteFolder = $grid->addAction('deleteFolder');
         $deleteFolder->setTitle('Delete folder');
         $deleteFolder->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) {
-            if($row->isSystem === true) {
+            if($row->isSystem == true) {
                 return false;
             }
 
@@ -200,6 +195,31 @@ class ArchiveFoldersPresenter extends AAdminPresenter {
         };
 
         return $grid;
+    }
+
+    public function handleDeleteFolder() {
+        $folderId = $this->httpRequest->get('folderId');
+        $parentFolderId = $this->httpRequest->get('parentFolderId'); // for returning purposes
+
+        try {
+            $this->archiveRepository->beginTransaction(__METHOD__);
+
+            $this->archiveManager->deleteFolder($folderId, $this->getUserId());
+
+            $this->archiveRepository->commit($this->getUserId(), __METHOD__);
+
+            $this->flashMessage('Successfully deleted archive folder.', 'success');
+        } catch(AException $e) {
+            $this->archiveRepository->rollback(__METHOD__);
+
+            $this->flashMessage('Could not delete archive folder. Reason: ' . $e->getMessage(), 'error', 10);
+        }
+
+        if($parentFolderId !== null) {
+            $this->redirect($this->createURL('list', ['folderId' => $parentFolderId]));
+        } else {
+            $this->redirect($this->createURL('list'));
+        }
     }
 
     public function handleNewFolderForm(?FormRequest $fr = null) {
@@ -291,20 +311,20 @@ class ArchiveFoldersPresenter extends AAdminPresenter {
             }
 
             $this->redirect($this->createURL('list'));
-        } else {
-            $backUrlParams = [];
-            if(!$this->archiveManager->isArchiveFolderRootFolder($folderId)) {
-                $folder = $this->archiveManager->getArchiveFolderById($folderId);
-
-                $backUrlParams['folderId'] = $folder->parentFolderId;
-            }
-
-            $this->saveToPresenterCache('links', $this->createBackUrl('list', $backUrlParams));
         }
     }
 
     public function renderFinalArchiveForm() {
-        $this->template->links = $this->loadFromPresenterCache('links');
+        $folderId = $this->httpRequest->get('folderId');
+
+        $backUrlParams = [];
+        if(!$this->archiveManager->isArchiveFolderRootFolder($folderId)) {
+            $folder = $this->archiveManager->getArchiveFolderById($folderId);
+
+            $backUrlParams['folderId'] = $folder->parentFolderId;
+        }
+
+        $this->template->links = $this->createBackUrl('list', $backUrlParams);;
     }
     
     protected function createComponentFinalArchiveFolderForm(HttpRequest $request) {

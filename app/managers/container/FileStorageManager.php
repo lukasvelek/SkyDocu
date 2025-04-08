@@ -125,15 +125,16 @@ class FileStorageManager extends AManager {
      * Returns a file
      * 
      * @param string $fileId File ID
+     * @param bool $force Force
      */
-    public function getFileById(string $fileId): DatabaseRow {
+    public function getFileById(string $fileId, bool $force = false): DatabaseRow {
         $exp = new DateTime();
         $exp->modify('+1h');
         $cache = $this->cacheFactory->getCache(CacheNames::FILES);
 
         $file = $cache->load($fileId, function() use ($fileId) {
             return $this->fileStorageRepository->getFileById($fileId);
-        });
+        }, [], $force);
 
         if($file === null) {
             throw new NonExistingEntityException('File does not exist.');

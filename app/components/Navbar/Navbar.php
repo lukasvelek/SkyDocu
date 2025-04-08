@@ -2,6 +2,7 @@
 
 namespace App\Components\Navbar;
 
+use App\Constants\Container\ProcessReportsViews;
 use App\Constants\Container\SystemGroups;
 use App\Constants\ContainerStatus;
 use App\Core\Caching\CacheFactory;
@@ -9,6 +10,7 @@ use App\Core\Caching\CacheNames;
 use App\Core\Http\HttpRequest;
 use App\Entities\UserEntity;
 use App\Managers\Container\GroupManager;
+use App\Managers\Container\StandaloneProcessManager;
 use App\Modules\TemplateObject;
 use App\UI\AComponent;
 use App\UI\LinkBuilder;
@@ -26,6 +28,7 @@ class Navbar extends AComponent {
     private ?int $mode;
     private ?GroupManager $groupManager;
     private CacheFactory $cacheFactory;
+    private ?StandaloneProcessManager $standaloneProcessManager;
 
     /**
      * Class constructor
@@ -33,9 +36,8 @@ class Navbar extends AComponent {
      * @param HttpRequest $httpRequest HttpRequest instance
      * @param int $mode Navbar mode
      * @param UserEntity $user Current user entity
-     * @param ?GroupManager Container GroupManager instance
      */
-    public function __construct(HttpRequest $httpRequest, ?int $mode, UserEntity $user, ?GroupManager $groupManager) {
+    public function __construct(HttpRequest $httpRequest, ?int $mode, UserEntity $user) {
         parent::__construct($httpRequest);
 
         $this->mode = $mode;
@@ -43,16 +45,19 @@ class Navbar extends AComponent {
         $this->template = new TemplateObject(file_get_contents(__DIR__ . '\\template.html'));
         $this->user = $user;
         $this->hideLinks = [];
-        $this->groupManager = $groupManager;
+        $this->groupManager = null;
+        $this->standaloneProcessManager = null;
     }
 
     /**
      * Injects classes
      * 
      * @param GroupManager $groupManager Container GroupManager instance
+     * @param StandaloneProcessManager Container StandaloneProcessManager instance
      */
-    public function inject(GroupManager $groupManager) {
+    public function inject(GroupManager $groupManager, StandaloneProcessManager $standaloneProcessManager) {
         $this->groupManager = $groupManager;
+        $this->standaloneProcessManager = $standaloneProcessManager;
     }
 
     /**
@@ -66,8 +71,6 @@ class Navbar extends AComponent {
 
     public function startup() {
         parent::startup();
-
-        $this->getLinks();
     }
 
     /**
@@ -99,6 +102,12 @@ class Navbar extends AComponent {
                     $links['Administration'] = NavbarGeneralLinks::A_SETTINGS;
                 }
 
+                if($this->standaloneProcessManager !== null) {
+                    $enabledProcessTypes = $this->standaloneProcessManager->getEnabledProcessTypes();
+                    $processType = $enabledProcessTypes[0];
+                    $links['Reports']['view'] = $processType->typeKey . '-' . ProcessReportsViews::VIEW_MY;
+                }
+
                 $this->links = $links;
                 break;
 
@@ -116,6 +125,8 @@ class Navbar extends AComponent {
      * Prepares links and fills the template
      */
     private function beforeRender() {
+        $this->getLinks();
+
         $linksCode = '';
 
         foreach($this->links as $title => $link) {

@@ -7,7 +7,6 @@ use App\Constants\SessionNames;
 use App\Core\AjaxRequestBuilder;
 use App\Core\Application;
 use App\Core\Caching\CacheFactory;
-use App\Core\Caching\CacheNames;
 use App\Core\Configuration;
 use App\Core\Datatypes\ArrayList;
 use App\Core\Datetypes\DateTime;
@@ -110,7 +109,7 @@ abstract class APresenter extends AGUICore {
      * Everything in startup() method is called after an instance of Presenter has been created and before other functionality-handling methods are called.
      */
     public function startup() {
-        $this->componentFactory = new ComponentFactory($this->httpRequest, $this);
+        $this->componentFactory = new ComponentFactory($this->httpRequest, $this, $this->app);
         $this->componentFactory->setCacheFactory($this->cacheFactory);
         $this->router->inject($this, new ModuleManager());
     }
@@ -279,6 +278,7 @@ abstract class APresenter extends AGUICore {
      * 
      * @param string $key Data key
      * @param mixed $value Data value
+     * @deprecated
      */
     protected function saveToPresenterCache(string $key, mixed $value) {
         $this->presenterCache->set($key, $value);
@@ -289,6 +289,7 @@ abstract class APresenter extends AGUICore {
      * 
      * @param string $key Data key
      * @return mixed Data value or null
+     * @deprecated
      */
     protected function loadFromPresenterCache(string $key) {
         return $this->presenterCache->get($key);

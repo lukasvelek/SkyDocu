@@ -20,6 +20,18 @@ class Configuration {
 
         return APP_BRANCH;
     }
+
+    /**
+     * Returns current version
+     */
+    public static function getCurrentVersion(): string {
+        $releaseDate = (APP_VERSION_RELEASE_DATE != '-' ? ('_' . APP_VERSION_RELEASE_DATE) : '');
+        if(APP_BRANCH == 'TEST') {
+            return APP_VERSION . '+Build_' . APP_VERSION_BUILD . $releaseDate . '+Branch_' . APP_BRANCH;
+        } else {
+            return APP_VERSION . ' (' . APP_VERSION . '+Build_' . APP_VERSION_BUILD . $releaseDate . '+Branch_' . APP_BRANCH . ')';
+        }
+    }
 }
 
 ?>

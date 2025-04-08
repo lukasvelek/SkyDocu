@@ -27,16 +27,13 @@ class ArchivePresenter extends AUserPresenter {
         } else {
             $this->redirect($this->createURL('list', ['folderId' => $this->archiveManager->getDefaultFolder()->folderId]));
         }
-
-        $folder = $this->archiveManager->getArchiveFolderById($this->currentFolderId);
-        $this->saveToPresenterCache('folderTitle', $folder->title);
     }
 
     public function renderList() {
-        $this->template->sidebar = $this->loadFromPresenterCache('sidebar');
-        $this->template->links = [
-        ];
-        $this->template->folder_title = $this->loadFromPresenterCache('folderTitle');
+        $folder = $this->archiveManager->getArchiveFolderById($this->currentFolderId);
+
+        $this->template->links = [];
+        $this->template->folder_title = $folder->title;
     }
 
     protected function createComponentFoldersSidebar(HttpRequest $request) {

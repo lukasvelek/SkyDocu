@@ -28,7 +28,10 @@ class UsersPresenter extends ASuperAdminSettingsPresenter {
     protected function createComponentUsersGrid(HttpRequest $request) {
         $grid = $this->componentFactory->getGridBuilder();
 
-        $grid->createDataSourceFromQueryBuilder($this->app->userRepository->composeQueryForUsers(), 'userId');
+        $qb = $this->app->userRepository->composeQueryForUsers();
+        $qb->andWhere($qb->getColumnNotInValues('userId', $this->app->groupManager->getAllContainersOnlyUsers()));
+
+        $grid->createDataSourceFromQueryBuilder($qb, 'userId');
         $grid->setGridName(GridHelper::GRID_USERS);
 
         $grid->addColumnText('fullname', 'Full name');
@@ -160,7 +163,7 @@ class UsersPresenter extends ASuperAdminSettingsPresenter {
         return $form;
     }
 
-    public function handleProfile() {
+    public function renderProfile() {
         $userId = $this->httpRequest->get('userId');
         if($userId === null) {
             throw new RequiredAttributeIsNotSetException('userId');
@@ -182,16 +185,9 @@ class UsersPresenter extends ASuperAdminSettingsPresenter {
         $addInfo('Full name', $user->getFullname());
         $addInfo('Email', ($user->getEmail() ?? '-'));
 
-        $this->saveToPresenterCache('userProfile', $userProfile);
-        $this->saveToPresenterCache('username', $user->getUsername());
-    }
-
-    public function renderProfile() {
-        $this->template->user_profile = $this->loadFromPresenterCache('userProfile');
-        $this->template->username = $this->loadFromPresenterCache('username');
-        $this->template->links = [
-            LinkBuilder::createSimpleLink('&larr; Back', $this->createURL('list'), 'link')
-        ];
+        $this->template->user_profile = $userProfile;
+        $this->template->username = $user->getUsername();
+        $this->template->links = LinkBuilder::createSimpleLink('&larr; Back', $this->createURL('list'), 'link');
     }
 
     public function handleEditUserForm(?FormRequest $fr = null) {

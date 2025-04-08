@@ -31,7 +31,6 @@ class LoginPresenter extends AAnonymPresenter {
     }
 
     public function renderLoginForm() {
-        $this->template->form = $this->loadFromPresenterCache('form');
         $this->template->title = 'Login';
     }
 
@@ -118,9 +117,7 @@ class LoginPresenter extends AAnonymPresenter {
         }
     }
 
-    public function renderContainerForm() {
-        $this->template->form = $this->loadFromPresenterCache('form');
-    }
+    public function renderContainerForm() {}
 
     protected function createComponentContainerForm(HttpRequest $request) {
         $groups = $this->app->groupManager->getMembershipsForUser($this->getUserId());

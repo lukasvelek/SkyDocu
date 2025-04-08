@@ -20,6 +20,7 @@ class GridFilter extends AComponent {
     private array $gridColumns;
     private array $activeFilters;
     private array $queryDependencies;
+    private array $filterLabels;
 
     /**
      * Class constructor
@@ -32,6 +33,7 @@ class GridFilter extends AComponent {
         $this->filters = [];
         $this->activeFilters = [];
         $this->queryDependencies = [];
+        $this->filterLabels = [];
     }
 
     /**
@@ -77,6 +79,15 @@ class GridFilter extends AComponent {
      */
     public function setActiveFilters(array $activeFilters) {
         $this->activeFilters = $activeFilters;
+    }
+
+    /**
+     * Sets filter labels
+     * 
+     * @param array $filterLabels Filter labels
+     */
+    public function setFilterLabels(array $filterLabels) {
+        $this->filterLabels = $filterLabels;
     }
 
     public function render() {
@@ -186,6 +197,8 @@ class GridFilter extends AComponent {
             $title = ucfirst($name);
             if(array_key_exists($name, $this->gridColumns)) {
                 $title = $this->gridColumns[$name];
+            } else if(array_key_exists($name, $this->filterLabels)) {
+                $title = $this->filterLabels[$name];
             }
 
             $form->addSelect($name, $title . ':')

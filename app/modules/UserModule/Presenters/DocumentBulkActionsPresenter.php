@@ -149,21 +149,20 @@ class DocumentBulkActionsPresenter extends AUserPresenter {
                 $params['folderId'] = $this->httpRequest->get('folderId');
             }
             $this->redirect($params);
-        } else {
-            $params = [];
-            if($this->httpRequest->get('backPage') !== null && $this->httpRequest->get('backAction') !== null) {
-                $params['page'] = $this->httpRequest->get('backPage');
-                $params['action'] = $this->httpRequest->get('backAction');
-            }
-            if($this->httpRequest->get('folderId') !== null) {
-                $params['folderId'] = $this->httpRequest->get('folderId');
-            }
-            $this->saveToPresenterCache('link', $this->createBackFullUrl($params['page'], $params['action'], ['folderId' => $params['folderId']]));
         }
     }
 
     public function renderMoveToArchiveForm() {
-        $this->template->links = $this->loadFromPresenterCache('link');
+        $params = [];
+        if($this->httpRequest->get('backPage') !== null && $this->httpRequest->get('backAction') !== null) {
+            $params['page'] = $this->httpRequest->get('backPage');
+            $params['action'] = $this->httpRequest->get('backAction');
+        }
+        if($this->httpRequest->get('folderId') !== null) {
+            $params['folderId'] = $this->httpRequest->get('folderId');
+        }
+
+        $this->template->links = $this->createBackFullUrl($params['page'], $params['action'], ['folderId' => $params['folderId']]);
     }
 
     protected function createComponentArchiveDocumentForm(HttpRequest $request) {

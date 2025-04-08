@@ -4,17 +4,13 @@ namespace App\Modules;
 
 use App\Components\Navbar\Navbar;
 use App\Constants\SessionNames;
-use App\Managers\Container\GroupManager;
-use App\Managers\EntityManager;
-use App\Repositories\Container\GroupRepository;
-use App\Repositories\ContentRepository;
-use App\Repositories\UserRepository;
+use App\Core\Container;
 
 abstract class AContainerModule extends AModule {
     protected string $navbarMode;
     protected Navbar $navbar;
 
-    private GroupManager $groupManager;
+    private Container $container;
 
     public function __construct(string $title) {
         parent::__construct($title);
@@ -24,21 +20,10 @@ abstract class AContainerModule extends AModule {
         parent::startup($presenterTitle, $actionTitle);
 
         $containerId = $this->httpSessionGet(SessionNames::CONTAINER);
-        $container = $this->app->containerManager->getContainerById($containerId);
-        $db = $this->app->dbManager->getConnectionToDatabase($container->getDefaultDatabase()->getName());
+        
+        $this->container = new Container($this->app, $containerId);
 
-        $contentRepository = new ContentRepository($db, $this->logger);
-
-        $entityManager = new EntityManager($this->logger, $contentRepository);
-        $groupRepository = new GroupRepository($db, $this->logger);
-        $userRepository = new UserRepository($db, $this->logger);
-
-        $this->groupManager = new GroupManager($this->logger, $entityManager, $groupRepository, $userRepository);
-
-        /**
-         * Injects GroupManager instance that was just created into the navbar component
-         */
-        $this->navbar->inject($this->groupManager);
+        $this->navbar->inject($this->container->groupManager, $this->container->standaloneProcessManager);
     }
 
     /**
@@ -47,7 +32,7 @@ abstract class AContainerModule extends AModule {
      * @return Navbar
      */
     protected function createComponentSysNavbar() {
-        $this->navbar = $this->createNavbarInstance($this->navbarMode, null);
+        $this->navbar = $this->createNavbarInstance($this->navbarMode);
         $navbar = &$this->navbar;
 
         return $navbar;

@@ -3,7 +3,6 @@
 namespace App\Components\Widgets\AboutApplicationWidget;
 
 use App\Components\Widgets\Widget;
-use App\Core\Application;
 use App\Core\Configuration;
 use App\Core\FileManager;
 use App\Core\Http\HttpRequest;

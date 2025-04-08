@@ -2,6 +2,7 @@
 
 namespace App\Modules\AdminModule;
 
+use App\Components\Widgets\AboutContainerWidget\AboutContainerWidget;
 use App\Constants\ContainerEnvironments;
 use App\Constants\SessionNames;
 use App\Core\Datetypes\DateTime;
@@ -64,6 +65,12 @@ class HomePresenter extends AAdminPresenter {
             ->setValue(ContainerEnvironments::toString($container->getEnvironment()));
 
         return $form;
+    }
+
+    protected function createComponentContainerInfoWidget(HttpRequest $request) {
+        $widget = new AboutContainerWidget($request, $this->app->containerManager, $this->app->groupManager, $this->app->userManager, $this->containerId);
+
+        return $widget;
     }
 
     public function renderColorCombo() {

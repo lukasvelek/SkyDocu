@@ -236,7 +236,6 @@ class DatabaseMigrationManager {
             }
 
             $tableSeeds = $object->seeding();
-
             if(!$tableSeeds->isEmpty()) {
                 $seeds = $tableSeeds->getSeeds();
 

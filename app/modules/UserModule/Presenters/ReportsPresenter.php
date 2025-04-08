@@ -5,14 +5,9 @@ namespace App\Modules\UserModule;
 use App\Components\ProcessReportsGrid\ProcessReportsGrid;
 use App\Components\ProcessReportsSidebar\ProcessReportsSidebar;
 use App\Components\PropertyItemsReportsGrid\PropertyItemsReportsGrid;
-use App\Constants\Container\StandaloneProcesses;
 use App\Constants\Container\SystemGroups;
-use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
-use App\Exceptions\AException;
-use App\Exceptions\GeneralException;
 use App\Helpers\LinkHelper;
-use App\Managers\EntityManager;
 use App\Repositories\Container\PropertyItemsRepository;
 use App\UI\LinkBuilder;
 

@@ -143,6 +143,36 @@ class PropertyItemsPresenter extends AUserPresenter {
 
         return $grid;
     }
+
+    public function handleRemoveItem() {
+        $itemId = $this->httpRequest->get('itemId');
+
+        if($itemId === null) {
+            $this->redirect($this->createFullURL('User:Reports', 'list', ['view' => 'propertyItems-all']));
+        }
+
+        $pir = new PropertyItemsRepository($this->processRepository->conn, $this->logger);
+
+        try {
+            $this->processRepository->beginTransaction(__METHOD__);
+
+            if(!$pir->removeItem($itemId)) {
+                throw new GeneralException('Database error.');
+            }
+
+            $this->standaloneProcessManager->deleteMetadataEnumValue($itemId);
+
+            $this->processRepository->commit($this->getUserId(), __METHOD__);
+            
+            $this->flashMessage('Successfully removed property item.', 'success');
+        } catch(AException $e) {
+            $this->processRepository->rollback(__METHOD__);
+
+            $this->flashMessage('Could not remove property item.', 'error', 10);
+        }
+
+        $this->redirect($this->createFullURL('User:Reports', 'list', ['view' => 'propertyItems-all']));
+    }
 }
 
 ?>

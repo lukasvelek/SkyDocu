@@ -367,6 +367,12 @@ class StandaloneProcessManager extends AManager {
         return $valueId;
     }
 
+    public function deleteMetadataEnumValue(string $valueId) {
+        if(!$this->processManager->processRepository->deleteProcessMetadataEnumValue($valueId)) {
+            throw new GeneralException('Database error.');
+        }
+    }
+
     public function getMetadataEnumValueById(string $valueId) {
         $row = $this->processManager->processRepository->getMetadataEnumValueById($valueId);
 

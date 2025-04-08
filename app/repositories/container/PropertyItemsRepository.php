@@ -62,6 +62,17 @@ class PropertyItemsRepository extends ARepository {
 
         return $qb->fetchAll();
     }
+
+    public function removeItem(string $itemId) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->delete()
+            ->from('property_items_user_relations')
+            ->where('itemId = ?', [$itemId])
+            ->execute();
+
+        return $qb->fetchBool();
+    }
 }
 
 ?>

@@ -9,6 +9,7 @@ use App\Core\DB\DatabaseRow;
 use App\Helpers\DateTimeFormatHelper;
 use App\Managers\Container\StandaloneProcessManager;
 use App\Repositories\Container\PropertyItemsRepository;
+use App\UI\GridBuilder2\Action;
 use App\UI\GridBuilder2\Cell;
 use App\UI\GridBuilder2\GridBuilder;
 use App\UI\GridBuilder2\IGridExtendingComponent;
@@ -124,6 +125,29 @@ class PropertyItemsReportsGrid extends GridBuilder implements IGridExtendingComp
 
             return $el;
         };
+
+        // remove
+        $remove = $this->addAction('remove');
+        $remove->setTitle('Remove');
+        $remove->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) {
+            if($row->userId !== $this->currentUserId) {
+                return false;
+            }
+
+            if($this->isInProcess($row->itemId)) {
+                return false;
+            }
+
+            return true;
+        };
+        $remove->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
+            $el = HTML::el('a');
+            $el->class('grid-link')
+                ->href($this->createFullURLString('User:PropertyItems', 'removeItem', ['itemId' => $row->itemId]))
+                ->text('Remove');
+
+            return $el;
+        };
     }
 
     private function getAllPropertyItems() {
@@ -147,6 +171,49 @@ class PropertyItemsReportsGrid extends GridBuilder implements IGridExtendingComp
         $this->getAllPropertyItems();
 
         return $this->itemsCache[$itemId];
+    }
+
+    private function isInProcess(string $itemId) {
+        $items = $this->standaloneProcessManager->getProcessMetadataEnumValues(StandaloneProcesses::REQUEST_PROPERTY_MOVE, 'items');
+
+        $item = null;
+        foreach($items as $_item) {
+            if($_item->valueId == $itemId) {
+                $item = $_item;
+            }
+        }
+        
+        if($item === null) {
+            return false;
+        }
+
+        $qb = $this->standaloneProcessManager->composeQueryForProcessData();
+        $qb->where('data LIKE ?', ['%' . $item->title2 . '%'])
+            ->execute();
+
+        $processIds = [];
+        while($row = $qb->fetchAssoc()) {
+            $processIds[] = $row['processId'];
+        }
+
+        $qb = $this->standaloneProcessManager->processManager->processRepository->composeQueryForStandaloneProcesses();
+        $qb->select(['COUNT(processId) AS cnt'])
+            ->andWhere($qb->getColumnInValues('processId', $processIds))
+            ->andWhere('status = 1')
+            ->regenerateSQL()
+            ->execute();
+
+        $result = $qb->fetch('cnt');
+
+        if($result === null) {
+            return false;
+        }
+
+        if($result == 0) {
+            return false;
+        }
+
+        return true;
     }
 }
 

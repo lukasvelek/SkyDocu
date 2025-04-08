@@ -27,6 +27,7 @@ Previously changelog for versions `1.0`-`1.4` has been located in README.md. How
 - In-container process reports design update
 - Navigation bar bugfix
 - Container user management
+- In-container property managament
 
 ## SkyDocu `1.4` (03/22/2025)
 - In-container multiple database support

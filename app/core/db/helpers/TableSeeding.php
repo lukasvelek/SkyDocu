@@ -31,6 +31,13 @@ class TableSeeding {
     public function getSeeds(): array {
         return $this->seeds;
     }
+
+    /**
+     * Returns true if the seeds are empty
+     */
+    public function isEmpty(): bool {
+        return empty($this->seeds);
+    }
 }
 
 ?>

@@ -63,6 +63,8 @@ class UserManager extends AManager {
     }
 
     public function updateUser(string $userId, array $data) {
+        $data['dateModified'] = date('Y-m-d H:i:s');
+
         if(!$this->userRepository->updateUser($userId, $data)) {
             throw new GeneralException('Database error.');
         }
@@ -92,6 +94,21 @@ class UserManager extends AManager {
         }
 
         return DatabaseRow::createFromDbRow($user);
+    }
+
+    public function searchUsersByUsernameAndFullname(string $query, array $exceptUsers = []): array {
+        $users = [];
+        $usernameEntities = $this->userRepository->searchUsersByUsername($query, $exceptUsers);
+        $fullnameEntities = $this->userRepository->searchUsersByFullname($query, $exceptUsers);
+
+        foreach($usernameEntities as $user) {
+            $users[$user->getId()] = $user->getFullname();
+        }
+        foreach($fullnameEntities as $user) {
+            $users[$user->getId()] = $user->getFullname();
+        }
+
+        return $users;
     }
 }
 

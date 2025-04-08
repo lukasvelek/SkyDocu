@@ -103,7 +103,7 @@ class GroupsPresenter extends ASuperAdminSettingsPresenter {
         ];
 
         $this->template->links = LinkHelper::createLinksFromArray($links);
-        $this->template->group_name = SystemGroups::toString($group->title);
+        $this->template->group_name = SystemGroups::toString($group->title) ?? $group->title;
     }
 
     protected function createComponentGroupUsersGrid(HttpRequest $request) {
@@ -115,11 +115,29 @@ class GroupsPresenter extends ASuperAdminSettingsPresenter {
         $grid->addColumnDatetime('dateCreated', 'Member since');
 
         $groupUsers = $this->app->groupManager->getGroupUsersForGroupId($request->get('groupId'));
+        $groupUserEntities = [];
+        $technicalUsers = 0;
+        foreach($groupUsers as $userId) {
+            $user = $this->app->userManager->getUserById($userId);
+
+            if($user->isTechnical()) {
+                $technicalUsers++;
+            }
+
+            $groupUserEntities[$userId] = $user;
+        }
 
         $remove = $grid->addAction('remove');
         $remove->setTitle('Remove');
-        $remove->onCanRender[] = function(DatabaseRow $row, Row $_row) use ($groupUsers) {
-            return ($groupUsers > 1) && ($row->userId != $this->getUserId());
+        $remove->onCanRender[] = function(DatabaseRow $row, Row $_row) use ($groupUserEntities, $technicalUsers) {
+            if(!$groupUserEntities[$row->userId]->isTechnical()) {
+                return false;
+            }
+            if($groupUserEntities[$row->userId]->isTechnical() && $technicalUsers == 1) {
+                return false;
+            }
+
+            return true;
         };
         $remove->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) use ($request) {
             $el = HTML::el('a') 

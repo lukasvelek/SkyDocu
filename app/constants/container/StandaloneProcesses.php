@@ -11,6 +11,7 @@ class StandaloneProcesses extends AConstant implements IColorable, IBackgroundCo
     public const FUNCTION_REQUEST = 'functionRequest';
     public const INVOICE = 'invoice';
     public const CONTAINER_REQUEST = 'containerRequest';
+    public const REQUEST_PROPERTY_MOVE = 'requestPropertyMove';
 
     public static function toString($key): ?string {
         return match($key) {
@@ -18,6 +19,7 @@ class StandaloneProcesses extends AConstant implements IColorable, IBackgroundCo
             self::FUNCTION_REQUEST => 'Function request',
             self::INVOICE => 'Invoice',
             self::CONTAINER_REQUEST => 'Container request',
+            self::REQUEST_PROPERTY_MOVE => 'Property move',
             default => null
         };
     }
@@ -28,7 +30,8 @@ class StandaloneProcesses extends AConstant implements IColorable, IBackgroundCo
             self::HOME_OFFICE => 'Home office',
             self::FUNCTION_REQUEST => 'Request a function',
             self::INVOICE => 'Invoice',
-            self::CONTAINER_REQUEST => 'Container request'
+            self::CONTAINER_REQUEST => 'Container request',
+            self::REQUEST_PROPERTY_MOVE => 'Request a property move'
         };
     }
 
@@ -38,7 +41,8 @@ class StandaloneProcesses extends AConstant implements IColorable, IBackgroundCo
             self::HOME_OFFICE => 'rgb(125, 155, 255)',
             self::FUNCTION_REQUEST => 'rgb(175, 133, 180)',
             self::INVOICE => 'rgb(219, 188, 127)',
-            self::CONTAINER_REQUEST => 'rgb(236, 137, 157)'
+            self::CONTAINER_REQUEST => 'rgb(236, 137, 157)',
+            self::REQUEST_PROPERTY_MOVE => 'rgb(136, 145, 136)'
         };
     }
 
@@ -48,7 +52,8 @@ class StandaloneProcesses extends AConstant implements IColorable, IBackgroundCo
             self::HOME_OFFICE => 'rgb(2, 32, 60)',
             self::FUNCTION_REQUEST => 'rgb(75, 33, 80)',
             self::INVOICE => 'rgb(92, 61, 0)',
-            self::CONTAINER_REQUEST => 'rgb(99, 0, 20)'
+            self::CONTAINER_REQUEST => 'rgb(99, 0, 20)',
+            self::REQUEST_PROPERTY_MOVE => 'rgb(0, 9, 0)'
         };
     }
 
@@ -78,6 +83,14 @@ class StandaloneProcesses extends AConstant implements IColorable, IBackgroundCo
             default => false,
             self::CONTAINER_REQUEST => true
         };
+    }
+
+    public static function areDefaultReportsEnabled($key): bool {
+        if($key == self::REQUEST_PROPERTY_MOVE) {
+            return false;
+        }
+
+        return true;
     }
 }
 

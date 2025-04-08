@@ -339,6 +339,17 @@ class ProcessRepository extends ARepository {
 
         return $qb->fetchBool();
     }
+
+    public function deleteProcessMetadataEnumValue(string $valueId) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->delete()
+            ->from('process_metadata_list_values')
+            ->where('valueId = ?', [$valueId])
+            ->execute();
+
+        return $qb->fetchBool();
+    }
 }
 
 ?>

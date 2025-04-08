@@ -66,6 +66,7 @@ class GridBuilder extends AComponent {
      * @var array<Filter> $filters
      */
     protected array $filters;
+    private array $filterLabels;
     protected array $activeFilters;
 
     private array $queryDependencies;
@@ -128,6 +129,7 @@ class GridBuilder extends AComponent {
         $this->controlsDisabled = false;
         $this->refreshDisabled = false;
         $this->containerId = null;
+        $this->filterLabels = [];
 
         $this->helper = new GridBuilderHelper($request);
     }
@@ -347,6 +349,16 @@ class GridBuilder extends AComponent {
         $this->filters[$key] = &$filter;
 
         return $filter;
+    }
+
+    /**
+     * Adds filter label
+     * 
+     * @param string $key Filter key
+     * @param string $text Filter label text
+     */
+    public function addFilterLabel(string $key, string $text) {
+        $this->filterLabels[$key] = $text;
     }
 
     /**
@@ -974,6 +986,7 @@ class GridBuilder extends AComponent {
         $filter->setGridColumns($this->helper->columnLabels);
         $filter->setActiveFilters($this->activeFilters);
         $filter->setQueryDependencies($this->queryDependencies);
+        $filter->setFilterLabels($this->filterLabels);
 
         return $filter;
     }

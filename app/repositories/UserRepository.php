@@ -164,6 +164,23 @@ class UserRepository extends ARepository {
         return $this->createUsersArrayFromQb($qb);
     }
 
+    public function searchUsersByFullname(string $fullname, array $exceptUsers = []) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb ->select(['*'])
+            ->from('users')
+            ->where('fullname LIKE ?', ['%' . $fullname . '%'])
+            ->andWhere('username <> ?', ['service_user']);
+        
+        if(!empty($exceptUsers)) {
+            $qb->andWhere($qb->getColumnNotInValues('userId', $exceptUsers));
+        }
+
+        $qb->execute();
+
+        return $this->createUsersArrayFromQb($qb);
+    }
+
     public function createNewUser(string $id, string $username, string $password, string $fullname, ?string $email) {
         $qb = $this->qb(__METHOD__);
 

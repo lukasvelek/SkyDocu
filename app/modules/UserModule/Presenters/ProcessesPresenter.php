@@ -417,6 +417,10 @@ class ProcessesPresenter extends AUserPresenter {
                             case StandaloneProcesses::INVOICE:
                                 $this->standaloneProcessManager->finishInvoice($processId);
                                 break;
+
+                            case StandaloneProcesses::REQUEST_PROPERTY_MOVE:
+                                $this->standaloneProcessManager->finishRequestPropertyMove($processId);
+                                break;
                         }
                     }
     

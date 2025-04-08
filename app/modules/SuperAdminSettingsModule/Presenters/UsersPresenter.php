@@ -28,7 +28,10 @@ class UsersPresenter extends ASuperAdminSettingsPresenter {
     protected function createComponentUsersGrid(HttpRequest $request) {
         $grid = $this->componentFactory->getGridBuilder();
 
-        $grid->createDataSourceFromQueryBuilder($this->app->userRepository->composeQueryForUsers(), 'userId');
+        $qb = $this->app->userRepository->composeQueryForUsers();
+        $qb->andWhere($qb->getColumnNotInValues('userId', $this->app->groupManager->getAllContainersOnlyUsers()));
+
+        $grid->createDataSourceFromQueryBuilder($qb, 'userId');
         $grid->setGridName(GridHelper::GRID_USERS);
 
         $grid->addColumnText('fullname', 'Full name');

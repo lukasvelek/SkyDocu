@@ -60,6 +60,13 @@ class TableSchema {
     public function getTableSchemas(): array {
         return $this->tables;
     }
+
+    /**
+     * Returns true if the schema is empty
+     */
+    public function isEmpty(): bool {
+        return empty($this->tables);
+    }
 }
 
 ?>

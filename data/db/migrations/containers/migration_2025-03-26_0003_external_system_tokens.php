@@ -6,6 +6,12 @@ use App\Core\DB\ABaseMigration;
 use App\Core\DB\Helpers\TableSchema;
 use App\Core\DB\Helpers\TableSeeding;
 
+/**
+ * This migration contains database schema updates for external system tokens
+ * 
+ * @author Lukas Velek
+ * @version 1.0 from 03/26/2025
+ */
 class migration_2025_03_26_0003_external_system_tokens extends ABaseMigration {
     public function up(): TableSchema {
         $table = $this->getTableSchema();

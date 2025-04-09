@@ -46,7 +46,7 @@ class PeeQLSchema {
         }
 
         try {
-            $obj = new $className($name);
+            $obj = new $className();
         } catch(Exception $e) {
             throw new Exception(sprintf('Could not create an instance of \'%s\'.', $className), 9999, $e);
         }

@@ -63,7 +63,7 @@ class PeeQLParser {
 
             return $result->getResult();
         } catch(Exception $e) {
-            throw new Exception('Could not parse given JSON query.', 9999, $e);
+            throw new Exception('Could not parse given JSON query. Reason: ' . $e->getMessage(), 9999, $e);
         }
     }
 

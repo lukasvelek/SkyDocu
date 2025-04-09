@@ -133,6 +133,13 @@ abstract class AOperation {
     }
 
     /**
+     * Returns conditions
+     */
+    public function getConditions(): QueryConditionList {
+        return $this->conditions;
+    }
+
+    /**
      * Returns the operation name
      */
     public function getName(): string {

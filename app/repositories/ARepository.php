@@ -8,6 +8,7 @@ use App\Core\DB\AMultipleDatabaseConnectionHandler;
 use App\Exceptions\DatabaseExecutionException;
 use App\Logger\Logger;
 use App\Managers\EntityManager;
+use PeeQL\Operations\Conditions\QueryConditionList;
 use QueryBuilder\ExpressionBuilder;
 use QueryBuilder\QueryBuilder;
 
@@ -219,6 +220,10 @@ abstract class ARepository extends AMultipleDatabaseConnectionHandler {
             ->execute();
 
         return $qb->fetch();
+    }
+
+    protected function processPeeQLConditions(QueryConditionList $list) {
+        return $list->getConvertedConditionsAsArray();
     }
 }
 

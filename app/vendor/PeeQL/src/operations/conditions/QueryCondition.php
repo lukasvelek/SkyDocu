@@ -94,7 +94,7 @@ class QueryCondition {
                 $text .= '0';
             }
         } else {
-            $text .= htmlspecialchars($this->value);
+            $text .= '\'' . htmlspecialchars($this->value) . '\'';
         }
 
         return $text;

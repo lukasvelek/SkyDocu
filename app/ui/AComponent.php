@@ -108,6 +108,22 @@ abstract class AComponent extends AGUICore implements IRenderable {
             throw new GeneralException('Method \'' . AComponent::class . '::prerender()\' has not been called (' . $this->componentName . ').', null, false);
         }
     }
+
+    /**
+     * Executes a PeeQL JSON query and returns the result as an associative array
+     * 
+     * @param array $json JSON query
+     * 
+     * @throws GeneralException
+     * @throws Exception
+     */
+    protected function executePeeQL(array $json): array {
+        if(isset($this->app)) {
+            return $this->app->peeql->execute($json);
+        } else {
+            throw new GeneralException('Application instance is not set.');
+        }
+    }
 }
 
 ?>

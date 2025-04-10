@@ -57,12 +57,16 @@ class PeeQL {
     }
 
     /**
-     * Executes the JSON query and returns the result
+     * Executes the JSON query and returns the result as an associative array
      * 
-     * @param string $json JSON query
+     * @param array $json JSON query
      */
-    public function execute(string $json): mixed {
-        return $this->peeql->execute($json);
+    public function execute(array $json): array {
+        $json = json_encode($json);
+
+        $result = $this->peeql->execute($json);
+
+        return json_decode($result, true);
     }
 }
 

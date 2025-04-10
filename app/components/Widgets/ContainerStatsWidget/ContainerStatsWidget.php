@@ -85,9 +85,23 @@ class ContainerStatsWidget extends Widget {
      * @return mixed Data from the database
      */
     private function fetchTotalContainerCountFromDb(): mixed {
-        $qb = $this->containerManager->containerRepository->composeQueryForContainers();
-        $qb->select(['COUNT(*) AS cnt']);
-        return $qb->execute()->fetch('cnt');
+        $json = [
+            'operation' => 'query',
+            'name' => 'getContainers',
+            'definition' => [
+                'containers' => [
+                    'get' => [
+                        'cols' => [
+                            'containerId'
+                        ]
+                    ]
+                ]
+            ]
+        ];
+
+        $result = $this->executePeeQL($json);
+
+        return count($result['data']);
     }
 
     /**
@@ -96,10 +110,30 @@ class ContainerStatsWidget extends Widget {
      * @return mixed Data from the database
      */
     private function fetchNewContainerCountFromDb(): mixed {
-        $qb = $this->containerManager->containerRepository->composeQueryForContainers();
-        $qb->select(['COUNT(*) AS cnt'])
-            ->andWhere('status = ?', [ContainerStatus::NEW]);
-        return $qb->execute()->fetch('cnt');
+        $json = [
+            'operation' => 'query',
+            'name' => 'getContainers',
+            'definition' => [
+                'containers' => [
+                    'get' => [
+                        'cols' => [
+                            'containerId'
+                        ],
+                        'conditions' => [
+                            [
+                                'col' => 'status',
+                                'value' => ContainerStatus::NEW,
+                                'type' => 'eq'
+                            ]
+                        ]
+                    ]
+                ]
+            ]
+        ];
+
+        $result = $this->executePeeQL($json);
+
+        return count($result['data']);
     }
 
     /**
@@ -108,10 +142,30 @@ class ContainerStatsWidget extends Widget {
      * @return mixed Data from the database
      */
     private function fetchRunningContainerCountFromDb(): mixed {
-        $qb = $this->containerManager->containerRepository->composeQueryForContainers();
-        $qb->select(['COUNT(*) AS cnt'])
-            ->andWhere('status = ?', [ContainerStatus::RUNNING]);
-        return $qb->execute()->fetch('cnt');
+        $json = [
+            'operation' => 'query',
+            'name' => 'getContainers',
+            'definition' => [
+                'containers' => [
+                    'get' => [
+                        'cols' => [
+                            'containerId'
+                        ],
+                        'conditions' => [
+                            [
+                                'col' => 'status',
+                                'value' => ContainerStatus::RUNNING,
+                                'type' => 'eq'
+                            ]
+                        ]
+                    ]
+                ]
+            ]
+        ];
+
+        $result = $this->executePeeQL($json);
+
+        return count($result['data']);
     }
 
     /**
@@ -120,10 +174,30 @@ class ContainerStatsWidget extends Widget {
      * @return mixed Data from the database
      */
     private function fetchNotRunningContainerCountFromDb(): mixed {
-        $qb = $this->containerManager->containerRepository->composeQueryForContainers();
-        $qb->select(['COUNT(*) AS cnt'])
-            ->andWhere('status = ?', [ContainerStatus::NOT_RUNNING]);
-        return $qb->execute()->fetch('cnt');
+        $json = [
+            'operation' => 'query',
+            'name' => 'getContainers',
+            'definition' => [
+                'containers' => [
+                    'get' => [
+                        'cols' => [
+                            'containerId'
+                        ],
+                        'conditions' => [
+                            [
+                                'col' => 'status',
+                                'value' => ContainerStatus::NOT_RUNNING,
+                                'type' => 'eq'
+                            ]
+                        ]
+                    ]
+                ]
+            ]
+        ];
+
+        $result = $this->executePeeQL($json);
+
+        return count($result['data']);
     }
 
     /**
@@ -132,10 +206,30 @@ class ContainerStatsWidget extends Widget {
      * @return mixed Data from the database
      */
     private function fetchRequestedContainerCountFromDb(): mixed {
-        $qb = $this->containerManager->containerRepository->composeQueryForContainers();
-        $qb->select(['COUNT(*) AS cnt'])
-            ->andWhere('status = ?', [ContainerStatus::REQUESTED]);
-        return $qb->execute()->fetch('cnt');
+        $json = [
+            'operation' => 'query',
+            'name' => 'getContainers',
+            'definition' => [
+                'containers' => [
+                    'get' => [
+                        'cols' => [
+                            'containerId'
+                        ],
+                        'conditions' => [
+                            [
+                                'col' => 'status',
+                                'value' => ContainerStatus::REQUESTED,
+                                'type' => 'eq'
+                            ]
+                        ]
+                    ]
+                ]
+            ]
+        ];
+
+        $result = $this->executePeeQL($json);
+
+        return count($result['data']);
     }
 
     public function actionRefresh() {

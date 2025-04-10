@@ -5,6 +5,7 @@ namespace App\Modules\UserModule;
 use App\Components\ProcessReportsGrid\ProcessReportsGrid;
 use App\Components\ProcessReportsSidebar\ProcessReportsSidebar;
 use App\Components\PropertyItemsReportsGrid\PropertyItemsReportsGrid;
+use App\Constants\Container\StandaloneProcesses;
 use App\Constants\Container\SystemGroups;
 use App\Core\Http\HttpRequest;
 use App\Helpers\LinkHelper;
@@ -20,8 +21,14 @@ class ReportsPresenter extends AUserPresenter {
 
     public function handleList() {
         if($this->httpRequest->get('view') === null) {
-            $processType = $this->standaloneProcessManager->getEnabledProcessTypes()[0];
-            $view = $processType->typeKey . '-my';
+            $processType = null;
+            foreach($this->standaloneProcessManager->getEnabledProcessTypes() as $_processType) {
+                if($_processType->typeKey != StandaloneProcesses::REQUEST_PROPERTY_MOVE) {
+                    $processType = $_processType->typeKey;
+                }
+            }
+
+            $view = $processType . '-my';
             $url = $this->httpRequest->getCurrentPageActionAsArray();
             $url['view'] = $view;
             $this->redirect($url);

@@ -4,7 +4,7 @@ namespace App\Core\DB;
 
 use App\Core\DatabaseConnection;
 use App\Logger\Logger;
-use App\Repositories\UserRepository;
+use App\Repositories\ContainerRepository;
 use App\Schemas\GetContainersSchema;
 use PeeQL\PeeQL as PeeQLPeeQL;
 
@@ -53,7 +53,7 @@ class PeeQL {
     private function defineRoutes() {
         $router = $this->peeql->getRouter();
 
-        $router->addRoute('users', UserRepository::class, $this->repositoryParams);
+        $router->addRoute('containers', ContainerRepository::class, $this->repositoryParams);
     }
 
     /**

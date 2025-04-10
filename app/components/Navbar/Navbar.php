@@ -3,6 +3,7 @@
 namespace App\Components\Navbar;
 
 use App\Constants\Container\ProcessReportsViews;
+use App\Constants\Container\StandaloneProcesses;
 use App\Constants\Container\SystemGroups;
 use App\Constants\ContainerStatus;
 use App\Core\Caching\CacheFactory;
@@ -103,9 +104,14 @@ class Navbar extends AComponent {
                 }
 
                 if($this->standaloneProcessManager !== null) {
-                    $enabledProcessTypes = $this->standaloneProcessManager->getEnabledProcessTypes();
-                    $processType = $enabledProcessTypes[0];
-                    $links['Reports']['view'] = $processType->typeKey . '-' . ProcessReportsViews::VIEW_MY;
+                    $processType = null;
+                    foreach($this->standaloneProcessManager->getEnabledProcessTypes() as $_processType) {
+                        if($_processType->typeKey != StandaloneProcesses::REQUEST_PROPERTY_MOVE) {
+                            $processType = $_processType->typeKey;
+                        }
+                    }
+
+                    $links['Reports']['view'] = $processType . '-' . ProcessReportsViews::VIEW_MY;
                 }
 
                 $this->links = $links;

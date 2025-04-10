@@ -6,6 +6,7 @@ use App\Authenticators\UserAuthenticator;
 use App\Constants\SessionNames;
 use App\Core\Caching\CacheFactory;
 use App\Core\DB\DatabaseManager;
+use App\Core\DB\PeeQL;
 use App\Core\Http\HttpRequest;
 use App\Entities\UserEntity;
 use App\Exceptions\AException;
@@ -91,6 +92,8 @@ class Application {
 
     public CacheFactory $cacheFactory;
 
+    public PeeQL $peeql;
+
     /**
      * The Application constructor. It creates objects of all used classes.
      */
@@ -146,6 +149,8 @@ class Application {
                 throw new GeneralException('Could not install database. Reason: ' . $e->getMessage(), $e);
             }
         }
+
+        $this->peeql = new PeeQL($this->db, $this->logger);
     }
 
     /**

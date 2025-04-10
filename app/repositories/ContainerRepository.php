@@ -244,18 +244,24 @@ class ContainerRepository extends ARepository {
             $qb->offset($operation->getPage() - 1);
         }
 
+        foreach($operation->getOrderBy() as $key => $order) {
+            $qb->orderBy($key, $order);
+        }
+
         $qb->execute();
 
         $qr = new QueryResult();
         $columns = $operation->getColumns();
 
         $data = [];
+        $i = 0;
         while($row = $qb->fetchAssoc()) {
             foreach($columns as $column) {
                 if(array_key_exists($column, $row)) {
-                    $data[$column] = $row[$column];
+                    $data[$i][$column] = $row[$column];
                 }
             }
+            $i++;
         }
 
         $qr->setResultData($data);

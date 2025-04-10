@@ -14,6 +14,7 @@ class GetContainersSchema extends AQuerySchema {
             'containerId',
             'title',
             'description',
+            'userId',
             'status',
             'dateCreated',
             'environment',

@@ -9,6 +9,7 @@ class ExternalSystemLogMessages {
     public const CREATE_DATA = 'Creating a new %s.';
     public const UPDATE_DATA = 'Updating existing %s.';
     public const DELETE_DATA = 'Deleting existing %s.';
+    public const PEEQL = 'Processing PeeQL query.';
 }
 
 ?>

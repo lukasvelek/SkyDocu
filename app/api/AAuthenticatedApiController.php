@@ -70,6 +70,19 @@ abstract class AAuthenticatedApiController extends AApiClass {
     }
 
     /**
+     * Logs PeeQL API
+     * 
+     * @param int $objectType Object type
+     */
+    protected function logPeeQL(int $objectType) {
+        $entity = strtolower(ExternalSystemLogObjectTypes::toString($objectType));
+
+        $message = sprintf(ExternalSystemLogMessages::PEEQL, $entity);
+
+        $this->createLog($message, ExternalSystemLogActionTypes::PEEQL, $objectType);
+    }
+
+    /**
      * Logs API read
      * 
      * @param int $objectType Object type

@@ -2,6 +2,7 @@
 
 namespace PeeQL\Schema;
 
+use Error;
 use Exception;
 
 /**

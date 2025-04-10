@@ -34,8 +34,8 @@ class PeeQL {
 
         $this->peeql = new PeeQLPeeQL();
 
-        $this->defineSchema();
         $this->defineRoutes();
+        $this->defineSchema();
     }
 
     /**

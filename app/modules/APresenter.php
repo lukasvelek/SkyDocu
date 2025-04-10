@@ -24,7 +24,6 @@ use App\Exceptions\TemplateDoesNotExistException;
 use App\Logger\Logger;
 use App\UI\LinkBuilder;
 use Exception;
-use PeeQL\PeeQL;
 
 /**
  * Common presenter class that all presenters must extend. It contains useful methods and most importantly rendering functionality.
@@ -64,7 +63,6 @@ abstract class APresenter extends AGUICore {
     protected ComponentFactory $componentFactory;
 
     protected Router $router;
-    protected PeeQL $peeQL;
 
     /**
      * The class constructor
@@ -105,7 +103,6 @@ abstract class APresenter extends AGUICore {
         $this->components = [];
 
         $this->router = new Router();
-        $this->peeQL = new PeeQL();
     }
 
     /**
@@ -115,12 +112,6 @@ abstract class APresenter extends AGUICore {
         $this->componentFactory = new ComponentFactory($this->httpRequest, $this, $this->app);
         $this->componentFactory->setCacheFactory($this->cacheFactory);
         $this->router->inject($this, new ModuleManager());
-
-        $router = $this->peeQL->getRouter();
-        $router->addObjectRoute('containers', $this->app->containerRepository);
-
-        $schema = $this->peeQL->getSchema();
-        $schema->addSchema('\\App\\Schemas\\GetContainersSchema', 'GetContainersSchema');
     }
 
     /**

@@ -25,7 +25,7 @@ class PeeQLController extends APeeQLOperation {
      */
     private function processQuery(): array {
         $data = $this->get('peeql');
-        return $this->app->peeql->execute($data);
+        return $this->peeql->execute($data);
     }
 }
 

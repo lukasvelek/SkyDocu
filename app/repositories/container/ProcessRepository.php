@@ -5,6 +5,8 @@ namespace App\Repositories\Container;
 use App\Constants\Container\ProcessStatus;
 use App\Constants\Container\StandaloneProcesses;
 use App\Repositories\ARepository;
+use PeeQL\Operations\QueryOperation;
+use PeeQL\Result\QueryResult;
 
 class ProcessRepository extends ARepository {
     public function commonComposeQuery(bool $onlyNotFinished = true) {
@@ -349,6 +351,10 @@ class ProcessRepository extends ARepository {
             ->execute();
 
         return $qb->fetchBool();
+    }
+
+    public function get(QueryOperation $operation): QueryResult {
+        return $this->processPeeQL('processes', $operation);
     }
 }
 

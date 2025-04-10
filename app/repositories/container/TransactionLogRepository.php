@@ -3,6 +3,8 @@
 namespace App\Repositories\Container;
 
 use App\Repositories\ARepository;
+use PeeQL\Operations\QueryOperation;
+use PeeQL\Result\QueryResult;
 
 class TransactionLogRepository extends ARepository {
     public function composeQueryForTransactionLog() {
@@ -27,6 +29,10 @@ class TransactionLogRepository extends ARepository {
         }
 
         return $users;
+    }
+
+    public function get(QueryOperation $operation): QueryResult {
+        return $this->processPeeQL('transaction_log', $operation);
     }
 }
 

@@ -5,6 +5,7 @@ namespace App\Api;
 use App\Core\Application;
 use App\Core\Container;
 use App\Core\DatabaseConnection;
+use App\Core\DB\PeeQL;
 use App\Core\Http\JsonResponse;
 use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
@@ -29,6 +30,8 @@ abstract class AApiClass {
 
     protected ?array $data = null;
     protected string $containerId;
+
+    protected PeeQL $peeql;
 
     /**
      * Class constructor
@@ -82,6 +85,8 @@ abstract class AApiClass {
         );
 
         $this->container = new Container($this->app, $this->containerId);
+
+        $this->peeql = new PeeQL($this->conn, $this->app->logger, true);
     }
 
     /**

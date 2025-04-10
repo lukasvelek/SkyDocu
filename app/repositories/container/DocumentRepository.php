@@ -3,6 +3,8 @@
 namespace App\Repositories\Container;
 
 use App\Repositories\ARepository;
+use PeeQL\Operations\QueryOperation;
+use PeeQL\Result\QueryResult;
 
 class DocumentRepository extends ARepository {
     public function composeQueryForDocuments() {
@@ -200,6 +202,10 @@ class DocumentRepository extends ARepository {
             ->execute();
 
         return $qb->fetchBool();
+    }
+
+    public function get(QueryOperation $operation): QueryResult {
+        return $this->processPeeQL('documents', $operation);
     }
 }
 

@@ -6,6 +6,8 @@ use App\Core\Caching\CacheNames;
 use App\Core\DatabaseConnection;
 use App\Entities\UserEntity;
 use App\Logger\Logger;
+use PeeQL\Operations\QueryOperation;
+use PeeQL\Result\QueryResult;
 use QueryBuilder\QueryBuilder;
 
 class UserRepository extends ARepository {
@@ -227,6 +229,10 @@ class UserRepository extends ARepository {
             ->execute();
 
         return $qb->fetchBool();
+    }
+
+    public function get(QueryOperation $operation): QueryResult {
+        return $this->processPeeQL('users', $operation);
     }
 }
 

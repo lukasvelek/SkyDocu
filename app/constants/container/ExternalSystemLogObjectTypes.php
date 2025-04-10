@@ -23,6 +23,7 @@ class ExternalSystemLogObjectTypes extends AConstant implements IColorable, IBac
     public const FILES = 9;
     public const ARCHIVE_FOLDERS = 10;
     public const TRANSACTION_LOG = 11;
+    public const PEEQL = 12;
 
     public static function toString($key): ?string {
         return match((int)$key) {
@@ -37,7 +38,8 @@ class ExternalSystemLogObjectTypes extends AConstant implements IColorable, IBac
             self::DOCUMENT_SHARING => 'Document sharing',
             self::FILES => 'File',
             self::ARCHIVE_FOLDERS => 'Archive folder',
-            self::TRANSACTION_LOG => 'Transaction log'
+            self::TRANSACTION_LOG => 'Transaction log',
+            self::PEEQL => 'PeeQL'
         };
     }
 
@@ -58,6 +60,7 @@ class ExternalSystemLogObjectTypes extends AConstant implements IColorable, IBac
                 return 'red';
 
             case self::USER:
+            case self::PEEQL:
                 return 'green';
 
             case self::EXTERNAL_SYSTEM:
@@ -84,6 +87,7 @@ class ExternalSystemLogObjectTypes extends AConstant implements IColorable, IBac
                 return 'pink';
 
             case self::USER:
+            case self::PEEQL:
                 return 'lightgreen';
 
             case self::EXTERNAL_SYSTEM:

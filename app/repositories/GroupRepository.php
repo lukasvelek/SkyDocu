@@ -7,6 +7,8 @@ use App\Core\Caching\CacheNames;
 use App\Core\DatabaseConnection;
 use App\Entities\GroupEntity;
 use App\Logger\Logger;
+use PeeQL\Operations\QueryOperation;
+use PeeQL\Result\QueryResult;
 
 class GroupRepository extends ARepository {
     private Cache $groupCache;
@@ -154,6 +156,10 @@ class GroupRepository extends ARepository {
 
             return $groups;
         }, [], $force);
+    }
+
+    public function get(QueryOperation $operation): QueryResult {
+        return $this->processPeeQL('groups', $operation);
     }
 }
 

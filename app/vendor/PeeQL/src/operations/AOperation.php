@@ -147,6 +147,13 @@ abstract class AOperation {
     }
 
     /**
+     * Returns the order by array
+     */
+    public function getOrderBy(): array {
+        return $this->orderBy;
+    }
+
+    /**
      * Creates a clone after validation
      */
     public static function cloneAfterValidation(QueryOperation $operation, array $columns, QueryConditionList $conditions) {

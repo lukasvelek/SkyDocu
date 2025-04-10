@@ -9,6 +9,8 @@ use App\Exceptions\DatabaseExecutionException;
 use App\Logger\Logger;
 use App\Managers\EntityManager;
 use PeeQL\Operations\Conditions\QueryConditionList;
+use PeeQL\Operations\QueryOperation;
+use PeeQL\Result\QueryResult;
 use QueryBuilder\ExpressionBuilder;
 use QueryBuilder\QueryBuilder;
 
@@ -222,8 +224,55 @@ abstract class ARepository extends AMultipleDatabaseConnectionHandler {
         return $qb->fetch();
     }
 
-    protected function processPeeQLConditions(QueryConditionList $list) {
-        return $list->getConvertedConditionsAsArray();
+    /**
+     * Processes PeeQL into a QueryBuilder instance, executes and fetches the data
+     * 
+     * @param string $tableName Table name
+     * @param QueryOperation $operation QueryOperation instance
+     */
+    protected function processPeeQL(string $tableName, QueryOperation $operation): QueryResult {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->select($operation->getColumns())
+            ->from($tableName);
+
+        $conditions = $operation->getConditions()->getConvertedConditionsAsArray();
+
+        foreach($conditions as $condition) {
+            $qb->andWhere($condition);
+        }
+
+        if($operation->getLimit() !== null) {
+            $qb->limit($operation->getLimit());
+        }
+
+        if($operation->getPage() !== null) {
+            $qb->offset($operation->getPage() - 1);
+        }
+
+        foreach($operation->getOrderBy() as $key => $order) {
+            $qb->orderBy($key, $order);
+        }
+
+        $qb->execute();
+
+        $qr = new QueryResult();
+        $columns = $operation->getColumns();
+
+        $data = [];
+        $i = 0;
+        while($row = $qb->fetchAssoc()) {
+            foreach($columns as $column) {
+                if(array_key_exists($column, $row)) {
+                    $data[$i][$column] = $row[$column];
+                }
+            }
+            $i++;
+        }
+
+        $qr->setResultData($data);
+
+        return $qr;
     }
 }
 

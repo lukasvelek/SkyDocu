@@ -225,42 +225,7 @@ class ContainerRepository extends ARepository {
     }
 
     public function get(QueryOperation $operation): QueryResult {
-        $qb = $this->qb(__METHOD__);
-
-        $qb->select($operation->getColumns())
-            ->from('containers');
-
-        $conditions = $this->processPeeQLConditions($operation->getConditions());
-
-        foreach($conditions as $condition) {
-            $qb->andWhere($condition);
-        }
-
-        if($operation->getLimit() !== null) {
-            $qb->limit($operation->getLimit());
-        }
-
-        if($operation->getPage() !== null) {
-            $qb->offset($operation->getPage() - 1);
-        }
-
-        $qb->execute();
-
-        $qr = new QueryResult();
-        $columns = $operation->getColumns();
-
-        $data = [];
-        while($row = $qb->fetchAssoc()) {
-            foreach($columns as $column) {
-                if(array_key_exists($column, $row)) {
-                    $data[$column] = $row[$column];
-                }
-            }
-        }
-
-        $qr->setResultData($data);
-
-        return $qr;
+        return $this->processPeeQL('containers', $operation);
     }
 }
 

@@ -90,15 +90,37 @@ class UserEntity extends AEntity {
         return $this->appDesignTheme;
     }
 
+    /**
+     * Returns date format
+     */
+    public function getDateFormat(): string {
+        return $this->dateFormat;
+    }
+
+    /**
+     * Returns time format
+     */
+    public function getTimeFormat(): string {
+        return $this->timeFormat;
+    }
+
+    /**
+     * Returns date time format
+     */
+    public function getDatetimeFormat(): string {
+        return $this->dateFormat . ' ' . $this->timeFormat;
+    }
+
     public static function createEntityFromDbRow(mixed $row): ?static {
         if($row === null) {
             return null;
         }
 
         $row = self::createRow($row);
-        self::checkTypes($row, ['userId' => 'string', 'username' => 'string', 'fullname' => 'string', 'email' => '?string', 'dateCreated' => 'string', 'isTechnical' => 'bool', 'appDesignTheme' => 'int']);
+        self::checkTypes($row, ['userId' => 'string', 'username' => 'string', 'fullname' => 'string', 'email' => '?string', 'dateCreated' => 'string', 'isTechnical' => 'bool', 'appDesignTheme' => 'int',
+                                'dateFormat' => 'string', 'timeFormat' => 'string']);
 
-        return new self($row->userId, $row->username, $row->fullname, $row->email, $row->dateCreated, $row->isTechnical, $row->appDesignTheme);
+        return new self($row->userId, $row->username, $row->fullname, $row->email, $row->dateCreated, $row->isTechnical, $row->appDesignTheme, $row->dateFormat, $row->timeFormat);
     }
 }
 

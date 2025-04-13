@@ -14,6 +14,7 @@ Previously changelog for versions `1.0`-`1.4` has been located in README.md. How
 ## SkyDocu `1.6` (_WIP_)
 - Global transaction log
     - All transactions are logged into a single master transaction log
+- Implemented PeeQL to API
 
 ## SkyDocu `1.5` (04/08/2025)
 - Added _Requested containers_ metric to superadministration Container statistics widget

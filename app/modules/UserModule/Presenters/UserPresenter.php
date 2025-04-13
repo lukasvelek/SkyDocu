@@ -74,8 +74,9 @@ class UserPresenter extends AUserPresenter {
             }
 
             $links[] = '<span>|</span>';
-
             $links[] = LinkBuilder::createSimpleLink('Change theme', $this->createURL('changeThemeForm', ['userId' => $userId]), 'link');
+            $links[] = '<span>|</span>';
+            $links[] = LinkBuilder::createSimpleLink('Change date & time formats', $this->createURL('changeDatetimeForm', ['userId' => $userId]), 'link');
         }
 
         $this->saveToPresenterCache('links', LinkHelper::createLinksFromArray($links));
@@ -252,6 +253,76 @@ class UserPresenter extends AUserPresenter {
         $form->addSelect('appDesignTheme', 'Theme:')
             ->setRequired()
             ->addRawOptions($themes);
+
+        $form->addSubmit('Save');
+
+        return $form;
+    }
+
+    public function handleChangeDatetimeForm(?FormRequest $fr = null) {
+        $userId = $this->httpRequest->get('userId');
+
+        if($fr !== null) {
+            try {
+                $this->app->userRepository->beginTransaction(__METHOD__);
+
+                $this->app->userManager->updateUser($userId, [
+                    'dateFormat' => $fr->dateFormat,
+                    'timeFormat' => $fr->timeFormat
+                ]);
+
+                $this->app->userRepository->commit($this->getUserId(), __METHOD__);
+                
+                $this->flashMessage('Successfully saved.', 'success');
+            } catch(AException $e) {
+                $this->app->userRepository->rollback(__METHOD__);
+
+                $this->flashMessage('Could not save. Reason: ' . $e->getMessage(), 'error', 10);
+            }
+
+            $this->redirect($this->createURL('profile', ['userId' => $userId]));
+        }
+    }
+
+    public function renderChangeDatetimeForm() {
+        $this->template->links = $this->createBackUrl('profile', ['userId' => $this->httpRequest->get('userId')]);
+    }
+
+    protected function createComponentChangeDatetimeForm(HttpRequest $request) {
+        $form = $this->componentFactory->getFormBuilder();
+
+        $dateFormats = [];
+        $_dateFormats = [
+            'd.m.Y',
+            'm/d/Y'
+        ];
+        foreach($_dateFormats as $date) {
+            $dateFormats[] = [
+                'value' => $date,
+                'text' => $date
+            ];
+        }
+
+        $timeFormats = [];
+        $_timeFormats = [
+            'H:i:s'
+        ];
+        foreach($_timeFormats as $time) {
+            $timeFormats[] = [
+                'value' => $time,
+                'text' => $time
+            ];
+        }
+
+        $form->setAction($this->createURL('changeDatetimeForm', ['userId' => $request->get('userId')]));
+
+        $form->addSelect('dateFormat', 'Date format:')
+            ->setRequired()
+            ->addRawOptions($dateFormats);
+
+        $form->addSelect('timeFormat', 'Time format:')
+            ->setRequired()
+            ->addRawOptions($timeFormats);
 
         $form->addSubmit('Save');
 

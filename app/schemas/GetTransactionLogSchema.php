@@ -19,8 +19,11 @@ class GetTransactionLogSchema extends AQuerySchema {
             'transactionId',
             'userId',
             'callingMethod',
-            'dateCreated'
+            'dateCreated',
+            'containerId'
         ]);
+
+        $this->addRequiredFilterColumn('containerId');
     }
 }
 

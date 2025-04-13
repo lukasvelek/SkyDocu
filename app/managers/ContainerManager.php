@@ -296,9 +296,9 @@ class ContainerManager extends AManager {
 
         $conn = $this->dbManager->getConnectionToDatabase($container->getDefaultDatabase()->getName());
 
-        $userRepository = new UserRepository($this->containerRepository->conn, $this->logger);
-        $groupRepository = new GroupRepository($conn, $this->logger);
-        $contentRepository = new ContentRepository($conn, $this->logger);
+        $userRepository = new UserRepository($this->containerRepository->conn, $this->logger, $this->containerRepository->transactionLogRepository);
+        $groupRepository = new GroupRepository($conn, $this->logger, $this->containerRepository->transactionLogRepository);
+        $contentRepository = new ContentRepository($conn, $this->logger, $this->containerRepository->transactionLogRepository);
         $entityManager = new EntityManager($this->logger, $contentRepository);
 
         $groupManager = new Container\GroupManager($this->logger, $entityManager, $groupRepository, $userRepository);

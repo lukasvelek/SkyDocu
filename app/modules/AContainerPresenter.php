@@ -50,7 +50,6 @@ abstract class AContainerPresenter extends APresenter {
     protected DocumentRepository $documentRepository;
     protected DocumentClassRepository $documentClassRepository;
     protected MetadataRepository $metadataRepository;
-    protected TransactionLogRepository $transactionLogRepository;
     protected GridRepository $gridRepository;
     protected ProcessRepository $processRepository;
     protected ArchiveRepository $archiveRepository;
@@ -251,8 +250,9 @@ abstract class AContainerPresenter extends APresenter {
             if(str_contains($rt, 'Repository')) {
                 $className = (string)$rt;
 
-                $this->$name = new $className($db, $this->logger);
+                $this->$name = new $className($db, $this->logger, $this->app->transactionLogRepository);
                 $this->$name->injectCacheFactory($cache);
+                $this->$name->setContainerId($this->containerId);
             }
         }
     }

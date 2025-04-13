@@ -3,18 +3,12 @@
 namespace App\Repositories;
 
 use App\Core\Caching\CacheNames;
-use App\Core\DatabaseConnection;
 use App\Entities\UserEntity;
-use App\Logger\Logger;
 use PeeQL\Operations\QueryOperation;
 use PeeQL\Result\QueryResult;
 use QueryBuilder\QueryBuilder;
 
 class UserRepository extends ARepository {
-    public function __construct(DatabaseConnection $conn, Logger $logger) {
-        parent::__construct($conn, $logger);
-    }
-
     public function getUserById(string $id, bool $force = false): UserEntity|null {
         $qb = $this->qb(__METHOD__);
 

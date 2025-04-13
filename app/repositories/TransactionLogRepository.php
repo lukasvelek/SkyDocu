@@ -21,7 +21,7 @@ class TransactionLogRepository {
         return new QueryBuilder($this->db, $this->logger, $method);
     }
 
-    public function createNewEntry(string $id, ?string $userId, string $methodName, string &$sql) {
+    public function createNewEntry(string $id, ?string $userId, string $methodName, string &$sql = '', ?string $containerId = null, ?string $dateCreated = null) {
         $qb = $this->qb(__METHOD__);
 
         $methodName = str_replace('\\', '\\\\', $methodName);
@@ -29,11 +29,20 @@ class TransactionLogRepository {
         $keys = ['transactionId', 'callingMethod', 'userId'];
         $values = [$id, $methodName, $userId];
 
+        if($containerId !== null) {
+            $keys[] = 'containerId';
+            $values[] = $containerId;
+        }
+        if($dateCreated !== null) {
+            $keys[] = 'dateCreated';
+            $values[] = $dateCreated;
+        }
+
         $qb ->insert('transaction_log', $keys)
             ->values($values)
             ->execute();
 
-        $sql = $qb->getSQL();
+        //$sql = $qb->getSQL();
         
         return $qb->fetchBool();
     }
@@ -81,6 +90,39 @@ class TransactionLogRepository {
         $qr->setResultData($data);
 
         return $qr;
+    }
+
+    public function composeQueryForTransactionLog(?string $containerId = null) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->select(['*'])
+            ->from('transaction_log');
+
+        if($containerId !== null) {
+            $qb->andWhere('containerId = ?', [$containerId]);
+        }
+
+        return $qb;
+    }
+
+    public function getUserIdsInTransactionLog(?string $containerId = null) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->select(['DISTINCT userId'])
+            ->from('transaction_log');
+
+        if($containerId !== null) {
+            $qb->andWhere('containerId = ?', [$containerId]);
+        }
+
+        $qb->execute();
+
+        $users = [];
+        while($row = $qb->fetchAssoc()) {
+            $users[] = $row['userId'];
+        }
+
+        return $users;
     }
 }
 

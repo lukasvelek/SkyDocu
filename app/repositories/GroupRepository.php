@@ -4,9 +4,7 @@ namespace App\Repositories;
 
 use App\Core\Caching\Cache;
 use App\Core\Caching\CacheNames;
-use App\Core\DatabaseConnection;
 use App\Entities\GroupEntity;
-use App\Logger\Logger;
 use PeeQL\Operations\QueryOperation;
 use PeeQL\Result\QueryResult;
 
@@ -14,10 +12,6 @@ class GroupRepository extends ARepository {
     private Cache $groupCache;
     private Cache $groupTitleToIdMappingCache;
     private Cache $userGroupMembershipsCache;
-
-    public function __construct(DatabaseConnection $db, Logger $logger) {
-        parent::__construct($db, $logger);
-    }
 
     private function getGroupCache() {
         if(!isset($this->groupCache)) {

@@ -47,7 +47,7 @@ class StandaloneProcessManager extends AManager {
         $this->groupManager = $groupManager;
         $this->folderManager = $folderManager;
 
-        $this->propertyItemsRepository = new PropertyItemsRepository($this->processManager->processRepository->conn, $this->logger);
+        $this->propertyItemsRepository = new PropertyItemsRepository($this->processManager->processRepository->conn, $this->logger, $this->processManager->processRepository->transactionLogRepository);
     }
 
     /**

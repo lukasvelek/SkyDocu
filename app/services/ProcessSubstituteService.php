@@ -80,7 +80,7 @@ class ProcessSubstituteService extends AService {
                 continue;
             }
 
-            $processRepository = new ProcessRepository($containerConnection, $this->logger);
+            $processRepository = new ProcessRepository($containerConnection, $this->logger, $this->containerManager->containerRepository->transactionLogRepository);
 
             $processes = $this->getProcessesWithAbsentUsers($processRepository, $absentUsersWithSubstitute);
             $this->logInfo(sprintf('Found %d processes where the current officer is absent.', count($processes)));

@@ -23,11 +23,11 @@ class PropertyMoveRequest extends AProcessForm {
 
         $this->userManager = $userManager;
         $this->standaloneProcessManager = $standaloneProcessManager;
-
-        $this->propertyItemsRepository = new PropertyItemsRepository($this->standaloneProcessManager->processManager->processRepository->conn, $this->standaloneProcessManager->processManager->processRepository->getLogger());
     }
 
     public function startup() {
+        $this->propertyItemsRepository = new PropertyItemsRepository($this->standaloneProcessManager->processManager->processRepository->conn, $this->standaloneProcessManager->processManager->processRepository->getLogger(), $this->app->transactionLogRepository);
+
         $par = new PostAjaxRequest($this->httpRequest);
         $par->setComponentUrl($this, 'searchUsers');
         $par->setData(['query' => '_query', 'name' => 'requestPropertyMove']);
@@ -66,7 +66,7 @@ class PropertyMoveRequest extends AProcessForm {
         $this->addSelect('user', 'User:')
             ->setRequired();
 
-        $this->addTextArea('comment', 'Comment');
+        $this->addTextArea('comment', 'Comment:');
 
         $this->addSubmit('Request');
     }

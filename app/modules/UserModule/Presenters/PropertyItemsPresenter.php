@@ -33,7 +33,7 @@ class PropertyItemsPresenter extends AUserPresenter {
 
                 $itemId = $this->standaloneProcessManager->createMetadataEnumValue($metadata->metadataId, $title, $title2, $title3);
 
-                $propertyItemsRepository = new PropertyItemsRepository($this->gridRepository->conn, $this->logger);
+                $propertyItemsRepository = new PropertyItemsRepository($this->gridRepository->conn, $this->logger, $this->app->transactionLogRepository);
 
                 $relationId = $this->processManager->createId(EntityManager::C_PROPERTY_ITEMS_USER_RELATION);
 
@@ -87,7 +87,7 @@ class PropertyItemsPresenter extends AUserPresenter {
     protected function createComponentPropertyItemHistoryGrid(HttpRequest $request) {
         $grid = $this->componentFactory->getGridBuilder($this->containerId);
 
-        $propertyItemsRepository = new PropertyItemsRepository($this->gridRepository->conn, $this->logger);
+        $propertyItemsRepository = new PropertyItemsRepository($this->gridRepository->conn, $this->logger, $this->app->transactionLogRepository);
 
         $items = $this->standaloneProcessManager->getProcessMetadataEnumValues(StandaloneProcesses::REQUEST_PROPERTY_MOVE, 'items');
 
@@ -151,7 +151,7 @@ class PropertyItemsPresenter extends AUserPresenter {
             $this->redirect($this->createFullURL('User:Reports', 'list', ['view' => 'propertyItems-all']));
         }
 
-        $pir = new PropertyItemsRepository($this->processRepository->conn, $this->logger);
+        $pir = new PropertyItemsRepository($this->processRepository->conn, $this->logger, $this->app->transactionLogRepository);
 
         try {
             $this->processRepository->beginTransaction(__METHOD__);

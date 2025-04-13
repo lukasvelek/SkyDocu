@@ -503,8 +503,11 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
         $container = $this->app->containerManager->getContainerById($containerId);
         $containerConnection = $this->app->dbManager->getConnectionToDatabase($container->getDefaultDatabase()->getName());
 
-        $contentRepository = new ContentRepository($containerConnection, $this->logger);
-        $fileStorageRepository = new FileStorageRepository($containerConnection, $this->logger);
+        $contentRepository = new ContentRepository($containerConnection, $this->logger, $this->app->transactionLogRepository);
+        $fileStorageRepository = new FileStorageRepository($containerConnection, $this->logger, $this->app->transactionLogRepository);
+
+        $contentRepository->setContainerId($containerId);
+        $fileStorageRepository->setContainerId($containerId);
 
         $entityManager = new EntityManager($this->logger, $contentRepository);
         $fileStorageManager = new FileStorageManager($this->logger, $entityManager, $fileStorageRepository);
@@ -867,7 +870,9 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
         $container = $this->app->containerManager->getContainerById($request->get('containerId'));
         $containerConn = $this->app->dbManager->getConnectionToDatabase($container->getDefaultDatabase()->getName());
 
-        $processRepository = new ProcessRepository($containerConn, $this->logger);
+        $processRepository = new ProcessRepository($containerConn, $this->logger, $this->app->transactionLogRepository);
+        $processRepository->setContainerId($container->getId());
+
         $qb = $processRepository->composeQueryForProcessTypes();
 
         $grid->createDataSourceFromQueryBuilder($qb, 'typeId');
@@ -920,7 +925,8 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
         $container = $this->app->containerManager->getContainerById($this->httpRequest->get('containerId'));
         $containerConn = $this->app->dbManager->getConnectionToDatabase($container->getDefaultDatabase()->getName());
 
-        $processRepository = new ProcessRepository($containerConn, $this->logger);
+        $processRepository = new ProcessRepository($containerConn, $this->logger, $this->app->transactionLogRepository);
+        $processRepository->setContainerId($container->getId());
         
         try {
             $processRepository->beginTransaction(__METHOD__);
@@ -946,8 +952,12 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
             $container = $this->app->containerManager->getContainerById($this->httpRequest->get('containerId'));
             $containerConn = $this->app->dbManager->getConnectionToDatabase($container->getDefaultDatabase()->getName());
 
-            $processRepository = new ProcessRepository($containerConn, $this->logger);
-            $contentRepository = new ContentRepository($containerConn, $this->logger);
+            $processRepository = new ProcessRepository($containerConn, $this->logger, $this->app->transactionLogRepository);
+            $contentRepository = new ContentRepository($containerConn, $this->logger, $this->app->transactionLogRepository);
+
+            $processRepository->setContainerId($container->getId());
+            $contentRepository->setContainerId($container->getId());
+
             $entityManager = new EntityManager($this->logger, $contentRepository);
 
             try {
@@ -993,7 +1003,9 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
         $container = $this->app->containerManager->getContainerById($request->get('containerId'));
         $containerConn = $this->app->dbManager->getConnectionToDatabase($container->getDefaultDatabase()->getName());
 
-        $processRepository = new ProcessRepository($containerConn, $this->logger);
+        $processRepository = new ProcessRepository($containerConn, $this->logger, $this->app->transactionLogRepository);
+        $processRepository->setContainerId($container->getId());
+        
         $qb = $processRepository->composeQueryForProcessTypes()
             ->execute();
 

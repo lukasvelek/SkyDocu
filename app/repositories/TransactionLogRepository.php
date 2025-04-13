@@ -21,7 +21,7 @@ class TransactionLogRepository {
         return new QueryBuilder($this->db, $this->logger, $method);
     }
 
-    public function createNewEntry(string $id, ?string $userId, string $methodName, string &$sql, ?string $containerId = null) {
+    public function createNewEntry(string $id, ?string $userId, string $methodName, string &$sql = '', ?string $containerId = null, ?string $dateCreated = null) {
         $qb = $this->qb(__METHOD__);
 
         $methodName = str_replace('\\', '\\\\', $methodName);
@@ -33,12 +33,16 @@ class TransactionLogRepository {
             $keys[] = 'containerId';
             $values[] = $containerId;
         }
+        if($dateCreated !== null) {
+            $keys[] = 'dateCreated';
+            $values[] = $dateCreated;
+        }
 
         $qb ->insert('transaction_log', $keys)
             ->values($values)
             ->execute();
 
-        $sql = $qb->getSQL();
+        //$sql = $qb->getSQL();
         
         return $qb->fetchBool();
     }

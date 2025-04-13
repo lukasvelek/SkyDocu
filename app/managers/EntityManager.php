@@ -90,7 +90,7 @@ class EntityManager extends AManager {
 
             $primaryKeyName = $this->getPrimaryKeyNameByCategory($category);
 
-            $cr = new ContentRepository($customConn, $this->logger);
+            $cr = new ContentRepository($customConn, $this->logger, $this->contentRepository->transactionLogRepository);
             $unique = $cr->checkIdIsUnique($category, $primaryKeyName, $entityId);
 
             if($unique || $x >= self::__MAX__) {

@@ -187,18 +187,14 @@ class FileStorageStatsWidget extends Widget {
      * @return array<string, \App\Entities\ContainerEntity>
      */
     private function getAllContainers(): array {
-        $qb = $this->containerManager->containerRepository->composeQueryForContainers();
-        $qb->execute();
-
-        $containerIds = [];
-        while($row = $qb->fetchAssoc()) {
-            $containerIds[] = $row['containerId'];
-        }
+        $_containers = $this->containerManager->getAllContainers(true, true);
 
         $containers = [];
-        foreach($containerIds as $containerId) {
-            $container = $this->containerManager->getContainerById($containerId, true);
-            $containers[$containerId] = $container;
+        foreach($_containers as $container) {
+            /**
+             * @var \App\Entities\ContainerEntity $container
+             */
+            $containers[$container->getId()] = $container;
         }
 
         return $containers;

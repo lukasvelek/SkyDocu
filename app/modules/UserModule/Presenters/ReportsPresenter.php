@@ -63,7 +63,7 @@ class ReportsPresenter extends AUserPresenter {
             $grid = new PropertyItemsReportsGrid(
                 $this->componentFactory->getGridBuilder($this->containerId),
                 $this->app,
-                new PropertyItemsRepository($this->gridRepository->conn, $this->logger),
+                new PropertyItemsRepository($this->gridRepository->conn, $this->logger, $this->app->transactionLogRepository),
                 $this->standaloneProcessManager
             );
 

@@ -66,9 +66,6 @@ class UsersPresenter extends AAdminPresenter {
             if($row->isDeleted == true) {
                 return false;
             }
-            if($row->userId == $this->getUserId()) {
-                return false;
-            }
 
             return true;
         };

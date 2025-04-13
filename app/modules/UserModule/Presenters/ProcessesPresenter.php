@@ -4,11 +4,13 @@ namespace App\Modules\UserModule;
 
 use App\Components\ProcessesGrid\ProcessesGrid;
 use App\Components\ProcessViewSidebar\ProcessViewSidebar;
+use App\Constants\Container\InvoiceCurrencies;
 use App\Constants\Container\ProcessFormValues\HomeOffice;
 use App\Constants\Container\ProcessGridViews;
 use App\Constants\Container\ProcessStatus;
 use App\Constants\Container\StandaloneProcesses;
 use App\Constants\Container\SystemProcessTypes;
+use App\Constants\ContainerEnvironments;
 use App\Core\DB\DatabaseRow;
 use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
@@ -17,6 +19,7 @@ use App\Exceptions\RequiredAttributeIsNotSetException;
 use App\Helpers\DateTimeFormatHelper;
 use App\Helpers\LinkHelper;
 use App\Helpers\ProcessHelper;
+use App\Repositories\Container\PropertyItemsRepository;
 use App\UI\HTML\HTML;
 use App\UI\LinkBuilder;
 
@@ -162,14 +165,65 @@ class ProcessesPresenter extends AUserPresenter {
         if(!empty($data)) {
             switch($process->type) {
                 case StandaloneProcesses::HOME_OFFICE:
-                    foreach($data as $key => $value) {
-                        $title = HomeOffice::toString($key);
+                    $createRow('Date from', DateTimeFormatHelper::formatDateToUserFriendly($data['dateFrom'], 'd.m.Y'));
+                    $createRow('Date to', DateTimeFormatHelper::formatDateToUserFriendly($data['dateTo'], 'd.m.Y'));
+                    $createRow('Reason', $data['reason']);
 
-                        if(str_starts_with($key, 'date')) {
-                            $value = DateTimeFormatHelper::formatDateToUserFriendly($value, 'd.m.Y');
+                    break;
+
+                case StandaloneProcesses::REQUEST_PROPERTY_MOVE:
+                    $item = $data['item'];
+                    
+                    $propertyItemsRepository = new PropertyItemsRepository($this->processRepository->conn, $this->logger, $this->app->transactionLogRepository);
+                    $propertyItemsRepository->setContainerId($this->containerId);
+
+                    $allItems = $this->standaloneProcessManager->getProcessMetadataEnumValues(StandaloneProcesses::REQUEST_PROPERTY_MOVE, 'items');
+
+                    foreach($allItems as $_item) {
+                        if($_item->title2 == $data['item']) {
+                            $item = $_item->title . ' (' . $_item->title2 . ')';
                         }
+                    }
 
-                        $createRow($title, $value);
+                    $createRow('Item', $item);
+                    $createRow('User', $this->app->userManager->getUserById($data['user'])->getFullname());
+
+                    if($data['comment'] !== null && $data['comment'] != '') {
+                        $createRow('Comment', $data['comment']);
+                    }
+
+                    break;
+
+                case StandaloneProcesses::INVOICE:
+                    $createRow('Invoice No.', $data['invoiceNo']);
+                    $createRow('Sum', $data['sum'] . ' ' . InvoiceCurrencies::toString($data['sumCurrency']));
+
+                    $allItems = $this->standaloneProcessManager->getProcessMetadataEnumValues(StandaloneProcesses::INVOICE, 'companies');
+
+                    $company = $data['company'];
+
+                    foreach($allItems as $item) {
+                        if($item->metadataKey == $data['company']) {
+                            $company = $item->title;
+                        }
+                    }
+
+                    $createRow('Company', $company);
+                    
+                    break;
+
+                case StandaloneProcesses::FUNCTION_REQUEST:
+                    $createRow('Description', $data['description']);
+
+                    break;
+
+                case StandaloneProcesses::CONTAINER_REQUEST:
+                    $createRow('Container name', $data['containerName']);
+                    $createRow('Environment', ContainerEnvironments::toString($data['environment']));
+                    $createRow('Reason', $data['reason']);
+
+                    if($data['additionalNotes'] !== null && $data['additionalNotes'] != '') {
+                        $createRow('Additional notes', $data['additionalNotes']);
                     }
 
                     break;

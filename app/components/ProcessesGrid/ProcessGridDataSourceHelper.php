@@ -53,7 +53,10 @@ class ProcessGridDataSourceHelper {
      * Composes query for VIEW_ALL
      */
     private function composeQueryAll() {
-        return $this->processRepository->commonComposeQuery();
+        $qb = $this->processRepository->commonComposeQuery();
+        $qb->orderBy('dateCreated', 'DESC');
+
+        return $qb;
     }
 
     /**
@@ -63,7 +66,8 @@ class ProcessGridDataSourceHelper {
      */
     private function composeQueryStartedByMe(string $currentUserId) {
         $qb = $this->processRepository->commonComposeQuery();
-        $qb->andWhere('authorUserId = ?', [$currentUserId]);
+        $qb->andWhere('authorUserId = ?', [$currentUserId])
+            ->orderBy('dateCreated', 'DESC');
         return $qb;
     }
 
@@ -75,7 +79,8 @@ class ProcessGridDataSourceHelper {
     private function composeQueryWaitingForMe(string $currentUserId) {
         $qb = $this->processRepository->commonComposeQuery();
         $qb->andWhere('(currentOfficerUserId = :currentOfficer OR currentOfficerSubstituteUserId = :currentOfficer)')
-            ->setParams([':currentOfficer' => $currentUserId]);
+            ->setParams([':currentOfficer' => $currentUserId])
+            ->orderBy('dateCreated', 'DESC');
         return $qb;
     }
 
@@ -86,7 +91,8 @@ class ProcessGridDataSourceHelper {
      */
     private function composeQueryWithMe(string $currentUserId) {
         $qb = $this->processRepository->commonComposeQuery();
-        $qb->andWhere('workflowUserIds LIKE ?', ['%' . $currentUserId . '%']);
+        $qb->andWhere('workflowUserIds LIKE ?', ['%' . $currentUserId . '%'])
+            ->orderBy('dateCreated', 'DESC');
         return $qb;
     }
 
@@ -97,9 +103,10 @@ class ProcessGridDataSourceHelper {
      */
     private function composeQueryFinished(string $currentUserId) {
         $qb = $this->processRepository->commonComposeQuery(false);
-        $qb->andWhere('authorUserId = :author OR currentOfficerUserId = :currentOfficer OR workflowUserIds LIKE :workflow OR currentOfficerSubstituteUserId = :currentOfficer');
-        $qb->setParams([':author' => $currentUserId, ':currentOfficer' => $currentUserId, ':workflow' => '%' . $currentUserId . '%']);
-        $qb->andWhere($qb->getColumnInValues('status', [ProcessStatus::CANCELED, ProcessStatus::FINISHED]));
+        $qb->andWhere('authorUserId = :author OR currentOfficerUserId = :currentOfficer OR workflowUserIds LIKE :workflow OR currentOfficerSubstituteUserId = :currentOfficer')
+            ->setParams([':author' => $currentUserId, ':currentOfficer' => $currentUserId, ':workflow' => '%' . $currentUserId . '%'])
+            ->andWhere($qb->getColumnInValues('status', [ProcessStatus::CANCELED, ProcessStatus::FINISHED]))
+            ->orderBy('dateCreated', 'DESC');
         return $qb;
     }
 

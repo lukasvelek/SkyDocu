@@ -5,6 +5,8 @@ namespace App\Modules\UserModule;
 use App\Components\UserSubstituteForm\UserSubstituteForm;
 use App\Constants\AppDesignThemes;
 use App\Constants\Container\SystemGroups;
+use App\Constants\DateFormats;
+use App\Constants\TimeFormats;
 use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
@@ -292,26 +294,31 @@ class UserPresenter extends AUserPresenter {
         $form = $this->componentFactory->getFormBuilder();
 
         $dateFormats = [];
-        $_dateFormats = [
-            'd.m.Y',
-            'm/d/Y'
-        ];
-        foreach($_dateFormats as $date) {
-            $dateFormats[] = [
+        foreach(DateFormats::FORMATS as $date) {
+            $format = [
                 'value' => $date,
                 'text' => $date
             ];
+
+            if($date == $this->app->currentUser->getDateFormat()) {
+                $format['selected'] = 'selected';
+            }
+
+            $dateFormats[] = $format;
         }
 
         $timeFormats = [];
-        $_timeFormats = [
-            'H:i:s'
-        ];
-        foreach($_timeFormats as $time) {
-            $timeFormats[] = [
+        foreach(TimeFormats::FORMATS as $time) {
+            $format = [
                 'value' => $time,
                 'text' => $time
             ];
+
+            if($time == $this->app->currentUser->getTimeFormat()) {
+                $format['selected'] = 'selected';
+            }
+
+            $timeFormats[] = $format;
         }
 
         $form->setAction($this->createURL('changeDatetimeForm', ['userId' => $request->get('userId')]));

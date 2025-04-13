@@ -95,7 +95,7 @@ class DatabasePresenter extends ASuperAdminSettingsPresenter {
                 $this->template->distrib_db_schema_update_link = '';
             }
 
-            $allContainers = $this->app->containerManager->getAllContainers(false);
+            $allContainers = $this->app->containerManager->getAllContainers(false, true);
             $this->template->containers_total = count($allContainers);
         } else {
             $this->template->current_db_schema_in_distribution = '-';

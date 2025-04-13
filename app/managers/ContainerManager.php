@@ -407,6 +407,7 @@ class ContainerManager extends AManager {
     public function getContainersInDistribution(): array {
         $qb = $this->containerRepository->composeQueryForContainers();
         $qb->andWhere('isInDistribution = ?', ['1'])
+            ->andWhere($qb->getColumnInValues('status', [ContainerStatus::NOT_RUNNING, ContainerStatus::RUNNING]))
             ->execute();
 
         $containerIds = [];
@@ -427,8 +428,13 @@ class ContainerManager extends AManager {
      * 
      * @param bool $returnEntities If true then an array of entities is returned or if false an array of IDs is returned
      */
-    public function getAllContainers(bool $returnEntities = true): array {
+    public function getAllContainers(bool $returnEntities = true, bool $activeOnly = false): array {
         $qb = $this->containerRepository->composeQueryForContainers();
+
+        if($activeOnly) {
+            $qb->andWhere($qb->getColumnInValues('status', [ContainerStatus::NOT_RUNNING, ContainerStatus::RUNNING]));
+        }
+
         $qb->execute();
 
         $containerIds = [];

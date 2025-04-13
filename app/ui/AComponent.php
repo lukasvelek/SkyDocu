@@ -119,7 +119,9 @@ abstract class AComponent extends AGUICore implements IRenderable {
      */
     protected function executePeeQL(array $json): array {
         if(isset($this->app)) {
-            return $this->app->peeql->execute($json);
+            $json = json_encode($json);
+            $result = $this->app->peeql->execute($json);
+            return json_decode($result, true);
         } else {
             throw new GeneralException('Application instance is not set.');
         }

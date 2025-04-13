@@ -41,7 +41,7 @@ class PeeQLParser {
             throw new Exception(sprintf('Operation of type \'%s\' is unknown.', $operation));
         }
 
-        $schemaName = ucfirst($operation->getName()) . 'Schema';
+        $schemaName = ucfirst($operation->getHandlerMethodName()) . ucfirst($operation->getHandlerName()) . 'Schema';
 
         $_schema = $schema->getSchema($schemaName);
         $operation = $_schema->validate($operation);

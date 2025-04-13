@@ -2,7 +2,6 @@
 
 namespace PeeQL\Schema;
 
-use Error;
 use Exception;
 
 /**
@@ -55,6 +54,12 @@ class PeeQLSchema {
         $this->addObjectSchema($name, $obj);
     }
 
+    /**
+     * Adds a schema definition using schema object
+     * 
+     * @param string $name Schema name
+     * @param ASchema $schema Schema object
+     */
     public function addObjectSchema(string $name, ASchema $schema) {
         $this->schemas[$name] = $schema;
     }

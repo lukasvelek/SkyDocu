@@ -18,6 +18,7 @@ use App\Schemas\Containers\GetContainerTransactionLogSchema;
 use App\Schemas\GetContainersSchema;
 use App\Schemas\GetTransactionLogSchema;
 use App\Schemas\GetUsersSchema;
+use PeeQL\IPeeQLWrapperClass;
 use PeeQL\PeeQL as PeeQLPeeQL;
 
 /**
@@ -25,7 +26,7 @@ use PeeQL\PeeQL as PeeQLPeeQL;
  * 
  * @author Lukas Velek
  */
-class PeeQL {
+class PeeQL implements IPeeQLWrapperClass {
     private PeeQLPeeQL $peeql;
     private DatabaseConnection $conn;
     private Logger $logger;
@@ -89,16 +90,14 @@ class PeeQL {
     }
 
     /**
-     * Executes the JSON query and returns the result as an associative array
+     * Executes the JSON query and returns the result as a JSON encoded string
      * 
-     * @param array $json JSON query
+     * @param string $json JSON query
      */
-    public function execute(array $json): array {
-        $json = json_encode($json);
-
+    public function execute(string $json): mixed {
         $result = $this->peeql->execute($json);
 
-        return json_decode($result, true);
+        return $result;
     }
 }
 

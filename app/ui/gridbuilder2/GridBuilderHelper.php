@@ -438,7 +438,7 @@ class GridBuilderHelper {
                 }
 
                 $html->title(DateTimeFormatHelper::formatDateToUserFriendly($value, DateTimeFormatHelper::ATOM_FORMAT));
-                return DateTimeFormatHelper::formatDateToUserFriendly($value);
+                return DateTimeFormatHelper::formatDateToUserFriendly($value, substr($this->app->currentUser->getDatetimeFormat(), 0, -2));
             };
 
             $col->onExportColumn[] = function(DatabaseRow $row, mixed $value) {

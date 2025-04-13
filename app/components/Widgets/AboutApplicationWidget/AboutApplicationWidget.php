@@ -136,7 +136,7 @@ class AboutApplicationWidget extends Widget {
         $schema = $migrationParts[2];
         $date = $migrationParts[1];
 
-        $date = '<span title="' . $date . '">' . DateTimeFormatHelper::formatDateToUserFriendly($date, DateTimeFormatHelper::EUROPEAN_FORMAT_DATE_ONLY) . '</span>';
+        $date = '<span title="' . $date . '">' . DateTimeFormatHelper::formatDateToUserFriendly($date, $this->app->currentUser->getDateFormat()) . '</span>';
 
         return (int)$schema . ' (' . $date . ')';
     }

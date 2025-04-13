@@ -2,16 +2,9 @@
 
 namespace App\Repositories;
 
-use App\Core\Caching\Cache;
 use App\Core\Caching\CacheNames;
-use App\Core\DatabaseConnection;
-use App\Logger\Logger;
 
 class GroupMembershipRepository extends ARepository {
-    public function __construct(DatabaseConnection $db, Logger $logger) {
-        parent::__construct($db, $logger);
-    }
-
     public function getMemberUserIdsForGroupId(string $groupId) {
         $qb = $this->qb(__METHOD__);
 

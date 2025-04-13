@@ -56,7 +56,6 @@ class Container {
     public DocumentRepository $documentRepository;
     public DocumentClassRepository $documentClassRepository;
     public MetadataRepository $metadataRepository;
-    public TransactionLogRepository $transactionLogRepository;
     public GridRepository $gridRepository;
     public ProcessRepository $processRepository;
     public ArchiveRepository $archiveRepository;
@@ -166,8 +165,9 @@ class Container {
             if(str_contains($rt, 'Repository')) {
                 $className = (string)$rt;
 
-                $this->$name = new $className($this->conn, $this->logger);
+                $this->$name = new $className($this->conn, $this->logger, $this->app->transactionLogRepository);
                 $this->$name->injectCacheFactory($this->cacheFactory);
+                $this->$name->setContainerId($this->containerId);
             }
         }
     }

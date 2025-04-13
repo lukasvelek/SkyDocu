@@ -118,6 +118,8 @@ class Application {
 
         $this->cacheFactory = new CacheFactory();
 
+        $this->transactionLogRepository = new TransactionLogRepository($this->db, $this->logger);
+
         $this->initRepositories();
 
         $this->userAuth = new UserAuthenticator($this->userRepository, $this->logger);
@@ -150,7 +152,7 @@ class Application {
             }
         }
 
-        $this->peeql = new PeeQL($this->db, $this->logger);
+        $this->peeql = new PeeQL($this->db, $this->logger, $this->transactionLogRepository);
     }
 
     /**
@@ -188,7 +190,9 @@ class Application {
                 $name = $rp->getName();
                 $className = (string)$rt;
 
-                $this->$name = new $className($this->db, $this->logger);
+                if($name == 'transactionLogRepository') continue;
+
+                $this->$name = new $className($this->db, $this->logger, $this->transactionLogRepository);
                 
                 if(method_exists($this->$name, 'injectCacheFactory')) {
                     $this->$name->injectCacheFactory($this->cacheFactory);

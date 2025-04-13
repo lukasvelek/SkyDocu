@@ -67,13 +67,13 @@ abstract class AApiClass {
         
         $this->conn = $this->app->dbManager->getConnectionToDatabase($container->getDefaultDatabase()->getName());
 
-        $contentRepository = new ContentRepository($this->conn, $this->app->logger);
+        $contentRepository = new ContentRepository($this->conn, $this->app->logger, $this->app->transactionLogRepository);
         $entityManager = new EntityManager($this->app->logger, $contentRepository);
 
-        $externalSystemsRepository = new ExternalSystemsRepository($this->conn, $this->app->logger);
-        $externalSystemLogRepository = new ExternalSystemLogRepository($this->conn, $this->app->logger);
-        $externalSystemTokenRepository = new ExternalSystemTokenRepository($this->conn, $this->app->logger);
-        $externalSystemRightsRepository = new ExternalSystemRightsRepository($this->conn, $this->app->logger);
+        $externalSystemsRepository = new ExternalSystemsRepository($this->conn, $this->app->logger, $this->app->transactionLogRepository);
+        $externalSystemLogRepository = new ExternalSystemLogRepository($this->conn, $this->app->logger, $this->app->transactionLogRepository);
+        $externalSystemTokenRepository = new ExternalSystemTokenRepository($this->conn, $this->app->logger, $this->app->transactionLogRepository);
+        $externalSystemRightsRepository = new ExternalSystemRightsRepository($this->conn, $this->app->logger, $this->app->transactionLogRepository);
 
         $this->externalSystemsManager = new ExternalSystemsManager(
             $this->app->logger,
@@ -86,7 +86,7 @@ abstract class AApiClass {
 
         $this->container = new Container($this->app, $this->containerId);
 
-        $this->peeql = new PeeQL($this->conn, $this->app->logger, true);
+        $this->peeql = new PeeQL($this->conn, $this->app->logger, $this->app->transactionLogRepository, true);
     }
 
     /**

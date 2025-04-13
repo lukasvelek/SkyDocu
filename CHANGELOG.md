@@ -17,6 +17,7 @@ Previously changelog for versions `1.0`-`1.4` has been located in README.md. How
 - Implemented PeeQL to API
 - Updated process information page
 - Updated ordering in process grids
+- Added support for user custom date and time formats
 
 ## SkyDocu `1.5` (04/08/2025)
 - Added _Requested containers_ metric to superadministration Container statistics widget

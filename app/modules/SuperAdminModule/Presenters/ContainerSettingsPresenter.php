@@ -614,7 +614,7 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
 
         $links = [
             'Invite link: ' . $inviteLink->toString() . $copyToClipboardLink->toString(),
-            'Invite link valid until: ' . DateTimeFormatHelper::formatDateToUserFriendly($invite->dateValid),
+            'Invite link valid until: ' . DateTimeFormatHelper::formatDateToUserFriendly($invite->dateValid, $this->app->currentUser->getDatetimeFormat()),
             LinkBuilder::createSimpleLink('Regenerate invite link', $this->createURL('generateInviteLink', ['containerId' => $containerId, 'regenerate' => '1', 'oldInviteId' => $invite->inviteId]), 'link')
         ];
 

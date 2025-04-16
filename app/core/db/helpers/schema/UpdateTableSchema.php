@@ -129,6 +129,10 @@ class UpdateTableSchema extends ABaseTableSchema {
             $value = ($value ? 1 : 0);
         }
 
+        if($value != 'current_timestamp()') {
+            $value = '\'' . $value . '\'';
+        }
+
         $this->addDefaults[$name] = $value;
 
         return $this;

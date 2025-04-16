@@ -90,6 +90,12 @@ class ListBuilder extends AComponent {
         return $this->helper->addAction($name);
     }
 
+    public function startup() {
+        parent::startup();
+
+        $this->helper->setApplication($this->app);
+    }
+
     public function prerender() {
         parent::prerender();
 

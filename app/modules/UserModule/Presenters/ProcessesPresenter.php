@@ -165,8 +165,8 @@ class ProcessesPresenter extends AUserPresenter {
         if(!empty($data)) {
             switch($process->type) {
                 case StandaloneProcesses::HOME_OFFICE:
-                    $createRow('Date from', DateTimeFormatHelper::formatDateToUserFriendly($data['dateFrom'], 'd.m.Y'));
-                    $createRow('Date to', DateTimeFormatHelper::formatDateToUserFriendly($data['dateTo'], 'd.m.Y'));
+                    $createRow('Date from', DateTimeFormatHelper::formatDateToUserFriendly($data['dateFrom'], $this->app->currentUser->getDateFormat()));
+                    $createRow('Date to', DateTimeFormatHelper::formatDateToUserFriendly($data['dateTo'], $this->app->currentUser->getDateFormat()));
                     $createRow('Reason', $data['reason']);
 
                     break;

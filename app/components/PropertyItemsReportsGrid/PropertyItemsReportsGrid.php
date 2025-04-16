@@ -103,7 +103,7 @@ class PropertyItemsReportsGrid extends GridBuilder implements IGridExtendingComp
             $entry = $this->propertyItemsRepository->getFirstEntryForPropertyItem($row->itemId);
 
             if($entry !== null) {
-                return DateTimeFormatHelper::formatDateToUserFriendly($entry['dateCreated']);
+                return DateTimeFormatHelper::formatDateToUserFriendly($entry['dateCreated'], $this->app->currentUser->getDatetimeFormat());
             } else {
                 return null;
             }

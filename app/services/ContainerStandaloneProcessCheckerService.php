@@ -70,12 +70,12 @@ class ContainerStandaloneProcessCheckerService extends AService {
                 continue;
             }
 
-            $contentRepository = new ContentRepository($containerConnection, $this->logger);
+            $contentRepository = new ContentRepository($containerConnection, $this->logger, $this->containerManager->containerRepository->transactionLogRepository);
             $entityManager = new EntityManager($this->logger, $contentRepository);
-            $userSubstituteRepository = new UserSubstituteRepository($this->serviceManager->systemServicesRepository->conn, $this->logger);
-            $userAbsenceRepository = new UserAbsenceRepository($this->serviceManager->systemServicesRepository->conn, $this->logger);
-            $processRepository = new ProcessRepository($containerConnection, $this->logger);
-            $groupRepository = new GroupRepository($containerConnection, $this->logger);
+            $userSubstituteRepository = new UserSubstituteRepository($this->serviceManager->systemServicesRepository->conn, $this->logger, $this->containerManager->containerRepository->transactionLogRepository);
+            $userAbsenceRepository = new UserAbsenceRepository($this->serviceManager->systemServicesRepository->conn, $this->logger, $this->containerManager->containerRepository->transactionLogRepository);
+            $processRepository = new ProcessRepository($containerConnection, $this->logger, $this->containerManager->containerRepository->transactionLogRepository);
+            $groupRepository = new GroupRepository($containerConnection, $this->logger, $this->containerManager->containerRepository->transactionLogRepository);
 
             $groupManager = new GroupManager($this->logger, $entityManager, $groupRepository, $this->userRepository);
             $userSubstituteManager = new UserSubstituteManager($this->logger, $entityManager, $userSubstituteRepository);

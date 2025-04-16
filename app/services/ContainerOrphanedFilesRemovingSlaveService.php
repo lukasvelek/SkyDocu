@@ -69,11 +69,11 @@ class ContainerOrphanedFilesRemovingSlaveService extends AService {
             $this->logError(sprintf('Could not connect to database for container \'%s\'.', $this->containerId));
         }
 
-        $contentRepository = new ContentRepository($containerConn, $this->logger);
+        $contentRepository = new ContentRepository($containerConn, $this->logger, $this->containerManager->containerRepository->transactionLogRepository);
         $entityManager = new EntityManager($this->logger, $contentRepository);
-        $fileStorageRepository = new FileStorageRepository($containerConn, $this->logger);
+        $fileStorageRepository = new FileStorageRepository($containerConn, $this->logger, $this->containerManager->containerRepository->transactionLogRepository);
         $fileStorageManager = new FileStorageManager($this->logger, $entityManager, $fileStorageRepository);
-        $documentRepository = new DocumentRepository($containerConn, $this->logger);
+        $documentRepository = new DocumentRepository($containerConn, $this->logger, $this->containerManager->containerRepository->transactionLogRepository);
 
         $this->processFiles($fileStorageManager, $documentRepository);
     }

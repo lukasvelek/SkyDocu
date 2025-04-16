@@ -44,7 +44,7 @@ class UserPresenter extends AUserPresenter {
 
         $addInfo('Full name', $user->getFullname());
         $addInfo('Email', ($user->getEmail() ?? '-'));
-        $addInfo('Member since', DateTimeFormatHelper::formatDateToUserFriendly($user->getDateCreated()));
+        $addInfo('Member since', DateTimeFormatHelper::formatDateToUserFriendly($user->getDateCreated(), $this->app->currentUser->getDatetimeFormat()));
         $addInfo('ID', $user->getId());
 
         $this->saveToPresenterCache('userProfile', $userProfile);
@@ -60,7 +60,7 @@ class UserPresenter extends AUserPresenter {
                 $links[] = LinkBuilder::createSimpleLink('Set out-of-office', $this->createURL('outOfOfficeForm'), 'link');
             } else {
                 $absence = $this->app->userAbsenceManager->getUserCurrentAbsence($this->getUserId());
-                $links[] = '<span>You are currently out-of-office until: ' . DateTimeFormatHelper::formatDateToUserFriendly($absence->dateTo, 'd.m.Y') . '.</span>';
+                $links[] = '<span>You are currently out-of-office until: ' . DateTimeFormatHelper::formatDateToUserFriendly($absence->dateTo, $this->app->currentUser->getDateFormat()) . '.</span>';
                 $links[] = LinkBuilder::createSimpleLink('Clear out-of-office', $this->createURL('clearOutOfOffice', ['absenceId' => $absence->absenceId]), 'link');
             }
 

@@ -56,7 +56,7 @@ class AboutContainerWidget extends Widget {
             'Container ID' => $this->containerId,
             'Container title' => $container->getTitle(),
             'Container users / technical users' => (count($groupGeneralUsers) . ' / ' . count($groupTechnicalUsers)),
-            'Date created' => DateTimeFormatHelper::formatDateToUserFriendly($container->getDateCreated()),
+            'Date created' => DateTimeFormatHelper::formatDateToUserFriendly($container->getDateCreated(), $this->app->currentUser->getDatetimeFormat()),
             'Container environment' => ContainerEnvironments::toString($container->getEnvironment())
         ];
 

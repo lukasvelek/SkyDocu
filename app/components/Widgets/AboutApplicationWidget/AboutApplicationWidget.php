@@ -97,7 +97,7 @@ class AboutApplicationWidget extends Widget {
             // not released yet
             return '<span title="This version has not been released yet.">' . APP_VERSION_RELEASE_DATE . '</span>';
         } else {
-            return DateTimeFormatHelper::formatDateToUserFriendly(APP_VERSION_RELEASE_DATE, 'd.m.Y');
+            return DateTimeFormatHelper::formatDateToUserFriendly(APP_VERSION_RELEASE_DATE, $this->app->currentUser->getDateFormat());
         }
     }
 

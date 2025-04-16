@@ -149,8 +149,8 @@ class DocumentsPresenter extends AUserPresenter {
         } catch(AException) {}
 
         $createRow('Folder', $folder);
-        $createRow('Date created', DateTimeFormatHelper::formatDateToUserFriendly($document->dateCreated));
-        $createRow('Date modified', ($document->dateModified !== null) ? DateTimeFormatHelper::formatDateToUserFriendly($document->dateModified) : '-');
+        $createRow('Date created', DateTimeFormatHelper::formatDateToUserFriendly($document->dateCreated, $this->app->currentUser->getDatetimeFormat()));
+        $createRow('Date modified', ($document->dateModified !== null) ? DateTimeFormatHelper::formatDateToUserFriendly($document->dateModified, $this->app->currentUser->getDatetimeFormat()) : '-');
 
         // FILE ATTACHMENT
         if($this->fileStorageManager->doesDocumentHaveFile($document->documentId)) {
@@ -208,8 +208,12 @@ class DocumentsPresenter extends AUserPresenter {
                                 break;
 
                             case CustomMetadataTypes::DATE:
+                                $data = DateTimeFormatHelper::formatDateToUserFriendly($data, $this->app->currentUser->getDateFormat());
+                                
+                                break;
+
                             case CustomMetadataTypes::DATETIME:
-                                $data = DateTimeFormatHelper::formatDateToUserFriendly($data);
+                                $data = DateTimeFormatHelper::formatDateToUserFriendly($data, $this->app->currentUser->getDatetimeFormat());
 
                                 break;
 

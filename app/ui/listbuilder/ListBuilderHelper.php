@@ -5,6 +5,7 @@ namespace App\UI\ListBuilder;
 use App\Constants\AConstant;
 use App\Constants\IBackgroundColorable;
 use App\Constants\IColorable;
+use App\Core\Application;
 use App\Helpers\ArrayHelper;
 use App\Helpers\DateTimeFormatHelper;
 use App\UI\HTML\HTML;
@@ -22,6 +23,8 @@ class ListBuilderHelper {
     private array $actions;
     private array $dataSource;
 
+    private Application $app;
+
     /**
      * Class constructor
      */
@@ -30,6 +33,15 @@ class ListBuilderHelper {
         $this->columnLabels = [];
         $this->actions = [];
         $this->dataSource = [];
+    }
+
+    /**
+     * Sets the application instance
+     * 
+     * @param Application $app Application instance
+     */
+    public function setApplication(Application $app) {
+        $this->app = $app;
     }
 
     /**
@@ -126,7 +138,7 @@ class ListBuilderHelper {
 
                     $el = HTML::el('span')
                         ->title(DateTimeFormatHelper::formatDateToUserFriendly($value, DateTimeFormatHelper::ATOM_FORMAT))
-                        ->text(DateTimeFormatHelper::formatDateToUserFriendly($value));
+                        ->text(DateTimeFormatHelper::formatDateToUserFriendly($value, $this->app->currentUser->getDateFormat()));
 
                     return $el;
                 };

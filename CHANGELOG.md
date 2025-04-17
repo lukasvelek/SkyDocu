@@ -27,8 +27,8 @@ Previously changelog for versions `1.0`-`1.4` has been located in README.md. How
     - Right management
     - Logging
 - New application version format implementation
-    - Build and branch are now contained
-- ContainerFileRemovingSlaveService update
+    - Build and branch are now included
+- `ContainerFileRemovingSlaveService` update
 - General services update
 - Bugfixes
 - Global usage graphs
@@ -71,7 +71,7 @@ Previously changelog for versions `1.0`-`1.4` has been located in README.md. How
     - In-container Users grid
     - In-conatiner Groups grid
 - Cache invalidation bug fix
-- FoldersSidebar alphabetical sorting
+- `FoldersSidebar` alphabetical sorting
 - New widgets
 - All process rights update
 - Archive
@@ -100,16 +100,16 @@ Previously changelog for versions `1.0`-`1.4` has been located in README.md. How
 - ErrorModule implementation
 - Core framework updates
 - Bugfixes
-- GridBuilder optimization
+- `GridBuilder` optimization
 - Form reducing & on change AJAX calling capability
 - Processes grid design update
 - Document sharing
 - Core AJAX requests and responses update
 - Updated config.php define checking
-- Empty GridBuilder design update
+- Empty `GridBuilder` design update
 - Accessibility update
-    - GridBuilder column name hints
-    - GridBuilder control hints
+    - `GridBuilder` column name hints
+    - `GridBuilder` control hints
     - Link hints
     - FormBuilder element hints
 - Updated information flash message design

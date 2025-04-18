@@ -2,11 +2,14 @@
 
 namespace App\Modules\SuperAdminModule;
 
+use App\Constants\Container\ProcessStatus as ContainerProcessStatus;
+use App\Constants\ProcessStatus;
 use App\Core\AjaxRequestBuilder;
 use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
 use App\Core\Http\JsonResponse;
 use App\Exceptions\AException;
+use App\Repositories\Container\ProcessRepository;
 use App\UI\FormBuilder2\JSON2FB;
 
 class ProcessEditorPresenter extends ASuperAdminPresenter {
@@ -79,6 +82,11 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
     public function handleEditor(?FormRequest $fr = null) {
         if($fr !== null) {
             try {
+                $oldProcessId = null;
+                if($this->httpRequest->get('processId') !== null) {
+                    $oldProcessId = $this->httpRequest->get('processId');
+                }
+
                 $formdata = $this->httpRequest->get('formdata');
                 $formdata = json_decode(base64_decode($formdata), true);
 
@@ -89,7 +97,28 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
 
                 $this->app->processRepository->beginTransaction(__METHOD__);
 
-                $this->app->processManager->createNewProcess($title, $description, $this->getUserId(), $code);
+                // add new version
+                [$processId, $uniqueProcessId] = $this->app->processManager->createNewProcess($title, $description, $this->getUserId(), $code, $oldProcessId);
+
+                // remove old version from distribution
+                if($oldProcessId !== null) {
+                    $this->app->processManager->updateProcess($oldProcessId, ['status' => ProcessStatus::NOT_IN_DISTRIBUTION]);
+                }
+
+                $containers = $this->app->containerManager->getAllContainers(true, true);
+
+                foreach($containers as $container) {
+                    /**
+                     * @var \App\Entities\ContainerEntity $container
+                     */
+                    $dbConn = $this->app->dbManager->getConnectionToDatabase($container->getDefaultDatabase()->getName());
+
+                    $processRepository = new ProcessRepository($dbConn, $this->logger, $this->app->userRepository->transactionLogRepository);
+
+                    $processRepository->removeCurrentDistributionProcessFromDistributionForUniqueProcessId($uniqueProcessId);
+
+                    $processRepository->addNewProcess($processId, $uniqueProcessId, $title, $description, $code, $this->getUserId(), ContainerProcessStatus::IN_DISTRIBUTION);
+                }
 
                 $this->app->processRepository->commit($this->getUserId(), __METHOD__);
 
@@ -109,16 +138,23 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
     }
 
     protected function createComponentProcessEditor(HttpRequest $request) {
+        $params = [];
+
         $process = null;
         if($request->get('processId') !== null && $request->get('uniqueProcessId') !== null) {
             $processId = $this->httpRequest->get('processId');
 
             $process = $this->app->processManager->getProcessById($processId);
+
+            $params['processId'] = $processId;
+            $params['uniqueProcessId'] = $process->uniqueProcessId;
         }
+
+        $params['formdata'] = $request->get('formdata');
 
         $form = $this->componentFactory->getFormBuilder();
 
-        $form->setAction($this->createURL('editor', ['formdata' => $request->get('formdata')]));
+        $form->setAction($this->createURL('editor', $params));
 
         $form->addLabel('formDefinition_label', 'Form JSON definition:')
             ->setRequired();

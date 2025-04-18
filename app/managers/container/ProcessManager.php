@@ -5,7 +5,6 @@ namespace App\Managers\Container;
 use App\Constants\Container\ProcessesGridSystemMetadata;
 use App\Constants\Container\ProcessInstanceStatus;
 use App\Core\DB\DatabaseRow;
-use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
 use App\Exceptions\NonExistingEntityException;
 use App\Helpers\ProcessHelper;
@@ -226,37 +225,6 @@ class ProcessManager extends AManager {
 
         $this->insertProcessMetadataHistory($processId, $userId, ProcessesGridSystemMetadata::STATUS, $process->status, $data['status']);
         $this->insertProcessMetadataHistory($processId, $userId, ProcessesGridSystemMetadata::CURRENT_OFFICER_USER_ID, $process->currentOfficerUserId, null);
-    }
-
-    /**
-     * Checks if given document is in a process
-     * 
-     * @param string $documentId Document ID
-     * @return bool True if document is in a process or false if not
-     */
-    public function isDocumentInProcess(string $documentId): bool {
-        $processes = $this->processRepository->getProcessesForDocument($documentId);
-
-        return !empty($processes);
-    }
-
-    /**
-     * Checks if given documents are in processes. Returns array of all document IDs that are in processes.
-     * 
-     * @param array $documentIds Array of document IDs
-     * @return array Array of document IDs that are in processes
-     */
-    public function areDocumentsInProcesses(array $documentIds): array {
-        $tmp = $this->processRepository->getActiveProcessCountForDocuments($documentIds);
-
-        $result = [];
-        foreach($tmp as $documentId => $count) {
-            if($count > 0) {
-                $result[] = $documentId;
-            }
-        }
-
-        return $result;
     }
 
     /**

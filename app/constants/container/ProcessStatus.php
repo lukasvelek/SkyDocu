@@ -7,33 +7,29 @@ use App\Constants\IBackgroundColorable;
 use App\Constants\IColorable;
 
 class ProcessStatus extends AConstant implements IColorable, IBackgroundColorable {
-    public const IN_PROGRESS = 1;
-    public const FINISHED = 2;
-    public const CANCELED = 3;
+    public const IN_DISTRIBUTION = 1;
+    public const NOT_IN_DISTRIBUTION = 2;
 
     public static function toString($key): ?string {
         return match((int)$key) {
-            self::IN_PROGRESS => 'In progress',
-            self::FINISHED => 'Finished',
-            self::CANCELED => 'Canceled',
+            self::IN_DISTRIBUTION => 'In distribution',
+            self::NOT_IN_DISTRIBUTION => 'Not in distribution',
             default => null
         };
     }
 
     public static function getColor($key): ?string {
         return match((int)$key) {
-            self::IN_PROGRESS => 'blue',
-            self::FINISHED => 'green',
-            self::CANCELED => 'red',
+            self::IN_DISTRIBUTION => 'green',
+            self::NOT_IN_DISTRIBUTION => 'red',
             default => 'black'
         };
     }
 
     public static function getBackgroundColor($key): ?string {
         return match((int)$key) {
-            self::IN_PROGRESS => 'lightblue',
-            self::FINISHED => 'lightgreen',
-            self::CANCELED => 'pink',
+            self::IN_DISTRIBUTION => 'lightgreen',
+            self::NOT_IN_DISTRIBUTION => 'pink',
             default => null
         };
     }

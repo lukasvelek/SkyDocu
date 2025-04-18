@@ -7,6 +7,7 @@ use App\Components\ProcessViewSidebar\ProcessViewSidebar;
 use App\Constants\Container\InvoiceCurrencies;
 use App\Constants\Container\ProcessFormValues\HomeOffice;
 use App\Constants\Container\ProcessGridViews;
+use App\Constants\Container\ProcessInstanceStatus;
 use App\Constants\Container\ProcessStatus;
 use App\Constants\Container\StandaloneProcesses;
 use App\Constants\Container\SystemProcessTypes;
@@ -237,7 +238,7 @@ class ProcessesPresenter extends AUserPresenter {
         // PROCESS ACTIONS
         $actions = [];
 
-        if($process->status == ProcessStatus::IN_PROGRESS) {
+        if($process->status == ProcessInstanceStatus::IN_PROGRESS) {
             // in progress
             if($process->currentOfficerUserId == $this->getUserId()) {
                 // is current officer
@@ -284,9 +285,9 @@ class ProcessesPresenter extends AUserPresenter {
 
             $processActionsCode = implode('<br><br>', $tmp);
         } else {
-            if($process->status == ProcessStatus::FINISHED) {
+            if($process->status == ProcessInstanceStatus::FINISHED) {
                 $processActionsCode = 'Process has been finished.';
-            } else if($process->status == ProcessStatus::CANCELED) {
+            } else if($process->status == ProcessInstanceStatus::CANCELED) {
                 $processActionsCode = 'Process has been canceled.';
             }
         }
@@ -460,10 +461,6 @@ class ProcessesPresenter extends AUserPresenter {
                     break;
     
                 case 'finish':
-                    if($isStandalone === null) {
-                        $this->processFactory->startDocumentProcessFinalExecute($process->type, $process->documentId);
-                    }
-
                     $this->processManager->finishProcess($processId, $this->getUserId());
 
                     if($isStandalone !== null) {

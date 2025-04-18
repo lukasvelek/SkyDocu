@@ -2,10 +2,14 @@
 
 namespace App\Modules\SuperAdminModule;
 
+use App\Constants\Container\ProcessStatus as ContainerProcessStatus;
 use App\Constants\ProcessStatus;
 use App\Core\DB\DatabaseRow;
 use App\Core\Http\HttpRequest;
+use App\Exceptions\AException;
+use App\Exceptions\GeneralException;
 use App\Helpers\LinkHelper;
+use App\Repositories\Container\ProcessRepository;
 use App\UI\FormBuilder2\JSON2FB;
 use App\UI\GridBuilder2\Action;
 use App\UI\GridBuilder2\Row;
@@ -29,7 +33,7 @@ class ProcessesPresenter extends ASuperAdminPresenter {
         $grid = $this->componentFactory->getGridBuilder();
 
         $qb = $this->app->processRepository->composeQueryForProcesses();
-        //$qb->orderBy('version', 'DESC');
+        $qb->andWhere('status = ?', [ProcessStatus::IN_DISTRIBUTION]);
 
         $grid->createDataSourceFromQueryBuilder($qb, 'processId');
 
@@ -51,42 +55,6 @@ class ProcessesPresenter extends ASuperAdminPresenter {
             return $el;
         };
 
-        $addToDistribution = $grid->addAction('addToDistribution');
-        $addToDistribution->setTitle('Add to distribution');
-        $addToDistribution->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) {
-            if($row->status == ProcessStatus::NEW) {
-                return true;
-            }
-
-            return false;
-        };
-        $addToDistribution->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
-            $el = HTML::el('a');
-            $el->text('Add to distribution')
-                ->class('grid-link')
-                ->href($this->createURLString('addToDistribution', ['processId' => $primaryKey]));
-
-            return $el;
-        };
-
-        $removeFromDistribution = $grid->addAction('removeFromDistribution');
-        $removeFromDistribution->setTitle('Remove from distribution');
-        $removeFromDistribution->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) {
-            if($row->status == ProcessStatus::IN_DISTRIBUTION) {
-                return true;
-            }
-
-            return false;
-        };
-        $removeFromDistribution->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
-            $el = HTML::el('a');
-            $el->text('Remove from distribution')
-                ->class('grid-link')
-                ->href($this->createURLString('removeFromDistribution', ['processId' => $primaryKey]));
-
-            return $el;
-        };
-
         $edit = $grid->addAction('edit');
         $edit->setTitle('Edit');
         $edit->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) {
@@ -101,6 +69,10 @@ class ProcessesPresenter extends ASuperAdminPresenter {
             return $el;
         };
 
+        $delete = $grid->addAction('delete');
+        $delete->setTitle('Delete');
+        // todo: ADD FORM DELETING
+
         return $grid;
     }
 
@@ -113,14 +85,6 @@ class ProcessesPresenter extends ASuperAdminPresenter {
 
         $this->template->process_form = $form->render();
         $this->template->links = $this->createBackUrl('list');
-    }
-
-    public function handleAddToDistribution() {
-
-    }
-
-    public function handleRemoveFromDistribution() {
-
     }
 }
 

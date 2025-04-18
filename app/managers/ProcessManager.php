@@ -24,7 +24,7 @@ class ProcessManager extends AManager {
     }
 
     /**
-     * Creates a new process
+     * Creates a new process and returns a new process ID
      * 
      * @param string $title Title
      * @param string $description Description
@@ -32,7 +32,7 @@ class ProcessManager extends AManager {
      * @param string $formCode Form code
      * @param ?string $oldProcessId Old process ID
      */
-    public function createNewProcess(string $title, string $description, string $authorId, string $formCode, ?string $oldProcessId = null) {
+    public function createNewProcess(string $title, string $description, string $authorId, string $formCode, ?string $oldProcessId = null): array {
         $processId = $this->createId(EntityManager::PROCESSES);
 
         $version = 1;
@@ -40,15 +40,17 @@ class ProcessManager extends AManager {
         if($oldProcessId !== null) {
             $process = $this->getProcessById($oldProcessId);
 
-            $version = (int)$process->version + 1;
+            $version = (int)($process->version) + 1;
             $uniqueProcessId = $process->uniqueProcessId;
         } else {
             $uniqueProcessId = $this->createId(EntityManager::PROCESSES_UNIQUE);
         }
 
-        if(!$this->processRepository->insertNewProcess($processId, $uniqueProcessId, $title, $description, $formCode, $authorId, ProcessStatus::NEW, $version)) {
+        if(!$this->processRepository->insertNewProcess($processId, $uniqueProcessId, $title, $description, $formCode, $authorId, ProcessStatus::IN_DISTRIBUTION, $version)) {
             throw new GeneralException('Database error.');
         }
+
+        return [$processId, $uniqueProcessId];
     }
 
     /**
@@ -64,6 +66,18 @@ class ProcessManager extends AManager {
         }
 
         return DatabaseRow::createFromDbRow($process);
+    }
+
+    /**
+     * Updates process
+     * 
+     * @param string $processId Process ID
+     * @param array $data Data
+     */
+    public function updateProcess(string $processId, array $data) {
+        if(!$this->processRepository->updateProcess($processId, $data)) {
+            throw new GeneralException('Database error.');
+        }
     }
 }
 

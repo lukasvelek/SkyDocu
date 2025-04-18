@@ -2,6 +2,7 @@
 
 namespace App\Repositories\Container;
 
+use App\Constants\Container\ProcessInstanceStatus;
 use App\Constants\Container\ProcessStatus;
 use App\Constants\Container\StandaloneProcesses;
 use App\Repositories\ARepository;
@@ -16,7 +17,7 @@ class ProcessRepository extends ARepository {
             ->from('processes');
 
         if($onlyNotFinished) {
-            $qb->andWhere('status = ?', [ProcessStatus::IN_PROGRESS]);
+            $qb->andWhere('status = ?', [ProcessInstanceStatus::IN_PROGRESS]);
         }
 
         return $qb;
@@ -58,7 +59,7 @@ class ProcessRepository extends ARepository {
             ->where('documentId = ?', [$documentId]);
 
         if($activeOnly) {
-            $qb->andWhere($qb->getColumnNotInValues('status', [ProcessStatus::FINISHED, ProcessStatus::CANCELED]));
+            $qb->andWhere($qb->getColumnNotInValues('status', [ProcessInstanceStatus::FINISHED, ProcessInstanceStatus::CANCELED]));
         }
 
         $qb->execute();
@@ -88,7 +89,7 @@ class ProcessRepository extends ARepository {
         $qb->select(['documentId', 'COUNT(processId) AS cnt'])
             ->from('processes')
             ->where($qb->getColumnInValues('documentId', $documentIds))
-            ->andWhere($qb->getColumnNotInValues('status', [ProcessStatus::FINISHED, ProcessStatus::CANCELED]))
+            ->andWhere($qb->getColumnNotInValues('status', [ProcessInstanceStatus::FINISHED, ProcessInstanceStatus::CANCELED]))
             ->andWhere($qb->getColumnInValues('type', $types));
 
         $qb->execute();
@@ -355,6 +356,51 @@ class ProcessRepository extends ARepository {
 
     public function get(QueryOperation $operation): QueryResult {
         return $this->processPeeQL('processes', $operation);
+    }
+
+    public function addNewProcess(string $processId, string $uniqueProcessId, string $title, string $description, string $form, string $userId, int $status) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->insert('processes', ['processId', 'uniqueProcessId', 'title', 'description', 'form', 'userId', 'status'])
+            ->values([$processId, $uniqueProcessId, $title, $description, $form, $userId, $status])
+            ->execute();
+
+        return $qb->fetchBool();
+    }
+
+    public function getDistributionProcessForUniqueProcessId(string $uniqueProcessId) {
+        $qb = $this->commonComposeQuery(false);
+
+        $qb->andWhere('uniqueProcessId = ?', [$uniqueProcessId])
+            ->andWhere('status = ?', [ProcessStatus::IN_DISTRIBUTION])
+            ->execute();
+
+        return $qb->fetch();
+    }
+
+    public function removeCurrentDistributionProcessFromDistributionForUniqueProcessId(string $uniqueProcessId) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->update('processes')
+            ->set(['status' => ProcessStatus::NOT_IN_DISTRIBUTION])
+            ->where('uniqueProcessId = ?', [$uniqueProcessId])
+            ->andWhere('status = ?', [ProcessStatus::IN_DISTRIBUTION])
+            ->execute();
+
+        return $qb->fetchBool();
+    }
+
+    public function addCurrentDistributionprocessToDistributionForUniqueProcessId(string $processId, string $uniqueProcessId) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->update('processes')
+            ->set(['status' => ProcessStatus::IN_DISTRIBUTION])
+            ->where('uniqueProcessId = ?', [$uniqueProcessId])
+            ->andWhere('processId = ?', [$processId])
+            ->andWhere('status = ?', [ProcessStatus::NOT_IN_DISTRIBUTION])
+            ->execute();
+
+        return $qb->fetchBool();
     }
 }
 

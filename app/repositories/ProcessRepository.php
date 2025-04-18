@@ -49,7 +49,7 @@ class ProcessRepository extends ARepository {
      * 
      * @param string $processId Process ID
      */
-    public function getProcessById(string $processId) {
+    public function getProcessById(string $processId): mixed {
         $qb = $this->qb(__METHOD__);
 
         $qb->select(['*'])
@@ -65,7 +65,7 @@ class ProcessRepository extends ARepository {
      * 
      * @param string $uniqueProcessId Unique process ID
      */
-    public function composeQueryForProcessType(string $uniqueProcessId) {
+    public function composeQueryForProcessType(string $uniqueProcessId): QueryBuilder {
         $qb = $this->qb(__METHOD__);
 
         $qb->select(['*'])
@@ -73,6 +73,23 @@ class ProcessRepository extends ARepository {
             ->where('uniqueProcessId = ?', [$uniqueProcessId]);
 
         return $qb;
+    }
+
+    /**
+     * Updates process
+     * 
+     * @param string $processId Process ID
+     * @param array $data Data
+     */
+    public function updateProcess(string $processId, array $data): bool {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->update('processes')
+            ->set($data)
+            ->where('processId = ?', [$processId])
+            ->execute();
+
+        return $qb->fetchBool();
     }
 }
 

@@ -141,6 +141,18 @@ class FormBuilder2 extends AComponent {
         return $template->render()->getRenderedContent();
     }
 
+    public function renderElementsOnly(): string {
+        $code = '';
+
+        foreach($this->elements as $name => $element) {
+            $row = $this->buildElement($name, $element);
+
+            $code .= $row->render();
+        }
+
+        return $code;
+    }
+
     /**
      * Build the inner form (the form itself) and returns its HTML code
      * 
@@ -326,7 +338,7 @@ class FormBuilder2 extends AComponent {
             $label = $this->labels[$name];
         }
 
-        if($element instanceof AInteractableElement) {
+        if($label !== null && $element instanceof AInteractableElement) {
             if($element->isRequired()) {
                 $label->setRequired();
             }
@@ -603,6 +615,77 @@ class FormBuilder2 extends AComponent {
         $this->elements[$name] = &$s;
 
         $this->processLabel($name, $label);
+
+        return $s;
+    }
+
+    public function addUserSelect(string $name, ?string $label = null, ?string $containerId = null) {
+        $s = new Select($name);
+
+        $this->elements[$name] = &$s;
+
+        $this->processLabel($name, $label);
+
+        // ADD USERS
+        $users = [];
+
+        $userJson = [
+            'operation' => 'query',
+            'name' => 'getUsers',
+            'definition' => [
+                'users' => [
+                    'get' => [
+                        'cols' => [
+                            'userId',
+                            'fullname'
+                        ]
+                    ]
+                ]
+            ]
+        ];
+
+        $getUserJson = function(string $userId) {
+            return [
+                'operation' => 'query',
+                'name' => 'getUsers',
+                'definition' => [
+                    'users' => [
+                        'get' => [
+                            'cols' => [
+                                'userId',
+                                'fullname'
+                            ],
+                            'conditions' => [
+                                [
+                                    'col' => 'userId',
+                                    'value' => $userId,
+                                    'type' => 'eq'
+                                ]
+                            ]
+                        ]
+                    ]
+                ]
+            ];
+        };
+
+        if($containerId !== null) {
+            $container = $this->app->containerManager->getContainerById($containerId);
+
+            $groupUsers = $this->app->groupManager->getGroupUsersForGroupTitle($container->getTitle() . ' - users');
+
+            foreach($groupUsers as $userId) {
+                $user = json_decode($this->app->peeql->execute(json_encode($getUserJson($userId))), true)['data'];
+
+                foreach($user as $row) {
+                    $users[] = [
+                        'value' => $row['userId'],
+                        'text' => $row['fullname']
+                    ];
+                }
+            }
+
+            $s->addRawOptions($users);
+        }
 
         return $s;
     }

@@ -2,12 +2,10 @@
 
 namespace App\Core;
 
-use App\Authorizators\DocumentBulkActionAuthorizator;
 use App\Authorizators\GroupStandardOperationsAuthorizator;
 use App\Authorizators\SupervisorAuthorizator;
 use App\Core\Caching\CacheFactory;
 use App\Entities\ContainerEntity;
-use App\Lib\Processes\ProcessFactory;
 use App\Logger\Logger;
 use App\Managers\Container\ArchiveManager;
 use App\Managers\Container\DocumentManager;
@@ -34,7 +32,6 @@ use App\Repositories\Container\GridRepository;
 use App\Repositories\Container\GroupRepository;
 use App\Repositories\Container\MetadataRepository;
 use App\Repositories\Container\ProcessRepository;
-use App\Repositories\Container\TransactionLogRepository;
 use App\Repositories\ContentRepository;
 use ReflectionClass;
 
@@ -78,11 +75,8 @@ class Container {
     public FileStorageManager $fileStorageManager;
     public ExternalSystemsManager $externalSystemsManager;
 
-    public DocumentBulkActionAuthorizator $documentBulkActionAuthorizator;
     public GroupStandardOperationsAuthorizator $groupStandardOperationsAuthorizator;
     public SupervisorAuthorizator $supervisorAuthorizator;
-
-    public ProcessFactory $processFactory;
 
     public string $containerId;
     public ContainerEntity $container;
@@ -126,7 +120,6 @@ class Container {
         $this->enumManager->standaloneProcessManager = $this->standaloneProcessManager;
         $this->documentManager->enumManager = $this->enumManager;
         
-        $this->documentBulkActionAuthorizator = new DocumentBulkActionAuthorizator($this->conn, $this->logger, $this->documentManager, $this->documentRepository, $this->app->userManager, $this->groupManager, $this->processManager, $this->archiveManager, $this->folderManager);
         $this->groupStandardOperationsAuthorizator = new GroupStandardOperationsAuthorizator($this->conn, $this->logger, $this->groupManager);
         $this->supervisorAuthorizator = new SupervisorAuthorizator($this->conn, $this->logger, $this->groupManager);
 
@@ -134,18 +127,6 @@ class Container {
 
         $user = $this->app->userManager->getServiceUserId();
         $serviceUser = $this->app->userManager->getUserById($user);
-
-        $this->processFactory = new ProcessFactory(
-            $this->documentManager,
-            $this->groupStandardOperationsAuthorizator,
-            $this->documentBulkActionAuthorizator,
-            $this->app->userManager,
-            $this->groupManager,
-            $serviceUser,
-            $this->containerId,
-            $this->processManager,
-            $this->archiveManager
-        );
     }
 
     /**

@@ -2,7 +2,6 @@
 
 namespace App\Components\DocumentsGrid;
 
-use App\Authorizators\DocumentBulkActionAuthorizator;
 use App\Authorizators\GroupStandardOperationsAuthorizator;
 use App\Constants\Container\CustomMetadataTypes;
 use App\Constants\Container\DocumentsGridSystemMetadata;
@@ -14,7 +13,6 @@ use App\Core\Http\JsonResponse;
 use App\Enums\AEnumForMetadata;
 use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
-use App\Lib\Processes\ProcessFactory;
 use App\Managers\Container\ArchiveManager;
 use App\Managers\Container\DocumentManager;
 use App\Managers\Container\EnumManager;
@@ -35,12 +33,9 @@ use App\UI\HTML\HTML;
 class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
     private string $currentUserId;
     private DocumentManager $documentManager;
-    private DocumentBulkActionsHelper $documentBulkActionsHelper;
-    private DocumentBulkActionAuthorizator $documentBulkActionAuthorizator;
     private GroupStandardOperationsAuthorizator $groupStandardOperationsAuthorizator;
     private EnumManager $enumManager;
     private GridManager $gridManager;
-    private ProcessFactory $processFactory;
     private ArchiveManager $archiveManager;
     private FileStorageManager $fileStorageManager;
 
@@ -56,11 +51,9 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
      * @param GridBuilder $grid GridBuilder instance
      * @param Application $app Application instance
      * @param DocumentManager $documentManager DocumentManager instance
-     * @param DocumentBulkActionAuthorizator $documentBulkActionAuthorizator DocumentBulkActionAuthorizator instance
      * @param GroupStandardOperationsAuthorizator $groupStandardOperationsAuthorizator
      * @param EnumManager $enumManager
      * @param GridManager $gridManager
-     * @param ProcessFactory $processFactory
      * @param ArchiveManager $archiveManager
      * @param FileStorageManager $fileStorageManager
      */
@@ -68,11 +61,9 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
         GridBuilder $grid,
         Application $app,
         DocumentManager $documentManager,
-        DocumentBulkActionAuthorizator $documentBulkActionAuthorizator,
         GroupStandardOperationsAuthorizator $groupStandardOperationsAuthorizator,
         EnumManager $enumManager,
         GridManager $gridManager,
-        ProcessFactory $processFactory,
         ArchiveManager $archiveManager,
         FileStorageManager $fileStorageManager
     ) {
@@ -83,15 +74,11 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
         $this->app = $app;
         $this->documentManager = $documentManager;
         $this->currentUserId = $app->currentUser->getId();
-        $this->documentBulkActionAuthorizator = $documentBulkActionAuthorizator;
         $this->groupStandardOperationsAuthorizator = $groupStandardOperationsAuthorizator;
         $this->enumManager = $enumManager;
         $this->gridManager = $gridManager;
-        $this->processFactory = $processFactory;
         $this->archiveManager = $archiveManager;
         $this->fileStorageManager = $fileStorageManager;
-
-        $this->documentBulkActionsHelper = new DocumentBulkActionsHelper($this->app, $this->documentManager, $this->httpRequest, $this->documentBulkActionAuthorizator, $this->groupStandardOperationsAuthorizator, $this->processFactory);
 
         $this->allMetadata = false;
         $this->currentFolderId = null;
@@ -271,15 +258,6 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
 
                 case DocumentsGridSystemMetadata::STATUS:
                     $this->addColumnConst(DocumentsGridSystemMetadata::STATUS, DocumentsGridSystemMetadata::toString(DocumentsGridSystemMetadata::STATUS), DocumentStatus::class);
-                    break;
-
-                case DocumentsGridSystemMetadata::IS_IN_PROCESS:
-                    $documentsInProcess = $this->processFactory->processManager->areDocumentsInProcesses($documentIds);
-
-                    $col = $this->addColumnBoolean(DocumentsGridSystemMetadata::IS_IN_PROCESS, DocumentsGridSystemMetadata::toString(DocumentsGridSystemMetadata::IS_IN_PROCESS));
-                    array_unshift($col->onRenderColumn, function(DatabaseRow $row, Row $_row, Cell $cell, HTML $html, mixed $value) use ($documentsInProcess) {
-                        return in_array($row->documentId, $documentsInProcess);
-                    });
                     break;
 
                 case DocumentsGridSystemMetadata::HAS_FILE:
@@ -613,30 +591,6 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
     }
 
     // HANDLERS
-    /**
-     * Handles bulk actions
-     * 
-     * @return JsonResponse Rendered modal content
-     */
-    public function actionBulkAction() {
-        $modal = new BulkActionsModal($this);
-
-        $ids = $this->httpRequest->get('ids');
-
-        if($this->isArchive) {
-            $this->documentBulkActionsHelper->setArchiveFolderId($this->getFolderId());
-        } else {
-            $this->documentBulkActionsHelper->setFolderId($this->getFolderId());
-        }
-
-        $bulkActions = $this->documentBulkActionsHelper->getBulkActions($ids, $this->currentFolderId);
-
-        $modal->setBulkActions($bulkActions);
-        $modal->startup();
-
-        return new JsonResponse(['modal' => $modal->render()]);
-    }
-
     public function actionFilter(): JsonResponse {
         $this->getActiveFiltersFromCache();
 

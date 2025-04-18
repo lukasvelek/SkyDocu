@@ -60,14 +60,13 @@ class ProcessManager extends AManager {
     /**
      * Starts given process
      * 
-     * @param ?string $documentId Document ID or null
      * @param string $type Proces type
      * @param string $userId Process author user ID
      * @param string $currentOfficerUserId Process current officer user ID
      * @param array $workflowUserIds Array of user IDs that are in the workflow
      * @return string Process ID
      */
-    public function startProcess(?string $documentId, string $type, string $userId, string $currentOfficerId, array $workflowUserIds): string {
+    public function startProcess(string $type, string $userId, string $currentOfficerId, array $workflowUserIds): string {
         $processId = $this->createId(EntityManager::C_PROCESSES);
 
         if($processId === null) {
@@ -89,10 +88,6 @@ class ProcessManager extends AManager {
             if($substitute != $currentOfficerId) {
                 $data['currentOfficerSubstituteUserId'] = $substitute;
             }
-        }
-
-        if($documentId !== null) {
-            $data['documentId'] = $documentId;
         }
 
         if(!$this->processRepository->insertNewProcess($processId, $data)) {
@@ -284,35 +279,6 @@ class ProcessManager extends AManager {
         }
 
         return $this->mProcessesCache[$processId];
-    }
-
-    /**
-     * Starts process and finishes it right after
-     * 
-     * @param string $documentId Document ID
-     * @param string $type Process type
-     * @param string $userId User ID
-     * @param string $currentOfficerUserId Current officer user ID
-     * @param array $workflowUserIds Array of user IDs that are in the process workflow
-     * @return bool True on success or false on failure
-     */
-    public function saveProcess(string $documentId, string $type, string $userId, string $currentOfficerId, array $workflowUserIds): bool {
-        $result = true;
-
-        try {
-            $this->processRepository->beginTransaction(__METHOD__);
-        
-            $processId = $this->startProcess($documentId, $type, $userId, $currentOfficerId, $workflowUserIds);
-            $this->finishProcess($processId, $userId);
-
-            $this->processRepository->commit($userId, __METHOD__);
-        } catch(AException $e) {
-            $this->processRepository->rollback(__METHOD__);
-
-            $result = false;
-        }
-
-        return $result;
     }
 
     /**

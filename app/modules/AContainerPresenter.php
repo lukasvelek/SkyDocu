@@ -2,13 +2,11 @@
 
 namespace App\Modules;
 
-use App\Authorizators\DocumentBulkActionAuthorizator;
 use App\Authorizators\GroupStandardOperationsAuthorizator;
 use App\Authorizators\SupervisorAuthorizator;
 use App\Constants\SessionNames;
 use App\Core\Caching\CacheFactory;
 use App\Core\DatabaseConnection;
-use App\Lib\Processes\ProcessFactory;
 use App\Managers\Container\ArchiveManager;
 use App\Managers\Container\DocumentManager;
 use App\Managers\Container\EnumManager;
@@ -34,7 +32,6 @@ use App\Repositories\Container\GridRepository;
 use App\Repositories\Container\GroupRepository;
 use App\Repositories\Container\MetadataRepository;
 use App\Repositories\Container\ProcessRepository;
-use App\Repositories\Container\TransactionLogRepository;
 use App\Repositories\ContentRepository;
 use ReflectionClass;
 
@@ -72,11 +69,8 @@ abstract class AContainerPresenter extends APresenter {
     protected FileStorageManager $fileStorageManager;
     protected ExternalSystemsManager $externalSystemsManager;
 
-    protected DocumentBulkActionAuthorizator $documentBulkActionAuthorizator;
     protected GroupStandardOperationsAuthorizator $groupStandardOperationsAuthorizator;
     protected SupervisorAuthorizator $supervisorAuthorizator;
-
-    protected ProcessFactory $processFactory;
 
     protected string $containerId;
 
@@ -121,23 +115,10 @@ abstract class AContainerPresenter extends APresenter {
 
         $this->documentManager->enumManager = $this->enumManager;
 
-        $this->documentBulkActionAuthorizator = new DocumentBulkActionAuthorizator($containerConnection, $this->logger, $this->documentManager, $this->documentRepository, $this->app->userManager, $this->groupManager, $this->processManager, $this->archiveManager, $this->folderManager);
         $this->groupStandardOperationsAuthorizator = new GroupStandardOperationsAuthorizator($containerConnection, $this->logger, $this->groupManager);
         $this->supervisorAuthorizator = new SupervisorAuthorizator($containerConnection, $this->logger, $this->groupManager);
 
         $this->injectCacheFactoryToAuthorizators();
-
-        $this->processFactory = new ProcessFactory(
-            $this->documentManager,
-            $this->groupStandardOperationsAuthorizator,
-            $this->documentBulkActionAuthorizator,
-            $this->app->userManager,
-            $this->groupManager,
-            $this->app->currentUser,
-            $this->containerId,
-            $this->processManager,
-            $this->archiveManager
-        );
 
         $this->componentFactory->setCacheFactory($this->getContainerCacheFactory());
     }

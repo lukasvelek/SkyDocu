@@ -47,11 +47,9 @@ class ArchivePresenter extends AUserPresenter {
             $this->componentFactory->getGridBuilder($this->containerId),
             $this->app,
             $this->documentManager,
-            $this->documentBulkActionAuthorizator,
             $this->groupStandardOperationsAuthorizator,
             $this->enumManager,
             $this->gridManager,
-            $this->processFactory,
             $this->archiveManager,
             $this->fileStorageManager
         );

@@ -62,7 +62,7 @@ class StandaloneProcessManager extends AManager {
             $admin->getId()
         ];
 
-        $processId = $this->processManager->startProcess(null, StandaloneProcesses::HOME_OFFICE, $this->currentUser->getId(), $currentOfficerId, $workflow);
+        $processId = $this->processManager->startProcess(StandaloneProcesses::HOME_OFFICE, $this->currentUser->getId(), $currentOfficerId, $workflow);
 
         $this->saveProcessData($processId, $data);
     }
@@ -75,7 +75,7 @@ class StandaloneProcessManager extends AManager {
             $admin->getId()
         ];
 
-        $processId = $this->processManager->startProcess(null, StandaloneProcesses::FUNCTION_REQUEST, $this->currentUser->getId(), $currentOfficerId, $workflow);
+        $processId = $this->processManager->startProcess(StandaloneProcesses::FUNCTION_REQUEST, $this->currentUser->getId(), $currentOfficerId, $workflow);
 
         $this->saveProcessData($processId, $data);
     }
@@ -91,7 +91,7 @@ class StandaloneProcessManager extends AManager {
             $containerManagerId
         ];
 
-        $processId = $this->processManager->startProcess(null, StandaloneProcesses::CONTAINER_REQUEST, $this->currentUser->getId(), $currentOfficerId, $workflow);
+        $processId = $this->processManager->startProcess(StandaloneProcesses::CONTAINER_REQUEST, $this->currentUser->getId(), $currentOfficerId, $workflow);
 
         $this->saveProcessData($processId, $data);
     }
@@ -107,7 +107,7 @@ class StandaloneProcessManager extends AManager {
             $accountantId
         ];
 
-        $processId = $this->processManager->startProcess(null, StandaloneProcesses::INVOICE, $this->currentUser->getId(), $currentOfficerId, $workflow);
+        $processId = $this->processManager->startProcess(StandaloneProcesses::INVOICE, $this->currentUser->getId(), $currentOfficerId, $workflow);
 
         $this->saveProcessData($processId, $data);
     }
@@ -184,7 +184,7 @@ class StandaloneProcessManager extends AManager {
 
         $currentOfficerId = $workflow[0];
 
-        $processId = $this->processManager->startProcess(null, StandaloneProcesses::REQUEST_PROPERTY_MOVE, $this->currentUser->getId(), $currentOfficerId, $workflow);
+        $processId = $this->processManager->startProcess(StandaloneProcesses::REQUEST_PROPERTY_MOVE, $this->currentUser->getId(), $currentOfficerId, $workflow);
 
         $this->saveProcessData($processId, $data);
     }

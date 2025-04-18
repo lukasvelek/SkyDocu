@@ -5,7 +5,7 @@ namespace App\Components\ProcessesGrid;
 use App\Constants\Container\GridNames;
 use App\Constants\Container\ProcessesGridSystemMetadata;
 use App\Constants\Container\ProcessGridViews;
-use App\Constants\Container\ProcessStatus;
+use App\Constants\Container\ProcessInstanceStatus;
 use App\Constants\Container\StandaloneProcesses;
 use App\Constants\Container\SystemProcessTypes;
 use App\Core\Application;
@@ -227,7 +227,7 @@ class ProcessesGrid extends GridBuilder implements IGridExtendingComponent {
                     break;
 
                 case ProcessesGridSystemMetadata::STATUS:
-                    $this->addColumnConst($name, $text, ProcessStatus::class);
+                    $this->addColumnConst($name, $text, ProcessInstanceStatus::class);
                     break;
             }
         }
@@ -283,7 +283,7 @@ class ProcessesGrid extends GridBuilder implements IGridExtendingComponent {
     private function appendFilters() {
         // Common
         $this->addFilter(ProcessesGridSystemMetadata::TYPE, null, StandaloneProcesses::getAll());
-        $this->addFilter(ProcessesGridSystemMetadata::STATUS, null, ProcessStatus::getAll());
+        //$this->addFilter(ProcessesGridSystemMetadata::STATUS, null, ProcessStatus::getAll());
         
         // Current officer
         if($this->view != ProcessGridViews::VIEW_WAITING_FOR_ME) {

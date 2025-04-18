@@ -105,11 +105,11 @@ class Navbar extends AComponent {
 
                 if($this->standaloneProcessManager !== null) {
                     $processType = null;
-                    foreach($this->standaloneProcessManager->getEnabledProcessTypes() as $_processType) {
+                    /*foreach($this->standaloneProcessManager->getEnabledProcessTypes() as $_processType) {
                         if($_processType->typeKey != StandaloneProcesses::REQUEST_PROPERTY_MOVE) {
                             $processType = $_processType->typeKey;
                         }
-                    }
+                    }*/
 
                     $links['Reports']['view'] = $processType . '-' . ProcessReportsViews::VIEW_MY;
                 }

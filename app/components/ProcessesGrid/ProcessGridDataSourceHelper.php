@@ -4,7 +4,7 @@ namespace App\Components\ProcessesGrid;
 
 use App\Constants\Container\ProcessesGridSystemMetadata;
 use App\Constants\Container\ProcessGridViews;
-use App\Constants\Container\ProcessStatus;
+use App\Constants\Container\ProcessInstanceStatus;
 use App\Repositories\Container\ProcessRepository;
 
 /**
@@ -105,7 +105,7 @@ class ProcessGridDataSourceHelper {
         $qb = $this->processRepository->commonComposeQuery(false);
         $qb->andWhere('authorUserId = :author OR currentOfficerUserId = :currentOfficer OR workflowUserIds LIKE :workflow OR currentOfficerSubstituteUserId = :currentOfficer')
             ->setParams([':author' => $currentUserId, ':currentOfficer' => $currentUserId, ':workflow' => '%' . $currentUserId . '%'])
-            ->andWhere($qb->getColumnInValues('status', [ProcessStatus::CANCELED, ProcessStatus::FINISHED]))
+            ->andWhere($qb->getColumnInValues('status', [ProcessInstanceStatus::CANCELED, ProcessInstanceStatus::FINISHED]))
             ->orderBy('dateCreated', 'DESC');
         return $qb;
     }

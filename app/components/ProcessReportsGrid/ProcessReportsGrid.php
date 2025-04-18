@@ -4,7 +4,7 @@ namespace App\Components\ProcessReportsGrid;
 
 use App\Constants\Container\GridNames;
 use App\Constants\Container\ProcessesGridSystemMetadata;
-use App\Constants\Container\ProcessStatus;
+use App\Constants\Container\ProcessInstanceStatus;
 use App\Core\Application;
 use App\Core\DB\DatabaseRow;
 use App\Core\Http\JsonResponse;
@@ -111,7 +111,7 @@ class ProcessReportsGrid extends GridBuilder implements IGridExtendingComponent 
                     break;
 
                 case ProcessesGridSystemMetadata::STATUS:
-                    $this->addColumnConst($name, $text, ProcessStatus::class);
+                    $this->addColumnConst($name, $text, ProcessInstanceStatus::class);
                     break;
             }
         }

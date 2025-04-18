@@ -3,7 +3,7 @@
 namespace App\Managers\Container;
 
 use App\Constants\Container\ProcessesGridSystemMetadata;
-use App\Constants\Container\ProcessStatus;
+use App\Constants\Container\ProcessInstanceStatus;
 use App\Core\DB\DatabaseRow;
 use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
@@ -194,7 +194,7 @@ class ProcessManager extends AManager {
         $process = $this->getProcessById($processId);
 
         $data = [
-            'status' => ProcessStatus::CANCELED
+            'status' => ProcessInstanceStatus::CANCELED
         ];
 
         if(!$this->processRepository->updateProcess($processId, $data)) {
@@ -202,7 +202,7 @@ class ProcessManager extends AManager {
         }
 
         $this->insertNewProcessComment($processId, $userId, $reason);
-        $this->insertProcessMetadataHistory($processId, $userId, ProcessesGridSystemMetadata::STATUS, $process->status, ProcessStatus::CANCELED);
+        $this->insertProcessMetadataHistory($processId, $userId, ProcessesGridSystemMetadata::STATUS, $process->status, ProcessInstanceStatus::CANCELED);
     }
 
     /**
@@ -215,7 +215,7 @@ class ProcessManager extends AManager {
         $process = $this->getProcessById($processId);
         
         $data = [
-            'status' => ProcessStatus::FINISHED,
+            'status' => ProcessInstanceStatus::FINISHED,
             'currentOfficerUserId' => null,
             'currentOfficerSubstituteUserId' => null
         ];

@@ -3,7 +3,7 @@
 namespace App\Components\Widgets\ProcessStatsWidget;
 
 use App\Components\Widgets\Widget;
-use App\Constants\Container\ProcessStatus;
+use App\Constants\Container\ProcessInstanceStatus;
 use App\Core\Http\HttpRequest;
 use App\Repositories\Container\ProcessRepository;
 
@@ -96,7 +96,7 @@ class ProcessStatsWidget extends Widget {
     private function fetchInProgressProcessCountFromDb() {
         $qb = $this->processRepository->composeQueryForStandaloneProcesses();
         $qb->select(['COUNT(*) AS cnt'])
-            ->andWhere('status = ?', [ProcessStatus::IN_PROGRESS]);
+            ->andWhere('status = ?', [ProcessInstanceStatus::IN_PROGRESS]);
 
         return $qb->execute()->fetch('cnt');
     }
@@ -109,7 +109,7 @@ class ProcessStatsWidget extends Widget {
     private function fetchFinishedProcessCountFromDb() {
         $qb = $this->processRepository->composeQueryForStandaloneProcesses();
         $qb->select(['COUNT(*) AS cnt'])
-            ->andWhere('status = ?', [ProcessStatus::FINISHED]);
+            ->andWhere('status = ?', [ProcessInstanceStatus::FINISHED]);
 
         return $qb->execute()->fetch('cnt');
     }
@@ -122,7 +122,7 @@ class ProcessStatsWidget extends Widget {
     private function fetchCanceledProcessCountFromDb() {
         $qb = $this->processRepository->composeQueryForStandaloneProcesses();
         $qb->select(['COUNT(*) AS cnt'])
-            ->andWhere('status = ?', [ProcessStatus::CANCELED]);
+            ->andWhere('status = ?', [ProcessInstanceStatus::CANCELED]);
 
         return $qb->execute()->fetch('cnt');
     }

@@ -47,11 +47,11 @@ class ProcessesSelect extends AComponent {
      * Loads widgets - enabled processes
      */
     private function loadWidgets() {
-        $enabledWidgets = $this->standaloneProcessManager->getEnabledProcessTypes();
+        //$enabledWidgets = $this->standaloneProcessManager->getEnabledProcessTypes();
 
-        foreach($enabledWidgets as $row) {
-            $key = $row->typeKey;
-            $title = StandaloneProcesses::toString($key);
+        foreach(StandaloneProcesses::getAll() as $key => $title) {
+            //$key = $row->typeKey;
+            //$title = StandaloneProcesses::toString($key);
 
             $params = [
                 'name' => $key

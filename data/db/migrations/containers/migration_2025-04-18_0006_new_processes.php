@@ -20,6 +20,7 @@ class migration_2025_04_18_0006_new_processes extends ABaseMigration {
 
         $table->create('processes')
             ->primaryKey('processId')
+            ->varchar('uniqueProcessId')
             ->varchar('title')
             ->varchar('description')
             ->varchar('form', 32768)

@@ -12,11 +12,13 @@ class migration_2025_04_18_0007_processes extends ABaseMigration {
 
         $table->create('processes')
             ->primaryKey('processId')
+            ->varchar('uniqueProcessId')
             ->varchar('title')
             ->varchar('description')
             ->varchar('form', 32768)
             ->varchar('userId')
             ->integer('status', 4)
+            ->integer('version')
             ->datetimeAuto('dateCreated');
 
         return $table;

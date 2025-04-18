@@ -30,11 +30,23 @@ class ProcessManager extends AManager {
      * @param string $description Description
      * @param string $authorId Author user ID
      * @param string $formCode Form code
+     * @param ?string $oldProcessId Old process ID
      */
-    public function createNewProcess(string $title, string $description, string $authorId, string $formCode) {
+    public function createNewProcess(string $title, string $description, string $authorId, string $formCode, ?string $oldProcessId = null) {
         $processId = $this->createId(EntityManager::PROCESSES);
 
-        if(!$this->processRepository->insertNewProcess($processId, $title, $description, $formCode, $authorId, ProcessStatus::NEW)) {
+        $version = 1;
+        $uniqueProcessId = null;
+        if($oldProcessId !== null) {
+            $process = $this->getProcessById($oldProcessId);
+
+            $version = (int)$process->version + 1;
+            $uniqueProcessId = $process->uniqueProcessId;
+        } else {
+            $uniqueProcessId = $this->createId(EntityManager::PROCESSES_UNIQUE);
+        }
+
+        if(!$this->processRepository->insertNewProcess($processId, $uniqueProcessId, $title, $description, $formCode, $authorId, ProcessStatus::NEW, $version)) {
             throw new GeneralException('Database error.');
         }
     }

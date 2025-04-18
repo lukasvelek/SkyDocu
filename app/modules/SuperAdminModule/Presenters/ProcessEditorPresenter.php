@@ -9,9 +9,9 @@ use App\Core\Http\JsonResponse;
 use App\Exceptions\AException;
 use App\UI\FormBuilder2\JSON2FB;
 
-class NewProcessEditorPresenter extends ASuperAdminPresenter {
+class ProcessEditorPresenter extends ASuperAdminPresenter {
     public function __construct() {
-        parent::__construct('NewProcessEditorPresenter', 'New process editor');
+        parent::__construct('ProcessEditorPresenter', 'Process editor');
     }
 
     public function renderForm() {
@@ -19,15 +19,39 @@ class NewProcessEditorPresenter extends ASuperAdminPresenter {
     }
 
     protected function createComponentProcessForm(HttpRequest $request) {
+        $process = null;
+        if($request->get('processId') !== null && $request->get('uniqueProcessId') !== null) {
+            $processId = $this->httpRequest->get('processId');
+
+            $process = $this->app->processManager->getProcessById($processId);
+        }
+
         $form = $this->componentFactory->getFormBuilder();
 
-        $form->setAction($this->createURL('formSubmit'));
+        if($process !== null) {
+            $params = [
+                'processId' => $request->get('processId'),
+                'uniqueProcessId' => $request->get('uniqueProcessId')
+            ];
 
-        $form->addTextInput('title', 'Title:')
+            $form->setAction($this->createURL('formSubmit', $params));
+        } else {
+            $form->setAction($this->createURL('formSubmit'));
+        }
+
+        $title = $form->addTextInput('title', 'Title:')
             ->setRequired();
 
-        $form->addTextArea('description', 'Description:')
+        if($process !== null) {
+            $title->setValue($process->title);
+        }
+
+        $description = $form->addTextArea('description', 'Description:')
             ->setRequired();
+
+        if($process !== null) {
+            $description->setContent($process->description);
+        }
 
         $form->addSubmit('Go to editor');
 
@@ -40,7 +64,16 @@ class NewProcessEditorPresenter extends ASuperAdminPresenter {
 
         $json = json_encode(['title' => $title, 'description' => $description]);
 
-        $this->redirect($this->createURL('editor', ['formdata' => base64_encode($json)]));
+        $params = [];
+
+        if($this->httpRequest->get('processId') !== null && $this->httpRequest->get('uniqueProcessId') !== null) {
+            $params['processId'] = $this->httpRequest->get('processId');
+            $params['uniqueProcessId'] = $this->httpRequest->get('uniqueProcessId');
+        }
+
+        $params['formdata'] = base64_encode($json);
+
+        $this->redirect($this->createURL('editor', $params));
     }
 
     public function handleEditor(?FormRequest $fr = null) {
@@ -76,6 +109,13 @@ class NewProcessEditorPresenter extends ASuperAdminPresenter {
     }
 
     protected function createComponentProcessEditor(HttpRequest $request) {
+        $process = null;
+        if($request->get('processId') !== null && $request->get('uniqueProcessId') !== null) {
+            $processId = $this->httpRequest->get('processId');
+
+            $process = $this->app->processManager->getProcessById($processId);
+        }
+
         $form = $this->componentFactory->getFormBuilder();
 
         $form->setAction($this->createURL('editor', ['formdata' => $request->get('formdata')]));
@@ -83,9 +123,14 @@ class NewProcessEditorPresenter extends ASuperAdminPresenter {
         $form->addLabel('formDefinition_label', 'Form JSON definition:')
             ->setRequired();
 
-        $form->addTextArea('formDefinition')
+        $formDefinition = $form->addTextArea('formDefinition')
             ->setRequired()
             ->setLines(20);
+
+        if($process !== null) {
+            $dbForm = base64_decode($process->form);
+            $formDefinition->setContent($dbForm);
+        }
 
         $form->addButton('View')
             ->setOnClick('sendLiveview()');

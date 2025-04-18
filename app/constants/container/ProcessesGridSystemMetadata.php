@@ -5,7 +5,6 @@ namespace App\Constants\Container;
 use App\Constants\AConstant;
 
 class ProcessesGridSystemMetadata extends AConstant {
-    public const DOCUMENT_ID = 'documentId';
     public const TYPE = 'type';
     public const AUTHOR_USER_ID = 'authorUserId';
     public const CURRENT_OFFICER_USER_ID = 'currentOfficerUserId';
@@ -16,7 +15,6 @@ class ProcessesGridSystemMetadata extends AConstant {
 
     public static function toString($key): ?string {
         return match($key) {
-            self::DOCUMENT_ID => 'Document',
             self::TYPE => 'Type',
             self::AUTHOR_USER_ID => 'Author',
             self::CURRENT_OFFICER_USER_ID => 'Current officer',

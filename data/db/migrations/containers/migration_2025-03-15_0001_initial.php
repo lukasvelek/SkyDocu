@@ -148,7 +148,6 @@ class migration_2025_03_15_0001_initial extends ABaseMigration {
 
         $table->create('processes')
             ->primaryKey('processId')
-            ->varchar('documentId', 256, true)
             ->varchar('type')
             ->varchar('authorUserId')
             ->varchar('currentOfficerUserId', 256, true)
@@ -157,8 +156,7 @@ class migration_2025_03_15_0001_initial extends ABaseMigration {
             ->integer('status', 4)
             ->default('status', 1)
             ->varchar('currentOfficerSubstituteUserId', 256, true)
-            ->index(['currentOfficerUserId', 'authorUserId'])
-            ->index(['documentId']);
+            ->index(['currentOfficerUserId', 'authorUserId']);
 
         $table->create('process_types')
             ->primaryKey('typeId')

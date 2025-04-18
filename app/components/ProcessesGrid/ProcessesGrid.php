@@ -199,37 +199,6 @@ class ProcessesGrid extends GridBuilder implements IGridExtendingComponent {
                     $this->addColumnDatetime($name, $text);
                     break;
 
-                case ProcessesGridSystemMetadata::DOCUMENT_ID:
-                    $dataSource = $this->filledDataSource;
-
-                    $documentIds = [];
-                    while($row = $dataSource->fetchAssoc()) {
-                        $documentId = $row['documentId'];
-                        
-                        if($documentId !== null) {
-                            $documentIds[] = $row['documentId'];
-                        }
-                    }
-
-                    $documentTitles = $this->getDocumentTitlesByIds($documentIds);
-
-                    $col = $this->addColumnText($name, $text);
-                    $col->onRenderColumn[] = function(DatabaseRow $row, Row $_row, Cell $cell, HTML $html, mixed $value) use ($documentTitles) {
-                        $el = HTML::el('span');
-
-                        if(in_array($value, $documentTitles)) {
-                            $el->text($documentTitles[$value]);
-                        } else {
-                            $el->text('-');
-                        }
-
-                        return $el;
-                    };
-                    $col->onExportColumn[] = function(DatabaseRow $row, mixed $value) use ($documentTitles) {
-                        return $documentTitles[$value];
-                    };
-                    break;
-
                 case ProcessesGridSystemMetadata::TYPE:
                     $col = $this->addColumnText($name, $text);
                     $col->onRenderColumn[] = function(DatabaseRow $row, Row $_row, Cell $cell, HTML $html, mixed $value) {
@@ -316,13 +285,6 @@ class ProcessesGrid extends GridBuilder implements IGridExtendingComponent {
         $this->addFilter(ProcessesGridSystemMetadata::TYPE, null, StandaloneProcesses::getAll());
         $this->addFilter(ProcessesGridSystemMetadata::STATUS, null, ProcessStatus::getAll());
         
-        $documentFilter = $this->addFilter(ProcessesGridSystemMetadata::DOCUMENT_ID, null, $this->getDocumentsInGrid());
-        $documentFilter->onSqlExecute[] = function(QueryBuilder &$qb, Filter $filter) {
-            if($filter->currentValue == 'empty') {
-                $qb->andWhere(ProcessesGridSystemMetadata::DOCUMENT_ID . ' IS NULL');
-            }
-        };
-        
         // Current officer
         if($this->view != ProcessGridViews::VIEW_WAITING_FOR_ME) {
             $this->addFilter(ProcessesGridSystemMetadata::CURRENT_OFFICER_USER_ID, null, $this->getCurrentOfficersInGrid());
@@ -332,40 +294,6 @@ class ProcessesGrid extends GridBuilder implements IGridExtendingComponent {
         if($this->view != ProcessGridViews::VIEW_STARTED_BY_ME) {
             $this->addFilter(ProcessesGridSystemMetadata::AUTHOR_USER_ID, null, $this->getAuthorsInGrid());
         }
-    }
-
-    /**
-     * Retirms all documents in grid
-     * 
-     * @return array Documents
-     */
-    private function getDocumentsInGrid() {
-        $qb = $this->getPagedDataSource();
-
-        $qb->execute();
-
-        $documents = [];
-        while($row = $qb->fetchAssoc()) {
-            $documentId = $row[ProcessesGridSystemMetadata::DOCUMENT_ID];
-
-            if($documentId === null) {
-                continue;
-            } else if(array_key_exists($documentId, $documents)) {
-                continue;
-            }
-
-            try {
-                $document = $this->documentManager->getDocumentById($documentId, false);
-            } catch(AException $e) {
-                continue;
-            }
-
-            $documents[$documentId] = $document->title;
-        }
-
-        $documents['empty'] = 'None';
-
-        return $documents;
     }
 
     /**

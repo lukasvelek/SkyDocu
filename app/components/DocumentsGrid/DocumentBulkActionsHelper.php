@@ -83,7 +83,7 @@ class DocumentBulkActionsHelper {
         }*/
 
         if($this->groupStandardOperationsAuthorizator->canUserShareDocuments($this->app->currentUser->getId()) && $this->checkIfDocumentsCanBeShared($documentIds)) {
-            $bulkActions[] = DocumentBulkActions::SHARING;
+            //$bulkActions[] = DocumentBulkActions::SHARING;
         }
 
         $ok = true;
@@ -94,7 +94,7 @@ class DocumentBulkActionsHelper {
         }
 
         if($ok === true) {
-            $bulkActions[] = DocumentBulkActions::MOVE_TO_FOLDER;
+            //$bulkActions[] = DocumentBulkActions::MOVE_TO_FOLDER;
         }
 
         // 1b. Create array of allowed processes
@@ -129,7 +129,7 @@ class DocumentBulkActionsHelper {
         }
 
         if($moveToArchive) {
-            $bulkActions[] = SystemProcessTypes::MOVE_TO_ARCHIVE;
+            //$bulkActions[] = SystemProcessTypes::MOVE_TO_ARCHIVE;
         }
 
         // Move from archive
@@ -141,19 +141,19 @@ class DocumentBulkActionsHelper {
         }
 
         if($moveFromArchive) {
-            $bulkActions[] = SystemProcessTypes::MOVE_FROM_ARCHIVE;
+            //$bulkActions[] = SystemProcessTypes::MOVE_FROM_ARCHIVE;
         }
 
         // Shredding request
         $p = $this->processFactory->createDocumentShreddingRequestProcess();
         if($p->canExecute($documentIds, null)) {
-            $bulkActions[] = SystemProcessTypes::SHREDDING_REQUEST;
+            //$bulkActions[] = SystemProcessTypes::SHREDDING_REQUEST;
         }
 
         // Shredding
         $p = $this->processFactory->createDocumentShreddingProcess();
         if($p->canExecute($documentIds, null)) {
-            $bulkActions[] = SystemProcessTypes::SHREDDING;
+            //$bulkActions[] = SystemProcessTypes::SHREDDING;
         }
     }
 

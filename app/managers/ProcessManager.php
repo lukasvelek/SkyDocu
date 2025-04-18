@@ -3,7 +3,9 @@
 namespace App\Managers;
 
 use App\Constants\ProcessStatus;
+use App\Core\DB\DatabaseRow;
 use App\Exceptions\GeneralException;
+use App\Exceptions\NonExistingEntityException;
 use App\Logger\Logger;
 use App\Repositories\ProcessRepository;
 
@@ -35,6 +37,21 @@ class ProcessManager extends AManager {
         if(!$this->processRepository->insertNewProcess($processId, $title, $description, $formCode, $authorId, ProcessStatus::NEW)) {
             throw new GeneralException('Database error.');
         }
+    }
+
+    /**
+     * Returns a process row by ID
+     * 
+     * @param string $processId
+     */
+    public function getProcessById(string $processId): DatabaseRow {
+        $process = $this->processRepository->getProcessById($processId);
+
+        if($process === null) {
+            throw new NonExistingEntityException('Process does not exist.');
+        }
+
+        return DatabaseRow::createFromDbRow($process);
     }
 }
 

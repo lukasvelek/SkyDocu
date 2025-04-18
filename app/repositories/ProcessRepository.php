@@ -41,6 +41,22 @@ class ProcessRepository extends ARepository {
 
         return $qb->fetchBool();
     }
+
+    /**
+     * Returns a process by ID
+     * 
+     * @param string $processId Process ID
+     */
+    public function getProcessById(string $processId) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->select(['*'])
+            ->from('processes')
+            ->where('processId = ?', [$processId])
+            ->execute();
+
+        return $qb->fetch();
+    }
 }
 
 ?>

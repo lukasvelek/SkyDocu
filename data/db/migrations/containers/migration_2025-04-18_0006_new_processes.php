@@ -14,7 +14,9 @@ class migration_2025_04_18_0006_new_processes extends ABaseMigration {
             ->primaryKey('instanceId')
             ->varchar('processId')
             ->varchar('userId')
-            ->varchar('data')
+            ->text('data')
+            ->varchar('currentOfficerId', 256, true)
+            ->integer('currentOfficerType', 4)
             ->integer('status', 4)
             ->datetimeAuto('dateCreated');
 
@@ -23,7 +25,9 @@ class migration_2025_04_18_0006_new_processes extends ABaseMigration {
             ->varchar('uniqueProcessId')
             ->varchar('title')
             ->varchar('description')
-            ->varchar('form', 32768)
+            ->text('form')
+            ->text('workflow', true)
+            ->text('workflowConfiguration', true)
             ->varchar('userId')
             ->integer('status', 4)
             ->datetimeAuto('dateCreated');

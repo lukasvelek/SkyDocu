@@ -2,14 +2,10 @@
 
 namespace App\Modules\SuperAdminModule;
 
-use App\Constants\Container\ProcessStatus as ContainerProcessStatus;
 use App\Constants\ProcessStatus;
 use App\Core\DB\DatabaseRow;
 use App\Core\Http\HttpRequest;
-use App\Exceptions\AException;
-use App\Exceptions\GeneralException;
 use App\Helpers\LinkHelper;
-use App\Repositories\Container\ProcessRepository;
 use App\UI\FormBuilder2\JSON2FB;
 use App\UI\GridBuilder2\Action;
 use App\UI\GridBuilder2\Row;
@@ -33,7 +29,7 @@ class ProcessesPresenter extends ASuperAdminPresenter {
         $grid = $this->componentFactory->getGridBuilder();
 
         $qb = $this->app->processRepository->composeQueryForProcesses();
-        $qb->andWhere('status = ?', [ProcessStatus::IN_DISTRIBUTION]);
+        $qb->andWhere($qb->getColumnInValues('status', [ProcessStatus::NEW, ProcessStatus::IN_DISTRIBUTION]));
 
         $grid->createDataSourceFromQueryBuilder($qb, 'processId');
 

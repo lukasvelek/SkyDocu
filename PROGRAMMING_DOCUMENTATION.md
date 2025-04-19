@@ -345,6 +345,83 @@ Logging individual operations is an obvious feature.
     - Optional parameters:
         - where
 
+## Process editor
+Process editor allows creating processes.
+
+### Process form definition
+Form is defined using JSON.
+
+The JSON must have a `name` and an `elements` array. The `elements` array contains elements to be displayed in the form.
+
+#### Login form example
+```
+{
+    "name": "Login form",
+    "elements": [
+        {
+            "name": "username",
+            "type": "text",
+            "label": "Username:",
+            "attributes": [
+                "required"
+            ]
+        },
+        {
+            "name": "password",
+            "type": "password",
+            "label": "Password:",
+            "attributes": [
+                "required"
+            ]
+        }
+    ]
+}
+```
+
+This is going to create this HTML code:
+```
+<div>
+    <label>Username:</label>
+    <input type="text" name="username" required>
+</div>
+<div>
+    <label>Password:</label>
+    <input type="password" name="password" required>
+</div>
+```
+
+### Process workflow definition
+Workflow is defined using JSON.
+
+The JSON must have an array `workflow` that contains workflow participants. The JSON also contains a list of actions each of the participants.
+
+Possible values are defined in the variables list to the side.
+
+Possible actions are:
+    - `PROCESS`
+    - `CANCEL`
+    - `FINISH`
+    - `ARCHIVE`
+
+#### Process workflow example
+```
+{
+    "workflow": [
+        {
+            "name": "$CURRENT_USER_SUPERIOR$",
+            "actions": ""
+        },
+        {
+            "name": "$CURRENT_USER$"
+        }
+    ]
+}
+```
+
+The workflow is going to look like this:
+1. Current user's superior
+2. Current user
+
 ## Database
 
 ### Database table schema

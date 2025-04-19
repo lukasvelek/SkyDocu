@@ -17,6 +17,7 @@ class UserEntity extends AEntity {
     private int $appDesignTheme;
     private string $dateFormat;
     private string $timeFormat;
+    private ?string $superiorUserId;
 
     /**
      * Class constructor
@@ -28,8 +29,9 @@ class UserEntity extends AEntity {
      * @param string $dateCreated Date created
      * @param bool $isTechnical Is user technical
      * @param int $appDesignTheme App design theme
+     * @param ?string $superiorUserId Superior user ID
      */
-    public function __construct(string $id, string $username, string $fullname, ?string $email, string $dateCreated, bool $isTechnical, int $appDesignTheme, string $dateFormat, string $timeFormat) {
+    public function __construct(string $id, string $username, string $fullname, ?string $email, string $dateCreated, bool $isTechnical, int $appDesignTheme, string $dateFormat, string $timeFormat, ?string $superiorUserId) {
         $this->id = $id;
         $this->username = $username;
         $this->fullname = $fullname;
@@ -39,6 +41,7 @@ class UserEntity extends AEntity {
         $this->appDesignTheme = $appDesignTheme;
         $this->dateFormat = $dateFormat;
         $this->timeFormat = $timeFormat;
+        $this->superiorUserId = $superiorUserId;
     }
 
     /**
@@ -111,6 +114,13 @@ class UserEntity extends AEntity {
         return $this->dateFormat . ' ' . $this->timeFormat;
     }
 
+    /**
+     * Returns user's superior ID
+     */
+    public function getSuperiorUserId(): ?string {
+        return $this->superiorUserId;
+    }
+
     public static function createEntityFromDbRow(mixed $row): ?static {
         if($row === null) {
             return null;
@@ -118,9 +128,9 @@ class UserEntity extends AEntity {
 
         $row = self::createRow($row);
         self::checkTypes($row, ['userId' => 'string', 'username' => 'string', 'fullname' => 'string', 'email' => '?string', 'dateCreated' => 'string', 'isTechnical' => 'bool', 'appDesignTheme' => 'int',
-                                'dateFormat' => 'string', 'timeFormat' => 'string']);
+                                'dateFormat' => 'string', 'timeFormat' => 'string', 'superiorUserId' => '?string']);
 
-        return new self($row->userId, $row->username, $row->fullname, $row->email, $row->dateCreated, $row->isTechnical, $row->appDesignTheme, $row->dateFormat, $row->timeFormat);
+        return new self($row->userId, $row->username, $row->fullname, $row->email, $row->dateCreated, $row->isTechnical, $row->appDesignTheme, $row->dateFormat, $row->timeFormat, $row->superiorUserId);
     }
 }
 

@@ -1,0 +1,68 @@
+<div class="row">
+    <div class="col-md">
+        <div class="row">
+            <div class="col-md" id="center">
+                <p id="page-title">Process editor</p>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-1 col-lg-1"></div>
+
+            <div class="col-md col-lg">
+                <div class="row">
+                    <div class="col-md">
+                        $LINKS$
+                    </div>
+                </div>
+
+                <hr>
+
+                <div class="row">
+                    <div class="col-md" id="form">
+                        $component workflowEditor$
+                    </div>
+
+                    <div class="col-md">
+                        <div class="row">
+                            <div class="col-md" id="center">
+                                <p id="page-text">Workflow variables</p>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md" id="grid">
+                                $component workflowVariablesList$
+                            </div>
+                        </div>
+
+                        <br>
+
+                        <div class="row">
+                            <div class="col-md">
+                                <p>You can define exact users with their ID. Example: <br>
+                                    $CURRENT_USER_ID$
+                                </p>
+
+                                <p>You can define exact groups with their ID. Example: <br>
+                                    $GROUP_ID$
+                                </p>
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <div class="row">
+                            <div class="col-md">
+                                <p class="page-text">Workflow users:</p>
+                                <div id="workflow-view"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-1 col-lg-1"></div>
+        </div>
+    </div>
+</div>

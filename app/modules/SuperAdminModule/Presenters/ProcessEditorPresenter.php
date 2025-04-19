@@ -119,29 +119,6 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
                 // add new version
                 [$processId, $uniqueProcessId] = $this->app->processManager->createNewProcess($title, $description, $this->getUserId(), $code, $oldProcessId, ProcessStatus::NEW);
 
-                // remove old version from distribution
-                /*if($oldProcessId !== null) {
-                    $this->app->processManager->updateProcess($oldProcessId, ['status' => ProcessStatus::NOT_IN_DISTRIBUTION]);
-                }*/
-
-                /*$containers = $this->app->containerManager->getAllContainers(true, true);
-
-                foreach($containers as $container) {
-                    /**
-                     * @var \App\Entities\ContainerEntity $container
-                     */
-
-                    /*if(!$container->isInDistribution()) continue;
-
-                    $dbConn = $this->app->dbManager->getConnectionToDatabase($container->getDefaultDatabase()->getName());
-
-                    $processRepository = new ProcessRepository($dbConn, $this->logger, $this->app->userRepository->transactionLogRepository);
-
-                    $processRepository->removeCurrentDistributionProcessFromDistributionForUniqueProcessId($uniqueProcessId);
-
-                    $processRepository->addNewProcess($processId, $uniqueProcessId, $title, $description, $code, $this->getUserId(), ContainerProcessStatus::NEW);
-                }*/
-
                 $this->app->processRepository->commit($this->getUserId(), __METHOD__);
 
                 $this->flashMessage('Successfully created a new process. Now, you have to define workflow.', 'success');

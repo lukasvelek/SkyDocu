@@ -91,6 +91,22 @@ class ProcessRepository extends ARepository {
 
         return $qb->fetchBool();
     }
+
+    /**
+     * Deletes process
+     * 
+     * @param string $processId Process ID
+     */
+    public function deleteProcess(string $processId) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->delete()
+            ->from('processes')
+            ->where('processId = ?', [$processId])
+            ->execute();
+
+        return $qb->fetchBool();
+    }
 }
 
 ?>

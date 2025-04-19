@@ -79,6 +79,17 @@ class ProcessManager extends AManager {
             throw new GeneralException('Database error.');
         }
     }
+
+    /**
+     * Deletes process
+     * 
+     * @param string $processId Process ID
+     */
+    public function deleteProcess(string $processId) {
+        if(!$this->processRepository->deleteProcess($processId)) {
+            throw new GeneralException('Database error.');
+        }
+    }
 }
 
 ?>

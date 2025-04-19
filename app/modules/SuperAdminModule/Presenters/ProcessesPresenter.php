@@ -4,8 +4,12 @@ namespace App\Modules\SuperAdminModule;
 
 use App\Constants\ProcessStatus;
 use App\Core\DB\DatabaseRow;
+use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
+use App\Exceptions\AException;
+use App\Exceptions\GeneralException;
 use App\Helpers\LinkHelper;
+use App\Repositories\Container\ProcessRepository;
 use App\UI\FormBuilder2\JSON2FB;
 use App\UI\GridBuilder2\Action;
 use App\UI\GridBuilder2\Row;
@@ -67,7 +71,17 @@ class ProcessesPresenter extends ASuperAdminPresenter {
 
         $delete = $grid->addAction('delete');
         $delete->setTitle('Delete');
-        // todo: ADD FORM DELETING
+        $delete->onCanRender[] = function() {
+            return true;
+        };
+        $delete->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
+            $el = HTML::el('a');
+            $el->text('Delete')
+                ->class('grid-link')
+                ->href($this->createURLString('deleteForm', ['processId' => $primaryKey]));
+
+            return $el;
+        };
 
         return $grid;
     }
@@ -81,6 +95,73 @@ class ProcessesPresenter extends ASuperAdminPresenter {
 
         $this->template->process_form = $form->render();
         $this->template->links = $this->createBackUrl('list');
+    }
+
+    public function handleDeleteForm(?FormRequest $fr = null) {
+        if($fr !== null) {
+            try {
+                $this->app->processRepository->beginTransaction(__METHOD__);
+
+                $process = $this->app->processManager->getProcessById($this->httpRequest->get('processId'));
+
+                if($fr->title != $process->title || !$this->app->userAuth->authUser($fr->password)) {
+                    throw new GeneralException('Bad credentials entered.');
+                }
+
+                $this->app->processManager->updateProcess($this->httpRequest->get('processId'), ['status' => ProcessStatus::NOT_IN_DISTRIBUTION]);
+
+                $containers = $this->app->containerManager->getAllContainers(true, true);
+
+                foreach($containers as $container) {
+                    /**
+                     * @var \App\Entities\ContainerEntity $container
+                     */
+
+                    if(!$container->isInDistribution()) continue;
+
+                    $dbConn = $this->app->dbManager->getConnectionToDatabase($container->getDefaultDatabase()->getName());
+
+                    $processRepository = new ProcessRepository($dbConn, $this->logger, $this->app->userRepository->transactionLogRepository);
+
+                    $processRepository->removeCurrentDistributionProcessFromDistributionForUniqueProcessId($process->uniqueProcessId);
+                }
+
+                $this->app->processRepository->commit($this->getUserId(), __METHOD__);
+
+                $this->flashMessage('Successfully deleted process.', 'success');
+            } catch(AException $e) {
+                $this->app->processRepository->rollback(__METHOD__);
+
+                $this->flashMessage('Could not delete process. Reason: ' . $e->getMessage(), 'error', 10);
+            }
+
+            $this->redirect($this->createURL('list'));
+        }
+    }
+
+    public function renderDeleteForm() {
+        $this->template->links = $this->createBackUrl('list');
+    }
+
+    protected function createComponentDeleteProcessForm(HttpRequest $request) {
+        $process = $this->app->processManager->getProcessById($request->get('processId'));
+
+        $form = $this->componentFactory->getFormBuilder();
+
+        $form->setAction($this->createURL('deleteForm', ['processId' => $request->get('processId')]));
+
+        $form->addLabel('lbl_text1', 'Are you sure you want to delete process <b>' . $process->title . '</b>?');
+        $form->addLabel('lbl_text2', 'If you are sure please enter your password and the process name below in order to authorize.');
+
+        $form->addTextInput('title', 'Process name:')
+            ->setRequired();
+
+        $form->addPasswordInput('password', 'Your password:')
+            ->setRequired();
+
+        $form->addSubmit('Delete');
+
+        return $form;
     }
 }
 

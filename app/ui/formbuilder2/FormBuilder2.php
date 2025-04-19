@@ -619,6 +619,13 @@ class FormBuilder2 extends AComponent {
         return $s;
     }
 
+    /**
+     * Adds form user select with all users
+     * 
+     * @param string $name Element name
+     * @param ?string $label Label text or null
+     * @param ?string $containerId Container ID or null (if no container ID is entered, no users are displayed)
+     */
     public function addUserSelect(string $name, ?string $label = null, ?string $containerId = null) {
         $s = new Select($name);
 
@@ -628,21 +635,6 @@ class FormBuilder2 extends AComponent {
 
         // ADD USERS
         $users = [];
-
-        $userJson = [
-            'operation' => 'query',
-            'name' => 'getUsers',
-            'definition' => [
-                'users' => [
-                    'get' => [
-                        'cols' => [
-                            'userId',
-                            'fullname'
-                        ]
-                    ]
-                ]
-            ]
-        ];
 
         $getUserJson = function(string $userId) {
             return [
@@ -686,6 +678,51 @@ class FormBuilder2 extends AComponent {
 
             $s->addRawOptions($users);
         }
+
+        return $s;
+    }
+
+    /**
+     * Adds user select search
+     * 
+     * @param string $name Element name
+     * @param ?string $label Label text or null
+     * @param ?string $containerId Container ID or null (if no container ID is entered no users are displayed)
+     */
+    public function addUserSelectSearch(string $name, ?string $label = null, ?string $containerId = null) {
+        $this->addTextInput('userSeach', 'Fullname:');
+
+        $btn = $this->addButton('Search users');
+
+        if($containerId !== null) {
+            $btn->setOnClick('searchUsersSubmit()');
+
+            $arb = new AjaxRequestBuilder();
+
+            $arb->setMethod('POST')
+                ->setComponentAction($this->presenter, $this->componentName . '-searchUsers')
+                ->setHeader(['query' => '_query', 'containerId' => '_containerId'])
+                ->setFunctionName('searchUsers')
+                ->setFunctionArguments(['_query', '_containerId'])
+                ->updateHTMLElement($name, 'data');
+
+            $this->addScript($arb);
+
+            $this->addScript('
+                function searchUsersSubmit() {
+                    const query = $("#userSearch").val();
+                    const containerId = "' . $containerId . '";
+
+                    searchUsers(query, containerId);
+                }
+            ');
+        }
+
+        $s = new Select($name);
+
+        $this->elements[$name] = &$s;
+
+        $this->processLabel($name, $label);
 
         return $s;
     }
@@ -777,6 +814,54 @@ class FormBuilder2 extends AComponent {
         }
 
         $this->additionalLinkParams[$key] = $data;
+    }
+
+    /**
+     * Handles user select search subform
+     */
+    public function actionSearchUsers() {
+        $query = $this->httpRequest->get('query');
+        $containerId = $this->httpRequest->get('containerId');
+
+        $container = $this->app->containerManager->getContainerById($containerId);
+
+        $groupUsers = $this->app->groupManager->getGroupUsersForGroupTitle($container->getTitle() . ' - users');
+
+        $users = [];
+
+        $getUserJson = function() use ($query) {
+            return [
+                'operation' => 'query',
+                'name' => 'getUsers',
+                'definition' => [
+                    'users' => [
+                        'get' => [
+                            'cols' => [
+                                'userId',
+                                'fullname'
+                            ],
+                            'conditions' => [
+                                [
+                                    'col' => 'fullname',
+                                    'value' => $query,
+                                    'type' => 'like'
+                                ]
+                            ]
+                        ]
+                    ]
+                ]
+            ];
+        };
+
+        $user = json_decode($this->app->peeql->execute(json_encode($getUserJson($query))), true);
+
+        foreach($user as $row) {
+            if(!in_array($row['userId'], $groupUsers)) continue;
+
+            $users[] = '<option value="' . $row['userId'] . '">' . $row['fullname'] . '</option>';
+        }
+
+        return new JsonResponse(['data' => implode('', $users)]);
     }
 }
 

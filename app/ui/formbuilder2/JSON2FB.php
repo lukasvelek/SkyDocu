@@ -25,6 +25,7 @@ class JSON2FB {
     private const SUBMIT = 'submit';
     private const BUTTON = 'button';
     private const USER_SELECT = 'userSelect';
+    private const USER_SELECT_SEARCH = 'userSelectSearch';
 
     private FormBuilder2 $form;
     
@@ -215,6 +216,14 @@ class JSON2FB {
                         $this->throwExceptionForUnsetAttribute('containerId', $element['type']);
                     } else {
                         $elem = $this->form->addUserSelect($name, $label);
+                    }
+                    break;
+
+                case self::USER_SELECT_SEARCH:
+                    if(!array_key_exists('containerId', $element) && (!array_key_exists($element['type'], $this->skipElementAttributes) || (array_key_exists($element['type'], $this->skipElementAttributes) && !in_array('containerId', $this->skipElementAttributes[$element['type']])))) {
+                        $this->throwExceptionForUnsetAttribute('containerId', $element['type']);
+                    } else {
+                        $elem = $this->form->addUserSelectSearch($name, $label);
                     }
                     break;
             }

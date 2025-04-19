@@ -235,6 +235,7 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
 
         $helper->setSkipAttributes(['action']);
         $helper->addSkipElementAttributes('userSelect', 'containerId');
+        $helper->addSkipElementAttributes('userSelectSearch', 'containerId');
 
         try {
             $code = $helper->render();
@@ -367,6 +368,13 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
                         $lastUser = '$CURRENT_USER_SUPERIOR$';
                     }
                     break;
+
+                case '$ADMINISTRATORS$':
+                    if($lastUser === null || ($lastUser !== null && $lastUser != '$ADMINISTRATORS$')) {
+                        $workflowUsers[] = '$ADMINISTRATORS$';
+                        $lastUser = '$ADMINISTRATORS$';
+                    }
+                    break;
             }
         }
 
@@ -451,6 +459,7 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
         $addVariable('$ARCHIVISTS$', 'Archivists group');
         $addVariable('$PROPERTY_MANAGERS$', 'Property managers');
         $addVariable('$CURRENT_USER_SUPERIOR$', 'Current user\'s superior');
+        $addVariable('$ADMINISTRATORS$', 'Administrators');
 
         $list->setDataSource($variables);
 

@@ -34,6 +34,10 @@ class QueryCondition {
      * Less than or equals
      */
     public const TYPE_LTE = 'lte';
+    /**
+     * LIKE
+     */
+    public const TYPE_LIKE = 'like';
 
     private string $columnName;
     private mixed $value;
@@ -76,6 +80,9 @@ class QueryCondition {
                 break;
             case self::TYPE_NEQ:
                 $text .= '<>';
+                break;
+            case self::TYPE_LIKE:
+                $text .= 'LIKE';
                 break;
         }
 

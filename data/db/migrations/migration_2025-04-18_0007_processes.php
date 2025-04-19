@@ -48,6 +48,18 @@ class migration_2025_04_18_0007_processes extends ABaseMigration {
                 'status' => 2,
                 'version' => 1
             ])
+            ->add([
+                'processId' => $this->getId(EntityManager::PROCESSES),
+                'uniqueProcessId' => $this->getId(EntityManager::PROCESSES_UNIQUE),
+                'title' => 'Function Request',
+                'description' => 'Function Request form',
+                'form' => 'ew0KICJuYW1lIjogImZ1bmN0aW9uUmVxdWVzdCIsDQogImVsZW1lbnRzIjogWw0KICB7DQogICAibmFtZSI6ICJ0aXRsZSIsDQogICAidHlwZSI6ICJ0ZXh0IiwNCiAgICJsYWJlbCI6ICJUaXRsZToiLA0KICAgImF0dHJpYnV0ZXMiOiBbDQogICAgInJlcXVpcmVkIg0KICAgXQ0KICB9LA0KICB7DQogICAibmFtZSI6ICJkZXNjcmlwdGlvbiIsDQogICAidHlwZSI6ICJ0ZXh0YXJlYSIsDQogICAibGFiZWwiOiAiRGVzY3JpcHRpb246IiwNCiAgICJhdHRyaWJ1dGVzIjogWw0KICAgICJyZXF1aXJlZCINCiAgIF0NCiAgfQ0KIF0NCn0=',
+                'workflow' => 'a:1:{i:0;s:16:"$ADMINISTRATORS$";}',
+                'workflowConfiguration' => 'a:1:{s:16:"$ADMINISTRATORS$";a:2:{i:0;s:6:"finish";i:1;s:6:"cancel";}}',
+                'userId' => $this->getTechnicalUserId(),
+                'status' => 2,
+                'version' => 1
+            ])
         ;
 
         return $seed;

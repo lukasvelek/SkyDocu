@@ -38,7 +38,9 @@ class ProcessesPresenter extends ASuperAdminPresenter {
         $grid->createDataSourceFromQueryBuilder($qb, 'processId');
 
         $grid->addColumnText('title', 'Title');
+        $grid->addColumnText('description', 'Description');
         $grid->addColumnUser('userId', 'Author');
+        $grid->addColumnText('version', 'Version');
         $grid->addColumnConst('status', 'Status', ProcessStatus::class);
 
         $viewForm = $grid->addAction('viewForm');

@@ -137,6 +137,22 @@ abstract class ABaseMigration {
 
         return $qb->fetch($columnName);
     }
+
+    /**
+     * Returns technical user's ID or null if no technical user exists
+     */
+    protected function getTechnicalUserId(): ?string {
+        $sql = 'SELECT userId FROM users WHERE username = "service_user"';
+
+        $result = $this->masterConn->query($sql);
+
+        $userId = null;
+        foreach($result as $row) {
+            $userId = $row['userId'];
+        }
+
+        return $userId;
+    }
 }
 
 ?>

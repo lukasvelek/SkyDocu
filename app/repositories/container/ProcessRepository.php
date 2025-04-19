@@ -40,17 +40,6 @@ class ProcessRepository extends ARepository {
         return $qb->fetchBool();
     }
 
-    public function updateProcess(string $processId, array $data) {
-        $qb = $this->qb(__METHOD__);
-
-        $qb->update('processes')
-            ->set($data)
-            ->where('processId = ?', [$processId])
-            ->execute();
-
-        return $qb->fetchBool();
-    }
-
     public function getProcessesForDocument(string $documentId, bool $activeOnly = true) {
         $qb = $this->qb(__METHOD__);
         
@@ -358,11 +347,22 @@ class ProcessRepository extends ARepository {
         return $this->processPeeQL('processes', $operation);
     }
 
-    public function addNewProcess(string $processId, string $uniqueProcessId, string $title, string $description, string $form, string $userId, int $status) {
+    public function addNewProcess(string $processId, string $uniqueProcessId, string $title, string $description, string $form, string $userId, int $status, string $workflow, string $workflowConfiguration) {
         $qb = $this->qb(__METHOD__);
 
-        $qb->insert('processes', ['processId', 'uniqueProcessId', 'title', 'description', 'form', 'userId', 'status'])
-            ->values([$processId, $uniqueProcessId, $title, $description, $form, $userId, $status])
+        $qb->insert('processes', ['processId', 'uniqueProcessId', 'title', 'description', 'form', 'userId', 'status', 'workflow', 'workflowConfiguration'])
+            ->values([$processId, $uniqueProcessId, $title, $description, $form, $userId, $status, $workflow, $workflowConfiguration])
+            ->execute();
+
+        return $qb->fetchBool();
+    }
+
+    public function updateProcess(string $processId, array $data) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->update('processes')
+            ->set($data)
+            ->where('processId = ?', [$processId])
             ->execute();
 
         return $qb->fetchBool();

@@ -273,6 +273,14 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
 
         $this->template->current_user_id = sprintf('$UID_%s$', $this->getUserId());
         $this->template->group_id = sprintf('$GID_%s$', $this->app->groupManager->getGroupByTitle('containerManagers')->groupId);
+
+        $actionsCode = '<ul>';
+        foreach(ProcessInstanceOperations::getAll() as $key => $text) {
+            $actionsCode .= '<li>' . $text . ' -> ' . $key . '</li>';
+        }
+        $actionsCode .= '</ul>';
+
+        $this->template->available_actions = $actionsCode;
     }
 
     protected function createComponentWorkflowEditor(HttpRequest $request) {
@@ -479,36 +487,32 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
         try {
             $this->app->processRepository->beginTransaction(__METHOD__);
 
-            $this->app->processRepository->commit($this->getUserId(), __METHOD__);
-        } catch(AException $e) {
-            $this->app->processRepository->rollback(__METHOD__);
-        }
-    }
-
-    public function handlePublishProcess(FormRequest $fr) {
-        try {
+            $processId = $this->httpRequest->get('processId');
+            $uniqueProcessId = $this->httpRequest->get('uniqueProcessId');
             $oldProcessId = null;
-            if($this->httpRequest->get('processId') !== null) {
-                $oldProcessId = $this->httpRequest->get('processId');
+            if($this->httpRequest->get('oldProcessId') !== null) {
+                $oldProcessId = $this->httpRequest->get('oldProcessId');
             }
 
-            $formdata = $this->httpRequest->get('formdata');
-            $formdata = json_decode(base64_decode($formdata), true);
+            $workflowJson = $fr->workflowDefinition;
+            $decodedJson = json_decode($workflowJson, true);
 
-            $title = $formdata['title'];
-            $description = $formdata['description'];
+            $workflowUsers = $this->getWorkflowFromJson($decodedJson);
+            $workflowConfiguration = $this->getWorkflowActions($decodedJson);
 
-            $code = base64_encode($fr->formDefinition);
+            $updateData = [
+                'workflow' => serialize($workflowUsers),
+                'workflowConfiguration' => serialize($workflowConfiguration),
+                'status' => ProcessStatus::IN_DISTRIBUTION
+            ];
 
-            $this->app->processRepository->beginTransaction(__METHOD__);
+            $this->app->processManager->updateProcess($processId, $updateData);
 
-            // add new version
-            [$processId, $uniqueProcessId] = $this->app->processManager->createNewProcess($title, $description, $this->getUserId(), $code, $oldProcessId);
-
-            // remove old version from distribution
             if($oldProcessId !== null) {
                 $this->app->processManager->updateProcess($oldProcessId, ['status' => ProcessStatus::NOT_IN_DISTRIBUTION]);
             }
+
+            $process = $this->app->processManager->getProcessById($processId);
 
             $containers = $this->app->containerManager->getAllContainers(true, true);
 
@@ -525,20 +529,19 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
 
                 $processRepository->removeCurrentDistributionProcessFromDistributionForUniqueProcessId($uniqueProcessId);
 
-                $processRepository->addNewProcess($processId, $uniqueProcessId, $title, $description, $code, $this->getUserId(), ContainerProcessStatus::NEW);
+                $processRepository->addNewProcess($processId, $uniqueProcessId, $process->title, $process->description, $process->form, $this->getUserId(), ContainerProcessStatus::IN_DISTRIBUTION, serialize($workflowUsers), serialize($workflowConfiguration));
             }
 
             $this->app->processRepository->commit($this->getUserId(), __METHOD__);
 
-            $this->flashMessage('Successfully created a new process.', 'success');
+            $this->flashMessage('Successfully saved and published the process.', 'success');
         } catch(AException $e) {
             $this->app->processRepository->rollback(__METHOD__);
 
-            $this->flashMessage('Could not create a new process. Reason: ' . $e->getMessage(), 'error', 10);
+            $this->flashMessage('Could not save and publish the process. Reason: ' . $e->getMessage(), 'error', 10);
         }
 
-        //$this->redirect($this->createFullURL('SuperAdmin:Processes', 'list'));
-        $this->redirect($this->createURL('workflowEditor', ['processId' => $processId]));
+        $this->redirect($this->createFullURL('SuperAdmin:Processes', 'list'));
     }
 }
 

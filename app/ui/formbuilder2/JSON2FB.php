@@ -2,6 +2,7 @@
 
 namespace App\UI\FormBuilder2;
 
+use App\Constants\AConstant;
 use App\Exceptions\GeneralException;
 
 /**
@@ -263,17 +264,33 @@ class JSON2FB {
                     }
                 }
 
-                if(array_key_exists('values', $element) && ($elem instanceof Select)) {
-                    foreach($element['values'] as $value => $text) {
-                        $isSelected = false;
-
-                        if(array_key_exists('selectedValue', $element)) {
-                            if($value == $element['selectedValue']) {
-                                $isSelected = true;
+                if($elem instanceof Select) {
+                    if(array_key_exists('values', $element)) {
+                        foreach($element['values'] as $value => $text) {
+                            $isSelected = false;
+    
+                            if(array_key_exists('selectedValue', $element)) {
+                                if($value == $element['selectedValue']) {
+                                    $isSelected = true;
+                                }
                             }
+    
+                            $elem->addRawOption($value, $text, $isSelected);
                         }
+                    } else if(array_key_exists('valuesFromConst', $element)) {
+                        $const = $element['valuesFromConst'];
 
-                        $elem->addRawOption($value, $text, $isSelected);
+                        if(class_exists($const)) {
+                            if(is_a($const, AConstant::class, true)) {
+                                foreach($const::getAll() as $value => $text) {
+                                    $elem->addRawOption($value, $text);
+                                }
+                            } else {
+                                throw new GeneralException('Class \'' . $const . '\' does not extend \'AConstant\' abstract class.');
+                            }
+                        } else {
+                            throw new GeneralException('Class \'' . $const . '\' does not exist.');
+                        }
                     }
                 }
             }

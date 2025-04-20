@@ -48,6 +48,7 @@ class migration_2025_04_18_0007_processes extends ABaseMigration {
                 'status' => 2,
                 'version' => 1
             ])
+            // FUNCTION REQUEST
             ->add([
                 'processId' => $this->getId(EntityManager::PROCESSES),
                 'uniqueProcessId' => $this->getId(EntityManager::PROCESSES_UNIQUE),
@@ -56,6 +57,19 @@ class migration_2025_04_18_0007_processes extends ABaseMigration {
                 'form' => 'ew0KICJuYW1lIjogImZ1bmN0aW9uUmVxdWVzdCIsDQogImVsZW1lbnRzIjogWw0KICB7DQogICAibmFtZSI6ICJ0aXRsZSIsDQogICAidHlwZSI6ICJ0ZXh0IiwNCiAgICJsYWJlbCI6ICJUaXRsZToiLA0KICAgImF0dHJpYnV0ZXMiOiBbDQogICAgInJlcXVpcmVkIg0KICAgXQ0KICB9LA0KICB7DQogICAibmFtZSI6ICJkZXNjcmlwdGlvbiIsDQogICAidHlwZSI6ICJ0ZXh0YXJlYSIsDQogICAibGFiZWwiOiAiRGVzY3JpcHRpb246IiwNCiAgICJhdHRyaWJ1dGVzIjogWw0KICAgICJyZXF1aXJlZCINCiAgIF0NCiAgfQ0KIF0NCn0=',
                 'workflow' => 'a:1:{i:0;s:16:"$ADMINISTRATORS$";}',
                 'workflowConfiguration' => 'a:1:{s:16:"$ADMINISTRATORS$";a:2:{i:0;s:6:"finish";i:1;s:6:"cancel";}}',
+                'userId' => $this->getTechnicalUserId(),
+                'status' => 2,
+                'version' => 1
+            ])
+            // CONTAINER REQUEST
+            ->add([
+                'processId' => $this->getId(EntityManager::PROCESSES),
+                'uniqueProcessId' => $this->getId(EntityManager::PROCESSES_UNIQUE),
+                'title' => 'Container Request',
+                'description' => 'Container Request form',
+                'form' => 'ew0KICJuYW1lIjogImNvbnRhaW5lclJlcXVlc3QiLA0KICJlbGVtZW50cyI6IFsNCiAgew0KICAgIm5hbWUiOiAiY29udGFpbmVyTmFtZSIsDQogICAidHlwZSI6ICJ0ZXh0IiwNCiAgICJsYWJlbCI6ICJDb250YWluZXIgbmFtZToiLA0KICAgImF0dHJpYnV0ZXMiOiBbDQogICAgInJlcXVpcmVkIg0KICAgXQ0KICB9LA0KICB7DQogICAibmFtZSI6ICJlbnZpcm9ubWVudCIsDQogICAidHlwZSI6ICJzZWxlY3QiLA0KICAgInZhbHVlc0Zyb21Db25zdCI6ICJcXEFwcFxcQ29uc3RhbnRzXFxDb250YWluZXJFbnZpcm9ubWVudHMiLA0KICAgImxhYmVsIjogIkVudmlyb25tZW50IiwNCiAgICJhdHRyaWJ1dGVzIjogWw0KICAgICJyZXF1aXJlZCINCiAgIF0NCiAgfSwNCiAgew0KICAgIm5hbWUiOiAicmVhc29uIiwNCiAgICJ0eXBlIjogInRleHRhcmVhIiwNCiAgICJsYWJlbCI6ICJSZWFzb246IiwNCiAgICJhdHRyaWJ1dGVzIjogWw0KICAgICJyZXF1aXJlZCINCiAgIF0NCiAgfSwNCiAgew0KICAgIm5hbWUiOiAiYWRkaXRpb25hbE5vdGVzIiwNCiAgICJ0eXBlIjogInRleHRhcmVhIiwNCiAgICJsYWJlbCI6ICJBZGRpdGlvbmFsIG5vdGVzOiINCiAgfQ0KIF0NCn0=',
+                'workflow' => 'a:2:{i:0;s:16:"$ADMINISTRATORS$";i:1;s:14:"$CURRENT_USER$";}',
+                'workflowConfiguration' => 'a:2:{s:16:"$ADMINISTRATORS$";a:2:{i:0;s:6:"accept";i:1;s:6:"reject";}s:14:"$CURRENT_USER$";a:2:{i:0;s:6:"finish";i:1;s:6:"cancel";}}',
                 'userId' => $this->getTechnicalUserId(),
                 'status' => 2,
                 'version' => 1

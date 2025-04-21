@@ -11,6 +11,7 @@ use App\Core\Http\Ajax\Requests\PostAjaxRequest;
 use App\Core\Http\HttpRequest;
 use App\Core\Http\JsonResponse;
 use App\Core\Router;
+use App\Modules\APresenter;
 use App\Modules\ModuleManager;
 use App\UI\AComponent;
 use App\UI\FormBuilder2\FormState\FormStateList;
@@ -717,6 +718,40 @@ class FormBuilder2 extends AComponent {
                 }
             ');
         }
+
+        $s = new Select($name);
+
+        $this->elements[$name] = &$s;
+
+        $this->processLabel($name, $label);
+
+        return $s;
+    }
+
+    public function addPresenterSelectSearch(string $actionName, array $params, string $name, string $searchByLabel, string $label) {
+        $this->addTextInput($name . 'Search', $searchByLabel);
+
+        $btn = $this->addButton('Search');
+        $btn->setOnClick('search' . ucfirst($name) . 'Submit()');
+
+        $arb = new AjaxRequestBuilder();
+        
+        $arb->setMethod('POST')
+            ->setAction($this->presenter, $actionName, $params)
+            ->setHeader(['query' => '_query'])
+            ->setFunctionName('search' . ucfirst($name))
+            ->setFunctionArguments(['_query'])
+            ->updateHTMLElement($name, 'data');
+
+        $this->addScript($arb);
+
+        $this->addScript('
+            function search' . ucfirst($name) . 'Submit() {
+                const query = $("#' . $name . 'Search").val();
+
+                search' . ucfirst($name) . '(query);
+            }
+        ');
 
         $s = new Select($name);
 

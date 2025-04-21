@@ -10,6 +10,7 @@ use App\UI\AComponent;
  * HomeOffice represents the HomeOffice standalone process
  * 
  * @author Lukas Velek
+ * @deprecated since 1.6
  */
 class HomeOffice extends AProcessForm {
     protected function createForm() {

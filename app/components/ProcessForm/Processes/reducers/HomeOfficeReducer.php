@@ -45,6 +45,8 @@ class HomeOfficeReducer implements IFormReducer {
             }
         }
     }
+
+    public function applyOnStartupReducer(FormStateList &$stateList) {}
 }
 
 ?>

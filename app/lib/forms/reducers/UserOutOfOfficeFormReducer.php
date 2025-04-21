@@ -45,6 +45,8 @@ class UserOutOfOfficeFormReducer implements IFormReducer {
             }
         }
     }
+
+    public function applyOnStartupReducer(FormStateList &$stateList) {}
 }
 
 ?>

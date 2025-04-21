@@ -74,6 +74,19 @@ class migration_2025_04_18_0007_processes extends ABaseMigration {
                 'status' => 2,
                 'version' => 1
             ])
+            // INVOICE
+            ->add([
+                'processId' => $this->getId(EntityManager::PROCESSES),
+                'uniqueProcessId' => $this->getId(EntityManager::PROCESSES_UNIQUE),
+                'title' => 'Invoice',
+                'description' => 'Invoice form',
+                'form' => 'ew0KICJuYW1lIjogImludm9pY2VGb3JtIiwNCiAiZWxlbWVudHMiOiBbDQogIHsNCiAgICJuYW1lIjogImludm9pY2VObyIsDQogICAidHlwZSI6ICJ0ZXh0IiwNCiAgICJsYWJlbCI6ICJJbnZvaWNlIE5vLjoiLA0KICAgImF0dHJpYnV0ZXMiOiBbDQogICAgInJlcXVpcmVkIiwNCiAgICAicmVhZG9ubHkiDQogICBdDQogIH0sDQogIHsNCiAgICJuYW1lIjogImNvbXBhbnkiLA0KICAgInR5cGUiOiAic2VsZWN0U2VhcmNoIiwNCiAgICJsYWJlbCI6ICJDb21wYW55OiIsDQogICAic2VhcmNoQnlMYWJlbCI6ICJDb21wYW55IG5hbWU6IiwNCiAgICJhY3Rpb25OYW1lIjogInNlYXJjaENvbXBhbmllcyIsDQogICAiYXR0cmlidXRlcyI6IFsNCiAgICAicmVxdWlyZWQiDQogICBdDQogIH0sDQogIHsNCiAgICJuYW1lIjogInN1bSIsDQogICAidHlwZSI6ICJudW1iZXIiLA0KICAgImxhYmVsIjogIlN1bToiLA0KICAgImF0dHJpYnV0ZXMiOiBbDQogICAgInJlcXVpcmVkIg0KICAgXQ0KICB9LA0KICB7DQogICAibmFtZSI6ICJzdW1DdXJyZW5jeSIsDQogICAidHlwZSI6ICJzZWxlY3QiLA0KICAgImxhYmVsIjogIlN1bSBjdXJyZW5jeToiLA0KICAgImF0dHJpYnV0ZXMiOiBbDQogICAgInJlcXVpcmVkIg0KICAgXQ0KICB9LA0KICB7DQogICAibmFtZSI6ICJmaWxlIiwNCiAgICJ0eXBlIjogImZpbGUiLA0KICAgImxhYmVsIjogIkludm9pY2UgZmlsZToiLA0KICAgImF0dHJpYnV0ZXMiOiBbDQogICAgInJlcXVpcmVkIg0KICAgXQ0KICB9DQogXSwNCiAicmVkdWNlciI6ICJcXEFwcFxcQ29tcG9uZW50c1xcUHJvY2Vzc0Zvcm1cXFByb2Nlc3Nlc1xccmVkdWNlcnNcXEludm9pY2VSZWR1Y2VyLnBocCINCn0=',
+                'workflow' => 'a:2:{i:0;s:13:"$ACCOUNTANTS$";i:1;s:13:"$ACCOUNTANTS$";}',
+                'workflowConfiguration' => 'a:2:{s:15:"$ACCOUNTANTS$_0";a:2:{i:0;s:6:"accept";i:1;s:6:"reject";}s:15:"$ACCOUNTANTS$_1";a:1:{i:0;s:7:"archive";}}',
+                'userId' => $this->getTechnicalUserId(),
+                'status' => 2,
+                'version' => 1
+            ])
         ;
 
         return $seed;

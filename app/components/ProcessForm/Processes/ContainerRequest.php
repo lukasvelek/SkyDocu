@@ -9,6 +9,7 @@ use App\Constants\ContainerEnvironments;
  * ContainerRequest represents the ContainerRequest standalone process
  * 
  * @author Lukas Velek
+ * @deprecated since 1.6
  */
 class ContainerRequest extends AProcessForm {
     protected function createForm() {

@@ -16,6 +16,13 @@ interface IFormReducer {
      * @param FormStateList &$stateList
      */
     function applyReducer(FormStateList &$stateList);
+
+    /**
+     * Applies form reducer on form startup -> before the form is rendered to the user
+     * 
+     * @param FormStateList &$stateList
+     */
+    function applyOnStartupReducer(FormStateList &$stateList);
 }
 
 ?>

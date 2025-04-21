@@ -328,52 +328,33 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
         $workflow = $decodedJson['workflow'];
 
         $workflowUsers = [];
-        $lastUser = null;
 
         foreach($workflow as $w) {
             $name = $w['name'];
 
             switch($name) {
                 case '$CURRENT_USER$':
-                    if($lastUser === null || ($lastUser !== null && $lastUser != '$CURRENT_USER$')) {
-                        $workflowUsers[] = '$CURRENT_USER$';
-                        $lastUser = '$CURRENT_USER$';
-                    }
+                    $workflowUsers[] = '$CURRENT_USER$';
                     break;
 
                 case '$ACCOUNTANTS$':
-                    if($lastUser === null || ($lastUser !== null && $lastUser != '$ACCOUNTANTS$')) {
-                        $workflowUsers[] = '$ACCOUNTANTS$';
-                        $lastUser = '$ACCOUNTANTS$';
-                    }
+                    $workflowUsers[] = '$ACCOUNTANTS$';
                     break;
 
                 case '$ARCHIVISTS$':
-                    if($lastUser === null || ($lastUser !== null && $lastUser != '$ARCHIVISTS$')) {
-                        $workflowUsers[] = '$ARCHIVISTS$';
-                        $lastUser = '$ARCHIVISTS$';
-                    }
+                    $workflowUsers[] = '$ARCHIVISTS$';
                     break;
 
                 case '$PROPERTY_MANAGERS$':
-                    if($lastUser === null || ($lastUser !== null && $lastUser != '$PROPERTY_MANAGERS$')) {
-                        $workflowUsers[] = '$PROPERTY_MANAGERS$';
-                        $lastUser = '$PROPERTY_MANAGERS$';
-                    }
+                    $workflowUsers[] = '$PROPERTY_MANAGERS$';
                     break;
 
                 case '$CURRENT_USER_SUPERIOR$':
-                    if($lastUser === null || ($lastUser !== null && $lastUser != '$CURRENT_USER_SUPERIOR$')) {
-                        $workflowUsers[] = '$CURRENT_USER_SUPERIOR$';
-                        $lastUser = '$CURRENT_USER_SUPERIOR$';
-                    }
+                    $workflowUsers[] = '$CURRENT_USER_SUPERIOR$';
                     break;
 
                 case '$ADMINISTRATORS$':
-                    if($lastUser === null || ($lastUser !== null && $lastUser != '$ADMINISTRATORS$')) {
-                        $workflowUsers[] = '$ADMINISTRATORS$';
-                        $lastUser = '$ADMINISTRATORS$';
-                    }
+                    $workflowUsers[] = '$ADMINISTRATORS$';
                     break;
             }
         }
@@ -386,7 +367,7 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
 
         $workflowActions = [];
 
-        foreach($workflow as $w) {
+        foreach($workflow as $index => $w) {
             if(!array_key_exists('actions', $w)) {
                 throw new GeneralException('Attribute \'action\' is not defined.');
             }
@@ -402,7 +383,7 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
                 $okActions[] = $action;
             }
 
-            $workflowActions[$name] = $okActions;
+            $workflowActions[$name . '_' . $index] = $okActions;
         }
 
         return $workflowActions;
@@ -421,11 +402,11 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
         $workflowActions = $this->getWorkflowActions($decodedJson);
 
         $workflowUsersPrettified = '<ol>';
-        foreach($workflowUsers as $workflowUser) {
+        foreach($workflowUsers as $index => $workflowUser) {
             $workflowUsersPrettified .= '
                 <li>' . $workflowUser . ' (will be filled on activation)<ul>';
 
-            foreach($workflowActions[$workflowUser] as $action) {
+            foreach($workflowActions[$workflowUser . '_' . $index] as $action) {
                 $workflowUsersPrettified .= '<li>' . ProcessInstanceOperations::toString($action) . '</li>';
             }
 

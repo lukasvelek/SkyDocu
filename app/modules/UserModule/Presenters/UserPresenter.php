@@ -147,7 +147,7 @@ class UserPresenter extends AUserPresenter {
         $form->addSubmit();
 
         $form->setCallReducerOnChange();
-        $form->reducer = new UserOutOfOfficeFormReducer($request);
+        $form->reducer = new UserOutOfOfficeFormReducer($this->app, $request);
 
         return $form;
     }

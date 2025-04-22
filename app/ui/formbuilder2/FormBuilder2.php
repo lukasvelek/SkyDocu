@@ -11,7 +11,6 @@ use App\Core\Http\Ajax\Requests\PostAjaxRequest;
 use App\Core\Http\HttpRequest;
 use App\Core\Http\JsonResponse;
 use App\Core\Router;
-use App\Modules\APresenter;
 use App\Modules\ModuleManager;
 use App\UI\AComponent;
 use App\UI\FormBuilder2\FormState\FormStateList;
@@ -171,7 +170,8 @@ class FormBuilder2 extends AComponent {
 
         if($this->reducer !== null && !$this->httpRequest->isAjax) {
             $stateList = $this->getStateList();
-            $this->reducer->applyReducer($stateList);
+            //$this->reducer->applyReducer($stateList);
+            $this->reducer->applyOnStartupReducer($stateList);
             $this->applyStateList($stateList);
         }
 

@@ -26,7 +26,7 @@ class HomeOffice extends AProcessForm {
         $this->addSubmit('Start');
 
         $this->setCallReducerOnChange();
-        $this->reducer = new HomeOfficeReducer($this->httpRequest);
+        $this->reducer = new HomeOfficeReducer($this->app, $this->httpRequest);
     }
 
     protected function createAction() {

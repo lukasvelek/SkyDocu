@@ -416,7 +416,7 @@ class migration_2025_03_15_0001_initial extends ABaseMigration {
             ]);
         }
 
-        $processTypesSeed = $seed->seed(EntityManager::C_PROCESS_TYPES);
+        /*$processTypesSeed = $seed->seed(EntityManager::C_PROCESS_TYPES);
 
         $standaloneProcessIds = [];
         foreach(StandaloneProcesses::getAll() as $key => $title) {
@@ -430,9 +430,9 @@ class migration_2025_03_15_0001_initial extends ABaseMigration {
                     'title' => $title,
                     'description' => StandaloneProcesses::getDescription($key)
             ]);
-        }
+        }*/
 
-        $seed->seed(EntityManager::C_PROCESS_CUSTOM_METADATA)
+        /*$seed->seed(EntityManager::C_PROCESS_CUSTOM_METADATA)
             ->add([
                 'metadataId' => $this->getId(EntityManager::C_PROCESS_CUSTOM_METADATA),
                 'typeId' => $standaloneProcessIds[StandaloneProcesses::INVOICE],
@@ -440,7 +440,7 @@ class migration_2025_03_15_0001_initial extends ABaseMigration {
                 'guiTitle' => 'Companies',
                 'type' => CustomMetadataTypes::ENUM,
                 'isRequired' => 1
-            ]);
+            ]);*/
 
         $groupSeed = $seed->seed(EntityManager::C_GROUPS);
 

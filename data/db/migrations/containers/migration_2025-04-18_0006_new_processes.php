@@ -42,7 +42,9 @@ class migration_2025_04_18_0006_new_processes extends ABaseMigration {
     public function seeding(): TableSeeding {
         $seed = $this->getTableSeeding();
 
-        
+        $processMetadata = $seed->seed('process_metadata');
+
+        $processMetadata->deleteAll();
 
         return $seed;
     }

@@ -31,6 +31,7 @@ use App\Repositories\Container\FolderRepository;
 use App\Repositories\Container\GridRepository;
 use App\Repositories\Container\GroupRepository;
 use App\Repositories\Container\MetadataRepository;
+use App\Repositories\Container\ProcessInstanceRepository;
 use App\Repositories\Container\ProcessRepository;
 use App\Repositories\ContentRepository;
 use ReflectionClass;
@@ -55,6 +56,7 @@ abstract class AContainerPresenter extends APresenter {
     protected ExternalSystemLogRepository $externalSystemLogRepository;
     protected ExternalSystemTokenRepository $externalSystemTokenRepository;
     protected ExternalSystemRightsRepository $externalSystemRightsRepository;
+    protected ProcessInstanceRepository $processInstanceRepository;
     
     protected EntityManager $entityManager;
     protected FolderManager $folderManager;

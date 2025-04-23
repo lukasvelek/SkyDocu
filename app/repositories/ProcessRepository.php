@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Constants\ProcessStatus;
 use QueryBuilder\QueryBuilder;
 
 /**
@@ -18,6 +19,17 @@ class ProcessRepository extends ARepository {
 
         $qb->select(['*'])
             ->from('processes');
+
+        return $qb;
+    }
+
+    /**
+     * Composes an instance of QueryBuilder for processes in distribution
+     */
+    public function composeQueryForProcessesInDistribution(): QueryBuilder {
+        $qb = $this->composeQueryForProcesses();
+
+        $qb->andWhere('status = ?', [ProcessStatus::IN_DISTRIBUTION]);
 
         return $qb;
     }

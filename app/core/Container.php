@@ -17,7 +17,6 @@ use App\Managers\Container\GridManager;
 use App\Managers\Container\GroupManager;
 use App\Managers\Container\MetadataManager;
 use App\Managers\Container\ProcessManager;
-use App\Managers\Container\StandaloneProcessManager;
 use App\Managers\EntityManager;
 use App\Repositories\Container\ArchiveRepository;
 use App\Repositories\Container\DocumentClassRepository;
@@ -72,6 +71,7 @@ class Container {
     public ArchiveManager $archiveManager;
     public FileStorageManager $fileStorageManager;
     public ExternalSystemsManager $externalSystemsManager;
+    public ProcessManager $processManager;
 
     public GroupStandardOperationsAuthorizator $groupStandardOperationsAuthorizator;
     public SupervisorAuthorizator $supervisorAuthorizator;
@@ -166,6 +166,9 @@ class Container {
                 'externalSystemLogRepository',
                 'externalSystemTokenRepository',
                 'externalSystemRightsRepository'
+            ],
+            'processManager' => [
+                'processRepository'
             ]
         ];
 

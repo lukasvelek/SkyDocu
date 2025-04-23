@@ -3,12 +3,16 @@
 namespace App\Services;
 
 use App\Constants\ContainerStatus;
+use App\Core\Application;
 use App\Core\Caching\CacheNames;
+use App\Core\Container;
 use App\Core\ServiceManager;
 use App\Exceptions\AException;
 use App\Exceptions\ServiceException;
 use App\Logger\Logger;
+use App\Managers\Container\ProcessManager as ContainerProcessManager;
 use App\Managers\ContainerManager;
+use App\Managers\ProcessManager;
 use App\Repositories\ContainerRepository;
 use Error;
 use Exception;
@@ -18,12 +22,17 @@ class ContainerCreationSlaveService extends AService {
 
     private ContainerManager $containerManager;
     private ContainerRepository $containerRepository;
+    private ProcessManager $processManager;
+    private Application $app;
+    private ContainerProcessManager $containerProcessManager;
 
-    public function __construct(Logger $logger, ServiceManager $serviceManager, ContainerManager $containerManager, ContainerRepository $containerRepository) {
+    public function __construct(Logger $logger, ServiceManager $serviceManager, ContainerManager $containerManager, ContainerRepository $containerRepository, ProcessManager $processManager, Application $app) {
         parent::__construct('ContainerCreationSlave', $logger, $serviceManager);
 
         $this->containerManager = $containerManager;
         $this->containerRepository = $containerRepository;
+        $this->processManager = $processManager;
+        $this->app = $app;
     }
 
     public function run() {
@@ -89,8 +98,36 @@ class ContainerCreationSlaveService extends AService {
     private function processContainerCreation() {
         try {
             $this->containerManager->createNewContainerAsync($this->containerId);
+            $this->insertProcesses();
         } catch(AException $e) {
             throw $e;
+        }
+    }
+
+    private function insertProcesses() {
+        $qb = $this->processManager->processRepository->composeQueryForProcessesInDistribution();
+
+        $qb->execute();
+
+        $insertProcesses = [];
+        while($row = $qb->fetchAssoc()) {
+            $insertProcesses[] = [
+                'processId' => $row['processId'],
+                'uniqueProcessId' => $row['uniqueProcessId'],
+                'title' => $row['title'],
+                'description' => $row['description'],
+                'form' => $row['form'],
+                'workflow' => $row['workflow'],
+                'workflowConfiguration' => $row['workflowConfiguration'],
+                'userId' => $row['userId'],
+                'status' => 1
+            ];
+        }
+
+        $container = new Container($this->app, $this->containerId);
+
+        foreach($insertProcesses as $data) {
+            $container->processManager->insertNewProcessFromDataArray($data);
         }
     }
 }

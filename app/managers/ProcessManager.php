@@ -15,7 +15,7 @@ use App\Repositories\ProcessRepository;
  * @author Lukas Velek
  */
 class ProcessManager extends AManager {
-    private ProcessRepository $processRepository;
+    public ProcessRepository $processRepository;
 
     public function __construct(Logger $logger, EntityManager $entityManager, ProcessRepository $processRepository) {
         parent::__construct($logger, $entityManager);

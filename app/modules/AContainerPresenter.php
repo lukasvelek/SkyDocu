@@ -63,8 +63,6 @@ abstract class AContainerPresenter extends APresenter {
     protected MetadataManager $metadataManager;
     protected EnumManager $enumManager;
     protected GridManager $gridManager;
-    protected ProcessManager $processManager;
-    protected StandaloneProcessManager $standaloneProcessManager;
     protected ArchiveManager $archiveManager;
     protected FileStorageManager $fileStorageManager;
     protected ExternalSystemsManager $externalSystemsManager;
@@ -111,8 +109,6 @@ abstract class AContainerPresenter extends APresenter {
         $this->initManagers();
         $this->injectCacheFactoryToManagers();
 
-        $this->enumManager->standaloneProcessManager = $this->standaloneProcessManager;
-
         $this->documentManager->enumManager = $this->enumManager;
 
         $this->groupStandardOperationsAuthorizator = new GroupStandardOperationsAuthorizator($containerConnection, $this->logger, $this->groupManager);
@@ -128,26 +124,11 @@ abstract class AContainerPresenter extends APresenter {
      */
     private function initManagers() {
         $managers = [
-            'processManager' => [
-                'processRepository',
-                'groupManager',
-                ':userSubstituteManager',
-                ':userAbsenceManager'
-            ],
             'archiveManager' => [
                 'archiveRepository'
             ],
             'fileStorageManager' => [
                 'fileStorageRepository'
-            ],
-            'standaloneProcessManager' => [
-                'processManager',
-                ':currentUser',
-                ':userManager',
-                'documentManager',
-                'fileStorageManager',
-                'groupManager',
-                'folderManager'
             ],
             'externalSystemsManager' => [
                 'externalSystemsRepository',

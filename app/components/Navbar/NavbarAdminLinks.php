@@ -13,7 +13,7 @@ class NavbarAdminLinks {
     public const MEMBERS = ['page' => 'Admin:Members', 'action' => 'dashboard'];
     public const DOCUMENTS = ['page' => 'Admin:Documents', 'action' => 'dashboard'];
     public const ARCHIVE = ['page' => 'Admin:Archive', 'action' => 'dashboard'];
-    public const PROCESSES = ['page' => 'Admin:Processes', 'action' => 'dashboard'];
+    //public const PROCESSES = ['page' => 'Admin:Processes', 'action' => 'dashboard'];
     public const SYSTEM = ['page' => 'Admin:System', 'action' => 'dashboard'];
 
     /**
@@ -28,7 +28,7 @@ class NavbarAdminLinks {
             'Members' => self::MEMBERS,
             'Documents' => self::DOCUMENTS,
             'Archive' => self::ARCHIVE,
-            'Processes' => self::PROCESSES,
+            //'Processes' => self::PROCESSES,
             'System' => self::SYSTEM
         ];
     }

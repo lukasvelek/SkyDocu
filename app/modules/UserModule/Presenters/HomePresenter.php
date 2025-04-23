@@ -21,41 +21,6 @@ class HomePresenter extends AUserPresenter {
 
         $this->template->permanent_flash_message = $code ?? '';
     }
-
-    protected function createComponentProcessesWaitingForMeGrid(HttpRequest $request) {
-        $grid = new ProcessesGrid(
-            $this->componentFactory->getGridBuilder($this->containerId),
-            $this->app,
-            $this->gridManager,
-            $this->processManager,
-            $this->documentManager
-        );
-
-        $grid->disableActions();
-        $grid->disablePagination();
-        $grid->disableControls();
-        $grid->setView(ProcessGridViews::VIEW_WAITING_FOR_ME);
-
-        return $grid;
-    }
-
-    protected function createComponentProcessesStartedByMeGrid(HttpRequest $request) {
-        $grid = new ProcessesGrid(
-            $this->componentFactory->getGridBuilder($this->containerId),
-            $this->app,
-            $this->gridManager,
-            $this->processManager,
-            $this->documentManager
-        );
-
-        $grid->disableActions();
-        $grid->disablePagination();
-        $grid->disableControls();
-
-        $grid->setView(ProcessGridViews::VIEW_STARTED_BY_ME);
-
-        return $grid;
-    }
 }
 
 ?>

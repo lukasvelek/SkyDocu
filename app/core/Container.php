@@ -69,8 +69,6 @@ class Container {
     public MetadataManager $metadataManager;
     public EnumManager $enumManager;
     public GridManager $gridManager;
-    public ProcessManager $processManager;
-    public StandaloneProcessManager $standaloneProcessManager;
     public ArchiveManager $archiveManager;
     public FileStorageManager $fileStorageManager;
     public ExternalSystemsManager $externalSystemsManager;
@@ -117,7 +115,6 @@ class Container {
         $this->initManagers();
         $this->injectCacheFactoryToManagers();
 
-        $this->enumManager->standaloneProcessManager = $this->standaloneProcessManager;
         $this->documentManager->enumManager = $this->enumManager;
         
         $this->groupStandardOperationsAuthorizator = new GroupStandardOperationsAuthorizator($this->conn, $this->logger, $this->groupManager);
@@ -158,26 +155,11 @@ class Container {
      */
     private function initManagers() {
         $managers = [
-            'processManager' => [
-                'processRepository',
-                'groupManager',
-                ':userSubstituteManager',
-                ':userAbsenceManager'
-            ],
             'archiveManager' => [
                 'archiveRepository'
             ],
             'fileStorageManager' => [
                 'fileStorageRepository'
-            ],
-            'standaloneProcessManager' => [
-                'processManager',
-                ':currentUser',
-                ':userManager',
-                'documentManager',
-                'fileStorageManager',
-                'groupManager',
-                'folderManager'
             ],
             'externalSystemsManager' => [
                 'externalSystemsRepository',

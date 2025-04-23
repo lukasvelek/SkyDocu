@@ -51,7 +51,7 @@ class migration_2025_04_05_0004_company_property_management extends ABaseMigrati
             ]);
         }
 
-        $processMetadata = $seed->seed(EntityManager::C_PROCESS_CUSTOM_METADATA);
+        /*$processMetadata = $seed->seed(EntityManager::C_PROCESS_CUSTOM_METADATA);
 
         $processMetadata->add([
             'metadataId' => $this->getId(EntityManager::C_PROCESS_CUSTOM_METADATA),
@@ -65,7 +65,7 @@ class migration_2025_04_05_0004_company_property_management extends ABaseMigrati
             'guiTitle' => 'Items',
             'type' => CustomMetadataTypes::ENUM,
             'isRequired' => 1
-        ]);
+        ]);*/
 
         return $seed;
     }

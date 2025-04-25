@@ -74,7 +74,7 @@ class ProcessesGridDatasourceHelper {
                 (
                     currentOfficerType = " . ProcessInstanceOfficerTypes::USER . "
                         AND
-                    currentOfficerId = \'" . $this->currentUserId . "\'
+                    currentOfficerId = '" . $this->currentUserId . "'
                 )
                     OR
                 (

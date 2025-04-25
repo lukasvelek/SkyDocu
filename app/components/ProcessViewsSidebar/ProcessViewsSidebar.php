@@ -12,16 +12,22 @@ use App\Core\Http\HttpRequest;
  * @author Lukas Velek
  */
 class ProcessViewsSidebar extends Sidebar2 {
+    private bool $isNewActive = false;
+
     public function __construct(HttpRequest $request) {
         parent::__construct($request);
 
         $this->setComponentName('processViewsSidebar');
     }
 
+    public function setNewProcessActive(bool $isNewActive = true) {
+        $this->isNewActive = $isNewActive;
+    }
+
     public function startup() {
         parent::startup();
 
-        $this->addLink('Start new process', $this->createFullURL('User:NewProcess', 'select'));
+        $this->addLink('Start new process', $this->createFullURL('User:NewProcess', 'select'), $this->isNewActive);
         $this->addHorizontalLine();
 
         $url = [

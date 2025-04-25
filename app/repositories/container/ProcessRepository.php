@@ -77,6 +77,14 @@ class ProcessRepository extends ARepository {
 
         return $qb->fetchBool();
     }
+
+    public function composeQueryForAvailableProcesses() {
+        $qb = $this->commonComposeQuery();
+
+        $qb->andWhere('status = 1');
+
+        return $qb;
+    }
 }
 
 ?>

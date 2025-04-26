@@ -37,6 +37,7 @@ class FormBuilder2 extends AComponent {
     private bool $callReducerOnChange;
     private bool $isPrerendered;
     private array $additionalLinkParams;
+    private bool $overrideReducerOnStartup = false;
 
     private FormStateListHelper $stateListHelper;
 
@@ -67,6 +68,15 @@ class FormBuilder2 extends AComponent {
         $this->hasFile = false;
 
         $this->router = new Router();
+    }
+
+    /**
+     * If set to true reducer isn't called on startup
+     * 
+     * @param bool $override Override reducer call on start up
+     */
+    public function setOverrideReducerCallOnStartup(bool $override = true) {
+        $this->overrideReducerOnStartup = $override;
     }
 
     /**
@@ -141,6 +151,9 @@ class FormBuilder2 extends AComponent {
         return $template->render()->getRenderedContent();
     }
 
+    /**
+     * Renders the form elements only to HTML code - without the <form> tag
+     */
     public function renderElementsOnly(): string {
         $code = '';
 
@@ -168,7 +181,7 @@ class FormBuilder2 extends AComponent {
             $form->setFileUpload();
         }
 
-        if($this->reducer !== null && !$this->httpRequest->isAjax) {
+        if($this->reducer !== null && !$this->httpRequest->isAjax && !$this->overrideReducerOnStartup) {
             $stateList = $this->getStateList();
             //$this->reducer->applyReducer($stateList);
             $this->reducer->applyOnStartupReducer($stateList);

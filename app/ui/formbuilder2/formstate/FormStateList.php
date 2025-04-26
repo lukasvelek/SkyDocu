@@ -29,6 +29,11 @@ class FormStateList {
         }
     }
 
+    /**
+     * Adds an element
+     * 
+     * @param string $name Element name
+     */
     public function addElement(string $name) {
         $this->_elements[$name] = new FormState($name);
     }

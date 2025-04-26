@@ -4,6 +4,8 @@ namespace App\UI\FormBuilder2;
 
 use App\Constants\AConstant;
 use App\Exceptions\GeneralException;
+use App\UI\FormBuilder2\FormState\FormStateList;
+use App\UI\FormBuilder2\FormState\FormStateListHelper;
 
 /**
  * JSON2FB is a helper-type class that helps with converting JSON form definition file to FormBuilder elements.
@@ -34,7 +36,7 @@ class JSON2FB {
     private array $json;
     private array $skipAttributes;
     private array $skipElementAttributes;
-    private bool $viewOnly;
+    private array $formData;
 
     /**
      * Class constructor
@@ -48,18 +50,7 @@ class JSON2FB {
 
         $this->skipAttributes = [];
         $this->skipElementAttributes = [];
-        $this->viewOnly = false;
-    }
-
-    /**
-     * Sets whether this is only a view render
-     * 
-     * @param bool $viewOnly View only
-     */
-    public function setViewOnly(bool $viewOnly = true) {
-        $this->viewOnly = $viewOnly;
-
-        $this->skipAttributes[] = 'action';
+        $this->formData = [];
     }
 
     /**
@@ -313,6 +304,20 @@ class JSON2FB {
                         }
                     }
                 }
+
+                if(!$this->formData !== null) {
+                    foreach($this->formData as $fdk => $fdv) {
+                        if($element['name'] == $fdk) {
+                            if(method_exists($elem, 'setValue')) {
+                                $elem->{'setValue'}($fdv);
+                            } else if(method_exists($elem, 'setContent')) {
+                                $elem->{'setContent'}($fdv);
+                            }
+
+                            $elem->setReadonly();
+                        }
+                    }
+                }
             }
         }
     }
@@ -333,6 +338,15 @@ class JSON2FB {
         $this->process();
 
         return $this->form;
+    }
+
+    /**
+     * Sets form data to be filled into the form
+     * 
+     * @param array $data Form data array
+     */
+    public function setFormData(array $data) {
+        $this->formData = $data;
     }
 
     /**

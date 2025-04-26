@@ -4,6 +4,7 @@ namespace App\Managers\Container;
 
 use App\Constants\Container\ProcessInstanceOfficerTypes;
 use App\Constants\Container\SystemGroups;
+use App\Core\DB\DatabaseRow;
 use App\Exceptions\GeneralException;
 use App\Logger\Logger;
 use App\Managers\AManager;
@@ -144,6 +145,21 @@ class ProcessInstanceManager extends AManager {
             $result, // new officer
             $type // new officer type
         ];
+    }
+
+    /**
+     * Returns an instance of DatabaseRow for process instance with given $instanceId
+     * 
+     * @param string $instanceId Process instance ID
+     */
+    public function getProcessInstanceById(string $instanceId): DatabaseRow {
+        $instance = $this->processInstanceRepository->getProcessInstanceById($instanceId);
+
+        if($instance === null) {
+            throw new GeneralException('Process instance \'' . $instanceId . '\' does not exist.');
+        }
+
+        return DatabaseRow::createFromDbRow($instance);
     }
 }
 

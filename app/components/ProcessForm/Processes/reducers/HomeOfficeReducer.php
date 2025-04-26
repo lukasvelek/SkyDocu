@@ -12,10 +12,6 @@ use App\UI\FormBuilder2\FormState\FormStateList;
  */
 class HomeOfficeReducer extends ABaseFormReducer {
     public function applyReducer(FormStateList &$stateList) {
-        /*if(!$this->request->isAjax) {
-            return;
-        }*/
-
         if($stateList->dateFrom->value !== null) {
             // dateFrom must be more or equal to the current date
             if(strtotime($stateList->dateFrom->value) < strtotime(date('Y-m-d'))) {

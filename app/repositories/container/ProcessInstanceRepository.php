@@ -57,6 +57,20 @@ class ProcessInstanceRepository extends ARepository {
 
         return $qb->fetchBool();
     }
+
+    /**
+     * Retrieves a process instance from database
+     * 
+     * @param string $instanceId Process instance ID
+     */
+    public function getProcessInstanceById(string $instanceId): mixed {
+        $qb = $this->commonComposeQuery();
+
+        $qb->andWhere('instanceId = ?', [$instanceId])
+            ->execute();
+
+        return $qb->fetch();
+    }
 }
 
 ?>

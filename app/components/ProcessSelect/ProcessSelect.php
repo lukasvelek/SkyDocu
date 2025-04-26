@@ -7,6 +7,11 @@ use App\Managers\Container\ProcessManager;
 use App\Repositories\Container\ProcessRepository;
 use App\UI\AComponent;
 
+/**
+ * ProcessSelect is a component that displays available processes and allows to start them
+ * 
+ * @author Lukas Velek
+ */
 class ProcessSelect extends AComponent {
     private ProcessManager $processManager;
     private ProcessRepository $processRepository;
@@ -33,11 +38,31 @@ class ProcessSelect extends AComponent {
 
         $tiles = $this->getProcessTiles();
         
+        $code = '<div class="row">';
+        
+        $maxTilesInRow = 6;
+        
+        $row = 0;
+        foreach($tiles as $tile) {
+            if(($row + 1) < $maxTilesInRow) {
+                $code .= '<div class="col-md-2">' . $tile . '</div>';
+                $row++;
+            } else {
+                $row = 0;
+                $code .= '</div><div class="row">';
+            }
+        }
+        
+        $template->process_tiles = $code;
+        
         return $template->render()->getRenderedContent();
     }
 
     public static function createFromComponent(AComponent $component) {}
 
+    /**
+     * Gets all available processes
+     */
     private function getProcesses() {
         $qb = $this->processRepository->composeQueryForAvailableProcesses();
 
@@ -55,7 +80,10 @@ class ProcessSelect extends AComponent {
         $this->processes = $processes;
     }
 
-    private function getProcessTiles() {
+    /**
+     * Fills templates for all process tiles, renders them and returns an array with their code
+     */
+    private function getProcessTiles(): array {
         $tiles = [];
 
         foreach($this->processes as $process) {
@@ -68,11 +96,21 @@ class ProcessSelect extends AComponent {
             $tileTemplate->process_id = $processId;
             $tileTemplate->process_title = $title;
             $tileTemplate->process_description = $description;
+            $tileTemplate->process_start_link = $this->getProcessStartLink($processId);
 
             $tiles[] = $tileTemplate->render()->getRenderedContent();
         }
 
         return $tiles;
+    }
+
+    /**
+     * Returns a process start link for given $processId
+     * 
+     * @param string $processId Process ID
+     */
+    private function getProcessStartLink(string $processId): string {
+        return $this->createFullURLString('User:NewProcess', 'startProcess', ['processId' => $processId]);
     }
 }
 

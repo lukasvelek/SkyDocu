@@ -20,6 +20,11 @@ class ProcessViewsSidebar extends Sidebar2 {
         $this->setComponentName('processViewsSidebar');
     }
 
+    /**
+     * Sets option 'Start new process' as active
+     * 
+     * @param bool $isNewActive True if the 'Start new process' is active, or false if not
+     */
     public function setNewProcessActive(bool $isNewActive = true) {
         $this->isNewActive = $isNewActive;
     }

@@ -68,6 +68,7 @@ abstract class AContainerPresenter extends APresenter {
     protected ArchiveManager $archiveManager;
     protected FileStorageManager $fileStorageManager;
     protected ExternalSystemsManager $externalSystemsManager;
+    protected ProcessManager $processManager;
 
     protected GroupStandardOperationsAuthorizator $groupStandardOperationsAuthorizator;
     protected SupervisorAuthorizator $supervisorAuthorizator;
@@ -137,6 +138,9 @@ abstract class AContainerPresenter extends APresenter {
                 'externalSystemLogRepository',
                 'externalSystemTokenRepository',
                 'externalSystemRightsRepository'
+            ],
+            'processManager' => [
+                'processRepository'
             ]
         ];
 

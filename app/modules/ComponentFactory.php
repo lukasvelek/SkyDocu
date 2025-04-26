@@ -126,43 +126,21 @@ class ComponentFactory {
     }
 
     /**
-     * Returns an instance of a Standalone process by it's name
+     * Creates a component instance by its name with custom parameters
      * 
-     * @param string $name Standalone process name
+     * @param string $className Component class name
+     * @param array $params Optional constructor parameters
      */
-    public function getStandaloneProcessFormByName(
-        string $name,
-        StandaloneProcessManager $standaloneProcessManager
-    ): ?AProcessForm {
-        switch($name) {
-            case StandaloneProcesses::HOME_OFFICE:
-                $form = new HomeOffice($this->request);
-                $this->injectDefault($form, $name);
-                return $form;
+    public function createComponentInstanceByClassName(string $className, array $params = []): AComponent {
+        /**
+         * @var \App\UI\AComponent $obj
+         */
+        $obj = new $className($this->request, ...$params);
 
-            case StandaloneProcesses::FUNCTION_REQUEST:
-                $form = new FunctionRequest($this->request);
-                $this->injectDefault($form, $name);
-                return $form;
+        $obj->setApplication($this->app);
+        $obj->setPresenter($this->presenter);
 
-            case StandaloneProcesses::INVOICE:
-                $form = new Invoice($this->request, $standaloneProcessManager);
-                $this->injectDefault($form, $name);
-                return $form;
-
-            case StandaloneProcesses::CONTAINER_REQUEST:
-                $form = new ContainerRequest($this->request);
-                $this->injectDefault($form, $name);
-                return $form;
-
-            case StandaloneProcesses::REQUEST_PROPERTY_MOVE:
-                $form = new PropertyMoveRequest($this->request, $this->app->userManager, $standaloneProcessManager);
-                $this->injectDefault($form, $name);
-                return $form;
-
-            default:
-                return null;
-        }
+        return $obj;
     }
 }
 

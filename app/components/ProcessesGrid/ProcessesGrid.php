@@ -6,6 +6,7 @@ use App\Constants\Container\ProcessInstanceOfficerTypes;
 use App\Constants\Container\ProcessInstanceStatus;
 use App\Constants\Container\SystemGroups;
 use App\Core\DB\DatabaseRow;
+use App\Core\Http\JsonResponse;
 use App\Managers\Container\GroupManager;
 use App\Managers\Container\ProcessManager;
 use App\Repositories\Container\ProcessInstanceRepository;
@@ -151,6 +152,12 @@ class ProcessesGrid extends GridBuilder implements IGridExtendingComponent {
         }
 
         return false;
+    }
+
+    public function actionGetSkeleton(): JsonResponse {
+        $this->prerender();
+
+        return parent::actionGetSkeleton();
     }
 }
 

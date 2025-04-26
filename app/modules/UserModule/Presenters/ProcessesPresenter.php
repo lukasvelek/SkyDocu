@@ -29,7 +29,8 @@ class ProcessesPresenter extends AUserPresenter {
             $grid,
             $this->processInstanceRepository,
             $request->get('view'),
-            $this->groupManager
+            $this->groupManager,
+            $this->processManager
         );
 
         return $processGrid;

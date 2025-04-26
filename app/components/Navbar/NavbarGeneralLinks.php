@@ -11,7 +11,7 @@ class NavbarGeneralLinks {
     public const DASHBOARD = ['page' => 'User:Home', 'action' => 'dashboard'];
     public const DOCUMENTS = ['page' => 'User:Documents', 'action' => 'list'];
     public const ARCHIVE = ['page' => 'User:Archive', 'action' => 'list'];
-    public const PROCESSES = ['page' => 'User:Processes', 'action' => 'list', 'view' => 'all'];
+    public const PROCESSES = ['page' => 'User:Processes', 'action' => 'list', 'view' => 'waitingForMe'];
     //public const REPORTS = ['page' => 'User:Reports', 'action' => 'list'];
 
     public const A_SETTINGS = ['page' => 'Admin:Home', 'action' => 'dashboard'];

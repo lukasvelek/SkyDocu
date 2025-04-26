@@ -134,7 +134,7 @@ class NewProcessPresenter extends AUserPresenter {
             $this->flashMessage('Could not start new process instance. Reason: ' . $e->getMessage(), 'error', 10);
         }
 
-        $this->redirect($this->createURL('select'));
+        $this->redirect($this->createFullURL('User:Processes', 'list', ['view' => 'waitingForMe']));
     }
 }
 

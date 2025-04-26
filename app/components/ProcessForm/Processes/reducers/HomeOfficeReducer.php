@@ -8,7 +8,7 @@ use App\UI\FormBuilder2\FormState\FormStateList;
 /**
  * Default reducer for the HomeOffice process form
  * 
- * @author LUkas Velek
+ * @author Lukas Velek
  */
 class HomeOfficeReducer extends ABaseFormReducer {
     public function applyReducer(FormStateList &$stateList) {

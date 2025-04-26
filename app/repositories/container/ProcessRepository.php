@@ -85,6 +85,20 @@ class ProcessRepository extends ARepository {
 
         return $qb;
     }
+
+    /**
+     * Returns process by its ID
+     * 
+     * @param string $processId Process ID
+     */
+    public function getProcessById(string $processId) {
+        $qb = $this->commonComposeQuery();
+
+        $qb->andWhere('processId = ?', [$processId])
+            ->execute();
+
+        return $qb->fetch();
+    }
 }
 
 ?>

@@ -81,6 +81,14 @@ class JSON2FB {
         $this->skipAttributes = $skipAttributes;
     }
 
+    public function addSubmitButton(string $text) {
+        $this->json['elements'][] = [
+            'type' => self::SUBMIT,
+            'name' => 'btn_submit',
+            'text' => $text
+        ];
+    }
+
     /**
      * Processes the form
      */
@@ -112,7 +120,7 @@ class JSON2FB {
             $reducer = $this->json['reducer'];
 
             if(class_exists($reducer)) {
-               $this->form->reducer = new $reducer($this->form->httpRequest);
+               $this->form->reducer = new $reducer($this->form->app, $this->form->httpRequest);
                $this->form->setCallReducerOnChange();
             }
         }

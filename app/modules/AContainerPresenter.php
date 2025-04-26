@@ -16,6 +16,7 @@ use App\Managers\Container\FolderManager;
 use App\Managers\Container\GridManager;
 use App\Managers\Container\GroupManager;
 use App\Managers\Container\MetadataManager;
+use App\Managers\Container\ProcessInstanceManager;
 use App\Managers\Container\ProcessManager;
 use App\Managers\Container\StandaloneProcessManager;
 use App\Managers\EntityManager;
@@ -69,6 +70,7 @@ abstract class AContainerPresenter extends APresenter {
     protected FileStorageManager $fileStorageManager;
     protected ExternalSystemsManager $externalSystemsManager;
     protected ProcessManager $processManager;
+    protected ProcessInstanceManager $processInstanceManager;
 
     protected GroupStandardOperationsAuthorizator $groupStandardOperationsAuthorizator;
     protected SupervisorAuthorizator $supervisorAuthorizator;
@@ -141,6 +143,11 @@ abstract class AContainerPresenter extends APresenter {
             ],
             'processManager' => [
                 'processRepository'
+            ],
+            'processInstanceManager' => [
+                'processInstanceRepository',
+                'groupManager',
+                ':userManager'
             ]
         ];
 

@@ -18,7 +18,8 @@ class migration_2025_04_18_0006_new_processes extends ABaseMigration {
             ->varchar('currentOfficerId', 256, true)
             ->integer('currentOfficerType', 4)
             ->integer('status', 4)
-            ->datetimeAuto('dateCreated');
+            ->datetimeAuto('dateCreated')
+            ->datetime('dateModified', true);
 
         $table->create('processes')
             ->primaryKey('processId')

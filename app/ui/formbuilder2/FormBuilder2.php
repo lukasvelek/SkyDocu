@@ -318,7 +318,17 @@ class FormBuilder2 extends AComponent {
 
         $this->addScript($par);
 
-        $this->addScript('function ' . $this->componentName . '_onChange() { ' . $par->getFunctionName() . '(\'\'); }');
+        $___args = [];
+
+        foreach($this->action as $k => $v) {
+            if(in_array($k, ['page', 'action', 'do'])) continue;
+
+            $___args[] = '\'' . $v . '\'';
+        }
+
+        $__args[] = '\'\'';
+
+        $this->addScript('function ' . $this->componentName . '_onChange() { ' . $par->getFunctionName() . '(' . implode($___args) . '); }');
 
         $this->router->inject($this->presenter, new ModuleManager());
         if(!$this->router->checkEndpointExists($this->action)) {

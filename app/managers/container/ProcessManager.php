@@ -2,6 +2,7 @@
 
 namespace App\Managers\Container;
 
+use App\Core\DB\DatabaseRow;
 use App\Exceptions\GeneralException;
 use App\Logger\Logger;
 use App\Managers\AManager;
@@ -44,6 +45,21 @@ class ProcessManager extends AManager {
         )) {
             throw new GeneralException('Database error.');
         }
+    }
+
+    /**
+     * Returns a DatabaseRow instance for process by given $processId
+     * 
+     * @param string $processId Process ID
+     */
+    public function getProcessById(string $processId): DatabaseRow {
+        $process = $this->processRepository->getProcessById($processId);
+
+        if($process === null) {
+            throw new GeneralException('No process \'' . $processId . '\' was found.');
+        }
+
+        return DatabaseRow::createFromDbRow($process);
     }
 }
 

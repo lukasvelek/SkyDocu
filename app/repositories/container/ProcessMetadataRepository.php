@@ -43,6 +43,24 @@ class ProcessMetadataRepository extends ARepository {
     }
 
     /**
+     * Returns process metadata by unique process ID and metadata title
+     * 
+     * @param string $uniqueProcessId Unique process ID
+     * @param string $title Metadata title
+     */
+    public function getProcessMetadataByTitleAndUniqueProcessId(string $uniqueProcessId, string $title) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->select(['*'])
+            ->from('process_metadata')
+            ->where('uniqueProcessId = ?', [$uniqueProcessId])
+            ->andWhere('title = ?', [$title])
+            ->execute();
+
+        return $qb->fetch();
+    }
+
+    /**
      * Composes an instance of QueryBuilder for process metadata values for given $metadataId
      * 
      * @param string $metadataId Metadata ID

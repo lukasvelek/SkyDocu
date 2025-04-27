@@ -2,6 +2,7 @@
 
 namespace App\Components\ProcessForm\Processes\Reducers;
 
+use App\Constants\Container\InvoiceCurrencies;
 use App\UI\FormBuilder2\ABaseFormReducer;
 use App\UI\FormBuilder2\FormState\FormStateList;
 
@@ -15,6 +16,18 @@ class InvoiceReducer extends ABaseFormReducer {
 
     public function applyOnStartupReducer(FormStateList &$stateList) {
         $stateList->invoiceNo->value = $this->generateInvoiceNo();
+        $stateList->sumCurrency->selectValues = $this->getCurrencies();
+    }
+
+    private function getCurrencies() {
+        $values = InvoiceCurrencies::getAll();
+
+        $options = [];
+        foreach($values as $key => $value) {
+            $options[] = '<option value="' . $key . '">' . $value . '</option>';
+        }
+
+        return implode('', $options);
     }
 
     private function generateInvoiceNo() {

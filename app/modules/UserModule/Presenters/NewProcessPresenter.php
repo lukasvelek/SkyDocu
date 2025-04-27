@@ -8,6 +8,7 @@ use App\Constants\Container\ProcessInstanceOfficerTypes;
 use App\Constants\Container\ProcessInstanceStatus;
 use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
+use App\Core\Http\JsonResponse;
 use App\Exceptions\AException;
 use App\UI\FormBuilder2\JSON2FB;
 
@@ -72,6 +73,7 @@ class NewProcessPresenter extends AUserPresenter {
         $json2Fb = new JSON2FB($form, $json, $this->containerId);
         $json2Fb->setSkipAttributes(['action']);
         $json2Fb->addSubmitButton('Submit');
+        $json2Fb->setCustomUrlParams(['processId' => $process->processId, 'instanceId' => $instanceId]);
 
         $form = $json2Fb->getFormBuilder();
 
@@ -141,6 +143,23 @@ class NewProcessPresenter extends AUserPresenter {
         }
 
         $this->redirect($this->createFullURL('User:Processes', 'list', ['view' => 'waitingForMe']));
+    }
+
+    // PROCESS HANDLERS
+    public function actionSearchCompanies() { // INVOICE PROCESS
+        $processId = $this->httpRequest->get('processId');
+        $query = $this->httpRequest->get('query');
+        
+        $uniqueProcessId = $this->processManager->getUniqueProcessIdForProcessId($processId);
+
+        $values = $this->processMetadataManager->searchMetadataValuesForUniqueProcessId($uniqueProcessId, 'companies', $query);
+
+        $options = [];
+        foreach($values as $value) {
+            $options[] = '<option value="' . $value->metadataKey . '">' . $value->title . '</option>';
+        }
+
+        return new JsonResponse(['data' => implode('', $options)]);
     }
 }
 

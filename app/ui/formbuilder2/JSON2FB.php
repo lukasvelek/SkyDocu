@@ -38,7 +38,8 @@ class JSON2FB {
     private array $skipAttributes;
     private array $skipElementAttributes;
     private array $formData;
-
+    private array $customUrlParams;
+    
     /**
      * Class constructor
      * 
@@ -54,6 +55,16 @@ class JSON2FB {
         $this->skipAttributes = [];
         $this->skipElementAttributes = [];
         $this->formData = [];
+        $this->customUrlParams = [];
+    }
+
+    /**
+     * Sets custom URL parameters for search selects
+     * 
+     * @param array $customUrlParams Custom URL parameters
+     */
+    public function setCustomUrlParams(array $customUrlParams) {
+        $this->customUrlParams = $customUrlParams;
     }
 
     /**
@@ -250,7 +261,7 @@ class JSON2FB {
                         $this->throwExceptionForUnsetAttribute('searchByLabel', $element['type']);
                     }
 
-                    $elem = $this->form->addPresenterSelectSearch($element['actionName'], [], $element['name'], $element['searchByLabel'], $element['label']);
+                    $elem = $this->form->addPresenterSelectSearch($element['actionName'], $this->customUrlParams, $element['name'], $element['searchByLabel'], $element['label']);
                     break;
             }
 

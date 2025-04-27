@@ -85,6 +85,17 @@ class ProcessManager extends AManager {
 
         return DatabaseRow::createFromDbRow($result);
     }
+
+    /**
+     * Returns unique process ID for given process ID
+     * 
+     * @param string $processId Process ID
+     */
+    public function getUniqueProcessIdForProcessId(string $processId): string {
+        $process = $this->getProcessById($processId);
+
+        return $process->uniqueProcessId;
+    }
 }
 
 ?>

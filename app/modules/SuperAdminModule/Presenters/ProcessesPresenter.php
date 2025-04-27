@@ -93,7 +93,7 @@ class ProcessesPresenter extends ASuperAdminPresenter {
 
         $form = base64_decode($process->form);
         $form = new JSON2FB($this->componentFactory->getFormBuilder(), json_decode($form, true), null);
-        $form->setViewOnly();
+        $form->setSkipAttributes(['action']);
 
         $this->template->process_form = $form->render();
         $this->template->links = $this->createBackUrl('list');

@@ -9,6 +9,11 @@ use App\Managers\AManager;
 use App\Managers\EntityManager;
 use App\Repositories\Container\ProcessMetadataRepository;
 
+/**
+ * ProcessMetadataManager contains high-level database operations for process metadata
+ * 
+ * @author Lukas Velek
+ */
 class ProcessMetadataManager extends AManager {
     public ProcessMetadataRepository $processMetadataRepository;
 
@@ -18,6 +23,12 @@ class ProcessMetadataManager extends AManager {
         $this->processMetadataRepository = $processMetadataRepository;
     }
 
+    /**
+     * Returns a DatabaseRow instance for process metadata by metadata ID
+     * 
+     * @param string $metadataId
+     * @throws GeneralException
+     */
     public function getProcessMetadataById(string $metadataId): DatabaseRow {
         $metadata = $this->processMetadataRepository->getProcessMetadataById($metadataId);
 
@@ -28,6 +39,12 @@ class ProcessMetadataManager extends AManager {
         return DatabaseRow::createFromDbRow($metadata);
     }
 
+    /**
+     * Adds a new metadata value
+     * 
+     * @param array $data Data
+     * @throws GeneralException
+     */
     public function addNewMetadataValue(array $data) {
         // add value id
         $valueId = $this->createId(EntityManager::C_PROCESS_CUSTOM_METADATA_VALUES);
@@ -37,6 +54,45 @@ class ProcessMetadataManager extends AManager {
         if(!$this->processMetadataRepository->insertNewMetadataValue($data)) {
             throw new GeneralException('Database error.');
         }
+    }
+
+    /**
+     * Returns a DatabaseRow instance for process metadata by unique process ID and metadata title
+     * 
+     * @param string $uniqueProcessId Unique process ID
+     * @param string $title Metadata title
+     * @throws GeneralException
+     */
+    public function getProcessMetadataByTitle(string $uniqueProcessId, string $title): DatabaseRow {
+        $metadata = $this->processMetadataRepository->getProcessMetadataByTitleAndUniqueProcessId($uniqueProcessId, $title);
+
+        if($metadata === null) {
+            throw new GeneralException('No process metadata for unique process ID \'' . $uniqueProcessId . '\' with title \'' . $title . '\' exists.');
+        }
+
+        return DatabaseRow::createFromDbRow($metadata);
+    }
+
+    /**
+     * Searches metadata values for unique process ID and metadata title
+     * 
+     * @param string $uniqueProcessId Unique process ID
+     * @param string $metadataTitle Metadata title
+     * @param string $query Query
+     */
+    public function searchMetadataValuesForUniqueProcessId(string $uniqueProcessId, string $metadataTitle, string $query): array {
+        $metadata = $this->getProcessMetadataByTitle($uniqueProcessId, $metadataTitle);
+
+        $qb = $this->processMetadataRepository->composeQueryForProcessMetadataValues($metadata->metadataId);
+        $qb->andWhere('title LIKE ?', ["%$query%"])
+            ->execute();
+
+        $values = [];
+        while($row = $qb->fetchAssoc()) {
+            $values[] = DatabaseRow::createFromDbRow($row);
+        }
+
+        return $values;
     }
 }
 

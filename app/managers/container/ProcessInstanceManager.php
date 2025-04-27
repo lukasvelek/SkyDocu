@@ -37,12 +37,22 @@ class ProcessInstanceManager extends AManager {
     }
 
     /**
+     * Generates unique process instance ID
+     */
+    public function generateUniqueInstanceId(): ?string {
+        return $this->createId(EntityManager::C_PROCESS_INSTANCES);
+    }
+
+    /**
      * Starts a new process instance with data in an array and returns instance ID
      * 
+     * @param ?string $instanceId Instance ID
      * @param array $data Process data
      */
-    public function startNewInstanceFromArray(array $data): string {
-        $instanceId = $this->createId(EntityManager::C_PROCESS_INSTANCES);
+    public function startNewInstanceFromArray(?string $instanceId, array $data): string {
+        if($instanceId === null) {
+            $instanceId = $this->generateUniqueInstanceId();
+        }
 
         $data['instanceId'] = $instanceId;
 
@@ -160,6 +170,33 @@ class ProcessInstanceManager extends AManager {
         }
 
         return DatabaseRow::createFromDbRow($instance);
+    }
+
+    /**
+     * Returns the last instance of process ID
+     * 
+     * @param string $processId Process ID
+     * @param bool $throwException True if exception should be thrown if no instance exists, or false if null should be returned instead
+     * @throws GeneralException
+     */
+    public function getLastInstanceForProcessId(string $processId, bool $throwException = true): ?DatabaseRow {
+        $qb = $this->processInstanceRepository->commonComposeQuery();
+
+        $qb->andWhere('processId = ?', [$processId])
+            ->orderBy('dateCreated', 'DESC')
+            ->limit(1);
+
+        $result = $qb->fetch();
+
+        if($result === null) {
+            if($throwException) {
+                throw new GeneralException('No instance for process \'' . $processId . '\' exists.');
+            } else {
+                return null;
+            }
+        }
+
+        return DatabaseRow::createFromDbRow($result);
     }
 }
 

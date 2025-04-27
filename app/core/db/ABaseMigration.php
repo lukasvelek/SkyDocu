@@ -139,6 +139,27 @@ abstract class ABaseMigration {
     }
 
     /**
+     * Returns a unique process ID for process title
+     * 
+     * @param string $processTitle Process title
+     */
+    protected function getUniqueProcessIdForProcessTitle(string $processTitle): mixed {
+        $qb = new QueryBuilder($this->conn, $this->logger, __METHOD__);
+
+        $qb->select(['uniqueProcessId'])
+            ->from('processes')
+            ->where('title = ?', [$processTitle])
+            ->andWhere('status = 1')
+            ->orderBy('dateCreated', 'DESC')
+            ->limit(1)
+            ->execute();
+
+        $result = $qb->fetch('uniqueProcessId');
+
+        return $result;
+    }
+
+    /**
      * Returns technical user's ID or null if no technical user exists
      */
     protected function getTechnicalUserId(): ?string {

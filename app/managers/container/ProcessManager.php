@@ -61,6 +61,30 @@ class ProcessManager extends AManager {
 
         return DatabaseRow::createFromDbRow($process);
     }
+
+    /**
+     * Returns last process for unique process ID
+     * 
+     * @param string $uniqueProcessId Unique process ID
+     * @throws GeneralException
+     */
+    public function getLastProcessForUniqueProcessId(string $uniqueProcessId): DatabaseRow {
+        $qb = $this->processRepository->commonComposeQuery();
+
+        $qb->andWhere('uniqueProcessId = ?', [$uniqueProcessId])
+            ->andWhere('status = 1')
+            ->orderBy('dateCreated', 'DESC')
+            ->limit(1)
+            ->execute();
+        
+        $result = $qb->fetch();
+
+        if($result === null) {
+            throw new GeneralException('No process for unique process ID \'' . $uniqueProcessId . '\' exists.');
+        }
+
+        return DatabaseRow::createFromDbRow($result);
+    }
 }
 
 ?>

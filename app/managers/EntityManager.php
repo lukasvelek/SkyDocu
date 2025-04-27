@@ -55,7 +55,7 @@ class EntityManager extends AManager {
     public const C_ARCHIVE_FOLDER_DOCUMENT_RELATION = 'archive_folder_document_relation';
     public const C_FILE_STORAGE = 'file_storage';
     public const C_DOCUMENT_FILE_RELATION = 'document_file_relation';
-    public const C_PROCESS_CUSTOM_METADATA_LIST_VALUES = 'process_metadata_list_values';
+    public const C_PROCESS_CUSTOM_METADATA_VALUES = 'process_metadata_values';
     public const C_PROCESS_CUSTOM_METADATA = 'process_metadata';
     public const C_EXTERNAL_SYSTEMS = 'external_systems';
     public const C_EXTERNAL_SYSTEM_LOG = 'external_system_log';
@@ -183,7 +183,7 @@ class EntityManager extends AManager {
             self::C_ARCHIVE_FOLDER_DOCUMENT_RELATION => 'relationId',
             self::C_FILE_STORAGE => 'fileId',
             self::C_DOCUMENT_FILE_RELATION => 'relationId',
-            self::C_PROCESS_CUSTOM_METADATA_LIST_VALUES => 'valueId',
+            self::C_PROCESS_CUSTOM_METADATA_VALUES => 'valueId',
             self::C_PROCESS_CUSTOM_METADATA => 'metadataId',
             self::C_EXTERNAL_SYSTEMS => 'systemId',
             self::C_EXTERNAL_SYSTEM_LOG => 'entryId',

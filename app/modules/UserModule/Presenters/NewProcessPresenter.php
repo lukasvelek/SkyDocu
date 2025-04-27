@@ -43,8 +43,11 @@ class NewProcessPresenter extends AUserPresenter {
 
         $process = $this->processManager->getProcessById($processId);
 
+        $instanceId = $this->processInstanceManager->generateUniqueInstanceId();
+
         $this->redirect($this->createURL('processForm', [
-            'processId' => $processId
+            'processId' => $processId,
+            'instanceId' => $instanceId
         ]));
     }
 
@@ -57,14 +60,16 @@ class NewProcessPresenter extends AUserPresenter {
     }
 
     protected function createComponentProcessForm(HttpRequest $request) {
+        $instanceId = $request->get('instanceId');
+
         $process = $this->processManager->getProcessById($request->get('processId'));
 
         $form = $this->componentFactory->getFormBuilder();
-        $form->setAction($this->createURL('submitProcessForm', ['processId' => $process->processId]));
+        $form->setAction($this->createURL('submitProcessForm', ['processId' => $process->processId, 'instanceId' => $instanceId]));
 
         $json = json_decode(base64_decode($process->form), true);
 
-        $json2Fb = new JSON2FB($form, $json);
+        $json2Fb = new JSON2FB($form, $json, $this->containerId);
         $json2Fb->setSkipAttributes(['action']);
         $json2Fb->addSubmitButton('Submit');
 
@@ -75,6 +80,7 @@ class NewProcessPresenter extends AUserPresenter {
 
     public function handleSubmitProcessForm(FormRequest $fr) {
         $processId = $this->httpRequest->get('processId');
+        $instanceId = $this->httpRequest->get('instanceId');
 
         $process = $this->processManager->getProcessById($processId);
 
@@ -93,7 +99,7 @@ class NewProcessPresenter extends AUserPresenter {
         try {
             $this->processInstanceRepository->beginTransaction(__METHOD__);
 
-            $instanceId = $this->processInstanceManager->startNewInstanceFromArray($instanceData);
+            $this->processInstanceManager->startNewInstanceFromArray($instanceId, $instanceData);
 
             $this->processInstanceRepository->commit($this->getUserId(), __METHOD__);
         } catch(AException $e) {

@@ -32,8 +32,9 @@ class JSON2FB {
     private const SELECT_SEARCH = 'selectSearch';
 
     private FormBuilder2 $form;
-    
     private array $json;
+    private ?string $containerId;
+    
     private array $skipAttributes;
     private array $skipElementAttributes;
     private array $formData;
@@ -43,10 +44,12 @@ class JSON2FB {
      * 
      * @param FormBuilder2 $form FormBuilder2 instance
      * @param array $json JSON with form data
+     * @param ?string $containerId Container ID
      */
-    public function __construct(FormBuilder2 $form, array $json) {
+    public function __construct(FormBuilder2 $form, array $json, ?string $containerId) {
         $this->form = $form;
         $this->json = $json;
+        $this->containerId = $containerId;
 
         $this->skipAttributes = [];
         $this->skipElementAttributes = [];
@@ -110,9 +113,19 @@ class JSON2FB {
         if(array_key_exists('reducer', $this->json)) {
             $reducer = $this->json['reducer'];
 
+            if(str_ends_with($reducer, '.php')) {
+                $reducer = substr($reducer, 0, -4);
+            }
+
             if(class_exists($reducer)) {
-               $this->form->reducer = new $reducer($this->form->app, $this->form->httpRequest);
-               $this->form->setCallReducerOnChange();
+                /**
+                 * @var \App\UI\FormBuilder2\ABaseFormReducer $reducerObj
+                 */
+                $reducerObj = new $reducer($this->form->app, $this->form->httpRequest);
+                $reducerObj->setContainerId($this->containerId);
+
+                $this->form->reducer = $reducerObj;
+                $this->form->setCallReducerOnChange();
             }
         }
     }
@@ -143,6 +156,7 @@ class JSON2FB {
 
             $elem = null;
 
+            // ELEMENT (INSTANCE) CREATION
             switch($element['type']) {
                 case self::TEXT:
                     $elem = $this->form->addTextInput($name, $label);
@@ -240,6 +254,7 @@ class JSON2FB {
                     break;
             }
 
+            // ELEMENT ATTRIBUTES PROCESSING
             if($elem !== null) {
                 if(array_key_exists('attributes', $element)) {
                     foreach($element['attributes'] as $attrName) {
@@ -265,16 +280,19 @@ class JSON2FB {
                     }
                 }
 
+                // BUTTON ONCLICK ACTION
                 if($elem instanceof Button && array_key_exists('onClick', $element)) {
                     $elem->setOnClick($element['onClick']);
                 }
                 
+                // ELEMENT VALUE
                 if(array_key_exists('value', $element)) {
                     if(method_exists($elem, 'setValue')) {
                         $elem->setValue($element['value']);
                     }
                 }
 
+                // SELECT ELEMENT VALUES
                 if($elem instanceof Select) {
                     if(array_key_exists('values', $element)) {
                         foreach($element['values'] as $value => $text) {
@@ -305,6 +323,7 @@ class JSON2FB {
                     }
                 }
 
+                // FORM DATA
                 if(!$this->formData !== null) {
                     foreach($this->formData as $fdk => $fdv) {
                         if($element['name'] == $fdk) {

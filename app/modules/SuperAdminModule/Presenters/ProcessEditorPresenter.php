@@ -231,7 +231,7 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
 
         $form = $this->componentFactory->getFormBuilder();
 
-        $helper = new JSON2FB($form, $decodedJson);
+        $helper = new JSON2FB($form, $decodedJson, null);
 
         $helper->setSkipAttributes(['action']);
         $helper->addSkipElementAttributes('userSelect', 'containerId');

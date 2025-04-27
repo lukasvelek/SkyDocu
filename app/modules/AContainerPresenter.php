@@ -18,6 +18,7 @@ use App\Managers\Container\GroupManager;
 use App\Managers\Container\MetadataManager;
 use App\Managers\Container\ProcessInstanceManager;
 use App\Managers\Container\ProcessManager;
+use App\Managers\Container\ProcessMetadataManager;
 use App\Managers\Container\StandaloneProcessManager;
 use App\Managers\EntityManager;
 use App\Repositories\Container\ArchiveRepository;
@@ -33,6 +34,7 @@ use App\Repositories\Container\GridRepository;
 use App\Repositories\Container\GroupRepository;
 use App\Repositories\Container\MetadataRepository;
 use App\Repositories\Container\ProcessInstanceRepository;
+use App\Repositories\Container\ProcessMetadataRepository;
 use App\Repositories\Container\ProcessRepository;
 use App\Repositories\ContentRepository;
 use ReflectionClass;
@@ -58,6 +60,7 @@ abstract class AContainerPresenter extends APresenter {
     protected ExternalSystemTokenRepository $externalSystemTokenRepository;
     protected ExternalSystemRightsRepository $externalSystemRightsRepository;
     protected ProcessInstanceRepository $processInstanceRepository;
+    protected ProcessMetadataRepository $processMetadataRepository;
     
     protected EntityManager $entityManager;
     protected FolderManager $folderManager;
@@ -71,6 +74,7 @@ abstract class AContainerPresenter extends APresenter {
     protected ExternalSystemsManager $externalSystemsManager;
     protected ProcessManager $processManager;
     protected ProcessInstanceManager $processInstanceManager;
+    protected ProcessMetadataManager $processMetadataManager;
 
     protected GroupStandardOperationsAuthorizator $groupStandardOperationsAuthorizator;
     protected SupervisorAuthorizator $supervisorAuthorizator;
@@ -148,6 +152,9 @@ abstract class AContainerPresenter extends APresenter {
                 'processInstanceRepository',
                 'groupManager',
                 ':userManager'
+            ],
+            'processMetadataManager' => [
+                'processMetadataRepository'
             ]
         ];
 

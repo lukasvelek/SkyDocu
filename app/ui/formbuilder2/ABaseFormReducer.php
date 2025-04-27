@@ -33,10 +33,12 @@ abstract class ABaseFormReducer implements IFormReducer {
     /**
      * Sets container ID
      * 
-     * @param string $containerId Container ID
+     * @param ?string $containerId Container ID
      */
-    public function setContainerId(string $containerId) {
-        $this->container = new Container($this->app, $containerId);
+    public function setContainerId(?string $containerId) {
+        if($containerId !== null) {
+            $this->container = new Container($this->app, $containerId);
+        }
     }
 
     /**

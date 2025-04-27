@@ -41,7 +41,7 @@ class FormBuilder2 extends AComponent {
 
     private FormStateListHelper $stateListHelper;
 
-    public ?IFormReducer $reducer;
+    public ?ABaseFormReducer $reducer;
     private Router $router;
     private bool $hasFile;
     

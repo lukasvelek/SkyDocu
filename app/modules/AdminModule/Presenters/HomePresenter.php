@@ -124,7 +124,7 @@ class HomePresenter extends AAdminPresenter {
 
         $form = $this->componentFactory->getFormBuilder();
 
-        $json2Fb = new JSON2FB($form, $json);
+        $json2Fb = new JSON2FB($form, $json, $this->containerId);
         
         $this->template->json_form = $json2Fb->render();
     }

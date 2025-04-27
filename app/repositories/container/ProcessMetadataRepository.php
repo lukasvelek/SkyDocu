@@ -1,0 +1,76 @@
+<?php
+
+namespace App\Repositories\Container;
+
+use App\Repositories\ARepository;
+use QueryBuilder\QueryBuilder;
+
+/**
+ * ProcessMetadataRepository contains low-level database operations for process metadata
+ * 
+ * @author Lukas Velek
+ */
+class ProcessMetadataRepository extends ARepository {
+    /**
+     * Composes an instance of QueryBuilder for process metadata with given $uniqueProcessId
+     * 
+     * @param string $uniqueProcessId Unique process ID
+     */
+    public function composeQueryForProcessMetadata(string $uniqueProcessId): QueryBuilder {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->select(['*'])
+            ->from('process_metadata')
+            ->where('uniqueProcessId = ?', [$uniqueProcessId]);
+        
+        return $qb;
+    }
+
+    /**
+     * Returns process metadata by ID
+     * 
+     * @param string $metadataId Metadata ID
+     */
+    public function getProcessMetadataById(string $metadataId) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->select(['*'])
+            ->from('process_metadata')
+            ->where('metadataId = ?', [$metadataId])
+            ->execute();
+
+        return $qb->fetch();
+    }
+
+    /**
+     * Composes an instance of QueryBuilder for process metadata values for given $metadataId
+     * 
+     * @param string $metadataId Metadata ID
+     */
+    public function composeQueryForProcessMetadataValues(string $metadataId): QueryBuilder {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->select(['*'])
+            ->from('process_metadata_values')
+            ->where('metadataId = ?', [$metadataId]);
+
+        return $qb;
+    }
+
+    /**
+     * Inserts a new metadata value
+     * 
+     * @param array $data Data array
+     */
+    public function insertNewMetadataValue(array $data): bool {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->insert('process_metadata_values', array_keys($data))
+            ->values(array_values($data))
+            ->execute();
+
+        return $qb->fetchBool();
+    }
+}
+
+?>

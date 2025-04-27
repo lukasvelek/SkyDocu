@@ -25,7 +25,7 @@ class ProcessPresenter extends AUserPresenter {
 
         $data = unserialize($instance->data);
 
-        $json2fb = new JSON2FB($form, $json);
+        $json2fb = new JSON2FB($form, $json, $this->containerId);
         $json2fb->setSkipAttributes(['action']);
         $json2fb->setFormData($data);
 
@@ -40,7 +40,7 @@ class ProcessPresenter extends AUserPresenter {
 
         $json = json_decode(base64_decode($process->form), true);
 
-        $json2fb = new JSON2FB($form, $json);
+        $json2fb = new JSON2FB($form, $json, $this->containerId);
         $json2fb->setSkipAttributes(['action']);
         
         $form = $json2fb->getFormBuilder();

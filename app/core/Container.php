@@ -16,7 +16,9 @@ use App\Managers\Container\FolderManager;
 use App\Managers\Container\GridManager;
 use App\Managers\Container\GroupManager;
 use App\Managers\Container\MetadataManager;
+use App\Managers\Container\ProcessInstanceManager;
 use App\Managers\Container\ProcessManager;
+use App\Managers\Container\ProcessMetadataManager;
 use App\Managers\EntityManager;
 use App\Repositories\Container\ArchiveRepository;
 use App\Repositories\Container\DocumentClassRepository;
@@ -30,6 +32,8 @@ use App\Repositories\Container\FolderRepository;
 use App\Repositories\Container\GridRepository;
 use App\Repositories\Container\GroupRepository;
 use App\Repositories\Container\MetadataRepository;
+use App\Repositories\Container\ProcessInstanceRepository;
+use App\Repositories\Container\ProcessMetadataRepository;
 use App\Repositories\Container\ProcessRepository;
 use App\Repositories\ContentRepository;
 use ReflectionClass;
@@ -60,6 +64,8 @@ class Container {
     public ExternalSystemLogRepository $externalSystemLogRepository;
     public ExternalSystemTokenRepository $externalSystemTokenRepository;
     public ExternalSystemRightsRepository $externalSystemRightsRepository;
+    public ProcessInstanceRepository $processInstanceRepository;
+    public ProcessMetadataRepository $processMetadataRepository;
     
     public EntityManager $entityManager;
     public FolderManager $folderManager;
@@ -72,6 +78,8 @@ class Container {
     public FileStorageManager $fileStorageManager;
     public ExternalSystemsManager $externalSystemsManager;
     public ProcessManager $processManager;
+    public ProcessInstanceManager $processInstanceManager;
+    public ProcessMetadataManager $processMetadataManager;
 
     public GroupStandardOperationsAuthorizator $groupStandardOperationsAuthorizator;
     public SupervisorAuthorizator $supervisorAuthorizator;
@@ -169,6 +177,14 @@ class Container {
             ],
             'processManager' => [
                 'processRepository'
+            ],
+            'processInstanceManager' => [
+                'processInstanceRepository',
+                'groupManager',
+                ':userManager'
+            ],
+            'processMetadataManager' => [
+                'processMetadataRepository'
             ]
         ];
 

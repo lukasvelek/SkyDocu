@@ -14,12 +14,24 @@ class InvoiceReducer extends ABaseFormReducer {
     public function applyReducer(FormStateList &$stateList) {}
 
     public function applyOnStartupReducer(FormStateList &$stateList) {
-        
+        $stateList->invoiceNo->value = $this->generateInvoiceNo();
     }
 
     private function generateInvoiceNo() {
         $this->throwContainerIsNull();
 
+        $processId = $this->request->get('processId');
+        
+        $lastInstance = $this->container->processInstanceManager->getLastInstanceForProcessId($processId, false);
+        
+        if($lastInstance !== null) {
+
+        } else {
+            // generate
+            // format - xxxx/YYYY
+
+            return '0001/' . date('Y');
+        }
         
         // TODO: Implement invoice number generation - as in \App\Components\ProcessForm\Processes\Invoice
     }

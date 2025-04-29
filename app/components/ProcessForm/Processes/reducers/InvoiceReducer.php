@@ -30,7 +30,7 @@ class InvoiceReducer extends ABaseFormReducer {
             ];
         }
 
-        return implode('', $options);
+        return $options;
     }
 
     private function generateInvoiceNo() {

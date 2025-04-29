@@ -24,7 +24,10 @@ class InvoiceReducer extends ABaseFormReducer {
 
         $options = [];
         foreach($values as $key => $value) {
-            $options[] = '<option value="' . $key . '">' . $value . '</option>';
+            $options[] = [
+                'value' => $key,
+                'text' => $value
+            ];
         }
 
         return implode('', $options);

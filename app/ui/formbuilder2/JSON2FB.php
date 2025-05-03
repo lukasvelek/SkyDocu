@@ -39,6 +39,7 @@ class JSON2FB {
     private array $skipElementAttributes;
     private array $formData;
     private array $customUrlParams;
+    private bool $callAfterSubmitReducer = false;
     
     /**
      * Class constructor
@@ -137,6 +138,17 @@ class JSON2FB {
 
                 $this->form->reducer = $reducerObj;
                 $this->form->setCallReducerOnChange();
+
+                if($this->callAfterSubmitReducer && !empty($this->formData)) {
+                    $stateList = $this->form->getStateList();
+
+                    $fslh = new FormStateListHelper();
+                    $fslh->applyProcessInstanceDataToFormStateList($stateList, $this->formData);
+                    $fslh->setElementsInFormStateListReadonly($stateList);
+
+                    $this->form->reducer->applyAfterSubmitOnOpenReducer($stateList);
+                    $this->form->applyStateList($stateList);
+                }
             }
         }
     }
@@ -167,102 +179,213 @@ class JSON2FB {
 
             $elem = null;
 
-            // ELEMENT (INSTANCE) CREATION
-            switch($element['type']) {
-                case self::TEXT:
-                    $elem = $this->form->addTextInput($name, $label);
-                    break;
-                
-                case self::PASSWORD:
-                    $elem = $this->form->addPasswordInput($name, $label);
-                    break;
+            if(empty($this->formData)) {
+                // ELEMENT (INSTANCE) CREATION
+                switch($element['type']) {
+                    case self::TEXT:
+                        $elem = $this->form->addTextInput($name, $label);
+                        break;
+                    
+                    case self::PASSWORD:
+                        $elem = $this->form->addPasswordInput($name, $label);
+                        break;
 
-                case self::NUMBER:
-                    $elem = $this->form->addNumberInput($name, $label);
-                    break;
+                    case self::NUMBER:
+                        $elem = $this->form->addNumberInput($name, $label);
+                        break;
 
-                case self::SELECT:
-                    $elem = $this->form->addSelect($name, $label);
-                    break;
+                    case self::SELECT:
+                        $elem = $this->form->addSelect($name, $label);
+                        break;
 
-                case self::CHECKBOX:
-                    $elem = $this->form->addCheckboxInput($name, $label);
-                    break;
+                    case self::CHECKBOX:
+                        $elem = $this->form->addCheckboxInput($name, $label);
+                        break;
 
-                case self::DATE:
-                    $elem = $this->form->addDateInput($name, $label);
-                    break;
+                    case self::DATE:
+                        $elem = $this->form->addDateInput($name, $label);
+                        break;
 
-                case self::DATETIME:
-                    $elem = $this->form->addDateTimeInput($name, $label);
-                    break;
+                    case self::DATETIME:
+                        $elem = $this->form->addDateTimeInput($name, $label);
+                        break;
 
-                case self::EMAIL:
-                    $elem = $this->form->addEmailInput($name, $label);
-                    break;
+                    case self::EMAIL:
+                        $elem = $this->form->addEmailInput($name, $label);
+                        break;
 
-                case self::FILE:
-                    $elem = $this->form->addFileInput($name, $label);
-                    break;
+                    case self::FILE:
+                        $elem = $this->form->addFileInput($name, $label);
+                        break;
 
-                case self::TEXTAREA:
-                    $elem = $this->form->addTextArea($name, $label);
-                    break;
+                    case self::TEXTAREA:
+                        $elem = $this->form->addTextArea($name, $label);
+                        break;
 
-                case self::TIME:
-                    $elem = $this->form->addTimeInput($name, $label);
-                    break;
+                    case self::TIME:
+                        $elem = $this->form->addTimeInput($name, $label);
+                        break;
 
-                case self::SUBMIT:
-                    if(!array_key_exists('text', $element)) {
-                        $this->throwExceptionForUnsetAttribute('text', $element['type']);
-                    } else {
-                        $elem = $this->form->addSubmit($element['text'], 'btn_submit');
-                    }
-                    break;
+                    case self::SUBMIT:
+                        if(!array_key_exists('text', $element)) {
+                            $this->throwExceptionForUnsetAttribute('text', $element['type']);
+                        } else {
+                            $elem = $this->form->addSubmit($element['text'], 'btn_submit');
+                        }
+                        break;
 
-                case self::BUTTON:
-                    if(!array_key_exists('text', $element)) {
-                        $this->throwExceptionForUnsetAttribute('text', $element['type']);
-                    } else {
-                        $elem = $this->form->addButton($element['text']);
-                    }
-                    break;
+                    case self::BUTTON:
+                        if(!array_key_exists('text', $element)) {
+                            $this->throwExceptionForUnsetAttribute('text', $element['type']);
+                        } else {
+                            $elem = $this->form->addButton($element['text']);
+                        }
+                        break;
 
-                case self::LABEL:
-                    if(!array_key_exists('text', $element)) {
-                        $this->throwExceptionForUnsetAttribute('text', $element['type']);
-                    } else {
-                        $elem = $this->form->addLabel($name, $element['text']);
-                    }
-                    break;
+                    case self::LABEL:
+                        if(!array_key_exists('text', $element)) {
+                            $this->throwExceptionForUnsetAttribute('text', $element['type']);
+                        } else {
+                            $elem = $this->form->addLabel($name, $element['text']);
+                        }
+                        break;
 
-                case self::USER_SELECT:
-                    if(!array_key_exists('containerId', $element) && (!array_key_exists($element['type'], $this->skipElementAttributes) || (array_key_exists($element['type'], $this->skipElementAttributes) && !in_array('containerId', $this->skipElementAttributes[$element['type']])))) {
-                        $this->throwExceptionForUnsetAttribute('containerId', $element['type']);
-                    } else {
-                        $elem = $this->form->addUserSelect($name, $label);
-                    }
-                    break;
+                    case self::USER_SELECT:
+                        if(!array_key_exists('containerId', $element) && (!array_key_exists($element['type'], $this->skipElementAttributes) || (array_key_exists($element['type'], $this->skipElementAttributes) && !in_array('containerId', $this->skipElementAttributes[$element['type']])))) {
+                            $this->throwExceptionForUnsetAttribute('containerId', $element['type']);
+                        } else {
+                            $elem = $this->form->addUserSelect($name, $label);
+                        }
+                        break;
 
-                case self::USER_SELECT_SEARCH:
-                    if(!array_key_exists('containerId', $element) && (!array_key_exists($element['type'], $this->skipElementAttributes) || (array_key_exists($element['type'], $this->skipElementAttributes) && !in_array('containerId', $this->skipElementAttributes[$element['type']])))) {
-                        $this->throwExceptionForUnsetAttribute('containerId', $element['type']);
-                    } else {
-                        $elem = $this->form->addUserSelectSearch($name, $label);
-                    }
-                    break;
+                    case self::USER_SELECT_SEARCH:
+                        if(!array_key_exists('containerId', $element) && (!array_key_exists($element['type'], $this->skipElementAttributes) || (array_key_exists($element['type'], $this->skipElementAttributes) && !in_array('containerId', $this->skipElementAttributes[$element['type']])))) {
+                            $this->throwExceptionForUnsetAttribute('containerId', $element['type']);
+                        } else {
+                            $elem = $this->form->addUserSelectSearch($name, $label);
+                        }
+                        break;
 
-                case self::SELECT_SEARCH:
-                    if(!array_key_exists('actionName', $element)) {
-                        $this->throwExceptionForUnsetAttribute('actionName', $element['type']);
-                    }
-                    if(!array_key_exists('searchByLabel', $element)) {
-                        $this->throwExceptionForUnsetAttribute('searchByLabel', $element['type']);
-                    }
+                    case self::SELECT_SEARCH:
+                        if(!array_key_exists('actionName', $element)) {
+                            $this->throwExceptionForUnsetAttribute('actionName', $element['type']);
+                        }
+                        if(!array_key_exists('searchByLabel', $element)) {
+                            $this->throwExceptionForUnsetAttribute('searchByLabel', $element['type']);
+                        }
 
-                    $elem = $this->form->addPresenterSelectSearch($element['actionName'], $this->customUrlParams, $element['name'], $element['searchByLabel'], $element['label']);
-                    break;
+                        $elem = $this->form->addPresenterSelectSearch($element['actionName'], $this->customUrlParams, $element['name'], $element['searchByLabel'], $element['label']);
+                        break;
+                }
+            } else {
+                switch($element['type']) {
+                    case self::TEXT:
+                        $elem = $this->form->addTextInput($name, $label);
+                        break;
+                    
+                    case self::PASSWORD:
+                        $elem = $this->form->addPasswordInput($name, $label);
+                        break;
+
+                    case self::NUMBER:
+                        $elem = $this->form->addNumberInput($name, $label);
+                        break;
+
+                    /*case self::SELECT:
+                        $elem = $this->form->addSelect($name, $label);
+                        break;*/
+
+                    case self::SELECT:
+                        $elem = $this->form->addTextInput($name, $label);
+                        break;
+
+                    case self::CHECKBOX:
+                        $elem = $this->form->addCheckboxInput($name, $label);
+                        break;
+
+                    case self::DATE:
+                        $elem = $this->form->addDateInput($name, $label);
+                        break;
+
+                    case self::DATETIME:
+                        $elem = $this->form->addDateTimeInput($name, $label);
+                        break;
+
+                    case self::EMAIL:
+                        $elem = $this->form->addEmailInput($name, $label);
+                        break;
+
+                    /*case self::FILE:
+                        $elem = $this->form->addFileInput($name, $label);
+                        break;*/
+
+                    case self::TEXTAREA:
+                        $elem = $this->form->addTextArea($name, $label);
+                        break;
+
+                    case self::TIME:
+                        $elem = $this->form->addTimeInput($name, $label);
+                        break;
+
+                    case self::SUBMIT:
+                        if(!array_key_exists('text', $element)) {
+                            $this->throwExceptionForUnsetAttribute('text', $element['type']);
+                        } else {
+                            $elem = $this->form->addSubmit($element['text'], 'btn_submit');
+                        }
+                        break;
+
+                    case self::BUTTON:
+                        if(!array_key_exists('text', $element)) {
+                            $this->throwExceptionForUnsetAttribute('text', $element['type']);
+                        } else {
+                            $elem = $this->form->addButton($element['text']);
+                        }
+                        break;
+
+                    case self::LABEL:
+                        if(!array_key_exists('text', $element)) {
+                            $this->throwExceptionForUnsetAttribute('text', $element['type']);
+                        } else {
+                            $elem = $this->form->addLabel($name, $element['text']);
+                        }
+                        break;
+
+                    /*case self::USER_SELECT:
+                    case self::USER_SELECT_SEARCH:
+                        if(!array_key_exists('containerId', $element) && (!array_key_exists($element['type'], $this->skipElementAttributes) || (array_key_exists($element['type'], $this->skipElementAttributes) && !in_array('containerId', $this->skipElementAttributes[$element['type']])))) {
+                            $this->throwExceptionForUnsetAttribute('containerId', $element['type']);
+                        } else {
+                            $elem = $this->form->addUserSelect($name, $label);
+                        }
+                        break;*/
+
+                    /*case self::USER_SELECT_SEARCH:
+                        if(!array_key_exists('containerId', $element) && (!array_key_exists($element['type'], $this->skipElementAttributes) || (array_key_exists($element['type'], $this->skipElementAttributes) && !in_array('containerId', $this->skipElementAttributes[$element['type']])))) {
+                            $this->throwExceptionForUnsetAttribute('containerId', $element['type']);
+                        } else {
+                            $elem = $this->form->addUserSelectSearch($name, $label);
+                        }
+                        break;*/
+
+                    /*case self::SELECT_SEARCH:
+                        if(!array_key_exists('actionName', $element)) {
+                            $this->throwExceptionForUnsetAttribute('actionName', $element['type']);
+                        }
+                        if(!array_key_exists('searchByLabel', $element)) {
+                            $this->throwExceptionForUnsetAttribute('searchByLabel', $element['type']);
+                        }
+
+                        $elem = $this->form->addPresenterSelectSearch($element['actionName'], $this->customUrlParams, $element['name'], $element['searchByLabel'], $element['label']);
+                        break;*/
+
+                    case self::USER_SELECT:
+                    case self::USER_SELECT_SEARCH:
+                    case self::SELECT_SEARCH:
+                        $elem = $this->form->addTextInput($name, $label);
+
+                        break;
+                }
             }
 
             // ELEMENT ATTRIBUTES PROCESSING
@@ -377,6 +500,14 @@ class JSON2FB {
      */
     public function setFormData(array $data) {
         $this->formData = $data;
+    }
+
+    /**
+     * Calls after submit reducer
+     */
+    public function callAfterSubmitReducer() {
+        $this->callAfterSubmitReducer = true;
+        $this->form->setCallAfterSubmitReducer(true);
     }
 
     /**

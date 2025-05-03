@@ -38,6 +38,7 @@ class FormBuilder2 extends AComponent {
     private bool $isPrerendered;
     private array $additionalLinkParams;
     private bool $overrideReducerOnStartup = false;
+    private bool $callAfterSubmitReducer = false;
 
     private FormStateListHelper $stateListHelper;
 
@@ -86,6 +87,15 @@ class FormBuilder2 extends AComponent {
      */
     public function setCallReducerOnChange(bool $callReducerOnChange = true) {
         $this->callReducerOnChange = $callReducerOnChange;
+    }
+
+    /**
+     * Sets if the after submit reducer method should be called
+     * 
+     * @param bool $callReducer
+     */
+    public function setCallAfterSubmitReducer(bool $callReducer = true) {
+        $this->callAfterSubmitReducer = $callReducer;
     }
 
     /**
@@ -181,13 +191,22 @@ class FormBuilder2 extends AComponent {
             $form->setFileUpload();
         }
 
-        if($this->reducer !== null && !$this->httpRequest->isAjax && !$this->overrideReducerOnStartup) {
-            $stateList = $this->getStateList();
-            //$this->reducer->applyReducer($stateList);
-            $this->reducer->applyOnStartupReducer($stateList);
-            $this->applyStateList($stateList);
+        // APPLIES REDUCER
+        if($this->reducer !== null && !$this->httpRequest->isAjax) {
+            if(!$this->overrideReducerOnStartup && !$this->callAfterSubmitReducer) {
+                $stateList = $this->getStateList();
+                $this->reducer->applyOnStartupReducer($stateList);
+                $this->applyStateList($stateList);
+            }
+
+            if($this->callAfterSubmitReducer) {
+                $stateList = $this->getStateList();
+                $this->reducer->applyAfterSubmitOnOpenReducer($stateList);
+                $this->applyStateList($stateList);
+            }
         }
 
+        // BUILDS ELEMENTS TO ROWS
         foreach($this->elements as $name => $element) {
             $row = $this->buildElement($name, $element);
 

@@ -35,6 +35,8 @@ class UserOutOfOfficeFormReducer extends ABaseFormReducer {
     }
 
     public function applyOnStartupReducer(FormStateList &$stateList) {}
+
+    public function applyAfterSubmitOnOpenReducer(FormStateList &$stateList) {}
 }
 
 ?>

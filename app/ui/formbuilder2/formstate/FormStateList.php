@@ -55,6 +55,15 @@ class FormStateList {
     public function getAll() {
         return $this->_elements;
     }
+
+    /**
+     * Returns true if given key exists
+     * 
+     * @param string $key Key name
+     */
+    public function keyExists(string $key): bool {
+        return array_key_exists($key, $this->_elements);
+    }
 }
 
 ?>

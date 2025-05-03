@@ -56,7 +56,6 @@ class NewProcessPresenter extends AUserPresenter {
         $process = $this->processManager->getProcessById($this->httpRequest->get('processId'));
 
         $this->template->process_title = $process->title;
-
         $this->template->links = $this->createBackUrl('select');
     }
 

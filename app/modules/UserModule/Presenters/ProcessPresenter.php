@@ -28,6 +28,7 @@ class ProcessPresenter extends AUserPresenter {
         $json2fb = new JSON2FB($form, $json, $this->containerId);
         $json2fb->setSkipAttributes(['action']);
         $json2fb->setFormData($data);
+        $json2fb->callAfterSubmitReducer();
 
         $this->template->process_form = $json2fb->render();
     }
@@ -60,7 +61,6 @@ class ProcessPresenter extends AUserPresenter {
         }
 
         $form->applyStateList($stateList);
-
         $form->setOverrideReducerCallOnStartup();
 
         return $form;

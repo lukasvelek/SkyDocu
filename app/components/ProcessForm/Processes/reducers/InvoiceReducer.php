@@ -15,8 +15,36 @@ class InvoiceReducer extends ABaseFormReducer {
     public function applyReducer(FormStateList &$stateList) {}
 
     public function applyOnStartupReducer(FormStateList &$stateList) {
-        $stateList->invoiceNo->value = $this->generateInvoiceNo();
-        $stateList->sumCurrency->selectValues = $this->getCurrencies();
+        if($stateList->invoiceNo->value === null) {
+            $stateList->invoiceNo->value = $this->generateInvoiceNo();
+        }
+        if($stateList->sumCurrency->selectValues === null) {
+            $stateList->sumCurrency->selectValues = $this->getCurrencies();
+        }
+    }
+
+    public function applyAfterSubmitOnOpenReducer(FormStateList &$stateList) {
+        // CURRENCY
+        $currencies = InvoiceCurrencies::getAll();
+
+        foreach($currencies as $key => $value) {
+            if($stateList->sumCurrency->value == $key) {
+                $stateList->sumCurrency->value = $value;
+                break;
+            }
+        }
+
+        // COMPANY
+        $processId = $this->request->get('processId');
+        $uniqueProcessId = $this->container->processManager->getUniqueProcessIdForProcessId($processId);
+
+        $values = $this->container->processMetadataManager->getMetadataValuesForUniqueProcessId($uniqueProcessId, 'companies');
+
+        foreach($values as $value) {
+            if($value->metadataKey == $stateList->company->value) {
+                $stateList->company->value = $value->title;
+            }
+        }
     }
 
     private function getCurrencies() {

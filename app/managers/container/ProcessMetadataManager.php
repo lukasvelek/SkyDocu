@@ -94,6 +94,43 @@ class ProcessMetadataManager extends AManager {
 
         return $values;
     }
+
+    /**
+     * Returns all metadata for unique process ID
+     * 
+     * @param string $uniqueProcessId Unique process ID
+     */
+    public function getMetadataForUniqueProcessId(string $uniqueProcessId): array {
+        $qb = $this->processMetadataRepository->composeQueryForProcessMetadata($uniqueProcessId);
+        $qb->execute();
+
+        $metadata = [];
+        while($row = $qb->fetchAssoc()) {
+            $metadata[] = DatabaseRow::createFromDbRow($row);
+        }
+
+        return $metadata;
+    }
+
+    /**
+     * Returns all metadata values for unique process ID
+     * 
+     * @param string $uniqueProcessId Unique process ID
+     * @param string $metadataTitle Metadata title
+     */
+    public function getMetadataValuesForUniqueProcessId(string $uniqueProcessId, string $metadataTitle) {
+        $metadata = $this->getProcessMetadataByTitle($uniqueProcessId, $metadataTitle);
+
+        $qb = $this->processMetadataRepository->composeQueryForProcessMetadataValues($metadata->metadataId);
+        $qb->execute();
+
+        $values = [];
+        while($row = $qb->fetchAssoc()) {
+            $values[] = DatabaseRow::createFromDbRow($row);
+        }
+
+        return $values;
+    }
 }
 
 ?>

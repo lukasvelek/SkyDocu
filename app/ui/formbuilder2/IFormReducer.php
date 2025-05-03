@@ -23,6 +23,13 @@ interface IFormReducer {
      * @param FormStateList &$stateList
      */
     function applyOnStartupReducer(FormStateList &$stateList);
+
+    /**
+     * Applies form reducer after the form has been submitted and is reopened
+     * 
+     * @param FormStateList &$stateList
+     */
+    function applyAfterSubmitOnOpenReducer(FormStateList &$stateList);
 }
 
 ?>

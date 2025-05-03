@@ -123,7 +123,7 @@ class ProcessesGrid extends GridBuilder implements IGridExtendingComponent {
         $open->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
             $el = HTML::el('a')
                 ->class('grid-link')
-                ->href($this->createFullURLString('User:Process', 'processForm', ['instanceId' => $primaryKey, 'processId' => $row->processId]))
+                ->href($this->createFullURLString('User:Process', 'processForm', ['instanceId' => $primaryKey, 'processId' => $row->processId, 'view' => $this->view]))
                 ->text('Open')
             ;
 

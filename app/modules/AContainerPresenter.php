@@ -2,6 +2,7 @@
 
 namespace App\Modules;
 
+use App\Authorizators\ContainerProcessAuthorizator;
 use App\Authorizators\GroupStandardOperationsAuthorizator;
 use App\Authorizators\SupervisorAuthorizator;
 use App\Constants\SessionNames;
@@ -19,7 +20,6 @@ use App\Managers\Container\MetadataManager;
 use App\Managers\Container\ProcessInstanceManager;
 use App\Managers\Container\ProcessManager;
 use App\Managers\Container\ProcessMetadataManager;
-use App\Managers\Container\StandaloneProcessManager;
 use App\Managers\EntityManager;
 use App\Repositories\Container\ArchiveRepository;
 use App\Repositories\Container\DocumentClassRepository;
@@ -78,6 +78,7 @@ abstract class AContainerPresenter extends APresenter {
 
     protected GroupStandardOperationsAuthorizator $groupStandardOperationsAuthorizator;
     protected SupervisorAuthorizator $supervisorAuthorizator;
+    protected ContainerProcessAuthorizator $containerProcessAuthorizator;
 
     protected string $containerId;
 
@@ -122,6 +123,7 @@ abstract class AContainerPresenter extends APresenter {
 
         $this->groupStandardOperationsAuthorizator = new GroupStandardOperationsAuthorizator($containerConnection, $this->logger, $this->groupManager);
         $this->supervisorAuthorizator = new SupervisorAuthorizator($containerConnection, $this->logger, $this->groupManager);
+        $this->containerProcessAuthorizator = new ContainerProcessAuthorizator($containerConnection, $this->logger, $this->processManager, $this->processInstanceManager, $this->groupManager, $this->app->userManager);
 
         $this->injectCacheFactoryToAuthorizators();
 

@@ -2,6 +2,7 @@
 
 namespace App\Core;
 
+use App\Authorizators\ContainerProcessAuthorizator;
 use App\Authorizators\GroupStandardOperationsAuthorizator;
 use App\Authorizators\SupervisorAuthorizator;
 use App\Core\Caching\CacheFactory;
@@ -83,6 +84,7 @@ class Container {
 
     public GroupStandardOperationsAuthorizator $groupStandardOperationsAuthorizator;
     public SupervisorAuthorizator $supervisorAuthorizator;
+    public ContainerProcessAuthorizator $containerProcessAuthorizator;
 
     public string $containerId;
     public ContainerEntity $container;
@@ -127,6 +129,7 @@ class Container {
         
         $this->groupStandardOperationsAuthorizator = new GroupStandardOperationsAuthorizator($this->conn, $this->logger, $this->groupManager);
         $this->supervisorAuthorizator = new SupervisorAuthorizator($this->conn, $this->logger, $this->groupManager);
+        $this->containerProcessAuthorizator = new ContainerProcessAuthorizator($this->conn, $this->logger, $this->processManager, $this->processInstanceManager, $this->groupManager, $this->app->userManager);
 
         $this->injectCacheFactoryToAuthorizators();
 

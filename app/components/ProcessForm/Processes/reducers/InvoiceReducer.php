@@ -17,6 +17,7 @@ class InvoiceReducer extends ABaseFormReducer {
     public function applyOnStartupReducer(FormStateList &$stateList) {
         if($stateList->invoiceNo->value === null) {
             $stateList->invoiceNo->value = $this->generateInvoiceNo();
+            $stateList->invoiceNo->isReadonly = true;
         }
         if($stateList->sumCurrency->selectValues === null) {
             $stateList->sumCurrency->selectValues = $this->getCurrencies();
@@ -69,15 +70,28 @@ class InvoiceReducer extends ABaseFormReducer {
         $lastInstance = $this->container->processInstanceManager->getLastInstanceForProcessId($processId, false);
         
         if($lastInstance !== null) {
+            $data = $lastInstance->data;
+            $data = unserialize($data);
 
-        } else {
-            // generate
-            // format - xxxx/YYYY
+            $invoiceNo = $data['invoiceNo'];
 
-            return '0001/' . date('Y');
+            $order = explode('/', $invoiceNo)[0];
+            $year = explode('/', $invoiceNo)[1];
+
+            if($year == date('Y')) {
+                $order = (int)$order;
+                $order++;
+
+                $order = (string)$order;
+                while(strlen($order) < 4) {
+                    $order = '0' . $order;
+                }
+
+                return $order . '/' . $year;
+            }
         }
-        
-        // TODO: Implement invoice number generation - as in \App\Components\ProcessForm\Processes\Invoice
+
+        return '0001/' . date('Y');
     }
 }
 

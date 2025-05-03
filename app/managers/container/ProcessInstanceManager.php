@@ -184,7 +184,8 @@ class ProcessInstanceManager extends AManager {
 
         $qb->andWhere('processId = ?', [$processId])
             ->orderBy('dateCreated', 'DESC')
-            ->limit(1);
+            ->limit(1)
+            ->execute();
 
         $result = $qb->fetch();
 

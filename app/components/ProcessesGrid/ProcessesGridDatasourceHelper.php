@@ -58,7 +58,10 @@ class ProcessesGridDatasourceHelper {
      * Composes query for all processes
      */
     private function composeQueryForAll(): QueryBuilder {
-        return $this->processInstanceRepository->commonComposeQuery();
+        $qb = $this->processInstanceRepository->commonComposeQuery()
+            ->orderBy('dateCreated', 'DESC');
+
+        return $qb;
     }
 
     /**
@@ -85,7 +88,8 @@ class ProcessesGridDatasourceHelper {
             )
         ";
 
-        $qb->andWhere($sqlForOfficer);
+        $qb->andWhere($sqlForOfficer)
+            ->orderBy('dateCreated', 'DESC');
         
         return $qb;
     }
@@ -97,7 +101,8 @@ class ProcessesGridDatasourceHelper {
         $qb = $this->processInstanceRepository->commonComposeQuery();
 
         $qb->andWhere($qb->getColumnInValues('status', [ProcessInstanceStatus::NEW, ProcessInstanceStatus::IN_PROGRESS]))
-            ->andWhere('userId = ?', [$this->currentUserId]);
+            ->andWhere('userId = ?', [$this->currentUserId])
+            ->orderBy('dateCreated', 'DESC');
         
         return $qb;
     }

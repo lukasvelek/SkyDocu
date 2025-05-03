@@ -3,7 +3,10 @@
 namespace App\Modules\UserModule;
 
 use App\Core\Http\HttpRequest;
+use App\Helpers\LinkHelper;
+use App\UI\FormBuilder2\Button;
 use App\UI\FormBuilder2\JSON2FB;
+use App\UI\LinkBuilder;
 
 class ProcessPresenter extends AUserPresenter {
     public function __construct() {
@@ -17,6 +20,7 @@ class ProcessPresenter extends AUserPresenter {
         
         $this->template->process_title = $process->title;
         
+        // PROCESS FORM
         $instance = $this->processInstanceManager->getProcessInstanceById($this->httpRequest->get('instanceId'));
 
         $form = $this->componentFactory->getFormBuilder();
@@ -31,39 +35,51 @@ class ProcessPresenter extends AUserPresenter {
         $json2fb->callAfterSubmitReducer();
 
         $this->template->process_form = $json2fb->render();
-    }
 
-    protected function createComponentProcessForm(HttpRequest $request) {
-        $process = $this->processManager->getProcessById($request->get('processId'));
-        $instance = $this->processInstanceManager->getProcessInstanceById($request->get('instanceId'));
+        // PROCESS CONTROLS
+        $workflow = unserialize($process->workflow);
+        $workflowConfiguration = unserialize($process->workflowConfiguration);
+        $workflowIndex = $data['workflowIndex'];
 
-        $form = $this->componentFactory->getFormBuilder();
+        $currentWorkflow = $workflow[$workflowIndex]; // e.g. $ADMINISTRATORS$
 
-        $json = json_decode(base64_decode($process->form), true);
-
-        $json2fb = new JSON2FB($form, $json, $this->containerId);
-        $json2fb->setSkipAttributes(['action']);
-        
-        $form = $json2fb->getFormBuilder();
-        
-        $data = unserialize($instance->data);
-
-        $stateList = $form->getStateList();
-
-        foreach($data as $key => $value) {
-            if($stateList->$key !== null) {
-                $stateList->$key->value = $value;
+        $countInWorkflow = 0;
+        foreach($workflow as $w) {
+            if($w == $currentWorkflow) {
+                $countInWorkflow++;
             }
         }
 
-        foreach($stateList->getAll() as $name => $state) {
-            $state->isReadonly = true;
+        $configuration = null;
+        if($countInWorkflow > 1) {
+            $configuration = $workflowConfiguration[$currentWorkflow . '_' . $workflowIndex];
+        } else {
+            $configuration = $workflowConfiguration[$currentWorkflow];
         }
 
-        $form->applyStateList($stateList);
-        $form->setOverrideReducerCallOnStartup();
+        if($configuration === null) {
+            $this->template->process_controls = '';
+        }
 
-        return $form;
+        $getLink = function(string $operation) {
+            return $this->createURLString('processOperation', ['operation' => $operation]);
+        };
+
+        $links = [];
+        foreach($configuration as $operation) {
+            $url = $getLink($operation);
+            
+            $btn = new Button('button', ucfirst($operation));
+            $btn->setOnClick("location.href='" . $url . "';");
+
+            $links[] = $btn->render();
+        }
+
+        $this->template->process_controls = implode('', $links);
+    }
+
+    public function handleProcessOperation() {
+
     }
 }
 

@@ -30,6 +30,8 @@ class JSON2FB {
     private const USER_SELECT = 'userSelect';
     private const USER_SELECT_SEARCH = 'userSelectSearch';
     private const SELECT_SEARCH = 'selectSearch';
+    private const DOCUMENT_SELECT_SEARCH = 'documentSelectSearch';
+    private const PROCESS_SELECT_SEARCH = 'processSelectSearch';
 
     private FormBuilder2 $form;
     private array $json;
@@ -172,7 +174,7 @@ class JSON2FB {
             }
 
             $name = $element['name'];
-            $label = null;
+            $label = $name;
             if(array_key_exists('label', $element)) {
                 $label = $element['label'];
             }
@@ -274,7 +276,15 @@ class JSON2FB {
                             $this->throwExceptionForUnsetAttribute('searchByLabel', $element['type']);
                         }
 
-                        $elem = $this->form->addPresenterSelectSearch($element['actionName'], $this->customUrlParams, $element['name'], $element['searchByLabel'], $element['label']);
+                        $elem = $this->form->addPresenterSelectSearch($element['actionName'], $this->customUrlParams, $name, $element['searchByLabel'], $label);
+                        break;
+
+                    case self::PROCESS_SELECT_SEARCH:
+                        $elem = $this->form->addPresenterSelectSearch('searchProcesses', $this->customUrlParams, $name, 'Search processes:', $label);
+                        break;
+
+                    case self::DOCUMENT_SELECT_SEARCH:
+                        $elem = $this->form->addPresenterSelectSearch('searchDocuments', $this->customUrlParams, $name, 'Search documents:', $label);
                         break;
                 }
             } else {
@@ -290,10 +300,6 @@ class JSON2FB {
                     case self::NUMBER:
                         $elem = $this->form->addNumberInput($name, $label);
                         break;
-
-                    /*case self::SELECT:
-                        $elem = $this->form->addSelect($name, $label);
-                        break;*/
 
                     case self::SELECT:
                         $elem = $this->form->addTextInput($name, $label);
@@ -314,10 +320,6 @@ class JSON2FB {
                     case self::EMAIL:
                         $elem = $this->form->addEmailInput($name, $label);
                         break;
-
-                    /*case self::FILE:
-                        $elem = $this->form->addFileInput($name, $label);
-                        break;*/
 
                     case self::TEXTAREA:
                         $elem = $this->form->addTextArea($name, $label);
@@ -350,34 +352,6 @@ class JSON2FB {
                             $elem = $this->form->addLabel($name, $element['text']);
                         }
                         break;
-
-                    /*case self::USER_SELECT:
-                    case self::USER_SELECT_SEARCH:
-                        if(!array_key_exists('containerId', $element) && (!array_key_exists($element['type'], $this->skipElementAttributes) || (array_key_exists($element['type'], $this->skipElementAttributes) && !in_array('containerId', $this->skipElementAttributes[$element['type']])))) {
-                            $this->throwExceptionForUnsetAttribute('containerId', $element['type']);
-                        } else {
-                            $elem = $this->form->addUserSelect($name, $label);
-                        }
-                        break;*/
-
-                    /*case self::USER_SELECT_SEARCH:
-                        if(!array_key_exists('containerId', $element) && (!array_key_exists($element['type'], $this->skipElementAttributes) || (array_key_exists($element['type'], $this->skipElementAttributes) && !in_array('containerId', $this->skipElementAttributes[$element['type']])))) {
-                            $this->throwExceptionForUnsetAttribute('containerId', $element['type']);
-                        } else {
-                            $elem = $this->form->addUserSelectSearch($name, $label);
-                        }
-                        break;*/
-
-                    /*case self::SELECT_SEARCH:
-                        if(!array_key_exists('actionName', $element)) {
-                            $this->throwExceptionForUnsetAttribute('actionName', $element['type']);
-                        }
-                        if(!array_key_exists('searchByLabel', $element)) {
-                            $this->throwExceptionForUnsetAttribute('searchByLabel', $element['type']);
-                        }
-
-                        $elem = $this->form->addPresenterSelectSearch($element['actionName'], $this->customUrlParams, $element['name'], $element['searchByLabel'], $element['label']);
-                        break;*/
 
                     case self::USER_SELECT:
                     case self::USER_SELECT_SEARCH:

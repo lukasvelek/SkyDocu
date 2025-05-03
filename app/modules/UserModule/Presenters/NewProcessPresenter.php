@@ -161,6 +161,14 @@ class NewProcessPresenter extends AUserPresenter {
 
         return new JsonResponse(['data' => implode('', $options)]);
     }
+
+    public function actionSearchProcesses() {
+        // TODO implement
+    }
+
+    public function actionSearchDocuments() {
+        // TODO implement
+    }
 }
 
 ?>

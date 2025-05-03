@@ -42,8 +42,6 @@ class NewProcessPresenter extends AUserPresenter {
     public function handleStartProcess() {
         $processId = $this->httpRequest->get('processId');
 
-        $process = $this->processManager->getProcessById($processId);
-
         $instanceId = $this->processInstanceManager->generateUniqueInstanceId();
 
         $this->redirect($this->createURL('processForm', [
@@ -73,6 +71,7 @@ class NewProcessPresenter extends AUserPresenter {
         $json2Fb->setSkipAttributes(['action']);
         $json2Fb->addSubmitButton('Submit');
         $json2Fb->setCustomUrlParams(['processId' => $process->processId, 'instanceId' => $instanceId]);
+        
 
         $form = $json2Fb->getFormBuilder();
 
@@ -85,6 +84,8 @@ class NewProcessPresenter extends AUserPresenter {
 
         $process = $this->processManager->getProcessById($processId);
 
+        $description = sprintf('New %s instance.', $process->title);
+
         $formData = serialize($fr->getData());
 
         $instanceData = [
@@ -92,11 +93,11 @@ class NewProcessPresenter extends AUserPresenter {
             'userId' => $this->getUserId(),
             'data' => $formData,
             'currentOfficerType' => ProcessInstanceOfficerTypes::NONE,
-            'status' => ProcessInstanceStatus::NEW
+            'status' => ProcessInstanceStatus::NEW,
+            'description' => $description
         ];
 
         // create process instance
-
         try {
             $this->processInstanceRepository->beginTransaction(__METHOD__);
 

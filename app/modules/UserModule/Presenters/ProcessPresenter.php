@@ -92,12 +92,16 @@ class ProcessPresenter extends AUserPresenter {
         $operation = $this->httpRequest->get('operation');
         $view = $this->httpRequest->get('view');
 
+        $process = $this->processManager->getProcessById($processId);
+
         try {
             if(!$this->containerProcessAuthorizator->canUserProcessInstance($instanceId, $this->getUserId())) {
                 throw new GeneralException('You are not allowed to perform any actions in this process.');
             }
 
             $fm = 'Operation successfully processed.';
+
+            $this->processInstanceRepository->beginTransaction(__METHOD__);
 
             switch($operation) {
                 case ProcessInstanceOperations::ACCEPT:
@@ -106,7 +110,6 @@ class ProcessPresenter extends AUserPresenter {
                     $this->processInstanceManager->acceptProcessInstance($instanceId, $this->getUserId());
     
                     // 2. change workflow
-                    $process = $this->processManager->getProcessById($processId);
                     $workflow = unserialize($process->workflow);
     
                     $instance = $this->processInstanceManager->getProcessInstanceById($instanceId);
@@ -121,6 +124,7 @@ class ProcessPresenter extends AUserPresenter {
                         $fm = 'Process successfully finished.';
                     } else {
                         $this->processInstanceManager->moveProcessInstanceToNextOfficer($instanceId, $officer, $officerType);
+                        $this->processInstanceManager->changeProcessInstanceDescription($instanceId, sprintf('%s waiting for your reaction.', $process->title));
                         $fm = 'Process successfully moved to next officer.';
                     }
 
@@ -129,30 +133,38 @@ class ProcessPresenter extends AUserPresenter {
                 case ProcessInstanceOperations::ARCHIVE:
                     // finish and archive the process
                     $this->processInstanceManager->archiveProcessInstance($instanceId, $this->getUserId());
+                    $this->processInstanceManager->changeProcessInstanceDescription($instanceId, sprintf('Archived %s', $process->title));
                     $fm = 'Process succesfully archived.';
                     break;
     
                 case ProcessInstanceOperations::CANCEL:
                     // cancel the process in current step
-                    $this->processInstanceManager->cancelProcessInstance($instanceId, $this->getUserId(), 'User canceled the process.');
+                    $this->processInstanceManager->cancelProcessInstance($instanceId, $this->getUserId());
+                    $this->processInstanceManager->changeProcessInstanceDescription($instanceId, sprintf('Canceled %s', $process->title));
                     $fm = 'Process successfully canceled.';
                     break;
     
                 case ProcessInstanceOperations::FINISH:
                     // finish the process
                     $this->processInstanceManager->changeProcessInstanceStatus($instanceId, ProcessInstanceStatus::FINISHED);
+                    $this->processInstanceManager->changeProcessInstanceDescription($instanceId, sprintf('Finished %s', $process->title));
                     $fm = 'Process successfully finished.';
                     break;
     
                 case ProcessInstanceOperations::REJECT:
                     // reject and finish the process
                     $this->processInstanceManager->rejectProcessInstance($instanceId, $this->getUserId());
+                    $this->processInstanceManager->changeProcessInstanceDescription($instanceId, sprintf('Rejected %s', $process->title));
                     $fm = 'Process successfully rejected.';
                     break;
             }
 
+            $this->processInstanceRepository->commit($this->getUserId(), __METHOD__);
+
             $this->flashMessage($fm, 'success');
         } catch(AException $e) {
+            $this->processInstanceRepository->rollback(__METHOD__);
+
             $this->flashMessage('Could not process operation. Reason: ' . $e->getMessage(), 'error', 10);
         }
 

@@ -360,7 +360,7 @@ class FormBuilder2 extends AComponent {
 
         $__args[] = '\'\'';
 
-        $this->addScript('function ' . $this->componentName . '_onChange() { ' . $par->getFunctionName() . '(' . implode($___args) . '); }');
+        $this->addScript('function ' . $this->componentName . '_onChange() { ' . $par->getFunctionName() . '(' . implode(', ', $___args) . '); }');
 
         $this->router->inject($this->presenter, new ModuleManager());
         if(!$this->router->checkEndpointExists($this->action)) {

@@ -312,6 +312,18 @@ class ProcessInstanceManager extends AManager {
             'status' => $status
         ]);
     }
+
+    /**
+     * Changes process instance description
+     * 
+     * @param string $instanceId Instance ID
+     * @param string $description Description
+     */
+    public function changeProcessInstanceDescription(string $instanceId, string $description) {
+        $this->updateInstance($instanceId, [
+            'description' => $description
+        ]);
+    }
 }
 
 ?>

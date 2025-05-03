@@ -82,6 +82,8 @@ class ProcessesGrid extends GridBuilder implements IGridExtendingComponent {
             return $el;
         };
 
+        $this->addColumnText('description', 'Description');
+
         $col = $this->addColumnText('currentOfficer', 'Officer');
         $col->onRenderColumn[] = function(DatabaseRow $row, Row $_row, Cell $cell, HTML $html, mixed $value) {
             $el = HTML::el('span');

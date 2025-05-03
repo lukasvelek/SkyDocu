@@ -84,7 +84,7 @@ class NewProcessPresenter extends AUserPresenter {
 
         $process = $this->processManager->getProcessById($processId);
 
-        $description = sprintf('New %s instance.', $process->title);
+        $description = sprintf('New %s process instance', $process->title);
 
         $formData = serialize($fr->getData());
 

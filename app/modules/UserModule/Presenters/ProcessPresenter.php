@@ -2,6 +2,7 @@
 
 namespace App\Modules\UserModule;
 
+use App\Constants\Container\ProcessInstanceOperations;
 use App\Core\Http\HttpRequest;
 use App\Helpers\LinkHelper;
 use App\UI\FormBuilder2\Button;
@@ -62,7 +63,7 @@ class ProcessPresenter extends AUserPresenter {
         }
 
         $getLink = function(string $operation) {
-            return $this->createURLString('processOperation', ['operation' => $operation]);
+            return $this->createURLString('processOperation', ['operation' => $operation, 'processId' => $this->httpRequest->get('processId'), 'instanceId' => $this->httpRequest->get('instanceId')]);
         };
 
         $links = [];
@@ -70,7 +71,7 @@ class ProcessPresenter extends AUserPresenter {
             $url = $getLink($operation);
             
             $btn = new Button('button', ucfirst($operation));
-            $btn->setOnClick("location.href='" . $url . "';");
+            $btn->setOnClick("location.href='" . $url . "'");
 
             $links[] = $btn->render();
         }
@@ -79,7 +80,31 @@ class ProcessPresenter extends AUserPresenter {
     }
 
     public function handleProcessOperation() {
+        $processId = $this->httpRequest->get('processId');
+        $instanceId = $this->httpRequest->get('instanceId');
+        $operation = $this->httpRequest->get('operation');
 
+        switch($operation) {
+            case ProcessInstanceOperations::ACCEPT:
+                // move to next step
+                break;
+        
+            case ProcessInstanceOperations::ARCHIVE:
+                // finish and archive the process
+                break;
+
+            case ProcessInstanceOperations::CANCEL:
+                // cancel the process in current step
+                break;
+
+            case ProcessInstanceOperations::FINISH:
+                // finish the process
+                break;
+
+            case ProcessInstanceOperations::REJECT:
+                // reject and finish the process
+                break;
+        }
     }
 }
 

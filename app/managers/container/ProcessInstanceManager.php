@@ -3,6 +3,7 @@
 namespace App\Managers\Container;
 
 use App\Constants\Container\ProcessInstanceOfficerTypes;
+use App\Constants\Container\ProcessInstanceStatus;
 use App\Constants\Container\SystemGroups;
 use App\Core\DB\DatabaseRow;
 use App\Exceptions\GeneralException;
@@ -86,9 +87,9 @@ class ProcessInstanceManager extends AManager {
      * @param string $currentUserId Current user ID
      * @param int $index Workflow index
      */
-    public function evaluateNextProcessInstanceOfficer(array $workflow, string $currentUserId, int $index): ?array {
+    public function evaluateNextProcessInstanceOfficer(array $workflow, string $currentUserId, int $index): array {
         if(($index + 1) > count($workflow)) {
-            return null;
+            return [null, null];
         }
 
         $name = $workflow[$index];
@@ -198,6 +199,118 @@ class ProcessInstanceManager extends AManager {
         }
 
         return DatabaseRow::createFromDbRow($result);
+    }
+
+    /**
+     * Cancels process instance
+     * 
+     * @param string $instanceId Process instance ID
+     * @param string $userId User ID
+     */
+    public function cancelProcessInstance(string $instanceId, string $userId) {
+        $instance = $this->getProcessInstanceById($instanceId);
+        $data = unserialize($instance->data);
+
+        $data['workflowHistory'][$userId] = 'cancel';
+
+        $dataToUpdate = [
+            'status' => ProcessInstanceStatus::CANCELED,
+            'data' => serialize($data)
+        ];
+
+        $this->updateInstance($instanceId, $dataToUpdate);
+    }
+
+    /**
+     * Accepts process instance
+     * 
+     * @param string $instanceId Process instance ID
+     * @param string $userId User ID
+     */
+    public function acceptProcessInstance(string $instanceId, string $userId) {
+        $instance = $this->getProcessInstanceById($instanceId);
+        $data = unserialize($instance->data);
+
+        $data['workflowHistory'][$userId] = 'accept';
+
+        $dataToUpdate = [
+            'data' => serialize($data)
+        ];
+
+        $this->updateInstance($instanceId, $dataToUpdate);
+    }
+
+    /**
+     * Rejects process instance
+     * 
+     * @param string $instanceId Process instance ID
+     * @param string $userId User ID
+     */
+    public function rejectProcessInstance(string $instanceId, string $userId) {
+        $instance = $this->getProcessInstanceById($instanceId);
+        $data = unserialize($instance->data);
+
+        $data['workflowHistory'][$userId] = 'reject';
+
+        $dataToUpdate = [
+            'data' => serialize($data),
+            'status' => ProcessInstanceStatus::FINISHED
+        ];
+
+        $this->updateInstance($instanceId, $dataToUpdate);
+    }
+
+    /**
+     * Archives process instance
+     * 
+     * @param string $instanceId Process instance ID
+     * @param string $userId User ID
+     */
+    public function archiveProcessInstance(string $instanceId, string $userId) {
+        $instance = $this->getProcessInstanceById($instanceId);
+        $data = unserialize($instance->data);
+
+        $data['workflowHistory'][$userId] = 'archive';
+
+        $dataToUpdate = [
+            'data' => serialize($data),
+            'status' => ProcessInstanceStatus::ARCHIVED
+        ];
+
+        $this->updateInstance($instanceId, $dataToUpdate);
+    }
+
+    /**
+     * Moves process instance to next officer
+     * 
+     * @param string $instanceId Process instance ID
+     * @param string $officerId Officer ID
+     * @param int $officerType Officer type
+     */
+    public function moveProcessInstanceToNextOfficer(string $instanceId, string $officerId, int $officerType) {
+        $instance = $this->getProcessInstanceById($instanceId);
+        $data = unserialize($instance->data);
+        $index = (int)$data['workflowIndex'];
+
+        $data['workflowIndex'] = $index + 1;
+
+        $this->updateInstance($instanceId, [
+            'currentOfficerId' => $officerId,
+            'currentOfficerType' => $officerType,
+            'data' => serialize($data)
+        ]);
+    }
+
+    /**
+     * Changes process instance status
+     * 
+     * @param string $instanceId Process instance ID
+     * @param int $status Status
+     */
+    public function changeProcessInstanceStatus(string $instanceId, int $status) {
+        $this->updateInstance($instanceId, [
+            'status' => $status
+        ]);
     }
 }
 

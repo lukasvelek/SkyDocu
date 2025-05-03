@@ -3,7 +3,9 @@
 namespace App\Modules\UserModule;
 
 use App\Constants\Container\ProcessInstanceOperations;
+use App\Constants\Container\ProcessInstanceStatus;
 use App\Core\Http\HttpRequest;
+use App\Exceptions\AException;
 use App\Helpers\LinkHelper;
 use App\UI\FormBuilder2\Button;
 use App\UI\FormBuilder2\JSON2FB;
@@ -84,27 +86,67 @@ class ProcessPresenter extends AUserPresenter {
         $instanceId = $this->httpRequest->get('instanceId');
         $operation = $this->httpRequest->get('operation');
 
-        switch($operation) {
-            case ProcessInstanceOperations::ACCEPT:
-                // move to next step
-                break;
-        
-            case ProcessInstanceOperations::ARCHIVE:
-                // finish and archive the process
-                break;
+        try {
+            $fm = 'Operation successfully processed.';
 
-            case ProcessInstanceOperations::CANCEL:
-                // cancel the process in current step
-                break;
+            switch($operation) {
+                case ProcessInstanceOperations::ACCEPT:
+                    // move to next step
+                    // 1. accept
+                    $this->processInstanceManager->acceptProcessInstance($instanceId, $this->getUserId());
+    
+                    // 2. change workflow
+                    $process = $this->processManager->getProcessById($processId);
+                    $workflow = unserialize($process->workflow);
+    
+                    $instance = $this->processInstanceManager->getProcessInstanceById($instanceId);
+                    $data = unserialize($instance->data);
+                    $index = $data['workflowIndex'] + 1;
+    
+                    [$officer, $officerType] = $this->processInstanceManager->evaluateNextProcessInstanceOfficer($workflow, $this->getUserId(), $index);
+    
+                    if($officer === null && $officerType === null) {
+                        // user is last -> finish
+                        $this->processInstanceManager->changeProcessInstanceStatus($instanceId, ProcessInstanceStatus::FINISHED);
+                        $fm = 'Process successfully finished.';
+                    } else {
+                        $this->processInstanceManager->moveProcessInstanceToNextOfficer($instanceId, $officer, $officerType);
+                        $fm = 'Process successfully moved to next officer.';
+                    }
 
-            case ProcessInstanceOperations::FINISH:
-                // finish the process
-                break;
+                    break;
+            
+                case ProcessInstanceOperations::ARCHIVE:
+                    // finish and archive the process
+                    $this->processInstanceManager->archiveProcessInstance($instanceId, $this->getUserId());
+                    $fm = 'Process succesfully archived.';
+                    break;
+    
+                case ProcessInstanceOperations::CANCEL:
+                    // cancel the process in current step
+                    $this->processInstanceManager->cancelProcessInstance($instanceId, $this->getUserId(), 'User canceled the process.');
+                    $fm = 'Process successfully canceled.';
+                    break;
+    
+                case ProcessInstanceOperations::FINISH:
+                    // finish the process
+                    $this->processInstanceManager->changeProcessInstanceStatus($instanceId, ProcessInstanceStatus::FINISHED);
+                    $fm = 'Process successfully finished.';
+                    break;
+    
+                case ProcessInstanceOperations::REJECT:
+                    // reject and finish the process
+                    $this->processInstanceManager->rejectProcessInstance($instanceId, $this->getUserId());
+                    $fm = 'Process successfully rejected.';
+                    break;
+            }
 
-            case ProcessInstanceOperations::REJECT:
-                // reject and finish the process
-                break;
+            $this->flashMessage($fm, 'success');
+        } catch(AException $e) {
+            $this->flashMessage('Could not process operation. Reason: ' . $e->getMessage(), 'error', 10);
         }
+
+        $this->redirect($this->createFullURL('User:Processes', 'list', ['view' => 'waitingForMe']));
     }
 }
 

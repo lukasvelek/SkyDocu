@@ -9,7 +9,7 @@ use PeeQL\Operations\AOperation;
  * 
  * @author Lukas Velek
  */
-abstract class ASchema {
+abstract class ACommonSchema {
     protected string $name;
 
     protected bool $isDefined;

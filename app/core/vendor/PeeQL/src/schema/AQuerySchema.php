@@ -11,7 +11,7 @@ use PeeQL\Operations\QueryOperation;
  * 
  * @author Lukas Velek
  */
-abstract class AQuerySchema extends ASchema {
+abstract class AQuerySchema extends ACommonSchema {
     protected array $visibleColumns;
     protected array $filterableColumns;
     protected array $sortableColumns;

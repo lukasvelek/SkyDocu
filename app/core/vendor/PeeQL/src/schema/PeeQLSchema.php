@@ -58,9 +58,9 @@ class PeeQLSchema {
      * Adds a schema definition using schema object
      * 
      * @param string $name Schema name
-     * @param ASchema $schema Schema object
+     * @param ACommonSchema $schema Schema object
      */
-    public function addObjectSchema(string $name, ASchema $schema) {
+    public function addObjectSchema(string $name, ACommonSchema $schema) {
         $this->schemas[$name] = $schema;
     }
     
@@ -69,7 +69,7 @@ class PeeQLSchema {
      * 
      * @param string $name Schema name
      */
-    public function getSchema(string $name): ASchema {
+    public function getSchema(string $name): ACommonSchema {
         if(!array_key_exists($name, $this->schemas)) {
             throw new Exception(sprintf('Schema named \'%s\' does not exist.', $name), 9999);
         }

@@ -81,8 +81,10 @@ class ContainerProcessAuthorizator extends AAuthorizator {
         if(array_key_exists('workflowHistory', $instanceData)) {
             $workflowHistory = $instanceData['workflowHistory'];
 
-            if(!array_key_exists($userId, $workflowHistory)) {
-                $hasAppearedInWorkflow = false;
+            foreach($workflowHistory as $wh) {
+                if(!array_key_exists($userId, $wh)) {
+                    $hasAppearedInWorkflow = false;
+                }
             }
         }
 

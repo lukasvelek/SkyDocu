@@ -12,7 +12,29 @@ use App\UI\FormBuilder2\FormState\FormStateList;
  * @author Lukas Velek
  */
 class InvoiceReducer extends ABaseFormReducer {
-    public function applyReducer(FormStateList &$stateList) {}
+    public function applyReducer(FormStateList &$stateList) {
+        if($stateList->sumCurrency->selectValues === null) {
+            $stateList->sumCurrency->selectValues = $this->getCurrencies();
+        }
+        if($stateList->company->value !== null) {
+            $_value = $stateList->company->value;
+
+            $processId = $this->request->get('processId');
+            $uniqueProcessId = $this->container->processManager->getUniqueProcessIdForProcessId($processId);
+            $values = $this->container->processMetadataManager->getMetadataValuesForUniqueProcessId($uniqueProcessId, 'companies');
+
+            foreach($values as $value) {
+                if($value->metadataKey == $_value) {
+                    $stateList->company->selectValues = [
+                        [
+                            'value' => $_value,
+                            'text' => $value->title
+                        ]
+                    ];
+                }
+            }
+        }
+    }
 
     public function applyOnStartupReducer(FormStateList &$stateList) {
         if($stateList->invoiceNo->value === null) {

@@ -73,8 +73,8 @@ class NewProcessPresenter extends AUserPresenter {
         $json2Fb->addSubmitButton('Submit');
         $json2Fb->setCustomUrlParams(['processId' => $process->processId, 'instanceId' => $instanceId]);
         
-
         $form = $json2Fb->getFormBuilder();
+        $form->setCallReducerOnChange(false);
 
         return $form;
     }

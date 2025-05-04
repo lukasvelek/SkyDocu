@@ -211,7 +211,7 @@ class ProcessInstanceManager extends AManager {
         $instance = $this->getProcessInstanceById($instanceId);
         $data = unserialize($instance->data);
 
-        $data['workflowHistory'][$userId] = 'cancel';
+        $data['workflowHistory'][][$userId] = 'cancel';
 
         $dataToUpdate = [
             'status' => ProcessInstanceStatus::CANCELED,
@@ -231,7 +231,7 @@ class ProcessInstanceManager extends AManager {
         $instance = $this->getProcessInstanceById($instanceId);
         $data = unserialize($instance->data);
 
-        $data['workflowHistory'][$userId] = 'accept';
+        $data['workflowHistory'][][$userId] = 'accept';
 
         $dataToUpdate = [
             'data' => serialize($data)
@@ -250,7 +250,7 @@ class ProcessInstanceManager extends AManager {
         $instance = $this->getProcessInstanceById($instanceId);
         $data = unserialize($instance->data);
 
-        $data['workflowHistory'][$userId] = 'reject';
+        $data['workflowHistory'][][$userId] = 'reject';
 
         $dataToUpdate = [
             'data' => serialize($data),
@@ -270,7 +270,7 @@ class ProcessInstanceManager extends AManager {
         $instance = $this->getProcessInstanceById($instanceId);
         $data = unserialize($instance->data);
 
-        $data['workflowHistory'][$userId] = 'archive';
+        $data['workflowHistory'][][$userId] = 'archive';
 
         $dataToUpdate = [
             'data' => serialize($data),

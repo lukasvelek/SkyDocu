@@ -770,6 +770,15 @@ class FormBuilder2 extends AComponent {
         return $s;
     }
 
+    /**
+     * Adds presenter select search - the handler is in the implementing presenter
+     * 
+     * @param string $actionName Handling action name
+     * @param array $params Parameters
+     * @param string $name Element name
+     * @param string $searchByLabel Search label text
+     * @param string $label Element label
+     */
     public function addPresenterSelectSearch(string $actionName, array $params, string $name, string $searchByLabel, string $label) {
         $this->addTextInput($name . 'Search', $searchByLabel);
 

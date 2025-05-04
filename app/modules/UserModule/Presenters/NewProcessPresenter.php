@@ -74,7 +74,10 @@ class NewProcessPresenter extends AUserPresenter {
         $json2Fb->setCustomUrlParams(['processId' => $process->processId, 'instanceId' => $instanceId]);
         
         $form = $json2Fb->getFormBuilder();
-        $form->setCallReducerOnChange(false);
+        
+        if($process->title == 'Invoice') {
+            $form->setCallReducerOnChange(false);
+        }
 
         return $form;
     }

@@ -4,7 +4,6 @@ namespace App\UI\FormBuilder2;
 
 use App\Constants\AConstant;
 use App\Exceptions\GeneralException;
-use App\UI\FormBuilder2\FormState\FormStateList;
 use App\UI\FormBuilder2\FormState\FormStateListHelper;
 
 /**
@@ -89,6 +88,11 @@ class JSON2FB {
         $this->skipAttributes = $skipAttributes;
     }
 
+    /**
+     * Adds submit button to the form
+     * 
+     * @param string $text Submit button text
+     */
     public function addSubmitButton(string $text) {
         $this->json['elements'][] = [
             'type' => self::SUBMIT,

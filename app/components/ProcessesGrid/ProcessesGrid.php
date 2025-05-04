@@ -2,6 +2,7 @@
 
 namespace App\Components\ProcessesGrid;
 
+use App\Authorizators\ContainerProcessAuthorizator;
 use App\Constants\Container\ProcessInstanceOfficerTypes;
 use App\Constants\Container\ProcessInstanceStatus;
 use App\Constants\Container\SystemGroups;
@@ -17,11 +18,17 @@ use App\UI\GridBuilder2\IGridExtendingComponent;
 use App\UI\GridBuilder2\Row;
 use App\UI\HTML\HTML;
 
+/**
+ * ProcessesGrid is used for displaying process instances in a grid/list view
+ * 
+ * @author Lukas Velek
+ */
 class ProcessesGrid extends GridBuilder implements IGridExtendingComponent {
     private ProcessInstanceRepository $processInstanceRepository;
     private GroupManager $groupManager;
     private ProcessManager $processManager;
-
+    private ContainerProcessAuthorizator $processAuthorizator;
+    
     private string $view;
 
     public function __construct(
@@ -29,7 +36,8 @@ class ProcessesGrid extends GridBuilder implements IGridExtendingComponent {
         ProcessInstanceRepository $processInstanceRepository,
         string $view,
         GroupManager $groupManager,
-        ProcessManager $processManager
+        ProcessManager $processManager,
+        ContainerProcessAuthorizator $processAuthorizator
     ) {
         parent::__construct($grid->httpRequest);
 
@@ -41,6 +49,7 @@ class ProcessesGrid extends GridBuilder implements IGridExtendingComponent {
         $this->view = $view;
         $this->groupManager = $groupManager;
         $this->processManager = $processManager;
+        $this->processAuthorizator = $processAuthorizator;
     }
 
     public function createDataSource() {
@@ -67,10 +76,16 @@ class ProcessesGrid extends GridBuilder implements IGridExtendingComponent {
         parent::prerender();
     }
 
+    /**
+     * Sets up the grid
+     */
     private function setup() {
         $this->addQueryDependency('view', $this->view);
     }
 
+    /**
+     * Appends system metadata columns to grid
+     */
     private function appendSystemMetadata() {
         $col = $this->addColumnText('processTitle', 'Process');
         $col->onRenderColumn[] = function(DatabaseRow $row, Row $_row, Cell $cell, HTML $html, mixed $value) {
@@ -106,6 +121,9 @@ class ProcessesGrid extends GridBuilder implements IGridExtendingComponent {
         $this->addColumnConst('status', 'Status', ProcessInstanceStatus::class);
     }
 
+    /**
+     * Appends actions to grid
+     */
     private function appendActions() {
         $userGroups = $this->groupManager->getGroupsForUser($this->app->currentUser->getId());
         $adminGroup = $this->groupManager->getGroupByTitle(SystemGroups::ADMINISTRATORS)->groupId;
@@ -113,6 +131,7 @@ class ProcessesGrid extends GridBuilder implements IGridExtendingComponent {
 
         $canSee = (in_array($adminGroup, $userGroups) || in_array($processSupervisorGroup, $userGroups));
 
+        // OPEN PROCESS INSTANCE
         $open = $this->addAction('open');
         $open->setTitle('Open');
         $open->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) use ($canSee) {
@@ -131,8 +150,29 @@ class ProcessesGrid extends GridBuilder implements IGridExtendingComponent {
 
             return $el;
         };
+
+        // PROCESS INSTANCE WORKFLOW HISTORY
+        $workflowHistory = $this->addAction('workflowHistory');
+        $workflowHistory->setTitle('Workflow history');
+        $workflowHistory->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) {
+            return $this->processAuthorizator->canUserViewProcessInstanceWorkflowHistory($row->instanceId, $this->app->currentUser->getId());
+        };
+        $workflowHistory->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
+            $el = HTML::el('a')
+                ->class('grid-link')
+                ->href($this->createFullURLString('User:ProcessWorkflow', 'history', ['instanceId' => $primaryKey, 'processId' => $row->processId, 'view' => $this->view]))
+                ->text('Workflow history')
+            ;
+
+            return $el;
+        };
     }
 
+    /**
+     * Evaluates if grid action "Open" is visible for current user
+     * 
+     * @param DatabaseRow $row DatabaseRow instance
+     */
     private function evaluateOpenActionVisibilityForOfficer(DatabaseRow $row): bool {
         $userGroups = $this->groupManager->getGroupsForUser($this->app->currentUser->getId());
 

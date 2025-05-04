@@ -56,6 +56,72 @@ class ContainerProcessAuthorizator extends AAuthorizator {
 
         return false;
     }
+
+    /**
+     * Checks if user can view process instance workflow history
+     * 
+     * There are 3 conditions and one of the must be met:
+     * - User must be the current officer
+     * - User must have appeared in workflow
+     * - User will appear in workflow
+     * 
+     * @param string $instanceId Process instance ID
+     * @param string $userId User ID
+     */
+    public function canUserViewProcessInstanceWorkflowHistory(string $instanceId, string $userId): bool {
+        $instance = $this->processInstanceManager->getProcessInstanceById($instanceId);
+        $instanceData = unserialize($instance->data);
+
+        // is current officer
+        $isCurrentOfficer = $this->canUserProcessInstance($instanceId, $userId);
+
+        // has appeared in workflow
+        $hasAppearedInWorkflow = true;
+
+        if(array_key_exists('workflowHistory', $instanceData)) {
+            $workflowHistory = $instanceData['workflowHistory'];
+
+            if(!array_key_exists($userId, $workflowHistory)) {
+                $hasAppearedInWorkflow = false;
+            }
+        }
+
+        // will appear in workflow
+        $willAppearInWorkflow = false;
+
+        //$process = $this->processManager->getLastProcessForUniqueProcessId($instance->uniqueProcessId);
+        $process = $this->processManager->getProcessById($instance->processId);
+
+        $workflow = unserialize($process->workflow);
+
+        $currentIndex = $instanceData['workflowIndex'];
+
+        if(($currentIndex + 1) < count($workflow)) {
+            for($i = $currentIndex; $i < count($workflow); $i++) {
+                [$officer, $type] = $this->processInstanceManager->evaluateNextProcessInstanceOfficer($workflow, $userId, $i);
+    
+                if($officer === null && $type === null) {
+                    // no next workflow
+                } else {
+                    if($type == ProcessInstanceOfficerTypes::GROUP) {
+                        $groups = $this->groupManager->getGroupsForUser($userId);
+    
+                        if(in_array($officer, $groups)) {
+                            $willAppearInWorkflow = true;
+                        }
+                    } else if($type == ProcessInstanceOfficerTypes::USER) {
+                        if($officer == $userId) {
+                            $willAppearInWorkflow = true;
+                        }
+                    }
+                }
+            }
+        } else {
+            $willAppearInWorkflow = true;
+        }
+
+        return ($isCurrentOfficer || $hasAppearedInWorkflow || $willAppearInWorkflow);
+    }
 }
 
 ?>

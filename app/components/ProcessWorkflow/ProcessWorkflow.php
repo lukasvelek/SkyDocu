@@ -10,6 +10,7 @@ use App\Core\Application;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\GeneralException;
 use App\Helpers\ColorHelper;
+use App\Helpers\DateTimeFormatHelper;
 use App\Managers\Container\GroupManager;
 use App\Managers\Container\ProcessInstanceManager;
 use App\Managers\Container\ProcessManager;
@@ -121,11 +122,15 @@ class ProcessWorkflow extends AComponent {
         $workflowHistory = [];
         if(array_key_exists('workflowHistory', $data)) {
             foreach($data['workflowHistory'] as $wh) {
-                foreach($wh as $actor => $response) {
+                foreach($wh as $actor => $whdata) {
+                    $response = $whdata['operation'];
+                    $responseDate = $whdata['date'];
+
                     $workflowHistory[] = [
                         'actor' => $actor,
                         'actorType' => null,
-                        'response' => $response
+                        'response' => $response,
+                        'responseDate' => $responseDate
                     ];
                 }
             }
@@ -135,7 +140,8 @@ class ProcessWorkflow extends AComponent {
             $workflowHistory[] = [
                 'actor' => $instance->currentOfficerId,
                 'actorType' => $instance->currentOfficerType,
-                'response' => null
+                'response' => null,
+                'responseDate' => null
             ];
         }
 
@@ -223,8 +229,9 @@ class ProcessWorkflow extends AComponent {
                     }
 
                     $response = ucfirst($response);
+                    $responseDate = DateTimeFormatHelper::formatDateToUserFriendly($workflowHistory[$i]['responseDate'], $this->app->currentUser->getDatetimeFormat());
 
-                    $text = sprintf('#%d %s [<i>%s</i>] - <b>%s</b>', $index, $actor, $w, $response);
+                    $text = sprintf('#%d %s [<i>%s</i>] - <b>%s</b> on %s', $index, $actor, $w, $response, $responseDate);
                 } else {
                     $text = sprintf('#%d %s [<i>%s</i>]', $index, $actor, $w);
                 }

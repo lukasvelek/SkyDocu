@@ -121,6 +121,7 @@ class ProcessPresenter extends AUserPresenter {
                     if($officer === null && $officerType === null) {
                         // user is last -> finish
                         $this->processInstanceManager->changeProcessInstanceStatus($instanceId, ProcessInstanceStatus::FINISHED);
+                        $this->processInstanceManager->changeProcessInstanceDescription($instanceId, sprintf('Finished %s', $process->title));
                         $fm = 'Process successfully finished.';
                     } else {
                         $this->processInstanceManager->moveProcessInstanceToNextOfficer($instanceId, $officer, $officerType);

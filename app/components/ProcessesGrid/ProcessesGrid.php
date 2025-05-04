@@ -50,6 +50,8 @@ class ProcessesGrid extends GridBuilder implements IGridExtendingComponent {
         $this->groupManager = $groupManager;
         $this->processManager = $processManager;
         $this->processAuthorizator = $processAuthorizator;
+
+        $this->gridName = 'ProcessesGrid';
     }
 
     public function createDataSource() {

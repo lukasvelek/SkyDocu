@@ -6,6 +6,7 @@ use App\Components\ProcessSelect\ProcessSelect;
 use App\Components\ProcessViewsSidebar\ProcessViewsSidebar;
 use App\Constants\Container\ProcessInstanceOfficerTypes;
 use App\Constants\Container\ProcessInstanceStatus;
+use App\Core\DB\DatabaseRow;
 use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
 use App\Core\Http\JsonResponse;
@@ -163,11 +164,37 @@ class NewProcessPresenter extends AUserPresenter {
     }
 
     public function actionSearchProcesses() {
-        // TODO implement
+        $processId = $this->httpRequest->get('processId');
+        $query = $this->httpRequest->get('query');
+
+        $qb = $this->processRepository->composeQueryForAvailableProcesses();
+
+        $qb->andWhere('title LIKE ?', ["%$query%"])
+            ->execute();
+        
+        $results = [];
+        while($row = $qb->fetchAssoc()) {
+            $results[] = '<option value="' . $row['processId'] . '">' . $row['title'] . '</option>';
+        }
+
+        return new JsonResponse(['data' => implode(''. $results)]);
     }
 
     public function actionSearchDocuments() {
-        // TODO implement
+        $processId = $this->httpRequest->get('processId');
+        $query = $this->httpRequest->get('query');
+
+        $qb = $this->documentRepository->composeQueryForDocuments();
+
+        $qb->andWhere('title LIKE ?', ["%$query%"])
+            ->execute();
+
+        $results = [];
+        while($row = $qb->fetchAssoc()) {
+            $results[] = '<option value="' . $row['documentId'] . '">' . $row['title'] . '</option>';
+        }
+
+        return new JsonResponse(['data' => implode('', $results)]);
     }
 }
 

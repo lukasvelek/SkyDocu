@@ -4,8 +4,6 @@ namespace App\Repositories\Container;
 
 use App\Constants\Container\ProcessStatus;
 use App\Repositories\ARepository;
-use PeeQL\Operations\QueryOperation;
-use PeeQL\Result\QueryResult;
 use QueryBuilder\QueryBuilder;
 
 class ProcessRepository extends ARepository {
@@ -16,10 +14,6 @@ class ProcessRepository extends ARepository {
             ->from('processes');
 
         return $qb;
-    }
-    
-    public function get(QueryOperation $operation): QueryResult {
-        return $this->processPeeQL('processes', $operation);
     }
 
     public function addNewProcess(string $processId, string $uniqueProcessId, string $title, string $description, string $form, string $userId, int $status, string $workflow, string $workflowConfiguration) {

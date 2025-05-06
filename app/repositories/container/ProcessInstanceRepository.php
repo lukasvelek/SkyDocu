@@ -3,6 +3,8 @@
 namespace App\Repositories\Container;
 
 use App\Repositories\ARepository;
+use PeeQL\Operations\QueryOperation;
+use PeeQL\Result\QueryResult;
 use QueryBuilder\QueryBuilder;
 
 /**
@@ -70,6 +72,10 @@ class ProcessInstanceRepository extends ARepository {
             ->execute();
 
         return $qb->fetch();
+    }
+
+    public function get(QueryOperation $operation): QueryResult {
+        return $this->processPeeQL('process_instances', $operation);
     }
 }
 

@@ -5,12 +5,14 @@ namespace App\Core\DB;
 use App\Core\DatabaseConnection;
 use App\Logger\Logger;
 use App\Repositories\Container\DocumentRepository;
+use App\Repositories\Container\ProcessInstanceRepository;
 use App\Repositories\Container\ProcessRepository;
 use App\Repositories\ContainerRepository;
 use App\Repositories\GroupRepository;
 use App\Repositories\TransactionLogRepository;
 use App\Repositories\UserRepository;
 use App\Schemas\Containers\GetContainerDocumentsSchema;
+use App\Schemas\Containers\GetContainerProcessInstanceSchema;
 use App\Schemas\Containers\GetContainerProcessSchema;
 use App\Schemas\GetGroupsSchema;
 use App\Schemas\GetContainersSchema;
@@ -60,7 +62,7 @@ class PeeQL implements IPeeQLWrapperClass {
         $schema = $this->peeql->getSchema();
 
         if($this->isContainer) {
-            $schema->addSchema(GetContainerProcessSchema::class, 'GetProcessesSchema');
+            $schema->addSchema(GetContainerProcessInstanceSchema::class, 'GetProcessInstancesSchema');
             $schema->addSchema(GetContainerDocumentsSchema::class, 'GetDocumentsSchema');
         } else {
             $schema->addSchema(GetContainersSchema::class, 'GetContainersSchema');
@@ -78,7 +80,7 @@ class PeeQL implements IPeeQLWrapperClass {
         $router = $this->peeql->getRouter();
 
         if($this->isContainer) {
-            $router->addRoute('processes', ProcessRepository::class, $this->repositoryParams);
+            $router->addRoute('processInstances', ProcessInstanceRepository::class, $this->repositoryParams);
             $router->addRoute('documents', DocumentRepository::class, $this->repositoryParams);
         } else {
             $router->addRoute('containers', ContainerRepository::class, $this->repositoryParams);

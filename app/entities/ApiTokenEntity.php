@@ -31,6 +31,10 @@ class ApiTokenEntity {
         $this->token = $token[self::_TOKEN];
         $this->containerId = $token[self::_CONTAINER_ID];
         $this->entityId = $token[self::_ENTITY_ID];
+
+        if(array_key_exists(self::_USER_ID, $token)) {
+            $this->userId = $token[self::_USER_ID];
+        }
     }
 
     /**
@@ -82,7 +86,7 @@ class ApiTokenEntity {
             $result[self::_USER_ID] = $this->userId;
         }
 
-        return base64_encode(implode(';', $result));
+        return base64_encode(serialize($result));
     }
 
     /**
@@ -91,7 +95,7 @@ class ApiTokenEntity {
      * @param string $token Transmitted token
      */
     public static function convertFromToken(string $token): ApiTokenEntity {
-        $decodedToken = explode(';', base64_decode($token));
+        $decodedToken = unserialize(base64_decode($token));
 
         $entity = new ApiTokenEntity($decodedToken);
 

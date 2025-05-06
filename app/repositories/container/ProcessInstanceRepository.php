@@ -2,7 +2,9 @@
 
 namespace App\Repositories\Container;
 
+use App\Constants\Container\ProcessInstanceOfficerTypes;
 use App\Repositories\ARepository;
+use PeeQL\Operations\Conditions\QueryCondition;
 use PeeQL\Operations\QueryOperation;
 use PeeQL\Result\QueryResult;
 use QueryBuilder\QueryBuilder;
@@ -75,6 +77,12 @@ class ProcessInstanceRepository extends ARepository {
     }
 
     public function get(QueryOperation $operation): QueryResult {
+        return $this->processPeeQL('process_instances', $operation);
+    }
+
+    public function getMy(QueryOperation $operation): QueryResult {
+        $operation->addCondition('currentOfficerType', ProcessInstanceOfficerTypes::USER, QueryCondition::TYPE_EQ);
+        $operation->addCondition('currentOfficerId', $this->userId, QueryCondition::TYPE_EQ);
         return $this->processPeeQL('process_instances', $operation);
     }
 }

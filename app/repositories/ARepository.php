@@ -23,6 +23,7 @@ abstract class ARepository extends AMultipleDatabaseConnectionHandler {
     public TransactionLogRepository $transactionLogRepository;
     protected CacheFactory $cacheFactory;
     private ?string $containerId;
+    protected ?string $userId;
 
     /**
      * Class constructor
@@ -30,13 +31,23 @@ abstract class ARepository extends AMultipleDatabaseConnectionHandler {
      * @param DatabaseConnection $conn Database connection instance
      * @param Logger $logger Logger instance
      */
-    public function __construct(DatabaseConnection $conn, Logger $logger, TransactionLogRepository $transactionLogRepository) {
+    public function __construct(DatabaseConnection $conn, Logger $logger, TransactionLogRepository $transactionLogRepository, ?string $userId = null) {
         parent::__construct($conn);
 
         $this->logger = $logger;
         $this->transactionLogRepository = $transactionLogRepository;
+        $this->userId = $userId;
 
         $this->containerId = null;
+    }
+
+    /**
+     * Sets current user ID
+     * 
+     * @param string $userId User ID
+     */
+    public function setUserId(string $userId) {
+        $this->userId = $userId;
     }
 
     /**

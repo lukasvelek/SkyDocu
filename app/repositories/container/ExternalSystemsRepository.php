@@ -10,7 +10,7 @@ class ExternalSystemsRepository extends ARepository {
 
         $qb->select(['*'])
             ->from('external_systems')
-            ->where('isSystem = 0');
+            /*->where('isSystem = 0')*/;
 
         return $qb;
     }

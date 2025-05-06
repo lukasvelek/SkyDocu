@@ -157,6 +157,7 @@ class Container {
                 $this->$name = new $className($this->conn, $this->logger, $this->app->transactionLogRepository);
                 $this->$name->injectCacheFactory($this->cacheFactory);
                 $this->$name->setContainerId($this->containerId);
+                $this->$name->setUserId($this->app->currentUser->getId());
             }
         }
     }

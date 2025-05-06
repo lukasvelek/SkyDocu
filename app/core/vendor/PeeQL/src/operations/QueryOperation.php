@@ -24,6 +24,17 @@ class QueryOperation extends AOperation {
         $this->limit = null;
         $this->page = null;
     }
+
+    /**
+     * Adds additional condition
+     * 
+     * @param string $column Column
+     * @param string $value Value
+     * @param string $type Type
+     */
+    public function addCondition(string $column, string $value, string $type) {
+        $this->conditions->addCondition($column, $value, $type);
+    }
     
     protected function processJson() {
         parent::processJson();

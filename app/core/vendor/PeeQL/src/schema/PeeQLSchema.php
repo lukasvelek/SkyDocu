@@ -36,7 +36,7 @@ class PeeQLSchema {
      * @param string $className Class name
      * @param ?string $name Schema name
      */
-    public function addSchema(string $className, ?string $name = null) {
+    public function addSchema(string $className, null|array|string $name = null) {
         if($name === null) {
             $name = $className;
         }
@@ -51,7 +51,13 @@ class PeeQLSchema {
             throw new Exception(sprintf('Could not create an instance of \'%s\'.', $className), 9999, $e);
         }
 
-        $this->addObjectSchema($name, $obj);
+        if(is_array($name)) {
+            foreach($name as $n) {
+                $this->addObjectSchema($n, $obj);
+            }
+        } else {
+            $this->addObjectSchema($name, $obj);
+        }
     }
 
     /**

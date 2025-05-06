@@ -9,7 +9,8 @@ class ExternalSystemsRepository extends ARepository {
         $qb = $this->qb(__METHOD__);
 
         $qb->select(['*'])
-            ->from('external_systems');
+            ->from('external_systems')
+            ->where('isSystem = 0');
 
         return $qb;
     }
@@ -66,6 +67,17 @@ class ExternalSystemsRepository extends ARepository {
             ->execute();
 
         return $qb->fetchBool();
+    }
+
+    public function getSystemExternalSystem() {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->select(['*'])
+            ->from('external_systems')
+            ->where('isSystem = 1')
+            ->execute();
+
+        return $qb->fetch();
     }
 }
 

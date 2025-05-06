@@ -8,6 +8,7 @@ use App\Authorizators\SupervisorAuthorizator;
 use App\Constants\SessionNames;
 use App\Core\Caching\CacheFactory;
 use App\Core\DatabaseConnection;
+use App\Entities\ApiTokenEntity;
 use App\Managers\Container\ArchiveManager;
 use App\Managers\Container\DocumentManager;
 use App\Managers\Container\EnumManager;
@@ -296,6 +297,19 @@ abstract class AContainerPresenter extends APresenter {
 
         $tmp = &$this->containerCacheFactory;
         return $tmp;
+    }
+
+    /**
+     * Returns system API token
+     */
+    protected function getSystemApiToken(): string {
+        $system = $this->externalSystemsManager->getSystemExternalSystem();
+
+        $token = $this->externalSystemsManager->createOrGetToken($system->systemId);
+
+        $entity = ApiTokenEntity::createNewEntity($token, $this->containerId, $system->systemId);
+        $entity->setUserId($this->getUserId());
+        return $entity->convertToToken();
     }
 }
 

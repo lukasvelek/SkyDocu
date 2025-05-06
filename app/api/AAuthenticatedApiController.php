@@ -3,7 +3,6 @@
 namespace App\Api;
 
 use App\Authenticators\ExternalSystemAuthenticator;
-use App\Constants\ApiTokenEntityTypes;
 use App\Constants\Container\ExternalSystemLogActionTypes;
 use App\Constants\Container\ExternalSystemLogMessages;
 use App\Constants\Container\ExternalSystemLogObjectTypes;
@@ -20,6 +19,7 @@ use App\Exceptions\GeneralException;
 abstract class AAuthenticatedApiController extends AApiClass {
     protected ApiTokenEntity $token;
     protected string $systemId;
+    protected ?string $userId = null;
 
     protected function startup() {
         $this->getToken();
@@ -35,12 +35,8 @@ abstract class AAuthenticatedApiController extends AApiClass {
     private function getToken() {
         $this->token = ApiTokenEntity::convertFromToken($this->get('token'));
         $this->containerId = $this->token->getContainerId();
-        
-        if($this->token->getEntityType() == ApiTokenEntityTypes::USER) {
-            throw new GeneralException('Entity type in token is user.');
-        }
-
         $this->systemId = $this->token->getEntityId();
+        $this->userId = $this->token->getUserId();
     }
 
     /**

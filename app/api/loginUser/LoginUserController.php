@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Api\Login;
+namespace App\Api\LoginUser;
 
 use App\Api\AApiClass;
 use App\Api\IAPITokenProcessing;
@@ -8,7 +8,8 @@ use App\Authenticators\ExternalSystemAuthenticator;
 use App\Core\Http\JsonResponse;
 use App\Entities\ApiTokenEntity;
 
-class LoginController extends AApiClass implements IAPITokenProcessing {
+class LoginUserController extends AApiClass implements IAPITokenProcessing {
+    private string $userId;
     private string $systemId;
 
     protected function startup() {
@@ -18,6 +19,8 @@ class LoginController extends AApiClass implements IAPITokenProcessing {
     }
 
     protected function run(): JsonResponse {
+        $this->userId = $this->get('userId');
+
         $login = $this->get('login');
         $password = $this->get('password');
 
@@ -43,6 +46,7 @@ class LoginController extends AApiClass implements IAPITokenProcessing {
 
     public function processToken(string $token): string {
         $entity = ApiTokenEntity::createNewEntity($token, $this->containerId, $this->systemId);
+        $entity->setUserId($this->userId);
         return $entity->convertToToken();
     }
 }

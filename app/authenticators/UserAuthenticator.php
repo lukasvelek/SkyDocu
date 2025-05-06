@@ -5,6 +5,8 @@ namespace App\Authenticators;
 use App\Constants\SessionNames;
 use App\Core\HashManager;
 use App\Entities\UserEntity;
+use App\Exceptions\AException;
+use App\Exceptions\ApiException;
 use App\Exceptions\BadCredentialsException;
 use App\Exceptions\GeneralException;
 use App\Logger\Logger;
@@ -28,6 +30,27 @@ class UserAuthenticator {
     public function __construct(UserRepository $userRepository, Logger $logger) {
         $this->userRepository = $userRepository;
         $this->logger = $logger;
+    }
+
+    /**
+     * Authenticates user by login hash
+     * 
+     * FOR API ONLY
+     * 
+     * @param string $hash User login hash
+     */
+    public function authByHash(string $hash) {
+        try {
+            $user = $this->userRepository->getUserByLoginHash($hash);
+
+            if($user === null) {
+                throw new GeneralException('User does not exist.');
+            }
+
+            $user = UserEntity::createEntityFromDbRow($user);
+        } catch(AException $e) {
+            throw new ApiException('Could not authenticate user. Reason: ' . $e->getMessage(), $e);
+        }
     }
 
     /**

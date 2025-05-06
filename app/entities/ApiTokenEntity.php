@@ -13,12 +13,12 @@ class ApiTokenEntity {
     private const _TOKEN = 'token';
     private const _CONTAINER_ID = 'containerId';
     private const _ENTITY_ID = 'entityId';
-    private const _ENTITY_TYPE = 'entityType';
+    private const _USER_ID = 'userId';
 
     private string $token;
     private string $containerId;
     private string $entityId;
-    private int $entityType;
+    private ?string $userId = null;
 
     /**
      * Class constructor
@@ -31,7 +31,20 @@ class ApiTokenEntity {
         $this->token = $token[self::_TOKEN];
         $this->containerId = $token[self::_CONTAINER_ID];
         $this->entityId = $token[self::_ENTITY_ID];
-        $this->entityType = $token[self::_ENTITY_TYPE];
+    }
+
+    /**
+     * Sets user ID
+     */
+    public function setUserId(string $userId) {
+        $this->userId = $userId;
+    }
+
+    /**
+     * Returns user ID
+     */
+    public function getUserId() {
+        return $this->userId;
     }
 
     /**
@@ -49,13 +62,6 @@ class ApiTokenEntity {
     }
 
     /**
-     * Returns entity type
-     */
-    public function getEntityType(): int {
-        return $this->entityType;
-    }
-
-    /**
      * Returns access token
      */
     public function getToken(): string {
@@ -69,9 +75,12 @@ class ApiTokenEntity {
         $result = [
             self::_TOKEN => $this->token,
             self::_CONTAINER_ID => $this->containerId,
-            self::_ENTITY_ID => $this->entityId,
-            self::_ENTITY_TYPE => $this->entityType
+            self::_ENTITY_ID => $this->entityId
         ];
+
+        if($this->userId !== null) {
+            $result[self::_USER_ID] = $this->userId;
+        }
 
         return base64_encode(implode(';', $result));
     }
@@ -97,17 +106,14 @@ class ApiTokenEntity {
      * @param string $entityId Entity ID
      * @param int $entityType Entity type
      */
-    public static function createNewEntity(string $token, string $containerId, string $entityId, int $entityType): ApiTokenEntity {
+    public static function createNewEntity(string $token, string $containerId, string $entityId): ApiTokenEntity {
         $array = [
             self::_TOKEN => $token,
             self::_CONTAINER_ID => $containerId,
-            self::_ENTITY_ID => $entityId,
-            self::_ENTITY_TYPE => $entityType
+            self::_ENTITY_ID => $entityId
         ];
         
-        $entity = new ApiTokenEntity($array);
-
-        return $entity;
+        return new ApiTokenEntity($array);
     }
 
     /**
@@ -120,8 +126,7 @@ class ApiTokenEntity {
         $mandatoryKeys = [
             self::_TOKEN,
             self::_CONTAINER_ID,
-            self::_ENTITY_ID,
-            self::_ENTITY_TYPE
+            self::_ENTITY_ID
         ];
 
         foreach($mandatoryKeys as $key) {

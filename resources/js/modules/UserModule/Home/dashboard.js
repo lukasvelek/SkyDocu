@@ -1,4 +1,6 @@
 async function loadData(_endpointUrl, _token) {
+    showLoadingAnimation("processes-waiting-for-me");
+
     const data = {
         data: {
             token: _token,

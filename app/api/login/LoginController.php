@@ -4,7 +4,9 @@ namespace App\Api\Login;
 
 use App\Api\AApiClass;
 use App\Authenticators\ExternalSystemAuthenticator;
+use App\Constants\ApiTokenEntityTypes;
 use App\Core\Http\JsonResponse;
+use App\Entities\ApiTokenEntity;
 
 class LoginController extends AApiClass {
     private string $systemId;
@@ -41,12 +43,13 @@ class LoginController extends AApiClass {
     }
 
     /**
-     * Processes token - adds other mandatory variables and encodes it to Base64
+     * Processes token
      * 
-     * @param string &$token Token
+     * @param string $token Token
      */
-    private function processToken(string &$token) {
-        $token = base64_encode($token . ';' . $this->containerId . ';' . $this->systemId);
+    private function processToken(string $token): string {
+        $entity = ApiTokenEntity::createNewEntity($token, $this->containerId, $this->systemId, ApiTokenEntityTypes::SYSTEM);
+        return $entity->convertToToken();
     }
 }
 

@@ -43,7 +43,7 @@ class migration_2025_04_27_0009_new_process_metadata extends ABaseMigration {
 
         $seed->seed('process_metadata')
             ->add([
-                'metadataId' => $this->getId('process_metadata'),
+                'metadataId' => $this->getId('process_metadata', 'metadataId'),
                 'uniqueProcessId' => $this->getUniqueProcessIdForProcessTitle('Invoice'),
                 'title' => 'companies',
                 'guiTitle' => 'Companies',

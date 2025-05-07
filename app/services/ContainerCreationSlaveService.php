@@ -88,6 +88,8 @@ class ContainerCreationSlaveService extends AService {
             $this->containerRepository->rollback(__METHOD__);
 
             $this->logError($e->getMessage());
+            $this->logError(var_export($e, true));
+            $this->saveExceptionToFile($e);
 
             $this->containerManager->changeContainerStatus($this->containerId, ContainerStatus::ERROR_DURING_CREATION, $this->serviceManager->getServiceUserId(), 'Status change due to background container creation. An error occured during container creation.');
             $this->containerManager->changeContainerCreationStatus($this->containerId, 0, null);

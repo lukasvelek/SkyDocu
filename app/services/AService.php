@@ -4,7 +4,10 @@ namespace App\Services;
 
 use App\Constants\ContainerStatus;
 use App\Core\Caching\CacheFactory;
+use App\Core\FileManager;
+use App\Core\HashManager;
 use App\Core\ServiceManager;
+use App\Helpers\ExceptionHelper;
 use App\Logger\Logger;
 use App\Managers\ContainerManager;
 use Exception;
@@ -108,6 +111,12 @@ abstract class AService implements IRunnable {
         }
 
         return $containerIds;
+    }
+
+    protected function saveExceptionToFile(Exception $e) {
+        if(FileManager::folderExists(LOG_DIR)) {
+            ExceptionHelper::saveExceptionToFile($e, HashManager::createHash(8, false));
+        }
     }
 }
 

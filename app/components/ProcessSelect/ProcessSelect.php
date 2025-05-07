@@ -2,6 +2,7 @@
 
 namespace App\Components\ProcessSelect;
 
+use App\Constants\ProcessColorCombos;
 use App\Core\Http\HttpRequest;
 use App\Managers\Container\ProcessManager;
 use App\Repositories\Container\ProcessRepository;
@@ -73,7 +74,8 @@ class ProcessSelect extends AComponent {
             $processes[] = [
                 'title' => $row['title'],
                 'description' => $row['description'],
-                'processId' => $row['processId']
+                'processId' => $row['processId'],
+                'colorCombo' => $row['colorCombo']
             ];
         }
 
@@ -90,6 +92,7 @@ class ProcessSelect extends AComponent {
             $title = $process['title'];
             $description = $process['description'];
             $processId = $process['processId'];
+            $colorCombo = $process['colorCombo'];
 
             $tileTemplate = $this->getTemplate(__DIR__ . '\\process-tile.html');
 
@@ -97,6 +100,8 @@ class ProcessSelect extends AComponent {
             $tileTemplate->process_title = $title;
             $tileTemplate->process_description = $description;
             $tileTemplate->process_start_link = $this->getProcessStartLink($processId);
+            $tileTemplate->color = ProcessColorCombos::getColor($colorCombo);
+            $tileTemplate->bg_color = ProcessColorCombos::getBackgroundColor($colorCombo);
 
             $tiles[] = $tileTemplate->render()->getRenderedContent();
         }

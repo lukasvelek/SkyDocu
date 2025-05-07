@@ -2,6 +2,7 @@
 
 namespace App\Data\Db\Migrations;
 
+use App\Constants\ProcessColorCombos;
 use App\Core\DB\ABaseMigration;
 use App\Core\DB\Helpers\TableSchema;
 use App\Core\DB\Helpers\TableSeeding;
@@ -34,6 +35,8 @@ class migration_2025_04_18_0007_processes extends ABaseMigration {
     public function seeding(): TableSeeding {
         $seed = $this->getTableSeeding();
 
+        $colors = array_keys(ProcessColorCombos::getAll());
+
         $seed->seed('processes')
             // HOME OFFICE
             ->add([
@@ -46,7 +49,8 @@ class migration_2025_04_18_0007_processes extends ABaseMigration {
                 'workflowConfiguration' => 'a:1:{s:23:"$CURRENT_USER_SUPERIOR$";a:2:{i:0;s:6:"accept";i:1;s:6:"reject";}}',
                 'userId' => $this->getTechnicalUserId(),
                 'status' => 2,
-                'version' => 1
+                'version' => 1,
+                'colorCombo' => $colors[rand(0, count($colors) - 1)]
             ])
             // FUNCTION REQUEST
             ->add([
@@ -59,7 +63,8 @@ class migration_2025_04_18_0007_processes extends ABaseMigration {
                 'workflowConfiguration' => 'a:1:{s:16:"$ADMINISTRATORS$";a:2:{i:0;s:6:"finish";i:1;s:6:"cancel";}}',
                 'userId' => $this->getTechnicalUserId(),
                 'status' => 2,
-                'version' => 1
+                'version' => 1,
+                'colorCombo' => $colors[rand(0, count($colors) - 1)]
             ])
             // CONTAINER REQUEST
             ->add([
@@ -72,7 +77,8 @@ class migration_2025_04_18_0007_processes extends ABaseMigration {
                 'workflowConfiguration' => 'a:2:{s:16:"$ADMINISTRATORS$";a:2:{i:0;s:6:"accept";i:1;s:6:"reject";}s:14:"$CURRENT_USER$";a:2:{i:0;s:6:"finish";i:1;s:6:"cancel";}}',
                 'userId' => $this->getTechnicalUserId(),
                 'status' => 2,
-                'version' => 1
+                'version' => 1,
+                'colorCombo' => $colors[rand(0, count($colors) - 1)]
             ])
             // INVOICE
             ->add([
@@ -85,7 +91,8 @@ class migration_2025_04_18_0007_processes extends ABaseMigration {
                 'workflowConfiguration' => 'a:2:{s:15:"$ACCOUNTANTS$_0";a:2:{i:0;s:6:"accept";i:1;s:6:"reject";}s:15:"$ACCOUNTANTS$_1";a:1:{i:0;s:7:"archive";}}',
                 'userId' => $this->getTechnicalUserId(),
                 'status' => 2,
-                'version' => 1
+                'version' => 1,
+                'colorCombo' => $colors[rand(0, count($colors) - 1)]
             ])
         ;
 

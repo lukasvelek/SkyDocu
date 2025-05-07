@@ -122,7 +122,8 @@ class ContainerCreationSlaveService extends AService {
                 'workflow' => $row['workflow'],
                 'workflowConfiguration' => $row['workflowConfiguration'],
                 'userId' => $row['userId'],
-                'status' => 1
+                'status' => 1,
+                'colorCombo' => $row['colorCombo']
             ];
         }
 

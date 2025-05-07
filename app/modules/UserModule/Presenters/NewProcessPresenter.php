@@ -6,7 +6,6 @@ use App\Components\ProcessSelect\ProcessSelect;
 use App\Components\ProcessViewsSidebar\ProcessViewsSidebar;
 use App\Constants\Container\ProcessInstanceOfficerTypes;
 use App\Constants\Container\ProcessInstanceStatus;
-use App\Core\DB\DatabaseRow;
 use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
 use App\Core\Http\JsonResponse;

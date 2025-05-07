@@ -16,11 +16,11 @@ class ProcessRepository extends ARepository {
         return $qb;
     }
 
-    public function addNewProcess(string $processId, string $uniqueProcessId, string $title, string $description, string $form, string $userId, int $status, string $workflow, string $workflowConfiguration) {
+    public function addNewProcess(string $processId, string $uniqueProcessId, string $title, string $description, string $form, string $userId, int $status, string $workflow, string $workflowConfiguration, string $colorCombo) {
         $qb = $this->qb(__METHOD__);
 
-        $qb->insert('processes', ['processId', 'uniqueProcessId', 'title', 'description', 'form', 'userId', 'status', 'workflow', 'workflowConfiguration'])
-            ->values([$processId, $uniqueProcessId, $title, $description, $form, $userId, $status, $workflow, $workflowConfiguration])
+        $qb->insert('processes', ['processId', 'uniqueProcessId', 'title', 'description', 'form', 'userId', 'status', 'workflow', 'workflowConfiguration', 'colorCombo'])
+            ->values([$processId, $uniqueProcessId, $title, $description, $form, $userId, $status, $workflow, $workflowConfiguration, $colorCombo])
             ->execute();
 
         return $qb->fetchBool();

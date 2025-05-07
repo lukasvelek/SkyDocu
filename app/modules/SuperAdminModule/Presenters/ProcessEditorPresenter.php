@@ -4,6 +4,7 @@ namespace App\Modules\SuperAdminModule;
 
 use App\Constants\Container\ProcessInstanceOperations;
 use App\Constants\Container\ProcessStatus as ContainerProcessStatus;
+use App\Constants\ProcessColorCombos;
 use App\Constants\ProcessStatus;
 use App\Core\AjaxRequestBuilder;
 use App\Core\Http\FormRequest;
@@ -58,6 +59,26 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
             $description->setContent($process->description);
         }
 
+        $colors = [];
+        foreach(ProcessColorCombos::getAll() as $key => $value) {
+            $color = [
+                'value' => $key,
+                'text' => $value
+            ];
+
+            if($process->colorCombo !== null && $process->colorCombo == $key) {
+                $color['selected'] = 'selected';
+            } else if($process->colorCombo === null && $key == ProcessColorCombos::GREEN) {
+                $color['selected'] = 'selected';
+            }
+
+            $colors[] = $color;
+        }
+
+        $form->addSelect('colorCombo', 'Color:')
+            ->setRequired()
+            ->addRawOptions($colors);
+
         $form->addSubmit('Go to editor');
 
         return $form;
@@ -66,8 +87,9 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
     public function handleFormSubmit(FormRequest $fr) {
         $title = $fr->title;
         $description = $fr->description;
+        $colorCombo = $fr->colorCombo;
 
-        $json = json_encode(['title' => $title, 'description' => $description]);
+        $json = json_encode(['title' => $title, 'description' => $description, 'colorCombo' => $colorCombo]);
 
         $params = [];
 
@@ -94,6 +116,7 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
 
                 $title = $formdata['title'];
                 $description = $formdata['description'];
+                $colorCombo = $formdata['colorCombo'];
 
                 $code = base64_encode($fr->formDefinition);
 
@@ -117,7 +140,7 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
                 $this->app->processRepository->beginTransaction(__METHOD__);
 
                 // add new version
-                [$processId, $uniqueProcessId] = $this->app->processManager->createNewProcess($title, $description, $this->getUserId(), $code, $oldProcessId, ProcessStatus::NEW);
+                [$processId, $uniqueProcessId] = $this->app->processManager->createNewProcess($title, $description, $this->getUserId(), $colorCombo, $code, $oldProcessId, ProcessStatus::NEW);
 
                 $this->app->processRepository->commit($this->getUserId(), __METHOD__);
 

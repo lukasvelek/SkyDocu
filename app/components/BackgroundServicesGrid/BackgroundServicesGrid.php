@@ -98,7 +98,15 @@ class BackgroundServicesGrid extends GridBuilder implements IGridExtendingCompon
         $run = $this->addAction('run');
         $run->setTitle('Run');
         $run->onCanRender[] = function(DatabaseRow $row, Row $_row) {
-            return $row->status == 1;
+            if($row->status != 1) {
+                return false;
+            }
+
+            if($row->isEnabled == false) {
+                return false;
+            }
+
+            return true;
         };
         $run->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
             $el = HTML::el('a')

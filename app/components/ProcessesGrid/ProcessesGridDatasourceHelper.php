@@ -10,7 +10,7 @@ use App\Repositories\Container\ProcessInstanceRepository;
 use QueryBuilder\QueryBuilder;
 
 /**
- * ProcessGridDatasourceHelper helps ProcessesGrid with datasource
+ * ProcessGridDatasourceHelper helps ProcessesGrid with data source
  * 
  * @author Lukas Velek
  */

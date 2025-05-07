@@ -6,6 +6,7 @@ use App\Authorizators\ContainerProcessAuthorizator;
 use App\Constants\Container\ProcessInstanceOfficerTypes;
 use App\Constants\Container\ProcessInstanceStatus;
 use App\Constants\Container\SystemGroups;
+use App\Constants\ProcessColorCombos;
 use App\Core\DB\DatabaseRow;
 use App\Core\Http\JsonResponse;
 use App\Managers\Container\GroupManager;
@@ -94,7 +95,11 @@ class ProcessesGrid extends GridBuilder implements IGridExtendingComponent {
             $process = $this->processManager->getProcessById($row->processId);
 
             $el = HTML::el('span');
-            $el->text($process->title);
+            $el->text($process->title)
+                ->style('color', ProcessColorCombos::getColor($process->colorCombo))
+                ->style('background-color', ProcessColorCombos::getBackgroundColor($process->colorCombo))
+                ->style('padding', '5px')
+                ->style('border-radius', '10px');
 
             return $el;
         };

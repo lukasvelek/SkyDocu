@@ -2,6 +2,7 @@
 
 namespace App\Modules\AdminModule;
 
+use App\Constants\Container\ProcessStatus;
 use App\Constants\ProcessColorCombos;
 use App\Core\DB\DatabaseRow;
 use App\Core\Http\FormRequest;
@@ -55,8 +56,8 @@ class ProcessesPresenter extends AAdminPresenter {
 
         $edit = $grid->addAction('edit');
         $edit->setTitle('Edit');
-        $edit->onCanRender[] = function() {
-            return true;
+        $edit->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) {
+            return $row->status == ProcessStatus::CUSTOM;
         };
         $edit->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
             $el = HTML::el('a');

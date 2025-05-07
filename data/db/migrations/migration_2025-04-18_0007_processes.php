@@ -23,7 +23,8 @@ class migration_2025_04_18_0007_processes extends ABaseMigration {
             ->varchar('userId')
             ->integer('status', 4)
             ->integer('version')
-            ->datetimeAuto('dateCreated');
+            ->datetimeAuto('dateCreated')
+            ->varchar('colorCombo', 256, true);
 
         return $table;
     }

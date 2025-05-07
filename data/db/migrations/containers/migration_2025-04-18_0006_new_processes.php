@@ -31,7 +31,8 @@ class migration_2025_04_18_0006_new_processes extends ABaseMigration {
             ->text('workflowConfiguration', true)
             ->varchar('userId')
             ->integer('status', 4)
-            ->datetimeAuto('dateCreated');
+            ->datetimeAuto('dateCreated')
+            ->varchar('colorCombo', 256, true);
 
         return $table;
     }

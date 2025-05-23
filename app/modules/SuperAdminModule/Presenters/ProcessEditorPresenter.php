@@ -58,7 +58,7 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
         if($process !== null) {
             $description->setContent($process->description);
         }
-
+            
         $colors = [];
         foreach(ProcessColorCombos::getAll() as $key => $value) {
             $color = [
@@ -66,10 +66,12 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
                 'text' => $value
             ];
 
-            if($process->colorCombo !== null && $process->colorCombo == $key) {
-                $color['selected'] = 'selected';
-            } else if($process->colorCombo === null && $key == ProcessColorCombos::GREEN) {
-                $color['selected'] = 'selected';
+            if($process !== null) {
+                if($process->colorCombo !== null && $process->colorCombo == $key) {
+                    $color['selected'] = 'selected';
+                } else if($process->colorCombo === null && $key == ProcessColorCombos::GREEN) {
+                    $color['selected'] = 'selected';
+                }
             }
 
             $colors[] = $color;
@@ -519,7 +521,7 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
 
                 $processRepository->removeCurrentDistributionProcessFromDistributionForUniqueProcessId($uniqueProcessId);
 
-                $processRepository->addNewProcess($processId, $uniqueProcessId, $process->title, $process->description, $process->form, $this->getUserId(), ContainerProcessStatus::IN_DISTRIBUTION, serialize($workflowUsers), serialize($workflowConfiguration));
+                $processRepository->addNewProcess($processId, $uniqueProcessId, $process->title, $process->description, $process->form, $this->getUserId(), ContainerProcessStatus::IN_DISTRIBUTION, serialize($workflowUsers), serialize($workflowConfiguration), $process->colorCombo);
             }
 
             $this->app->processRepository->commit($this->getUserId(), __METHOD__);

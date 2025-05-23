@@ -96,6 +96,7 @@ class GridBuilderHelper {
      * @param bool $actionsDisabled Are actions disabled?
      * @param bool $hasCheckboxes Has checkboxes?
      * @param bool $isSkeleton Is skeleton?
+     * @param array $disabledActionList List of disabled actions
      * @return Table Table instance
      */
     public function buildGrid(
@@ -105,7 +106,8 @@ class GridBuilderHelper {
         string $primaryKeyColName,
         bool $actionsDisabled = false,
         bool $hasCheckboxes = false,
-        bool $isSkeleton = false
+        bool $isSkeleton = false,
+        array $disabledActionList = []
     ) {
         $_tableRows = [];
 
@@ -222,7 +224,7 @@ class GridBuilderHelper {
             $_tableRows['header']->addCell($_headerCell, true);
         }
 
-        if(!empty($actions) && !$actionsDisabled) {
+        if(!empty($actions) && !$actionsDisabled && (count($actions) > count($disabledActionList))) {
             $maxCountToRender = 0;
             $canRender = [];
             
@@ -232,6 +234,8 @@ class GridBuilderHelper {
                 $i = 0;
                 foreach($actions as $actionName => $action) {
                     $cAction = clone $action;
+
+                    if(in_array($actionName, $disabledActionList)) continue;
 
                     foreach($cAction->onCanRender as $render) {
                         try {

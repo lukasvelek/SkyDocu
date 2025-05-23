@@ -5,6 +5,7 @@ namespace App\Modules\UserModule;
 use App\Components\ProcessesGrid\ProcessesGrid;
 use App\Constants\Container\ProcessGridViews;
 use App\Core\Http\HttpRequest;
+use App\UI\LinkBuilder;
 
 class HomePresenter extends AUserPresenter {
     public function __construct() {
@@ -34,6 +35,9 @@ class HomePresenter extends AUserPresenter {
 
             tmp();
         ');
+
+        $this->template->processes_waiting_for_me_widget_title = LinkBuilder::createSimpleLink('Processes waiting for me', $this->createFullURL('User:Processes', 'list', ['view' => ProcessGridViews::VIEW_WAITING_FOR_ME]), 'widget-title');
+        $this->template->processes_started_by_me_widget_title = LinkBuilder::createSimpleLink('Processes started by me', $this->createFullURL('User:Processes', 'list', ['view' => ProcessGridViews::VIEW_STARTED_BY_ME]), 'widget-title');
     }
 
     protected function createComponentWaitingForMeWidget(HttpRequest $request) {
@@ -49,8 +53,9 @@ class HomePresenter extends AUserPresenter {
             $this->containerProcessAuthorizator
         );
 
-        $grid->disableActions();
         $grid->disablePagination();
+
+        $grid->disableActionByName('workflowHistory');
         
         if($this->isAjax()) {
             $grid->setLimit(5);
@@ -74,8 +79,9 @@ class HomePresenter extends AUserPresenter {
             $this->containerProcessAuthorizator
         );
 
-        $grid->disableActions();
         $grid->disablePagination();
+
+        $grid->disableActionByName('workflowHistory');
         
         if($this->isAjax()) {
             $grid->setLimit(5);

@@ -430,7 +430,7 @@ class GridBuilder extends AComponent {
                                     $el->style('background-color', $bgColor);
                                 }
 
-                                $el->style('border-radius', '10px')
+                                $el->style('border-radius', '12px')
                                     ->style('padding', '5px');
                             }
                         }

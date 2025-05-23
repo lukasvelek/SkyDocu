@@ -148,7 +148,7 @@ class GridBuilder3 extends AComponent {
                             $color = $constClass::getBackgroundColor($value);
 
                             $el->style('background-color', $color)
-                                ->style('border-radius', '10px')
+                                ->style('border-radius', '12px')
                                 ->style('padding', '5px');
                         }
 

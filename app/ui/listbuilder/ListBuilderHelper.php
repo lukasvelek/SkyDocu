@@ -75,7 +75,7 @@ class ListBuilderHelper {
                         $el = HTML::el('span')
                             ->style('color', 'green')
                             ->style('background-color', 'lightgreen')
-                            ->style('border-radius', '10px')
+                            ->style('border-radius', '12px')
                             ->style('padding', '5px')
                             ->text('&check;');
                         $cell->setContent($el);
@@ -83,7 +83,7 @@ class ListBuilderHelper {
                         $el = HTML::el('span')
                             ->style('color', 'red')
                             ->style('background-color', 'pink')
-                            ->style('border-radius', '10px')
+                            ->style('border-radius', '12px')
                             ->style('padding', '5px')
                             ->text('&times;');
                         $cell->setContent($el);
@@ -116,7 +116,7 @@ class ListBuilderHelper {
 
                                     if($bgColor !== null) {
                                         $el->style('background-color', $bgColor)
-                                            ->style('border-radius', '10px')
+                                            ->style('border-radius', '12px')
                                             ->style('padding', '5px');
                                     }
                                 }

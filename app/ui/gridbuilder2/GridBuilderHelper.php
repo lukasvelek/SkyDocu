@@ -479,7 +479,7 @@ class GridBuilderHelper {
                     $bgColor = 'lightgreen';
 
                     $el = HTML::el('span')
-                            ->style('border-radius', '10px')
+                            ->style('border-radius', '12px')
                             ->style('padding', '5px')
                             ->text('&check;');
 
@@ -500,7 +500,7 @@ class GridBuilderHelper {
                     $bgColor = 'pink';
 
                     $el = HTML::el('span')
-                            ->style('border-radius', '10px')
+                            ->style('border-radius', '12px')
                             ->style('padding', '5px')
                             ->text('&times;');
 

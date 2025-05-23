@@ -99,7 +99,7 @@ class ProcessesGrid extends GridBuilder implements IGridExtendingComponent {
                 ->style('color', ProcessColorCombos::getColor($process->colorCombo))
                 ->style('background-color', ProcessColorCombos::getBackgroundColor($process->colorCombo))
                 ->style('padding', '5px')
-                ->style('border-radius', '10px');
+                ->style('border-radius', '12px');
 
             return $el;
         };

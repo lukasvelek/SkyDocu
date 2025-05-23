@@ -227,7 +227,8 @@ class GridBuilderHelper {
         if(!empty($actions) && !$actionsDisabled && (count($actions) > count($disabledActionList))) {
             $maxCountToRender = 0;
             $canRender = [];
-            
+            $actionRenderCount = [];
+
             foreach($_tableRows as $k => $_row) {
                 if($k == 'header') continue;
 
@@ -244,6 +245,12 @@ class GridBuilderHelper {
                             if($result == true) {
                                 $canRender[$k][$actionName] = $cAction;
                                 $i++;
+
+                                if(array_key_exists($actionName, $actionRenderCount)) {
+                                    $actionRenderCount[$actionName]++;
+                                } else {
+                                    $actionRenderCount[$actionName] = 1;
+                                }
                             } else {
                                 $canRender[$k][$actionName] = null;
                             }
@@ -314,7 +321,8 @@ class GridBuilderHelper {
 
                     if(!array_key_exists($k, $cells)) {
                         foreach($actionData as $actionName => $action) {
-                            if(!in_array($actionName, $displayedActions)) continue;
+                            if(!in_array($actionName, $displayedActions) && !array_key_exists($actionName, $actionRenderCount)) continue;
+
                             $_cell = new Cell();
                             $_cell->setName($actionName);
                             $_cell->setContent('');

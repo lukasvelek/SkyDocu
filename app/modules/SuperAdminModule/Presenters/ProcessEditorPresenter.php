@@ -29,7 +29,8 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
         if($request->get('processId') !== null && $request->get('uniqueProcessId') !== null) {
             $processId = $this->httpRequest->get('processId');
 
-            $process = $this->app->processManager->getProcessById($processId);
+            //$process = $this->app->processManager->getProcessById($processId);
+            $process = $this->app->processManager->getProcessEntityById($processId);
         }
 
         $form = $this->componentFactory->getFormBuilder();
@@ -49,14 +50,14 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
             ->setRequired();
 
         if($process !== null) {
-            $title->setValue($process->title);
+            $title->setValue($process->getTitle());
         }
 
         $description = $form->addTextArea('description', 'Description:')
             ->setRequired();
 
         if($process !== null) {
-            $description->setContent($process->description);
+            $description->setContent($process->getDescription());
         }
             
         $colors = [];
@@ -67,9 +68,9 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
             ];
 
             if($process !== null) {
-                if($process->colorCombo !== null && $process->colorCombo == $key) {
+                if($process->getColorCombo() !== null && $process->getColorCombo() == $key) {
                     $color['selected'] = 'selected';
-                } else if($process->colorCombo === null && $key == ProcessColorCombos::GREEN) {
+                } else if($process->getColorCombo() === null && $key == ProcessColorCombos::GREEN) {
                     $color['selected'] = 'selected';
                 }
             }
@@ -256,6 +257,7 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
 
         $form = $this->componentFactory->getFormBuilder();
 
+        // TODO: rewrite json2fb to support multiple forms
         $helper = new JSON2FB($form, $decodedJson, null);
 
         $helper->setSkipAttributes(['action']);

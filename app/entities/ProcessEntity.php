@@ -28,9 +28,9 @@ class ProcessEntity extends AEntity {
     
     // FROM DEFINITION
     private string $colorCombo;
-    private array $workflow;
-    private string $name;
-    private array $forms;
+    private array $workflow = [];
+    private string $name = 'Process';
+    private array $forms = [];
     // END FROM DEFINITION
 
     /**
@@ -70,18 +70,12 @@ class ProcessEntity extends AEntity {
         // process definition
         if(array_key_exists(self::DEFINITION_COLOR_COMBO, $this->definition)) {
             $this->colorCombo = $this->definition[self::DEFINITION_COLOR_COMBO];
-        } else {
-            throw new GeneralException('Process has no color combo defined.');
         }
         if(array_key_exists(self::DEFINITION_NAME, $this->definition)) {
             $this->name = $this->definition[self::DEFINITION_NAME];
-        } else {
-            throw new GeneralException('Process has no name defined.');
         }
         if(array_key_exists(self::DEFINITION_FORMS, $this->definition)) {
             $this->forms = $this->definition[self::DEFINITION_FORMS];
-        } else {
-            throw new GeneralException('Process has no forms defined.');
         }
 
         $actors = [];
@@ -193,6 +187,13 @@ class ProcessEntity extends AEntity {
         return $this->colorCombo;
     }
 
+    /**
+     * Returns definition
+     */
+    public function getDefinition(): array {
+        return $this->definition;
+    }
+
     public static function createEntityFromDbRow(mixed $row): ?static {
         if($row === null) {
             return null;
@@ -201,7 +202,7 @@ class ProcessEntity extends AEntity {
         $row = self::createRow($row);
         self::checkTypes($row, [
             'processId' => 'string',
-            'uniqueProcess' => 'string',
+            'uniqueProcessId' => 'string',
             'title' => 'string',
             'description' => 'string',
             'userId' => 'string',
@@ -220,7 +221,7 @@ class ProcessEntity extends AEntity {
             $row->status,
             $row->userId,
             $row->dateCreated,
-            json_decode($row->definition, true)
+            json_decode(base64_decode($row->definition), true)
         );
     }
 }

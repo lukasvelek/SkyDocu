@@ -264,7 +264,7 @@ class ListBuilderHelper {
                     foreach($actionData as $actionName => $action) {
                         if($action instanceof ListAction) {
                             $_action = clone $action;
-                            $_action->inject($row, $_row, $k);
+                            $_action->inject($row, $_row, $_row->index - 1);
                             $_cell = new ListCell();
                             $_cell->setName($actionName);
                             $_cell->setContent($_action->output()->toString());
@@ -289,7 +289,7 @@ class ListBuilderHelper {
                     foreach($actionData as $actionName => $action) {
                         if($action instanceof ListAction) {
                             $_action = clone $action;
-                            $_action->inject($row, $_row, $k);
+                            $_action->inject($row, $_row, $_row->index - 1);
                             $_cell = new ListCell();
                             $_cell->setName($actionName);
                             $_cell->setContent($_action->output()->toString());

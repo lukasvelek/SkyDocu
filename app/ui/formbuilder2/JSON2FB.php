@@ -3,6 +3,7 @@
 namespace App\UI\FormBuilder2;
 
 use App\Constants\AConstant;
+use App\Constants\Container\ProcessInstanceOperations;
 use App\Exceptions\GeneralException;
 use App\UI\FormBuilder2\FormState\FormStateListHelper;
 
@@ -31,6 +32,8 @@ class JSON2FB {
     private const SELECT_SEARCH = 'selectSearch';
     private const DOCUMENT_SELECT_SEARCH = 'documentSelectSearch';
     private const PROCESS_SELECT_SEARCH = 'processSelectSearch';
+
+    private const ACCEPT_BUTTON = 'acceptButton';
 
     private FormBuilder2 $form;
     private array $json;
@@ -248,6 +251,10 @@ class JSON2FB {
                         }
                         break;
 
+                    case self::ACCEPT_BUTTON:
+                        $elem = $this->form->addButton(ProcessInstanceOperations::toString(ProcessInstanceOperations::ACCEPT));
+                        break;
+
                     case self::LABEL:
                         if(!array_key_exists('text', $element)) {
                             $this->throwExceptionForUnsetAttribute('text', $element['type']);
@@ -347,6 +354,10 @@ class JSON2FB {
                         } else {
                             $elem = $this->form->addButton($element['text']);
                         }
+                        break;
+
+                    case self::ACCEPT_BUTTON:
+                        $elem = $this->form->addButton(ProcessInstanceOperations::toString(ProcessInstanceOperations::ACCEPT));
                         break;
 
                     case self::LABEL:

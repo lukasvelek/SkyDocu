@@ -47,7 +47,7 @@ class ProcessManager extends AManager {
             $uniqueProcessId = $this->createId(EntityManager::PROCESSES_UNIQUE);
         }
 
-        if(!$this->processRepository->insertNewProcess($processId, $uniqueProcessId, $title, $description, json_encode($definition), $authorId, $status, $version)) {
+        if(!$this->processRepository->insertNewProcess($processId, $uniqueProcessId, $title, $description, base64_encode(json_encode($definition)), $authorId, $status, $version)) {
             throw new GeneralException('Database error.');
         }
 

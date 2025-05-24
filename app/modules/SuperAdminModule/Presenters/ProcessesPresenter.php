@@ -43,20 +43,6 @@ class ProcessesPresenter extends ASuperAdminPresenter {
         $grid->addColumnText('version', 'Version');
         $grid->addColumnConst('status', 'Status', ProcessStatus::class);
 
-        $viewForm = $grid->addAction('viewForm');
-        $viewForm->setTitle('View form');
-        $viewForm->onCanRender[] = function() {
-            return true;
-        };
-        $viewForm->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
-            $el = HTML::el('a');
-            $el->text('View form')
-                ->class('grid-link')
-                ->href($this->createURLString('viewForm', ['processId' => $primaryKey]));
-
-            return $el;
-        };
-
         $edit = $grid->addAction('edit');
         $edit->setTitle('Edit');
         $edit->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) {
@@ -86,17 +72,6 @@ class ProcessesPresenter extends ASuperAdminPresenter {
         };
 
         return $grid;
-    }
-
-    public function renderViewForm() {
-        $process = $this->app->processManager->getProcessById($this->httpRequest->get('processId'));
-
-        $form = base64_decode($process->form);
-        $form = new JSON2FB($this->componentFactory->getFormBuilder(), json_decode($form, true), null);
-        $form->setSkipAttributes(['action']);
-
-        $this->template->process_form = $form->render();
-        $this->template->links = $this->createBackUrl('list');
     }
 
     public function handleDeleteForm(?FormRequest $fr = null) {

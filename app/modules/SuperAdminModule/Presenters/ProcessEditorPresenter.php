@@ -2,6 +2,7 @@
 
 namespace App\Modules\SuperAdminModule;
 
+use App\Constants\Container\ProcessStatus as ContainerProcessStatus;
 use App\Constants\ProcessColorCombos;
 use App\Constants\ProcessStatus;
 use App\Core\AjaxRequestBuilder;
@@ -11,6 +12,7 @@ use App\Core\Http\JsonResponse;
 use App\Entities\ProcessEntity;
 use App\Exceptions\AException;
 use App\Helpers\LinkHelper;
+use App\Repositories\Container\ProcessRepository;
 use App\UI\FormBuilder2\JSON2FB;
 use App\UI\HTML\HTML;
 use App\UI\LinkBuilder;
@@ -166,7 +168,8 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
 
         $links = [
             $this->createBackFullUrl('SuperAdmin:Processes', 'list'),
-            LinkBuilder::createSimpleLink('New workflow step', $this->createURL('editor2', $params), 'link')
+            LinkBuilder::createSimpleLink('New workflow step', $this->createURL('editor2', $params), 'link'),
+            LinkBuilder::createSimpleLink('Publish', $this->createURL('publish', $params), 'link')
         ];
 
         $this->template->links = LinkHelper::createLinksFromArray($links);
@@ -578,6 +581,72 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
         } catch(AException $e) {
             return new JsonResponse(['error' => '1', 'errorMsg' => $e->getMessage()]);
         }
+    }
+
+    public function handlePublish() {
+        $processId = $this->httpRequest->get('processId');
+        $uniqueProcessId = $this->httpRequest->get('uniqueProcessId');
+
+        $oldProcessId = null;
+        if($this->httpRequest->get('oldProcessId') !== null) {
+            $oldProcessId = $this->httpRequest->get('oldProcessId');
+        }
+
+        // update status
+        // disable old versions
+        // write to containers in distribution
+        // disable old container versions
+
+        try {
+            $this->app->processRepository->beginTransaction(__METHOD__);
+
+            $this->app->processManager->updateProcess($processId, [
+                'status' => ProcessStatus::IN_DISTRIBUTION
+            ]);
+
+            if($oldProcessId !== null) {
+                $this->app->processManager->updateProcess($oldProcessId, [
+                    'status' => ProcessStatus::NOT_IN_DISTRIBUTION
+                ]);
+            }
+
+            $process = $this->app->processManager->getProcessEntityById($processId);
+
+            $containers = $this->app->containerManager->getAllContainers(true, true);
+
+            foreach($containers as $container) {
+                /**
+                 * @var \App\Entities\ContainerEntity $container
+                 */
+                if(!$container->isInDistribution()) continue;
+
+                $dbConn = $this->app->dbManager->getConnectionToDatabase($container->getDefaultDatabase()->getName());
+
+                $processRepository = new ProcessRepository($dbConn, $this->logger, $this->app->transactionLogRepository, $this->getUserId());
+
+                $processRepository->removeCurrentDistributionProcessFromDistributionForUniqueProcessId($uniqueProcessId);
+
+                $processRepository->addNewProcess(
+                    $processId,
+                    $uniqueProcessId,
+                    $process->getTitle(),
+                    $process->getDescription(),
+                    base64_encode(json_encode($process->getDefinition())),
+                    $this->getUserId(),
+                    ContainerProcessStatus::IN_DISTRIBUTION
+                );
+            }
+
+            $this->app->processRepository->commit($this->getUserId(), __METHOD__);
+
+            $this->flashMessage('Successfully published process.', 'success');
+        } catch(AException $e) {
+            $this->app->processRepository->rollback(__METHOD__);
+
+            $this->flashMessage('Could not publish process.', 'error', 10);
+        }
+
+        $this->redirect($this->createFullURL('SuperAdmin:Processes', 'list'));
     }
 }
 

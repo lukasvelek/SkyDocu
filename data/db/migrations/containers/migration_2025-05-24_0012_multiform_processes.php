@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Data\Db\Migrations;
+namespace App\Data\Db\Migrations\Containers;
 
 use App\Core\DB\ABaseMigration;
 use App\Core\DB\Helpers\TableSchema;
 use App\Core\DB\Helpers\TableSeeding;
 
-class migration_2025_05_23_0009_multiform_processes extends ABaseMigration {
+class migration_2025_05_24_0012_multiform_processes extends ABaseMigration {
     public function up(): TableSchema {
         $table = $this->getTableSchema();
 

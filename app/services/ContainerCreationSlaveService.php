@@ -108,12 +108,11 @@ class ContainerCreationSlaveService extends AService {
 
     private function insertProcesses() {
         $qb = $this->processManager->processRepository->composeQueryForProcessesInDistribution();
-
         $qb->execute();
 
         $insertProcesses = [];
         while($row = $qb->fetchAssoc()) {
-            $insertProcesses[] = [
+            /*$insertProcesses[] = [
                 'processId' => $row['processId'],
                 'uniqueProcessId' => $row['uniqueProcessId'],
                 'title' => $row['title'],
@@ -124,6 +123,16 @@ class ContainerCreationSlaveService extends AService {
                 'userId' => $row['userId'],
                 'status' => 1,
                 'colorCombo' => $row['colorCombo']
+            ];*/
+
+            $insertProcesses[] = [
+                'processId' => $row['processId'],
+                'uniqueProcessId' => $row['uniqueProcessId'],
+                'title' => $row['title'],
+                'description' => $row['description'],
+                'definition' => $row['definition'],
+                'userId' => $row['userId'],
+                'status' => 1
             ];
         }
 

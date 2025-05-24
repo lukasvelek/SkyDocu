@@ -37,12 +37,9 @@ class ProcessManager extends AManager {
             $data['uniqueProcessId'],
             $data['title'],
             $data['description'],
-            $data['form'],
+            $data['definition'],
             $data['userId'],
-            $data['status'],
-            $data['workflow'],
-            $data['workflowConfiguration'],
-            $data['colorCombo']
+            $data['status']
         )) {
             throw new GeneralException('Database error.');
         }

@@ -6,8 +6,6 @@ use App\Constants\Container\ProcessInstanceOperations;
 use App\Constants\Container\ProcessInstanceStatus;
 use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
-use App\Helpers\LinkHelper;
-use App\UI\FormBuilder2\Button;
 use App\UI\FormBuilder2\JSON2FB;
 
 class ProcessPresenter extends AUserPresenter {
@@ -63,53 +61,7 @@ class ProcessPresenter extends AUserPresenter {
 
         $renderedForms[] = $json2fb->render();
 
-        $this->template->process_form = LinkHelper::createLinksFromArray($renderedForms, '<hr>');
-
-        // PROCESS CONTROLS
-        // check if user is current officer
-        if($this->containerProcessAuthorizator->canUserProcessInstance($instance->instanceId, $this->getUserId())) {
-            //$workflow = unserialize($process->workflow);
-            //$workflowConfiguration = unserialize($process->workflowConfiguration);
-            $workflowIndex = $data['workflowIndex'];
-
-            $currentWorkflow = $workflow[$workflowIndex]; // e.g. $ADMINISTRATORS$
-
-            $countInWorkflow = 0;
-            foreach($workflow as $w) {
-                if($w == $currentWorkflow) {
-                    $countInWorkflow++;
-                }
-            }
-
-            $configuration = null;
-            if($countInWorkflow > 1) {
-                //$configuration = $workflowConfiguration[$currentWorkflow . '_' . $workflowIndex];
-            } else {
-                //$configuration = $workflowConfiguration[$currentWorkflow];
-            }
-
-            if($configuration === null) {
-                $this->template->process_controls = '';
-            }
-
-            $getLink = function(string $operation) use ($view) {
-                return $this->createURLString('processOperation', ['operation' => $operation, 'processId' => $this->httpRequest->get('processId'), 'instanceId' => $this->httpRequest->get('instanceId'), 'view' => $view]);
-            };
-
-            $links = [];
-            /*foreach($configuration as $operation) {
-                $url = $getLink($operation);
-                
-                $btn = new Button('button', ucfirst($operation));
-                $btn->setOnClick("location.href='" . $url . "'");
-
-                $links[] = $btn->render();
-            }*/
-
-            $this->template->process_controls = implode('', $links);
-        } else {
-            $this->template->process_controls = '';
-        }
+        $this->template->process_form = implode('<hr>', $renderedForms);
     }
 
     public function handleProcessOperation() {
@@ -136,7 +88,6 @@ class ProcessPresenter extends AUserPresenter {
                     $this->processInstanceManager->acceptProcessInstance($instanceId, $this->getUserId());
     
                     // 2. change workflow
-                    //$workflow = unserialize($process->workflow);
                     $definition = json_decode(base64_decode($process->definition), true);
 
                     $forms = $definition['forms'];
@@ -153,7 +104,7 @@ class ProcessPresenter extends AUserPresenter {
                     $instance = $this->processInstanceManager->getProcessInstanceById($instanceId);
                     $data = unserialize($instance->data);
                     $index = $data['workflowIndex'] + 1;
-                    
+
                     [$officer, $officerType] = $this->processInstanceManager->evaluateNextProcessInstanceOfficer($workflow, $this->getUserId(), $index);
     
                     if($officer === null && $officerType === null) {

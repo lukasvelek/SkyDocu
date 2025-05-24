@@ -66,16 +66,17 @@ class ProcessSelect extends AComponent {
      */
     private function getProcesses() {
         $qb = $this->processRepository->composeQueryForAvailableProcesses();
-
         $qb->execute();
 
         $processes = [];
         while($row = $qb->fetchAssoc()) {
+            $definition = json_decode(base64_decode($row['definition']), true);
+            
             $processes[] = [
                 'title' => $row['title'],
                 'description' => $row['description'],
                 'processId' => $row['processId'],
-                'colorCombo' => $row['colorCombo']
+                'colorCombo' => $definition['colorCombo']
             ];
         }
 

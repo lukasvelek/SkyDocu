@@ -91,10 +91,16 @@ class ContainerProcessAuthorizator extends AAuthorizator {
         // will appear in workflow
         $willAppearInWorkflow = false;
 
-        //$process = $this->processManager->getLastProcessForUniqueProcessId($instance->uniqueProcessId);
         $process = $this->processManager->getProcessById($instance->processId);
 
-        $workflow = unserialize($process->workflow);
+        $definition = json_decode(base64_decode($process->definition), true);
+
+        $forms = $definition['forms'];
+
+        $workflow = [];
+        foreach($forms as $form) {
+            $workflow[] = $form['actor'];
+        }
 
         $currentIndex = $instanceData['workflowIndex'];
 

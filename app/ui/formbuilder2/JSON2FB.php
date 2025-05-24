@@ -4,6 +4,7 @@ namespace App\UI\FormBuilder2;
 
 use App\Constants\AConstant;
 use App\Constants\Container\ProcessInstanceOperations;
+use App\Core\Router;
 use App\Exceptions\GeneralException;
 use App\UI\FormBuilder2\FormState\FormStateListHelper;
 
@@ -34,6 +35,10 @@ class JSON2FB {
     private const PROCESS_SELECT_SEARCH = 'processSelectSearch';
 
     private const ACCEPT_BUTTON = 'acceptButton';
+    private const REJECT_BUTTON = 'rejectButton';
+    private const CANCEL_BUTTON = 'cancelButton';
+    private const FINISH_BUTTON = 'finishButton';
+    private const ARCHIVE_BUTTON = 'archiveButton';
 
     private FormBuilder2 $form;
     private array $json;
@@ -44,6 +49,8 @@ class JSON2FB {
     private array $formData;
     private array $customUrlParams;
     private bool $callAfterSubmitReducer = false;
+    private array $skipElementTypes = [];
+    private array $formHandleButtonsParams = [];
     
     /**
      * Class constructor
@@ -188,6 +195,8 @@ class JSON2FB {
 
             $elem = null;
 
+            if(in_array($element['type'], $this->skipElementTypes)) continue;
+
             if(empty($this->formData)) {
                 // ELEMENT (INSTANCE) CREATION
                 switch($element['type']) {
@@ -253,6 +262,32 @@ class JSON2FB {
 
                     case self::ACCEPT_BUTTON:
                         $elem = $this->form->addButton(ProcessInstanceOperations::toString(ProcessInstanceOperations::ACCEPT));
+                        $url = Router::generateUrl(array_merge($this->formHandleButtonsParams, ['operation' => 'accept']));
+                        $elem->setOnClick('location.href=\'' . $url . '\';');
+                        break;
+
+                    case self::CANCEL_BUTTON:
+                        $elem = $this->form->addButton(ProcessInstanceOperations::toString(ProcessInstanceOperations::CANCEL));
+                        $url = Router::generateUrl(array_merge($this->formHandleButtonsParams, ['operation' => 'cancel']));
+                        $elem->setOnClick('location.href=\'' . $url . '\';');
+                        break;
+
+                    case self::FINISH_BUTTON:
+                        $elem = $this->form->addButton(ProcessInstanceOperations::toString(ProcessInstanceOperations::FINISH));
+                        $url = Router::generateUrl(array_merge($this->formHandleButtonsParams, ['operation' => 'finish']));
+                        $elem->setOnClick('location.href=\'' . $url . '\';');
+                        break;
+
+                    case self::ARCHIVE_BUTTON:
+                        $elem = $this->form->addButton(ProcessInstanceOperations::toString(ProcessInstanceOperations::ARCHIVE));
+                        $url = Router::generateUrl(array_merge($this->formHandleButtonsParams, ['operation' => 'archive']));
+                        $elem->setOnClick('location.href=\'' . $url . '\';');
+                        break;
+
+                    case self::REJECT_BUTTON:
+                        $elem = $this->form->addButton(ProcessInstanceOperations::toString(ProcessInstanceOperations::REJECT));
+                        $url = Router::generateUrl(array_merge($this->formHandleButtonsParams, ['operation' => 'reject']));
+                        $elem->setOnClick('location.href=\'' . $url . '\';');
                         break;
 
                     case self::LABEL:
@@ -358,6 +393,32 @@ class JSON2FB {
 
                     case self::ACCEPT_BUTTON:
                         $elem = $this->form->addButton(ProcessInstanceOperations::toString(ProcessInstanceOperations::ACCEPT));
+                        $url = Router::generateUrl(array_merge($this->formHandleButtonsParams, ['operation' => 'accept']));
+                        $elem->setOnClick('location.href=\'' . $url . '\';');
+                        break;
+
+                    case self::CANCEL_BUTTON:
+                        $elem = $this->form->addButton(ProcessInstanceOperations::toString(ProcessInstanceOperations::CANCEL));
+                        $url = Router::generateUrl(array_merge($this->formHandleButtonsParams, ['operation' => 'cancel']));
+                        $elem->setOnClick('location.href=\'' . $url . '\';');
+                        break;
+
+                    case self::FINISH_BUTTON:
+                        $elem = $this->form->addButton(ProcessInstanceOperations::toString(ProcessInstanceOperations::FINISH));
+                        $url = Router::generateUrl(array_merge($this->formHandleButtonsParams, ['operation' => 'finish']));
+                        $elem->setOnClick('location.href=\'' . $url . '\';');
+                        break;
+
+                    case self::ARCHIVE_BUTTON:
+                        $elem = $this->form->addButton(ProcessInstanceOperations::toString(ProcessInstanceOperations::ARCHIVE));
+                        $url = Router::generateUrl(array_merge($this->formHandleButtonsParams, ['operation' => 'archive']));
+                        $elem->setOnClick('location.href=\'' . $url . '\';');
+                        break;
+
+                    case self::REJECT_BUTTON:
+                        $elem = $this->form->addButton(ProcessInstanceOperations::toString(ProcessInstanceOperations::REJECT));
+                        $url = Router::generateUrl(array_merge($this->formHandleButtonsParams, ['operation' => 'reject']));
+                        $elem->setOnClick('location.href=\'' . $url . '\';');
                         break;
 
                     case self::LABEL:
@@ -497,6 +558,25 @@ class JSON2FB {
     public function callAfterSubmitReducer() {
         $this->callAfterSubmitReducer = true;
         $this->form->setCallAfterSubmitReducer(true);
+    }
+
+    /**
+     * Removes buttons
+     */
+    public function removeButtons() {
+        $this->skipElementTypes = [
+            self::ACCEPT_BUTTON,
+            self::ARCHIVE_BUTTON,
+            self::BUTTON,
+            self::CANCEL_BUTTON,
+            self::FINISH_BUTTON,
+            self::REJECT_BUTTON,
+            self::SUBMIT
+        ];
+    }
+
+    public function setFormHandleButtonsParams(array $params) {
+        $this->formHandleButtonsParams = $params;
     }
 
     /**

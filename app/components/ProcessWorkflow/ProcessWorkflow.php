@@ -106,7 +106,14 @@ class ProcessWorkflow extends AComponent {
     private function getProcessWorkflow(): array {
         $process = $this->processManager->getProcessById($this->processId);
 
-        $workflow = unserialize($process->workflow);
+        $definition = json_decode(base64_decode($process->definition), true);
+
+        $forms = $definition['forms'];
+
+        $workflow = [];
+        foreach($forms as $form) {
+            $workflow[] = $form['actor'];
+        }
 
         return $workflow;
     }
@@ -119,7 +126,14 @@ class ProcessWorkflow extends AComponent {
 
         $data = unserialize($instance->data);
 
-        $workflowHistory = [];
+        $workflowHistory = [
+            [
+                'actor' => $instance->userId,
+                'actorType' => ProcessInstanceOfficerTypes::USER,
+                'response' => ProcessInstanceOperations::CREATE,
+                'responseDate' => $instance->dateCreated
+            ]
+        ];
         if(array_key_exists('workflowHistory', $data)) {
             foreach($data['workflowHistory'] as $wh) {
                 foreach($wh as $actor => $whdata) {
@@ -225,6 +239,10 @@ class ProcessWorkflow extends AComponent {
             
                         case ProcessInstanceOperations::REJECT:
                             $response = 'Rejected';
+                            break;
+
+                        case ProcessInstanceOperations::CREATE:
+                            $response = 'Created';
                             break;
                     }
 

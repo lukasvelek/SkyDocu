@@ -6,6 +6,7 @@ use App\Constants\Container\ProcessInstanceOperations;
 use App\Constants\Container\ProcessInstanceStatus;
 use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
+use App\Helpers\LinkHelper;
 use App\UI\FormBuilder2\Button;
 use App\UI\FormBuilder2\JSON2FB;
 
@@ -26,24 +27,49 @@ class ProcessPresenter extends AUserPresenter {
         // PROCESS FORM
         $instance = $this->processInstanceManager->getProcessInstanceById($this->httpRequest->get('instanceId'));
 
-        $form = $this->componentFactory->getFormBuilder();
-        
-        $json = json_decode(base64_decode($process->form), true);
-
         $data = unserialize($instance->data);
+
+        $form = $this->componentFactory->getFormBuilder();
+
+        $definition = json_decode(base64_decode($process->definition), true);
+        $forms = $definition['forms'];
+
+        $workflow = [];
+        foreach($forms as $_form) {
+            $workflow[] = $_form['actor'];
+        }
+
+        $json = json_decode($forms[$data['workflowIndex']]['form'], true);
 
         $json2fb = new JSON2FB($form, $json, $this->containerId);
         $json2fb->setSkipAttributes(['action']);
         $json2fb->setFormData($data);
         $json2fb->callAfterSubmitReducer();
+        $json2fb->removeButtons();
 
-        $this->template->process_form = $json2fb->render();
+        $renderedForms = [
+            $json2fb->render()
+        ];
+
+        $form = $this->componentFactory->getFormBuilder();
+
+        $json = json_decode($forms[$data['workflowIndex'] + 1]['form'], true);
+
+        $json2fb = new JSON2FB($form, $json, $this->containerId);
+        $json2fb->setSkipAttributes(['action']);
+        $json2fb->setFormData($data);
+        $json2fb->callAfterSubmitReducer();
+        $json2fb->setFormHandleButtonsParams($this->createURL('processOperation', ['processId' => $this->httpRequest->get('processId'), 'instanceId' => $this->httpRequest->get('instanceId'), 'view' => $view]));
+
+        $renderedForms[] = $json2fb->render();
+
+        $this->template->process_form = LinkHelper::createLinksFromArray($renderedForms, '<hr>');
 
         // PROCESS CONTROLS
         // check if user is current officer
         if($this->containerProcessAuthorizator->canUserProcessInstance($instance->instanceId, $this->getUserId())) {
-            $workflow = unserialize($process->workflow);
-            $workflowConfiguration = unserialize($process->workflowConfiguration);
+            //$workflow = unserialize($process->workflow);
+            //$workflowConfiguration = unserialize($process->workflowConfiguration);
             $workflowIndex = $data['workflowIndex'];
 
             $currentWorkflow = $workflow[$workflowIndex]; // e.g. $ADMINISTRATORS$
@@ -57,9 +83,9 @@ class ProcessPresenter extends AUserPresenter {
 
             $configuration = null;
             if($countInWorkflow > 1) {
-                $configuration = $workflowConfiguration[$currentWorkflow . '_' . $workflowIndex];
+                //$configuration = $workflowConfiguration[$currentWorkflow . '_' . $workflowIndex];
             } else {
-                $configuration = $workflowConfiguration[$currentWorkflow];
+                //$configuration = $workflowConfiguration[$currentWorkflow];
             }
 
             if($configuration === null) {
@@ -71,14 +97,14 @@ class ProcessPresenter extends AUserPresenter {
             };
 
             $links = [];
-            foreach($configuration as $operation) {
+            /*foreach($configuration as $operation) {
                 $url = $getLink($operation);
                 
                 $btn = new Button('button', ucfirst($operation));
                 $btn->setOnClick("location.href='" . $url . "'");
 
                 $links[] = $btn->render();
-            }
+            }*/
 
             $this->template->process_controls = implode('', $links);
         } else {
@@ -110,12 +136,24 @@ class ProcessPresenter extends AUserPresenter {
                     $this->processInstanceManager->acceptProcessInstance($instanceId, $this->getUserId());
     
                     // 2. change workflow
-                    $workflow = unserialize($process->workflow);
+                    //$workflow = unserialize($process->workflow);
+                    $definition = json_decode(base64_decode($process->definition), true);
+
+                    $forms = $definition['forms'];
+
+                    $workflow = [];
+                    $i = 0;
+                    foreach($forms as $form) {
+                        if($i > 0) {
+                            $workflow[] = $form['actor'];
+                        }
+                        $i++;
+                    }
     
                     $instance = $this->processInstanceManager->getProcessInstanceById($instanceId);
                     $data = unserialize($instance->data);
                     $index = $data['workflowIndex'] + 1;
-    
+                    
                     [$officer, $officerType] = $this->processInstanceManager->evaluateNextProcessInstanceOfficer($workflow, $this->getUserId(), $index);
     
                     if($officer === null && $officerType === null) {

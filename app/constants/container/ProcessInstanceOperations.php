@@ -10,6 +10,7 @@ class ProcessInstanceOperations extends AConstant {
     public const ARCHIVE = 'archive';
     public const ACCEPT = 'accept';
     public const REJECT = 'reject';
+    public const CREATE = 'create';
 
     public static function toString($key): ?string {
         return match($key) {
@@ -17,7 +18,8 @@ class ProcessInstanceOperations extends AConstant {
             self::FINISH => 'Finish',
             self::ARCHIVE => 'Archive',
             self::ACCEPT => 'Accept',
-            self::REJECT => 'Reject'
+            self::REJECT => 'Reject',
+            self::CREATE => 'Create'
         };
     }
 }

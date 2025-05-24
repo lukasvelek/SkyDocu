@@ -65,7 +65,9 @@ class NewProcessPresenter extends AUserPresenter {
         $form = $this->componentFactory->getFormBuilder();
         $form->setAction($this->createURL('submitProcessForm', ['processId' => $process->processId, 'instanceId' => $instanceId]));
 
-        $json = json_decode(base64_decode($process->form), true);
+        $definition = json_decode(base64_decode($process->definition), true);
+
+        $json = json_decode($definition['forms'][0]['form'], true);
 
         $json2Fb = new JSON2FB($form, $json, $this->containerId);
         $json2Fb->setSkipAttributes(['action']);
@@ -115,7 +117,13 @@ class NewProcessPresenter extends AUserPresenter {
             $this->redirect($this->createURL('select'));
         }
 
-        $workflow = unserialize($process->workflow);
+        $definition = json_decode(base64_decode($process->definition), true);
+        $forms = $definition['forms'];
+
+        $workflow = [];
+        foreach($forms as $form) {
+            $workflow[] = $form['actor'];
+        }
 
         // evaluate new officer
         [$officer, $type] = $this->processInstanceManager->evaluateNextProcessInstanceOfficer($workflow, $this->getUserId(), 0);

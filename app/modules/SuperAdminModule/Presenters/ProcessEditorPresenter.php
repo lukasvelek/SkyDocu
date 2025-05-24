@@ -168,9 +168,16 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
 
         $links = [
             $this->createBackFullUrl('SuperAdmin:Processes', 'list'),
-            LinkBuilder::createSimpleLink('New workflow step', $this->createURL('editor2', $params), 'link'),
-            LinkBuilder::createSimpleLink('Publish', $this->createURL('publish', $params), 'link')
+            LinkBuilder::createSimpleLink('New workflow step', $this->createURL('editor2', $params), 'link')
         ];
+
+        $process = $this->app->processManager->getProcessEntityById($this->httpRequest->get('processId'));
+
+        $workflow = $process->getDefinition()['forms'] ?? [];
+
+        if(count($workflow) > 0) {
+            $links[] = LinkBuilder::createSimpleLink('Publish', $this->createURL('publish', $params), 'link');
+        }
 
         $this->template->links = LinkHelper::createLinksFromArray($links);
     }

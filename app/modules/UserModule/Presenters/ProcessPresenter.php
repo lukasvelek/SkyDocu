@@ -117,12 +117,10 @@ class ProcessPresenter extends AUserPresenter {
                     if($officer === null && $officerType === null) {
                         // user is last -> finish
                         $this->processInstanceManager->changeProcessInstanceStatus($instanceId, ProcessInstanceStatus::FINISHED);
-                        //$this->processInstanceManager->changeProcessInstanceDescription($instanceId, sprintf('Finished %s', $process->title));
                         $description = sprintf('Finished %s', $process->title);
                         $fm = 'Process successfully finished.';
                     } else {
                         $this->processInstanceManager->moveProcessInstanceToNextOfficer($instanceId, $officer, $officerType);
-                        //$this->processInstanceManager->changeProcessInstanceDescription($instanceId, sprintf('%s waiting for your reaction.', $process->title));
                         $description = sprintf('%s waiting for your reaction.', $process->title);
                         $fm = 'Process successfully moved to next officer.';
                     }
@@ -131,7 +129,6 @@ class ProcessPresenter extends AUserPresenter {
                 case ProcessInstanceOperations::ARCHIVE:
                     // finish and archive the process
                     $this->processInstanceManager->archiveProcessInstance($instanceId, $this->getUserId());
-                    //$this->processInstanceManager->changeProcessInstanceDescription($instanceId, sprintf('Archived %s', $process->title));
                     $description = sprintf('Archived %s', $process->title);
                     $fm = 'Process succesfully archived.';
                     break;
@@ -139,7 +136,6 @@ class ProcessPresenter extends AUserPresenter {
                 case ProcessInstanceOperations::CANCEL:
                     // cancel the process in current step
                     $this->processInstanceManager->cancelProcessInstance($instanceId, $this->getUserId());
-                    //$this->processInstanceManager->changeProcessInstanceDescription($instanceId, sprintf('Canceled %s', $process->title));
                     $description = sprintf('Canceled %s', $process->title);
                     $fm = 'Process successfully canceled.';
                     break;
@@ -147,7 +143,6 @@ class ProcessPresenter extends AUserPresenter {
                 case ProcessInstanceOperations::FINISH:
                     // finish the process
                     $this->processInstanceManager->changeProcessInstanceStatus($instanceId, ProcessInstanceStatus::FINISHED);
-                    //$this->processInstanceManager->changeProcessInstanceDescription($instanceId, sprintf('Finished %s', $process->title));
                     $description = sprintf('Finished %s', $process->title);
                     $fm = 'Process successfully finished.';
                     break;
@@ -155,7 +150,6 @@ class ProcessPresenter extends AUserPresenter {
                 case ProcessInstanceOperations::REJECT:
                     // reject and finish the process
                     $this->processInstanceManager->rejectProcessInstance($instanceId, $this->getUserId());
-                    //$this->processInstanceManager->changeProcessInstanceDescription($instanceId, sprintf('Rejected %s', $process->title));
                     $description = sprintf('Rejected %s', $process->title);
                     $fm = 'Process successfully rejected.';
                     break;
@@ -165,8 +159,17 @@ class ProcessPresenter extends AUserPresenter {
             $forms = $definition['forms'];
             $_form = json_decode($forms[$index]['form'], true);
 
+            // global workflow step description
             if(array_key_exists('instanceDescription', $_form)) {
                 $description = $_form['instanceDescription'];
+            }
+            
+            $operationName = $operation . 'Button';
+            foreach(json_decode($_form['form'], true)['elements'] as $element) {
+                if($operationName == $element['type'] && array_key_exists('instanceDescription', $element)) {
+                    $description = $element['instanceDescription'];
+                    break;
+                }
             }
 
             $this->processInstanceManager->changeProcessInstanceDescription($instanceId, $description);

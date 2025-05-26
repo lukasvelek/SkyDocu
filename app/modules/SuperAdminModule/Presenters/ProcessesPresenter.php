@@ -52,7 +52,7 @@ class ProcessesPresenter extends ASuperAdminPresenter {
             $el = HTML::el('a');
             $el->text('Edit')
                 ->class('grid-link')
-                ->href($this->createFullURLString('SuperAdmin:ProcessEditor', 'form', ['processId' => $primaryKey, 'uniqueProcessId' => $row->uniqueProcessId]));
+                ->href($this->createFullURLString('SuperAdmin:ProcessEditor', 'form', ['processId' => $primaryKey, 'uniqueProcessId' => $row->uniqueProcessId, 'oldProcessId' => $primaryKey]));
 
             return $el;
         };

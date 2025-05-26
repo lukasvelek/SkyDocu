@@ -274,6 +274,24 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
             return $el;
         };
 
+        $edit = $list->addAction('Copy');
+        $edit->setTitle('Copy');
+        $edit->onCanRender[] = function() {
+            return true;
+        };
+        $edit->onRender[] = function(mixed $primaryKey, ArrayRow $row, ListRow $_row, HTML $html) use ($params) {
+            $_params = $params;
+            $_params['primaryKey'] = $primaryKey;
+            //$_params['operation'] = 'edit';
+
+            $el = HTML::el('a');
+            $el->href($this->createURLString('editor2', $_params))
+                ->text('Copy')
+                ->class('grid-link');
+
+            return $el;
+        };
+
         $delete = $list->addAction('delete');
         $delete->setTitle('Delete');
         $delete->onCanRender[] = function() {
@@ -627,12 +645,21 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
             $oldProcessId = $this->httpRequest->get('oldProcessId');
         }
 
+        $processExists = ($this->app->processManager->getProcessById($processId) !== null);
+        if($processExists) {
+            $oldProcessId = $processId;
+        }
+
         // update status
         // disable old versions
         // write to containers in distribution
         // disable old container versions
 
         try {
+            if($oldProcessId !== null) {
+                $processId = $this->app->processManager->createNewProcessFromExisting($oldProcessId);
+            }
+
             $this->app->processRepository->beginTransaction(__METHOD__);
 
             $this->app->processManager->updateProcess($processId, [
@@ -678,7 +705,7 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
         } catch(AException $e) {
             $this->app->processRepository->rollback(__METHOD__);
 
-            $this->flashMessage('Could not publish process.', 'error', 10);
+            $this->flashMessage('Could not publish process. Reason: ' . $e->getMessage(), 'error', 10);
         }
 
         $this->redirect($this->createFullURL('SuperAdmin:Processes', 'list'));

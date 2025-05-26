@@ -25,6 +25,24 @@ class ProcessManager extends AManager {
     }
 
     /**
+     * Creates a new process from existing one - creates a copy and returns the new process' ID
+     * 
+     * @param string $oldProcessId Old process ID
+     */
+    public function createNewProcessFromExisting(string $oldProcessId): array {
+        $process = $this->getProcessById($oldProcessId);
+
+        return $this->createNewProcess(
+            $process->title,
+            $process->description,
+            $process->userId,
+            json_decode(base64_decode($process->definition), true),
+            $oldProcessId,
+            ProcessStatus::NEW
+        );
+    }
+
+    /**
      * Creates a new process and returns a new process ID
      * 
      * @param string $title Title

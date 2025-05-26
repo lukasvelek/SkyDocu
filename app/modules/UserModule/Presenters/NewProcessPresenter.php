@@ -4,12 +4,14 @@ namespace App\Modules\UserModule;
 
 use App\Components\ProcessSelect\ProcessSelect;
 use App\Components\ProcessViewsSidebar\ProcessViewsSidebar;
+use App\Constants\Container\ProcessGridViews;
 use App\Constants\Container\ProcessInstanceOfficerTypes;
 use App\Constants\Container\ProcessInstanceStatus;
 use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
 use App\Core\Http\JsonResponse;
 use App\Exceptions\AException;
+use App\Exceptions\GeneralException;
 use App\UI\FormBuilder2\JSON2FB;
 
 class NewProcessPresenter extends AUserPresenter {
@@ -42,12 +44,22 @@ class NewProcessPresenter extends AUserPresenter {
     public function handleStartProcess() {
         $processId = $this->httpRequest->get('processId');
 
-        $instanceId = $this->processInstanceManager->generateUniqueInstanceId();
+        try {
+            $instanceId = $this->processInstanceManager->generateUniqueInstanceId();
 
-        $this->redirect($this->createURL('processForm', [
-            'processId' => $processId,
-            'instanceId' => $instanceId
-        ]));
+            if($instanceId === null) {
+                throw new GeneralException('Database error.');
+            }
+
+            $this->redirect($this->createFullURL('User:NewProcess', 'processForm', [
+                'processId' => $processId,
+                'instanceId' => $instanceId,
+                'view' => ProcessGridViews::VIEW_WAITING_FOR_ME
+            ]));
+        } catch(AException $e) {
+            $this->flashMessage('Could not start a process. Reason: ' . $e->getMessage(), 'error', 10);
+            $this->redirect($this->createURL('select'));
+        }
     }
 
     public function renderProcessForm() {
@@ -126,10 +138,15 @@ class NewProcessPresenter extends AUserPresenter {
         }
 
         // evaluate new officer
-        [$officer, $type] = $this->processInstanceManager->evaluateNextProcessInstanceOfficer($workflow, $this->getUserId(), 0);
+        [$officer, $type] = $this->processInstanceManager->evaluateNextProcessInstanceOfficer($workflow, $this->getUserId(), 1);
+
+        $runService = false;
+        if($officer == $this->app->userManager->getServiceUserId() && $type == ProcessInstanceOfficerTypes::USER) {
+            $runService = true;
+        }
 
         $formData = $fr->getData();
-        $formData['workflowIndex'] = 0;
+        $formData['workflowIndex'] = 1;
         $formData = serialize($formData);
 
         $instanceData = [
@@ -151,6 +168,13 @@ class NewProcessPresenter extends AUserPresenter {
             $this->processInstanceRepository->rollback(__METHOD__);
 
             $this->flashMessage('Could not start new process instance. Reason: ' . $e->getMessage(), 'error', 10);
+        }
+
+        if($runService) {
+            $this->app->serviceManager->runService('psuhs.php', [
+                $this->containerId,
+                $instanceId
+            ]);
         }
 
         $this->redirect($this->createFullURL('User:Processes', 'list', ['view' => 'waitingForMe']));

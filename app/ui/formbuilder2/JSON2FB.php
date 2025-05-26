@@ -51,6 +51,7 @@ class JSON2FB {
     private bool $callAfterSubmitReducer = false;
     private array $skipElementTypes = [];
     private array $formHandleButtonsParams = [];
+    private bool $isEditor = false;
     
     /**
      * Class constructor
@@ -68,6 +69,15 @@ class JSON2FB {
         $this->skipElementAttributes = [];
         $this->formData = [];
         $this->customUrlParams = [];
+    }
+
+    /**
+     * Sets if the form is rendered for form editor
+     * 
+     * @param bool $editor Is editor?
+     */
+    public function setEditor(bool $editor = true) {
+        $this->isEditor = $editor;
     }
 
     /**
@@ -263,31 +273,41 @@ class JSON2FB {
                     case self::ACCEPT_BUTTON:
                         $elem = $this->form->addButton(ProcessInstanceOperations::toString(ProcessInstanceOperations::ACCEPT));
                         $url = Router::generateUrl(array_merge($this->formHandleButtonsParams, ['operation' => 'accept']));
-                        $elem->setOnClick('location.href=\'' . $url . '\';');
+                        if(!$this->isEditor) {
+                            $elem->setOnClick('location.href=\'' . $url . '\';');
+                        }
                         break;
 
                     case self::CANCEL_BUTTON:
                         $elem = $this->form->addButton(ProcessInstanceOperations::toString(ProcessInstanceOperations::CANCEL));
                         $url = Router::generateUrl(array_merge($this->formHandleButtonsParams, ['operation' => 'cancel']));
-                        $elem->setOnClick('location.href=\'' . $url . '\';');
+                        if(!$this->isEditor) {
+                            $elem->setOnClick('location.href=\'' . $url . '\';');
+                        }
                         break;
 
                     case self::FINISH_BUTTON:
                         $elem = $this->form->addButton(ProcessInstanceOperations::toString(ProcessInstanceOperations::FINISH));
                         $url = Router::generateUrl(array_merge($this->formHandleButtonsParams, ['operation' => 'finish']));
-                        $elem->setOnClick('location.href=\'' . $url . '\';');
+                        if(!$this->isEditor) {
+                            $elem->setOnClick('location.href=\'' . $url . '\';');
+                        }
                         break;
 
                     case self::ARCHIVE_BUTTON:
                         $elem = $this->form->addButton(ProcessInstanceOperations::toString(ProcessInstanceOperations::ARCHIVE));
                         $url = Router::generateUrl(array_merge($this->formHandleButtonsParams, ['operation' => 'archive']));
-                        $elem->setOnClick('location.href=\'' . $url . '\';');
+                        if(!$this->isEditor) {
+                            $elem->setOnClick('location.href=\'' . $url . '\';');
+                        }
                         break;
 
                     case self::REJECT_BUTTON:
                         $elem = $this->form->addButton(ProcessInstanceOperations::toString(ProcessInstanceOperations::REJECT));
                         $url = Router::generateUrl(array_merge($this->formHandleButtonsParams, ['operation' => 'reject']));
-                        $elem->setOnClick('location.href=\'' . $url . '\';');
+                        if(!$this->isEditor) {
+                            $elem->setOnClick('location.href=\'' . $url . '\';');
+                        }
                         break;
 
                     case self::LABEL:
@@ -394,31 +414,41 @@ class JSON2FB {
                     case self::ACCEPT_BUTTON:
                         $elem = $this->form->addButton(ProcessInstanceOperations::toString(ProcessInstanceOperations::ACCEPT));
                         $url = Router::generateUrl(array_merge($this->formHandleButtonsParams, ['operation' => 'accept']));
-                        $elem->setOnClick('location.href=\'' . $url . '\';');
+                        if(!$this->isEditor) {
+                            $elem->setOnClick('location.href=\'' . $url . '\';');
+                        }
                         break;
 
                     case self::CANCEL_BUTTON:
                         $elem = $this->form->addButton(ProcessInstanceOperations::toString(ProcessInstanceOperations::CANCEL));
                         $url = Router::generateUrl(array_merge($this->formHandleButtonsParams, ['operation' => 'cancel']));
-                        $elem->setOnClick('location.href=\'' . $url . '\';');
+                        if(!$this->isEditor) {
+                            $elem->setOnClick('location.href=\'' . $url . '\';');
+                        }
                         break;
 
                     case self::FINISH_BUTTON:
                         $elem = $this->form->addButton(ProcessInstanceOperations::toString(ProcessInstanceOperations::FINISH));
                         $url = Router::generateUrl(array_merge($this->formHandleButtonsParams, ['operation' => 'finish']));
-                        $elem->setOnClick('location.href=\'' . $url . '\';');
+                        if(!$this->isEditor) {
+                            $elem->setOnClick('location.href=\'' . $url . '\';');
+                        }
                         break;
 
                     case self::ARCHIVE_BUTTON:
                         $elem = $this->form->addButton(ProcessInstanceOperations::toString(ProcessInstanceOperations::ARCHIVE));
                         $url = Router::generateUrl(array_merge($this->formHandleButtonsParams, ['operation' => 'archive']));
-                        $elem->setOnClick('location.href=\'' . $url . '\';');
+                        if(!$this->isEditor) {
+                            $elem->setOnClick('location.href=\'' . $url . '\';');
+                        }
                         break;
 
                     case self::REJECT_BUTTON:
                         $elem = $this->form->addButton(ProcessInstanceOperations::toString(ProcessInstanceOperations::REJECT));
                         $url = Router::generateUrl(array_merge($this->formHandleButtonsParams, ['operation' => 'reject']));
-                        $elem->setOnClick('location.href=\'' . $url . '\';');
+                        if(!$this->isEditor) {
+                            $elem->setOnClick('location.href=\'' . $url . '\';');
+                        }
                         break;
 
                     case self::LABEL:

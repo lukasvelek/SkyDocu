@@ -27,8 +27,6 @@ class ProcessPresenter extends AUserPresenter {
 
         $data = unserialize($instance->data);
 
-        $form = $this->componentFactory->getFormBuilder();
-
         $definition = json_decode(base64_decode($process->definition), true);
         $forms = $definition['forms'];
 
@@ -37,29 +35,36 @@ class ProcessPresenter extends AUserPresenter {
             $workflow[] = $_form['actor'];
         }
 
-        $json = json_decode($forms[$data['workflowIndex']]['form'], true);
+        $renderedForms = [];
+        for($i = 0; $i <= $data['workflowIndex']; $i++) {
+            // cascade forms
 
-        $json2fb = new JSON2FB($form, $json, $this->containerId);
-        $json2fb->setSkipAttributes(['action']);
-        $json2fb->setFormData($data);
-        $json2fb->callAfterSubmitReducer();
-        $json2fb->removeButtons();
+            $json = json_decode($forms[$i]['form'], true);
 
-        $renderedForms = [
-            $json2fb->render()
-        ];
+            if(array_key_exists('operations', $json)) continue;
 
-        $form = $this->componentFactory->getFormBuilder();
+            $form = $this->componentFactory->getFormBuilder();
 
-        $json = json_decode($forms[$data['workflowIndex'] + 1]['form'], true);
+            $json2fb = new JSON2FB($form, $json, $this->containerId);
+            $json2fb->setSkipAttributes(['action']);
+            $json2fb->setFormData($data);
+            $json2fb->callAfterSubmitReducer();
+            if($i < $data['workflowIndex']) {
+                $json2fb->removeButtons();
+            }
+            $json2fb->setCustomUrlParams([
+                'processId' => $this->httpRequest->get('processId'),
+                'instanceId' => $this->httpRequest->get('instanceId'),
+                'view' => $view
+            ]);
+            $json2fb->setFormHandleButtonsParams($this->createURL('processOperation', [
+                'processId' => $this->httpRequest->get('processId'),
+                'instanceId' => $this->httpRequest->get('instanceId'),
+                'view' => $view
+            ]));
 
-        $json2fb = new JSON2FB($form, $json, $this->containerId);
-        $json2fb->setSkipAttributes(['action']);
-        $json2fb->setFormData($data);
-        $json2fb->callAfterSubmitReducer();
-        $json2fb->setFormHandleButtonsParams($this->createURL('processOperation', ['processId' => $this->httpRequest->get('processId'), 'instanceId' => $this->httpRequest->get('instanceId'), 'view' => $view]));
-
-        $renderedForms[] = $json2fb->render();
+            $renderedForms[] = $json2fb->render();
+        }
 
         $this->template->process_form = implode('<hr>', $renderedForms);
     }
@@ -81,6 +86,12 @@ class ProcessPresenter extends AUserPresenter {
 
             $this->processInstanceRepository->beginTransaction(__METHOD__);
 
+            $description = '';
+
+            $instance = $this->processInstanceManager->getProcessInstanceById($instanceId);
+            $data = unserialize($instance->data);
+            $index = $data['workflowIndex'];
+
             switch($operation) {
                 case ProcessInstanceOperations::ACCEPT:
                     // move to next step
@@ -95,59 +106,70 @@ class ProcessPresenter extends AUserPresenter {
                     $workflow = [];
                     $i = 0;
                     foreach($forms as $form) {
-                        if($i > 0) {
+                        //if($i > 0) {
                             $workflow[] = $form['actor'];
-                        }
+                        //}
                         $i++;
                     }
-    
-                    $instance = $this->processInstanceManager->getProcessInstanceById($instanceId);
-                    $data = unserialize($instance->data);
-                    $index = $data['workflowIndex'] + 1;
 
-                    [$officer, $officerType] = $this->processInstanceManager->evaluateNextProcessInstanceOfficer($workflow, $this->getUserId(), $index);
+                    [$officer, $officerType] = $this->processInstanceManager->evaluateNextProcessInstanceOfficer($workflow, $this->getUserId(), $index + 1);
     
                     if($officer === null && $officerType === null) {
                         // user is last -> finish
                         $this->processInstanceManager->changeProcessInstanceStatus($instanceId, ProcessInstanceStatus::FINISHED);
-                        $this->processInstanceManager->changeProcessInstanceDescription($instanceId, sprintf('Finished %s', $process->title));
+                        //$this->processInstanceManager->changeProcessInstanceDescription($instanceId, sprintf('Finished %s', $process->title));
+                        $description = sprintf('Finished %s', $process->title);
                         $fm = 'Process successfully finished.';
                     } else {
                         $this->processInstanceManager->moveProcessInstanceToNextOfficer($instanceId, $officer, $officerType);
-                        $this->processInstanceManager->changeProcessInstanceDescription($instanceId, sprintf('%s waiting for your reaction.', $process->title));
+                        //$this->processInstanceManager->changeProcessInstanceDescription($instanceId, sprintf('%s waiting for your reaction.', $process->title));
+                        $description = sprintf('%s waiting for your reaction.', $process->title);
                         $fm = 'Process successfully moved to next officer.';
                     }
-
                     break;
             
                 case ProcessInstanceOperations::ARCHIVE:
                     // finish and archive the process
                     $this->processInstanceManager->archiveProcessInstance($instanceId, $this->getUserId());
-                    $this->processInstanceManager->changeProcessInstanceDescription($instanceId, sprintf('Archived %s', $process->title));
+                    //$this->processInstanceManager->changeProcessInstanceDescription($instanceId, sprintf('Archived %s', $process->title));
+                    $description = sprintf('Archived %s', $process->title);
                     $fm = 'Process succesfully archived.';
                     break;
     
                 case ProcessInstanceOperations::CANCEL:
                     // cancel the process in current step
                     $this->processInstanceManager->cancelProcessInstance($instanceId, $this->getUserId());
-                    $this->processInstanceManager->changeProcessInstanceDescription($instanceId, sprintf('Canceled %s', $process->title));
+                    //$this->processInstanceManager->changeProcessInstanceDescription($instanceId, sprintf('Canceled %s', $process->title));
+                    $description = sprintf('Canceled %s', $process->title);
                     $fm = 'Process successfully canceled.';
                     break;
     
                 case ProcessInstanceOperations::FINISH:
                     // finish the process
                     $this->processInstanceManager->changeProcessInstanceStatus($instanceId, ProcessInstanceStatus::FINISHED);
-                    $this->processInstanceManager->changeProcessInstanceDescription($instanceId, sprintf('Finished %s', $process->title));
+                    //$this->processInstanceManager->changeProcessInstanceDescription($instanceId, sprintf('Finished %s', $process->title));
+                    $description = sprintf('Finished %s', $process->title);
                     $fm = 'Process successfully finished.';
                     break;
     
                 case ProcessInstanceOperations::REJECT:
                     // reject and finish the process
                     $this->processInstanceManager->rejectProcessInstance($instanceId, $this->getUserId());
-                    $this->processInstanceManager->changeProcessInstanceDescription($instanceId, sprintf('Rejected %s', $process->title));
+                    //$this->processInstanceManager->changeProcessInstanceDescription($instanceId, sprintf('Rejected %s', $process->title));
+                    $description = sprintf('Rejected %s', $process->title);
                     $fm = 'Process successfully rejected.';
                     break;
             }
+
+            $definition = json_decode(base64_decode($process->definition), true);
+            $forms = $definition['forms'];
+            $_form = json_decode($forms[$index]['form'], true);
+
+            if(array_key_exists('instanceDescription', $_form)) {
+                $description = $_form['instanceDescription'];
+            }
+
+            $this->processInstanceManager->changeProcessInstanceDescription($instanceId, $description);
 
             $this->processInstanceRepository->commit($this->getUserId(), __METHOD__);
 

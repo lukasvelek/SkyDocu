@@ -80,7 +80,7 @@ class ProcessWorkflow extends AComponent {
 
         $steps = $this->createWorkflowSteps();
 
-        $template->workflow_steps = implode('<br>', $steps);
+        $template->workflow_steps = implode('<div class="text-center" style="font-size: 30px">&darr;</div>', $steps);
 
         return $template->render()->getRenderedContent();
     }
@@ -243,6 +243,10 @@ class ProcessWorkflow extends AComponent {
 
                         case ProcessInstanceOperations::CREATE:
                             $response = 'Created';
+                            break;
+
+                        case ProcessInstanceOperations::PROCESS:
+                            $response = 'Processed';
                             break;
                     }
 

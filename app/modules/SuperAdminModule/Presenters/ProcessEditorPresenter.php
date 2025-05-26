@@ -12,6 +12,7 @@ use App\Core\Http\JsonResponse;
 use App\Entities\ProcessEntity;
 use App\Exceptions\AException;
 use App\Helpers\LinkHelper;
+use App\Helpers\ProcessEditorHelper;
 use App\Repositories\Container\ProcessRepository;
 use App\UI\FormBuilder2\JSON2FB;
 use App\UI\HTML\HTML;
@@ -473,6 +474,17 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
 
         $form->addScript($arb);
 
+        $arb = new AjaxRequestBuilder();
+
+        $arb->setAction($this, 'editorServiceLiveview')
+            ->setMethod('POST')
+            ->setHeader(['code' => '_code'])
+            ->setFunctionName('editorServiceLiveview')
+            ->setFunctionArguments(['_code'])
+            ->updateHTMLElement('form-live-view', 'form');
+
+        $form->addScript($arb);
+
         $code = '
             function sendLiveview() {
                 const _code = $("#formDefinition").val();
@@ -482,7 +494,21 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
                     return;
                 }
 
+                const _actor = $("#actor").val();
+
                 var _json = "";
+
+                if(_actor == "$SERVICE_USER$") {
+                    try {
+                        _json = JSON.parse(_code);
+
+                        editorServiceLiveview(JSON.stringify(_json));
+                    } catch(exception) {
+                        alert("Could not parse JSON. Reason: " + exception);
+                    }
+
+                    return;
+                }
 
                 try {
                     _json = JSON.parse(_code);
@@ -522,7 +548,8 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
             '$ARCHIVISTS$',
             '$PROPERTY_MANAGERS$',
             '$CURRENT_USER_SUPERIOR$',
-            '$ADMINISTRATORS$'
+            '$ADMINISTRATORS$',
+            '$SERVICE_USER$'
         ];
 
         if(!in_array($actor, $possibleActors) && !str_starts_with($actor, '$GID_') && !str_starts_with($actor, '$UID_')) {
@@ -580,6 +607,7 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
         $helper->setSkipAttributes(['action']);
         $helper->addSkipElementAttributes('userSelect', 'containerId');
         $helper->addSkipElementAttributes('userSelectSearch', 'containerId');
+        $helper->setEditor();
 
         try {
             $code = $helper->render();
@@ -654,6 +682,35 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
         }
 
         $this->redirect($this->createFullURL('SuperAdmin:Processes', 'list'));
+    }
+
+    public function actionEditorServiceLiveview() {
+        $jsonCode = $this->httpRequest->get('code');
+
+        $decodedJson = json_decode($jsonCode, true);
+
+        if($decodedJson === null) {
+            return new JsonResponse(['error' => '1', 'errorMsg' => 'The form JSON entered is incorrect.']);
+        }
+
+        try {
+            ProcessEditorHelper::checkServiceUserDefinition($decodedJson);
+        } catch(AException $e) {
+            return new JsonResponse(['error' => '1', 'errorMsg' => 'Form validation failed. Reason: ' . $e->getMessage()]);
+        }
+
+        $operations = ProcessEditorHelper::getServiceUserDefinitionUpdateOperations($decodedJson);
+
+        $code = '<ul>';
+        foreach($operations as $key => $value) {
+            if($value === null) {
+                $value = 'NULL';
+            }
+            $code .= '<li>' . $key . ' => ' . $value . '</li>';
+        }
+        $code .= '</ul>';
+
+        return new JsonResponse(['form' => $code]);
     }
 }
 

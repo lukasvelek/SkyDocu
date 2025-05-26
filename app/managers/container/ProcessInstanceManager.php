@@ -19,7 +19,7 @@ use App\Repositories\Container\ProcessInstanceRepository;
  * @author Lukas Velek
  */
 class ProcessInstanceManager extends AManager {
-    private ProcessInstanceRepository $processInstanceRepository;
+    public ProcessInstanceRepository $processInstanceRepository;
     private GroupManager $groupManager;
     private UserManager $userManager;
 
@@ -135,6 +135,11 @@ class ProcessInstanceManager extends AManager {
                 $group = $this->groupManager->getGroupByTitle(SystemGroups::ADMINISTRATORS);
                 $result = $group->groupId;
                 $type = ProcessInstanceOfficerTypes::GROUP;
+                break;
+
+            case '$SERVICE_USER$':
+                $result = $this->userManager->getServiceUserId();
+                $type = ProcessInstanceOfficerTypes::USER;
                 break;
 
             default:

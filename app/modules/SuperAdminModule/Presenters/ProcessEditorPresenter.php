@@ -144,6 +144,8 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
 
             if($oldProcessId !== null) {
                 $params['oldProcessId'] = $oldProcessId;
+            } else {
+                $params['isNew'] = 1;
             }
 
             $this->app->processRepository->commit($this->getUserId(), __METHOD__);
@@ -179,7 +181,7 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
 
         $workflow = $process->getDefinition()['forms'] ?? [];
 
-        if(count($workflow) > 0) {
+        if(count($workflow) > 0 && ($this->httpRequest->get('oldProcessId') !== null || $this->httpRequest->get('isNew') == 1)) {
             $links[] = LinkBuilder::createSimpleLink('Publish', $this->createURL('publish', $params), 'link');
         }
 

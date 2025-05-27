@@ -152,16 +152,23 @@ class ProcessManager extends AManager {
      * Returns previous version for process ID
      * 
      * @param string $processId Process ID
+     * @param bool $returnEntity True if ProcessEntity should be returned or false if DatabaseRow should be returned
      * @throws AException
      */
-    public function getPreviousVersionForProcessId(string $processId): ?DatabaseRow {
+    public function getPreviousVersionForProcessId(string $processId, bool $returnEntity = false): null|DatabaseRow|ProcessEntity {
         try {
             $process = $this->getProcessEntityById($processId);
 
             if($process->getVersion() > 1) {
                 $uniqueProcessId = $process->getUniqueProcessId();
 
-                return $this->getProcessByUniqueProcessIdAndVersion($uniqueProcessId, $process->getVersion() - 1);
+                $previousVersion = $this->getProcessByUniqueProcessIdAndVersion($uniqueProcessId, $process->getVersion() - 1);
+
+                if($returnEntity) {
+                    return $this->getProcessEntityById($previousVersion->processId);
+                }
+
+                return $previousVersion;
             }
 
             return null;

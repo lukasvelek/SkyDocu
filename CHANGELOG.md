@@ -21,8 +21,11 @@ Previously changelog for versions `1.0`-`1.4` has been located in README.md. How
 - Added conversion tool for JSON form definitions
     - The tool receives JSON form definition and returns the FormBuilder or HTML code of the form
 - Processes overhaul
-    - Support for custom process types
     - Updated workflow
+    - Custom process types
+    - Multistep forms
+    - Process editor
+    - Process versioning
 
 ## SkyDocu `1.5` (04/08/2025)
 - Added _Requested containers_ metric to superadministration Container statistics widget

@@ -287,7 +287,6 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
         $edit->onRender[] = function(mixed $primaryKey, ArrayRow $row, ListRow $_row, HTML $html) use ($params) {
             $_params = $params;
             $_params['primaryKey'] = $primaryKey;
-            //$_params['operation'] = 'edit';
 
             $el = HTML::el('a');
             $el->href($this->createURLString('editor2', $_params))
@@ -665,17 +664,13 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
             $oldProcessId = $this->httpRequest->get('oldProcessId');
         }
 
-        // update status
-        // disable old versions
-        // write to containers in distribution
-        // disable old container versions
-
         try {
             $this->app->processRepository->beginTransaction(__METHOD__);
 
             $fmText = 'Successfully published new process';
 
             if($oldProcessId !== null) {
+                // Remove old process version from distribution
                 $this->app->processManager->updateProcess($oldProcessId, [
                     'status' => ProcessStatus::NOT_IN_DISTRIBUTION
                 ]);
@@ -685,6 +680,7 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
 
             $fmText .= '.';
 
+            // Add new process version to distribution
             $this->app->processManager->updateProcess($processId, [
                 'status' => ProcessStatus::IN_DISTRIBUTION
             ]);
@@ -701,14 +697,12 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
         try {
             $process = $this->app->processManager->getProcessEntityById($processId);
 
-            $containers = $this->app->containerManager->getAllContainers(true, true);
+            $containers = $this->app->containerManager->getContainersInDistribution();
 
             foreach($containers as $container) {
                 /**
                  * @var \App\Entities\ContainerEntity $container
                  */
-                if(!$container->isInDistribution()) continue;
-
                 $dbConn = $this->app->dbManager->getConnectionToDatabase($container->getDefaultDatabase()->getName());
 
                 $processRepository = new ProcessRepository($dbConn, $this->logger, $this->app->transactionLogRepository, $this->getUserId());
@@ -716,8 +710,10 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
                 try {
                     $processRepository->beginTransaction(__METHOD__);
 
+                    // Remove previous process version in container
                     $processRepository->removeCurrentDistributionProcessFromDistributionForUniqueProcessId($uniqueProcessId);
 
+                    // Add new process version to container
                     $processRepository->addNewProcess(
                         $processId,
                         $uniqueProcessId,

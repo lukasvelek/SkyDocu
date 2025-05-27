@@ -89,7 +89,7 @@ class ProcessEntity extends AEntity {
     /**
      * Returns process ID
      */
-    public function getProcessId(): string {
+    public function getId(): string {
         return $this->processId;
     }
 

@@ -33,7 +33,9 @@ class ProcessesPresenter extends ASuperAdminPresenter {
         $grid = $this->componentFactory->getGridBuilder();
 
         $qb = $this->app->processRepository->composeQueryForProcesses();
-        $qb->andWhere($qb->getColumnInValues('status', [ProcessStatus::NEW, ProcessStatus::IN_DISTRIBUTION]));
+        $qb->andWhere($qb->getColumnInValues('status', [ProcessStatus::NEW, ProcessStatus::IN_DISTRIBUTION]))
+            ->orderBy('title', 'ASC')
+            ->orderBy('version', 'ASC');
 
         $grid->createDataSourceFromQueryBuilder($qb, 'processId');
 
@@ -49,10 +51,21 @@ class ProcessesPresenter extends ASuperAdminPresenter {
             return true;
         };
         $edit->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
+            $params = [
+                'processId' => $primaryKey,
+                'uniqueProcessId' => $row->uniqueProcessId
+            ];
+
+            $previousProcess = $this->app->processManager->getPreviousVersionForProcessId($primaryKey);
+
+            if($previousProcess !== null) {
+                $params['oldProcessId'] = $previousProcess->processId;
+            }
+
             $el = HTML::el('a');
             $el->text('Edit')
                 ->class('grid-link')
-                ->href($this->createFullURLString('SuperAdmin:ProcessEditor', 'form', ['processId' => $primaryKey, 'uniqueProcessId' => $row->uniqueProcessId, 'oldProcessId' => $primaryKey]));
+                ->href($this->createFullURLString('SuperAdmin:ProcessEditor', 'form', $params));
 
             return $el;
         };

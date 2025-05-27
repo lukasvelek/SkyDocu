@@ -120,6 +120,9 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
 
                 $this->redirect($this->createURL('workflowList', $params));
             }
+
+            $definition = $oldProcess->getDefinition();
+            $definition['colorCombo'] = $colorCombo;
         }
 
         try {
@@ -588,6 +591,21 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
 
         $definition[ProcessEntity::DEFINITION_FORMS][] = $_definition;
 
+        if($this->httpRequest->get('oldProcessId') !== null) {
+            $oldProcess = $this->app->processManager->getProcessEntityById($this->httpRequest->get('oldProcessId'));
+
+            $oldDefinition = $oldProcess->getDefinition();
+
+            if($oldDefinition != $definition) {
+                // new version must be created
+
+                [$newProcessId, $uniqueProcessId] = $this->app->processManager->createNewProcessFromExisting($oldProcess->getId());
+
+                $params['processId'] = $newProcessId;
+                $params['oldProcessId'] = $processId;
+            }
+        }
+
         $data = [
             'definition' => base64_encode(json_encode($definition))
         ];
@@ -645,33 +663,40 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
             $oldProcessId = $this->httpRequest->get('oldProcessId');
         }
 
-        $processExists = ($this->app->processManager->getProcessById($processId) !== null);
-        if($processExists) {
-            $oldProcessId = $processId;
-        }
-
         // update status
         // disable old versions
         // write to containers in distribution
         // disable old container versions
 
         try {
-            if($oldProcessId !== null) {
-                $processId = $this->app->processManager->createNewProcessFromExisting($oldProcessId);
-            }
-
             $this->app->processRepository->beginTransaction(__METHOD__);
 
-            $this->app->processManager->updateProcess($processId, [
-                'status' => ProcessStatus::IN_DISTRIBUTION
-            ]);
+            $fmText = 'Successfully published new process';
 
             if($oldProcessId !== null) {
                 $this->app->processManager->updateProcess($oldProcessId, [
                     'status' => ProcessStatus::NOT_IN_DISTRIBUTION
                 ]);
+
+                $fmText .= ' version';
             }
 
+            $fmText .= '.';
+
+            $this->app->processManager->updateProcess($processId, [
+                'status' => ProcessStatus::IN_DISTRIBUTION
+            ]);
+
+            $this->app->processRepository->commit($this->getUserId(), __METHOD__);
+
+            $this->flashMessage($fmText, 'success');
+        } catch(AException $e) {
+            $this->app->processRepository->rollback(__METHOD__);
+
+            $this->flashMessage('Could not publish new process' . ($oldProcessId !== null ? ' version.' : '.') . ' Reason: ' . $e->getMessage(), 'error', 10);
+        }
+
+        try {
             $process = $this->app->processManager->getProcessEntityById($processId);
 
             $containers = $this->app->containerManager->getAllContainers(true, true);
@@ -686,26 +711,32 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
 
                 $processRepository = new ProcessRepository($dbConn, $this->logger, $this->app->transactionLogRepository, $this->getUserId());
 
-                $processRepository->removeCurrentDistributionProcessFromDistributionForUniqueProcessId($uniqueProcessId);
+                try {
+                    $processRepository->beginTransaction(__METHOD__);
 
-                $processRepository->addNewProcess(
-                    $processId,
-                    $uniqueProcessId,
-                    $process->getTitle(),
-                    $process->getDescription(),
-                    base64_encode(json_encode($process->getDefinition())),
-                    $this->getUserId(),
-                    ContainerProcessStatus::IN_DISTRIBUTION
-                );
+                    $processRepository->removeCurrentDistributionProcessFromDistributionForUniqueProcessId($uniqueProcessId);
+
+                    $processRepository->addNewProcess(
+                        $processId,
+                        $uniqueProcessId,
+                        $process->getTitle(),
+                        $process->getDescription(),
+                        base64_encode(json_encode($process->getDefinition())),
+                        $this->getUserId(),
+                        ContainerProcessStatus::IN_DISTRIBUTION
+                    );
+
+                    $processRepository->commit($this->getUserId(), __METHOD__);
+                } catch(AException $e) {
+                    $processRepository->rollback(__METHOD__);
+
+                    throw $e;
+                }
             }
 
-            $this->app->processRepository->commit($this->getUserId(), __METHOD__);
-
-            $this->flashMessage('Successfully published process.', 'success');
+            $this->flashMessage('Successfully published new process ' . ($oldProcessId !== null ? 'version ' : '') . 'to distribution.', 'success');
         } catch(AException $e) {
-            $this->app->processRepository->rollback(__METHOD__);
-
-            $this->flashMessage('Could not publish process. Reason: ' . $e->getMessage(), 'error', 10);
+            $this->flashMessage('Could not publish new process ' . ($oldProcessId !== null ? 'version ' : '') . 'to distribution. Reason: ' . $e->getMessage(), 'error', 10);
         }
 
         $this->redirect($this->createFullURL('SuperAdmin:Processes', 'list'));

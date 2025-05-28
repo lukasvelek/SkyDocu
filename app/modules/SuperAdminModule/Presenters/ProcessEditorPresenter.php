@@ -439,6 +439,8 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
 
         $process = $this->app->processManager->getProcessEntityById($request->get('processId'));
 
+        $isFirst = $process->getWorkflow() == 0;
+
         $primaryKey = null;
         $operation = null;
         if($request->get('primaryKey') !== null) {
@@ -479,7 +481,7 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
         }
 
         if($operation != 'view') {
-            $form->addButton('View form')
+            $form->addButton('Check form')
                 ->setOnClick('sendLiveview()');
 
             $form->addSubmit('Save');
@@ -489,9 +491,9 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
 
         $arb->setAction($this, 'editorLiveview2')
             ->setMethod('POST')
-            ->setHeader(['code' => '_code'])
+            ->setHeader(['code' => '_code', 'isFirst' => '_isFirst'])
             ->setFunctionName('editorLiveview')
-            ->setFunctionArguments(['_code'])
+            ->setFunctionArguments(['_code', '_isFirst'])
             ->updateHTMLElement('form-live-view', 'form');
 
         $form->addScript($arb);
@@ -535,7 +537,7 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
                 try {
                     _json = JSON.parse(_code);
 
-                    editorLiveview(JSON.stringify(_json));
+                    editorLiveview(JSON.stringify(_json), ' . ($isFirst ? 'true' : 'false') . ');
                 } catch(exception) {
                     alert("Could not parse JSON. Reason: " + exception);
                 }
@@ -630,6 +632,7 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
 
     public function actionEditorLiveview2() {
         $jsonCode = $this->httpRequest->get('code');
+        $isFirst = $this->httpRequest->get('isFirst') == 'true';
 
         $decodedJson = json_decode($jsonCode, true);
 
@@ -645,6 +648,9 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
         $helper->addSkipElementAttributes('userSelect', 'containerId');
         $helper->addSkipElementAttributes('userSelectSearch', 'containerId');
         $helper->setEditor();
+        if(!$isFirst) {
+            $helper->checkForHandleButtons();
+        }
 
         try {
             $code = $helper->render();

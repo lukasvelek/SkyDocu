@@ -9,7 +9,6 @@ use App\Core\AjaxRequestBuilder;
 use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
 use App\Core\Http\JsonResponse;
-use App\Entities\ProcessEntity;
 use App\Exceptions\AException;
 use App\Helpers\LinkHelper;
 use App\Helpers\ProcessEditorHelper;
@@ -610,46 +609,6 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
         $process = $this->app->processManager->getProcessEntityById($processId);
 
         $definition = $process->getDefinition();
-
-        if($definition[ProcessEntity::DEFINITION_FORM_ACTOR] != $actor || $definition[ProcessEntity::DEFINITION_FORM_FORM] != $form) {
-            [$newProcessId, $uniqueProcessId] = $this->app->processManager->createNewProcessFromExisting($process->getId());
-
-            $params['processId'] = $newProcessId;
-            $params['oldProcessId'] = $processId;
-
-            $processId = $newProcessId;
-
-            $_definition = [
-                ProcessEntity::DEFINITION_FORM_ACTOR => $actor,
-                ProcessEntity::DEFINITION_FORM_FORM => $form
-            ];
-
-            $definition[ProcessEntity::DEFINITION_FORMS][] = $_definition;
-        } else {
-            $_definition = [
-                ProcessEntity::DEFINITION_FORM_ACTOR => $actor,
-                ProcessEntity::DEFINITION_FORM_FORM => $form
-            ];
-
-            $definition[ProcessEntity::DEFINITION_FORMS][] = $_definition;
-
-            if($this->httpRequest->get('oldProcessId') !== null) {
-                $oldProcess = $this->app->processManager->getProcessEntityById($this->httpRequest->get('oldProcessId'));
-
-                $oldDefinition = $oldProcess->getDefinition();
-
-                if($oldDefinition != $definition) {
-                    // new version must be created
-
-                    [$newProcessId, $uniqueProcessId] = $this->app->processManager->createNewProcessFromExisting($oldProcess->getId());
-
-                    $params['processId'] = $newProcessId;
-                    $params['oldProcessId'] = $processId;
-
-                    $processId = $newProcessId;
-                }
-            }
-        }
 
         $data = [
             'definition' => base64_encode(json_encode($definition))

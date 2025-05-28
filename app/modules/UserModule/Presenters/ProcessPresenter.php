@@ -231,7 +231,7 @@ class ProcessPresenter extends AUserPresenter {
                 
                 $operationName = $operation . 'Button';
                 foreach(json_decode($_form['form'], true)['elements'] as $element) {
-                    if($operationName == $element['type'] && array_key_exists('instanceDescription', $element)) {
+                    if(($operationName == $element['type'] || $element['type'] == 'submit') && array_key_exists('instanceDescription', $element)) {
                         $description = $element['instanceDescription'];
                         break;
                     }

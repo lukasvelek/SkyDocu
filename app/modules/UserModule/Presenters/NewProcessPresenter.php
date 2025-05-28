@@ -6,6 +6,7 @@ use App\Components\ProcessSelect\ProcessSelect;
 use App\Components\ProcessViewsSidebar\ProcessViewsSidebar;
 use App\Constants\Container\ProcessGridViews;
 use App\Constants\Container\ProcessInstanceOfficerTypes;
+use App\Constants\Container\ProcessInstanceOperations;
 use App\Constants\Container\ProcessInstanceStatus;
 use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
@@ -115,7 +116,7 @@ class NewProcessPresenter extends AUserPresenter {
             'workflowHistory' => [
                 [
                     'userId' => $this->getUserId(),
-                    'data' => ProcessInstanceDataEntity::createNewWorkflowHistoryEntry('submit', null)
+                    'data' => ProcessInstanceDataEntity::createNewWorkflowHistoryEntry(ProcessInstanceOperations::CREATE, null)
                 ]
             ]
         ];

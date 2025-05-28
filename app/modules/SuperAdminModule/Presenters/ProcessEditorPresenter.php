@@ -179,9 +179,36 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
 
         $process = $this->app->processManager->getProcessEntityById($this->httpRequest->get('processId'));
 
+        $previousVersion = $this->app->processManager->getPreviousVersionForProcessId($process->getId(), true);
+
         $workflow = $process->getDefinition()['forms'] ?? [];
 
-        if(count($workflow) > 0 && ($this->httpRequest->get('oldProcessId') !== null || $this->httpRequest->get('isNew') == 1)) {
+        $showPublishLink = false;
+        if(count($workflow) > 0) { // workflow must not bet empty
+            /*if($this->httpRequest->get('oldProcessId') !== null) {
+                $showPublishLink = true;
+            }
+
+            if($this->httpRequest->get('isNew') == 0) {
+                $showPublishLink = true;
+            }*/
+
+            if($previousVersion !== null) {
+                // previous version exists
+                if($process->getStatus() == ProcessStatus::NEW && $previousVersion->getStatus() == ProcessStatus::IN_DISTRIBUTION) {
+                    // previous version is in distribution and the current is new
+                    $showPublishLink = true;
+                }
+            } else {
+                // previous version does not exist
+                if($process->getStatus() == ProcessStatus::NEW) {
+                    // current version is new
+                    $showPublishLink = true;
+                }
+            }
+        }
+
+        if($showPublishLink) {
             $links[] = LinkBuilder::createSimpleLink('Publish', $this->createURL('publish', $params), 'link');
         }
 
@@ -670,6 +697,12 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
         $oldProcessId = null;
         if($this->httpRequest->get('oldProcessId') !== null) {
             $oldProcessId = $this->httpRequest->get('oldProcessId');
+        } else {
+            $previousVersion = $this->app->processManager->getPreviousVersionForProcessId($processId, true);
+            
+            if($previousVersion !== null) {
+                $oldProcessId = $previousVersion->getId();
+            }
         }
 
         try {

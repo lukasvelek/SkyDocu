@@ -49,7 +49,11 @@ class ProcessPresenter extends AUserPresenter {
             $json2fb->setSkipAttributes(['action']);
             $json2fb->setFormData($data);
             $json2fb->callAfterSubmitReducer();
-            if($i < $data['workflowIndex']) {
+            if($i < $data['workflowIndex'] || in_array($instance->status, [
+                ProcessInstanceStatus::ARCHIVED,
+                ProcessInstanceStatus::CANCELED,
+                ProcessInstanceStatus::FINISHED
+            ])) {
                 $json2fb->removeButtons();
             }
             $json2fb->setCustomUrlParams([
@@ -106,9 +110,7 @@ class ProcessPresenter extends AUserPresenter {
                     $workflow = [];
                     $i = 0;
                     foreach($forms as $form) {
-                        //if($i > 0) {
                             $workflow[] = $form['actor'];
-                        //}
                         $i++;
                     }
 

@@ -2,11 +2,11 @@
 
 namespace App\Data\Db\Migrations\Containers;
 
-use App\Core\DB\ABaseMigration;
+use App\Core\DB\AContainerBaseMigration;
 use App\Core\DB\Helpers\TableSchema;
 use App\Core\DB\Helpers\TableSeeding;
 
-class migration_2025_05_24_0013_multiform_processes2 extends ABaseMigration {
+class migration_2025_05_24_0013_multiform_processes2 extends AContainerBaseMigration {
     public function up(): TableSchema {
         $table = $this->getTableSchema();
 

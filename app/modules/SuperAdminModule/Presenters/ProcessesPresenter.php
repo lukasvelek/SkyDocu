@@ -56,11 +56,13 @@ class ProcessesPresenter extends ASuperAdminPresenter {
                 'uniqueProcessId' => $row->uniqueProcessId
             ];
 
-            $previousProcess = $this->app->processManager->getPreviousVersionForProcessId($primaryKey);
+            try {
+                $previousProcess = $this->app->processManager->getPreviousVersionForProcessId($primaryKey);
 
-            if($previousProcess !== null) {
-                $params['oldProcessId'] = $previousProcess->processId;
-            }
+                if($previousProcess !== null) {
+                    $params['oldProcessId'] = $previousProcess->processId;
+                }
+            } catch(AException $e) {}
 
             $el = HTML::el('a');
             $el->text('Edit')

@@ -466,7 +466,7 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
 
         $process = $this->app->processManager->getProcessEntityById($request->get('processId'));
 
-        $isFirst = $process->getWorkflow() == 0;
+        $isFirst = empty($process->getWorkflow());
 
         $primaryKey = null;
         $operation = null;
@@ -563,6 +563,8 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
 
                 try {
                     _json = JSON.parse(_code);
+
+                    $("#form-live-view").html("<div id=\"center\"><img src=\"resources/loading.gif\" width=\"64px\"></div>");
 
                     editorLiveview(JSON.stringify(_json), ' . ($isFirst ? 'true' : 'false') . ');
                 } catch(exception) {

@@ -197,12 +197,42 @@ class JSON2FB {
 
     /**
      * Processes all elements
+     * 
+     * @param array $elements Elements
      */
     private function processElements(array $elements) {
         $elementMandatoryAttributes = [
             'name',
             'type'
         ];
+
+        $allElementTypes = [];
+        foreach($elements as $element) {
+            $allElementTypes[] = $element['type'];
+        }
+
+        $getHandlersInForm = function() use ($allElementTypes) {
+            return array_intersect([
+                self::ACCEPT_BUTTON,
+                self::ARCHIVE_BUTTON,
+                self::CANCEL_BUTTON,
+                self::FINISH_BUTTON,
+                self::REJECT_BUTTON,
+                self::SUBMIT
+            ], $allElementTypes);
+        };
+
+        if($this->checkHandleButtons) {
+            if(empty($getHandlersInForm())) {
+                throw new GeneralException('No handle button is defined.');
+            }
+        }
+
+        if($this->checkNoHandleButtons) {
+            if(!empty($getHandlersInForm())) {
+                throw new GeneralException('Handle button is defined.');
+            }
+        }
 
         foreach($elements as $element) {
             foreach($elementMandatoryAttributes as $attr) {
@@ -222,32 +252,6 @@ class JSON2FB {
             $elem = null;
 
             if(in_array($element['type'], $this->skipElementTypes)) continue;
-
-            if($this->checkHandleButtons) {
-                if(!in_array($element['type'], [
-                    self::SUBMIT,
-                    self::ACCEPT_BUTTON,
-                    self::ARCHIVE_BUTTON,
-                    self::CANCEL_BUTTON,
-                    self::FINISH_BUTTON,
-                    self::REJECT_BUTTON
-                ])) {
-                    throw new GeneralException('No handle button is defined.');
-                }
-            }
-
-            if($this->checkNoHandleButtons) {
-                if(in_array($element['type'], [
-                    self::SUBMIT,
-                    self::ACCEPT_BUTTON,
-                    self::ARCHIVE_BUTTON,
-                    self::CANCEL_BUTTON,
-                    self::FINISH_BUTTON,
-                    self::REJECT_BUTTON
-                ])) {
-                    throw new GeneralException('Handle button is defined.');
-                }
-            }
 
             if(empty($this->formData)) {
                 // ELEMENT (INSTANCE) CREATION

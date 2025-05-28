@@ -650,6 +650,8 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
         $helper->setEditor();
         if(!$isFirst) {
             $helper->checkForHandleButtons();
+        } else {
+            $helper->checkForNoHandleButtons();
         }
 
         try {

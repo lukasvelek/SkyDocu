@@ -53,6 +53,7 @@ class JSON2FB {
     private array $formHandleButtonsParams = [];
     private bool $isEditor = false;
     private bool $checkHandleButtons = false;
+    private bool $checkNoHandleButtons = false;
     
     /**
      * Class constructor
@@ -86,6 +87,13 @@ class JSON2FB {
      */
     public function checkForHandleButtons() {
         $this->checkHandleButtons = true;
+    }
+
+    /**
+     * Checks for no form handling buttons
+     */
+    public function checkForNoHandleButtons() {
+        $this->checkNoHandleButtons = true;
     }
 
     /**
@@ -225,6 +233,19 @@ class JSON2FB {
                     self::REJECT_BUTTON
                 ])) {
                     throw new GeneralException('No handle button is defined.');
+                }
+            }
+
+            if($this->checkNoHandleButtons) {
+                if(in_array($element['type'], [
+                    self::SUBMIT,
+                    self::ACCEPT_BUTTON,
+                    self::ARCHIVE_BUTTON,
+                    self::CANCEL_BUTTON,
+                    self::FINISH_BUTTON,
+                    self::REJECT_BUTTON
+                ])) {
+                    throw new GeneralException('Handle button is defined.');
                 }
             }
 

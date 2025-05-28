@@ -129,7 +129,7 @@ class ProcessServiceUserHandlingService extends AService {
 
             [$officer, $officerType] = $instanceManager->evaluateNextProcessInstanceOfficer($workflow, $this->userManager->getServiceUserId(), $workflowIndex + 1);
 
-            $instanceManager->moveProcessInstanceToNextOfficer($this->instanceId, $officer, $officerType);
+            $instanceManager->moveProcessInstanceToNextOfficer($this->instanceId, $this->userManager->getServiceUserId(), $officer, $officerType);
 
             $instance = $instanceManager->getProcessInstanceById($this->instanceId);
 

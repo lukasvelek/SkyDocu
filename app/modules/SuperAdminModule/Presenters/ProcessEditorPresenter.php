@@ -179,20 +179,15 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
 
         $process = $this->app->processManager->getProcessEntityById($this->httpRequest->get('processId'));
 
-        $previousVersion = $this->app->processManager->getPreviousVersionForProcessId($process->getId(), true);
+        $previousVersion = null;
+        try {
+            $previousVersion = $this->app->processManager->getPreviousVersionForProcessId($process->getId(), true);
+        } catch(AException $e) {}
 
         $workflow = $process->getDefinition()['forms'] ?? [];
 
         $showPublishLink = false;
         if(count($workflow) > 0) { // workflow must not bet empty
-            /*if($this->httpRequest->get('oldProcessId') !== null) {
-                $showPublishLink = true;
-            }
-
-            if($this->httpRequest->get('isNew') == 0) {
-                $showPublishLink = true;
-            }*/
-
             if($previousVersion !== null) {
                 // previous version exists
                 if($process->getStatus() == ProcessStatus::NEW && $previousVersion->getStatus() == ProcessStatus::IN_DISTRIBUTION) {
@@ -616,25 +611,43 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
 
         $definition = $process->getDefinition();
 
-        $_definition = [
-            ProcessEntity::DEFINITION_FORM_ACTOR => $actor,
-            ProcessEntity::DEFINITION_FORM_FORM => $form
-        ];
+        if($definition[ProcessEntity::DEFINITION_FORM_ACTOR] != $actor || $definition[ProcessEntity::DEFINITION_FORM_FORM] != $form) {
+            [$newProcessId, $uniqueProcessId] = $this->app->processManager->createNewProcessFromExisting($process->getId());
 
-        $definition[ProcessEntity::DEFINITION_FORMS][] = $_definition;
+            $params['processId'] = $newProcessId;
+            $params['oldProcessId'] = $processId;
 
-        if($this->httpRequest->get('oldProcessId') !== null) {
-            $oldProcess = $this->app->processManager->getProcessEntityById($this->httpRequest->get('oldProcessId'));
+            $processId = $newProcessId;
 
-            $oldDefinition = $oldProcess->getDefinition();
+            $_definition = [
+                ProcessEntity::DEFINITION_FORM_ACTOR => $actor,
+                ProcessEntity::DEFINITION_FORM_FORM => $form
+            ];
 
-            if($oldDefinition != $definition) {
-                // new version must be created
+            $definition[ProcessEntity::DEFINITION_FORMS][] = $_definition;
+        } else {
+            $_definition = [
+                ProcessEntity::DEFINITION_FORM_ACTOR => $actor,
+                ProcessEntity::DEFINITION_FORM_FORM => $form
+            ];
 
-                [$newProcessId, $uniqueProcessId] = $this->app->processManager->createNewProcessFromExisting($oldProcess->getId());
+            $definition[ProcessEntity::DEFINITION_FORMS][] = $_definition;
 
-                $params['processId'] = $newProcessId;
-                $params['oldProcessId'] = $processId;
+            if($this->httpRequest->get('oldProcessId') !== null) {
+                $oldProcess = $this->app->processManager->getProcessEntityById($this->httpRequest->get('oldProcessId'));
+
+                $oldDefinition = $oldProcess->getDefinition();
+
+                if($oldDefinition != $definition) {
+                    // new version must be created
+
+                    [$newProcessId, $uniqueProcessId] = $this->app->processManager->createNewProcessFromExisting($oldProcess->getId());
+
+                    $params['processId'] = $newProcessId;
+                    $params['oldProcessId'] = $processId;
+
+                    $processId = $newProcessId;
+                }
             }
         }
 
@@ -700,7 +713,10 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
         if($this->httpRequest->get('oldProcessId') !== null) {
             $oldProcessId = $this->httpRequest->get('oldProcessId');
         } else {
-            $previousVersion = $this->app->processManager->getPreviousVersionForProcessId($processId, true);
+            $previousVersion = null;
+            try {
+                $previousVersion = $this->app->processManager->getPreviousVersionForProcessId($processId, true);
+            } catch(AException $e) {}
             
             if($previousVersion !== null) {
                 $oldProcessId = $previousVersion->getId();

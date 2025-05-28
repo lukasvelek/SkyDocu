@@ -8,6 +8,7 @@ use App\Constants\Container\ProcessInstanceStatus;
 use App\Constants\Container\SystemGroups;
 use App\Core\Application;
 use App\Core\Http\HttpRequest;
+use App\Entities\ProcessInstanceDataEntity;
 use App\Exceptions\GeneralException;
 use App\Helpers\ColorHelper;
 use App\Helpers\DateTimeFormatHelper;
@@ -124,30 +125,17 @@ class ProcessWorkflow extends AComponent {
     private function getInstanceWorkflow(): array {
         $instance = $this->processInstanceManager->getProcessInstanceById($this->instanceId);
 
-        $data = unserialize($instance->data);
+        $instanceData = ProcessInstanceDataEntity::createFromSerializedData($instance->data);
 
-        $workflowHistory = [
-            [
-                'actor' => $instance->userId,
-                'actorType' => ProcessInstanceOfficerTypes::USER,
-                'response' => ProcessInstanceOperations::CREATE,
-                'responseDate' => $instance->dateCreated
-            ]
-        ];
-        if(array_key_exists('workflowHistory', $data)) {
-            foreach($data['workflowHistory'] as $wh) {
-                foreach($wh as $actor => $whdata) {
-                    $response = $whdata['operation'];
-                    $responseDate = $whdata['date'];
-
-                    $workflowHistory[] = [
-                        'actor' => $actor,
-                        'actorType' => null,
-                        'response' => $response,
-                        'responseDate' => $responseDate
-                    ];
-                }
-            }
+        $workflowHistory = [];
+        $wh = $instanceData->getWorkflowHistory();
+        foreach($wh as $w) {
+            $workflowHistory[] = [
+                'actor' => $w['userId'],
+                'actorType' => null,
+                'response' => $w['data']['operation'],
+                'responseDate' => $w['data']['date']
+            ];
         }
 
         if($instance->status == ProcessInstanceStatus::IN_PROGRESS) {
@@ -192,6 +180,7 @@ class ProcessWorkflow extends AComponent {
 
             $index = $i + 1;
             
+            $response = null;
             if(array_key_exists($i, $workflowHistory)) {
                 // workflow history entry exists
                 $actor = $workflowHistory[$i]['actor'];
@@ -262,7 +251,12 @@ class ProcessWorkflow extends AComponent {
             }
 
             // fill template
-            [$bg, $fg] = $this->getColor($w);
+            if($response !== null) {
+                [$bg, $fg] = $this->getColor($w);
+            } else {
+                $bg = 'white';
+                $fg = 'black';
+            }
             
             $template->bg_color = $bg;
             $template->fg_color = $fg;

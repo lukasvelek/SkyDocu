@@ -10,6 +10,7 @@ use App\Constants\Container\ProcessInstanceStatus;
 use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
 use App\Core\Http\JsonResponse;
+use App\Entities\ProcessInstanceDataEntity;
 use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
 use App\UI\FormBuilder2\JSON2FB;
@@ -103,12 +104,26 @@ class NewProcessPresenter extends AUserPresenter {
 
         $description = sprintf('New %s process instance', $process->title);
 
-        $formData = serialize($fr->getData());
+        $formData = [
+            'forms' => [
+                [
+                    'userId' => $this->getUserId(),
+                    'data' => $fr->getData()
+                ]
+            ],
+            'workflowIndex' => 1,
+            'workflowHistory' => [
+                [
+                    'userId' => $this->getUserId(),
+                    'data' => ProcessInstanceDataEntity::createNewWorkflowHistoryEntry('submit', null)
+                ]
+            ]
+        ];
 
         $instanceData = [
             'processId' => $processId,
             'userId' => $this->getUserId(),
-            'data' => $formData,
+            'data' => serialize($formData),
             'currentOfficerType' => ProcessInstanceOfficerTypes::NONE,
             'status' => ProcessInstanceStatus::NEW,
             'description' => $description
@@ -145,15 +160,10 @@ class NewProcessPresenter extends AUserPresenter {
             $runService = true;
         }
 
-        $formData = $fr->getData();
-        $formData['workflowIndex'] = 1;
-        $formData = serialize($formData);
-
         $instanceData = [
             'currentOfficerId' => $officer,
             'currentOfficerType' => $type,
-            'status' => ProcessInstanceStatus::IN_PROGRESS,
-            'data' => $formData
+            'status' => ProcessInstanceStatus::IN_PROGRESS
         ];
 
         try {

@@ -222,13 +222,13 @@ class JSON2FB {
             ], $allElementTypes);
         };
 
-        if($this->checkHandleButtons) {
+        if($this->checkHandleButtons && !$this->isEditor) {
             if(empty($getHandlersInForm())) {
                 throw new GeneralException('No handle button is defined.');
             }
         }
 
-        if($this->checkNoHandleButtons) {
+        if($this->checkNoHandleButtons && !$this->isEditor) {
             if(!empty($getHandlersInForm())) {
                 throw new GeneralException('Handle button is defined.');
             }
@@ -651,6 +651,11 @@ class JSON2FB {
         ];
     }
 
+    /**
+     * Sets form handle buttons URL parameters
+     * 
+     * @param array $params URL parameters
+     */
     public function setFormHandleButtonsParams(array $params) {
         $this->formHandleButtonsParams = $params;
     }

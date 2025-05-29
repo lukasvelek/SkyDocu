@@ -144,7 +144,7 @@ class ProcessPresenter extends AUserPresenter {
                             $i++;
                         }
 
-                        [$officer, $officerType] = $this->processInstanceManager->evaluateNextProcessInstanceOfficer($workflow, $this->getUserId(), $instanceData->getWorkflowIndex() + 1);
+                        [$officer, $officerType] = $this->processInstanceManager->evaluateNextProcessInstanceOfficer($instance, $workflow, $this->getUserId(), $instanceData->getWorkflowIndex() + 1);
 
                         if($officer === null && $officerType === null) {
                             // user is last -> accept
@@ -177,7 +177,7 @@ class ProcessPresenter extends AUserPresenter {
                             $i++;
                         }
 
-                        [$officer, $officerType] = $this->processInstanceManager->evaluateNextProcessInstanceOfficer($workflow, $this->getUserId(), $instanceData->getWorkflowIndex() + 1);
+                        [$officer, $officerType] = $this->processInstanceManager->evaluateNextProcessInstanceOfficer($instance, $workflow, $this->getUserId(), $instanceData->getWorkflowIndex() + 1);
         
                         if($officer === null && $officerType === null) {
                             // user is last -> finish

@@ -126,14 +126,7 @@ class ProcessWorkflow extends AComponent {
 
         $data = unserialize($instance->data);
 
-        $workflowHistory = [
-            [
-                'actor' => $instance->userId,
-                'actorType' => ProcessInstanceOfficerTypes::USER,
-                'response' => ProcessInstanceOperations::CREATE,
-                'responseDate' => $instance->dateCreated
-            ]
-        ];
+        $workflowHistory = [];
         if(array_key_exists('workflowHistory', $data)) {
             foreach($data['workflowHistory'] as $wh) {
                 foreach($wh as $actor => $whdata) {

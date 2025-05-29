@@ -482,6 +482,13 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
                     return;
                 }
 
+                const _actor = $("#actor").val();
+
+                if(_actor == "$SERVICE_USER$") {
+                    alert("No form is used for service steps.");
+                    return;
+                }
+
                 var _json = "";
 
                 try {
@@ -522,7 +529,9 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
             '$ARCHIVISTS$',
             '$PROPERTY_MANAGERS$',
             '$CURRENT_USER_SUPERIOR$',
-            '$ADMINISTRATORS$'
+            '$ADMINISTRATORS$',
+            '$SERVICE_USER$',
+            '$INSTANCE_AUTHOR$'
         ];
 
         if(!in_array($actor, $possibleActors) && !str_starts_with($actor, '$GID_') && !str_starts_with($actor, '$UID_')) {

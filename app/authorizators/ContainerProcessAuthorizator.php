@@ -106,7 +106,7 @@ class ContainerProcessAuthorizator extends AAuthorizator {
 
         if(($currentIndex + 1) < count($workflow)) {
             for($i = $currentIndex; $i < count($workflow); $i++) {
-                [$officer, $type] = $this->processInstanceManager->evaluateNextProcessInstanceOfficer($workflow, $userId, $i);
+                [$officer, $type] = $this->processInstanceManager->evaluateNextProcessInstanceOfficer($instance, $workflow, $userId, $i);
     
                 if($officer === null && $type === null) {
                     // no next workflow

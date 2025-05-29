@@ -5,6 +5,7 @@ namespace App\Modules\UserModule;
 use App\Components\ProcessSelect\ProcessSelect;
 use App\Components\ProcessViewsSidebar\ProcessViewsSidebar;
 use App\Constants\Container\ProcessInstanceOfficerTypes;
+use App\Constants\Container\ProcessInstanceOperations;
 use App\Constants\Container\ProcessInstanceStatus;
 use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
@@ -91,6 +92,28 @@ class NewProcessPresenter extends AUserPresenter {
 
         $description = sprintf('New %s process instance', $process->title);
 
+        $index = 0;
+
+        $definition = json_decode(base64_decode($process->definition), true);
+        $forms = $definition['forms'];
+
+        $workflow = [];
+        foreach($forms as $form) {
+            $workflow[] = $form['actor'];
+        }
+
+        if(($index + 1) <= count($workflow)) {
+            foreach($forms as $form) {
+                $_form = json_decode($form['form'], true);
+
+                if($form['actor'] == $workflow[$index]) {
+                    if(array_key_exists('instanceDescription', $_form)) {
+                        //$description = $_form['instanceDescription'];
+                    }
+                }
+            }
+        }
+
         $formData = serialize($fr->getData());
 
         $instanceData = [
@@ -117,19 +140,17 @@ class NewProcessPresenter extends AUserPresenter {
             $this->redirect($this->createURL('select'));
         }
 
-        $definition = json_decode(base64_decode($process->definition), true);
-        $forms = $definition['forms'];
-
-        $workflow = [];
-        foreach($forms as $form) {
-            $workflow[] = $form['actor'];
-        }
+        $instance = $this->processInstanceManager->getProcessInstanceById($instanceId);
 
         // evaluate new officer
-        [$officer, $type] = $this->processInstanceManager->evaluateNextProcessInstanceOfficer($workflow, $this->getUserId(), 0);
+        [$officer, $type] = $this->processInstanceManager->evaluateNextProcessInstanceOfficer($instance, $workflow, $this->getUserId(), 0);
 
         $formData = $fr->getData();
         $formData['workflowIndex'] = 0;
+        $formData['workflowHistory'][][$this->getUserId()] = [
+            'operation' => ProcessInstanceOperations::CREATE,
+            'date' => date('Y-m-d H:i:s')
+        ];
         $formData = serialize($formData);
 
         $instanceData = [

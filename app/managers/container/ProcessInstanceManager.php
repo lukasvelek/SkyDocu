@@ -83,11 +83,12 @@ class ProcessInstanceManager extends AManager {
     /**
      * Evaluates next process instance officer for given process workflow
      * 
+     * @param DatabaseRow $instance Instance
      * @param array $workflow Process workflow
      * @param string $currentUserId Current user ID
      * @param int $index Workflow index
      */
-    public function evaluateNextProcessInstanceOfficer(array $workflow, string $currentUserId, int $index): array {
+    public function evaluateNextProcessInstanceOfficer(DatabaseRow $instance, array $workflow, string $currentUserId, int $index): array {
         if(($index + 1) > count($workflow)) {
             return [null, null];
         }
@@ -135,6 +136,15 @@ class ProcessInstanceManager extends AManager {
                 $group = $this->groupManager->getGroupByTitle(SystemGroups::ADMINISTRATORS);
                 $result = $group->groupId;
                 $type = ProcessInstanceOfficerTypes::GROUP;
+                break;
+
+            case '$INSTANCE_AUTHOR$':
+                $data = unserialize($instance->data);
+                $result = $data['workflowHistory'][0];
+                $type = ProcessInstanceOfficerTypes::USER;
+                break;
+
+            case '$SERVICE_USER$':
                 break;
 
             default:

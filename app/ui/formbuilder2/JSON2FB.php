@@ -51,6 +51,9 @@ class JSON2FB {
     private bool $callAfterSubmitReducer = false;
     private array $skipElementTypes = [];
     private array $formHandleButtonsParams = [];
+    private bool $isEditor = false;
+    private bool $checkHandleButtons = false;
+    private bool $checkNoHandleButtons = false;
     
     /**
      * Class constructor
@@ -68,6 +71,29 @@ class JSON2FB {
         $this->skipElementAttributes = [];
         $this->formData = [];
         $this->customUrlParams = [];
+    }
+
+    /**
+     * Sets if the form is rendered for form editor
+     * 
+     * @param bool $editor Is editor?
+     */
+    public function setEditor(bool $editor = true) {
+        $this->isEditor = $editor;
+    }
+
+    /**
+     * Checks for form handling buttons
+     */
+    public function checkForHandleButtons() {
+        $this->checkHandleButtons = true;
+    }
+
+    /**
+     * Checks for no form handling buttons
+     */
+    public function checkForNoHandleButtons() {
+        $this->checkNoHandleButtons = true;
     }
 
     /**
@@ -171,12 +197,42 @@ class JSON2FB {
 
     /**
      * Processes all elements
+     * 
+     * @param array $elements Elements
      */
     private function processElements(array $elements) {
         $elementMandatoryAttributes = [
             'name',
             'type'
         ];
+
+        $allElementTypes = [];
+        foreach($elements as $element) {
+            $allElementTypes[] = $element['type'];
+        }
+
+        $getHandlersInForm = function() use ($allElementTypes) {
+            return array_intersect([
+                self::ACCEPT_BUTTON,
+                self::ARCHIVE_BUTTON,
+                self::CANCEL_BUTTON,
+                self::FINISH_BUTTON,
+                self::REJECT_BUTTON,
+                self::SUBMIT
+            ], $allElementTypes);
+        };
+
+        if($this->checkHandleButtons && !$this->isEditor) {
+            if(empty($getHandlersInForm())) {
+                throw new GeneralException('No handle button is defined.');
+            }
+        }
+
+        if($this->checkNoHandleButtons && !$this->isEditor) {
+            if(!empty($getHandlersInForm())) {
+                throw new GeneralException('Handle button is defined.');
+            }
+        }
 
         foreach($elements as $element) {
             foreach($elementMandatoryAttributes as $attr) {
@@ -263,31 +319,41 @@ class JSON2FB {
                     case self::ACCEPT_BUTTON:
                         $elem = $this->form->addButton(ProcessInstanceOperations::toString(ProcessInstanceOperations::ACCEPT));
                         $url = Router::generateUrl(array_merge($this->formHandleButtonsParams, ['operation' => 'accept']));
-                        //$elem->setOnClick('location.href=\'' . $url . '\';');
+                        if(!$this->isEditor) {
+                            $elem->setOnClick('location.href=\'' . $url . '\';');
+                        }
                         break;
 
                     case self::CANCEL_BUTTON:
                         $elem = $this->form->addButton(ProcessInstanceOperations::toString(ProcessInstanceOperations::CANCEL));
                         $url = Router::generateUrl(array_merge($this->formHandleButtonsParams, ['operation' => 'cancel']));
-                        //$elem->setOnClick('location.href=\'' . $url . '\';');
+                        if(!$this->isEditor) {
+                            $elem->setOnClick('location.href=\'' . $url . '\';');
+                        }
                         break;
 
                     case self::FINISH_BUTTON:
                         $elem = $this->form->addButton(ProcessInstanceOperations::toString(ProcessInstanceOperations::FINISH));
                         $url = Router::generateUrl(array_merge($this->formHandleButtonsParams, ['operation' => 'finish']));
-                        //$elem->setOnClick('location.href=\'' . $url . '\';');
+                        if(!$this->isEditor) {
+                            $elem->setOnClick('location.href=\'' . $url . '\';');
+                        }
                         break;
 
                     case self::ARCHIVE_BUTTON:
                         $elem = $this->form->addButton(ProcessInstanceOperations::toString(ProcessInstanceOperations::ARCHIVE));
                         $url = Router::generateUrl(array_merge($this->formHandleButtonsParams, ['operation' => 'archive']));
-                        //$elem->setOnClick('location.href=\'' . $url . '\';');
+                        if(!$this->isEditor) {
+                            $elem->setOnClick('location.href=\'' . $url . '\';');
+                        }
                         break;
 
                     case self::REJECT_BUTTON:
                         $elem = $this->form->addButton(ProcessInstanceOperations::toString(ProcessInstanceOperations::REJECT));
                         $url = Router::generateUrl(array_merge($this->formHandleButtonsParams, ['operation' => 'reject']));
-                        //$elem->setOnClick('location.href=\'' . $url . '\';');
+                        if(!$this->isEditor) {
+                            $elem->setOnClick('location.href=\'' . $url . '\';');
+                        }
                         break;
 
                     case self::LABEL:
@@ -394,31 +460,41 @@ class JSON2FB {
                     case self::ACCEPT_BUTTON:
                         $elem = $this->form->addButton(ProcessInstanceOperations::toString(ProcessInstanceOperations::ACCEPT));
                         $url = Router::generateUrl(array_merge($this->formHandleButtonsParams, ['operation' => 'accept']));
-                        $elem->setOnClick('location.href=\'' . $url . '\';');
+                        if(!$this->isEditor) {
+                            $elem->setOnClick('location.href=\'' . $url . '\';');
+                        }
                         break;
 
                     case self::CANCEL_BUTTON:
                         $elem = $this->form->addButton(ProcessInstanceOperations::toString(ProcessInstanceOperations::CANCEL));
                         $url = Router::generateUrl(array_merge($this->formHandleButtonsParams, ['operation' => 'cancel']));
-                        $elem->setOnClick('location.href=\'' . $url . '\';');
+                        if(!$this->isEditor) {
+                            $elem->setOnClick('location.href=\'' . $url . '\';');
+                        }
                         break;
 
                     case self::FINISH_BUTTON:
                         $elem = $this->form->addButton(ProcessInstanceOperations::toString(ProcessInstanceOperations::FINISH));
                         $url = Router::generateUrl(array_merge($this->formHandleButtonsParams, ['operation' => 'finish']));
-                        $elem->setOnClick('location.href=\'' . $url . '\';');
+                        if(!$this->isEditor) {
+                            $elem->setOnClick('location.href=\'' . $url . '\';');
+                        }
                         break;
 
                     case self::ARCHIVE_BUTTON:
                         $elem = $this->form->addButton(ProcessInstanceOperations::toString(ProcessInstanceOperations::ARCHIVE));
                         $url = Router::generateUrl(array_merge($this->formHandleButtonsParams, ['operation' => 'archive']));
-                        $elem->setOnClick('location.href=\'' . $url . '\';');
+                        if(!$this->isEditor) {
+                            $elem->setOnClick('location.href=\'' . $url . '\';');
+                        }
                         break;
 
                     case self::REJECT_BUTTON:
                         $elem = $this->form->addButton(ProcessInstanceOperations::toString(ProcessInstanceOperations::REJECT));
                         $url = Router::generateUrl(array_merge($this->formHandleButtonsParams, ['operation' => 'reject']));
-                        $elem->setOnClick('location.href=\'' . $url . '\';');
+                        if(!$this->isEditor) {
+                            $elem->setOnClick('location.href=\'' . $url . '\';');
+                        }
                         break;
 
                     case self::LABEL:
@@ -575,6 +651,11 @@ class JSON2FB {
         ];
     }
 
+    /**
+     * Sets form handle buttons URL parameters
+     * 
+     * @param array $params URL parameters
+     */
     public function setFormHandleButtonsParams(array $params) {
         $this->formHandleButtonsParams = $params;
     }

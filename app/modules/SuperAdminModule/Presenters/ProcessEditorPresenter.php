@@ -9,9 +9,9 @@ use App\Core\AjaxRequestBuilder;
 use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
 use App\Core\Http\JsonResponse;
-use App\Entities\ProcessEntity;
 use App\Exceptions\AException;
 use App\Helpers\LinkHelper;
+use App\Helpers\ProcessEditorHelper;
 use App\Repositories\Container\ProcessRepository;
 use App\UI\FormBuilder2\JSON2FB;
 use App\UI\HTML\HTML;
@@ -119,6 +119,9 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
 
                 $this->redirect($this->createURL('workflowList', $params));
             }
+
+            $definition = $oldProcess->getDefinition();
+            $definition['colorCombo'] = $colorCombo;
         }
 
         try {
@@ -140,6 +143,8 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
 
             if($oldProcessId !== null) {
                 $params['oldProcessId'] = $oldProcessId;
+            } else {
+                $params['isNew'] = 1;
             }
 
             $this->app->processRepository->commit($this->getUserId(), __METHOD__);
@@ -173,9 +178,31 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
 
         $process = $this->app->processManager->getProcessEntityById($this->httpRequest->get('processId'));
 
+        $previousVersion = null;
+        try {
+            $previousVersion = $this->app->processManager->getPreviousVersionForProcessId($process->getId(), true);
+        } catch(AException $e) {}
+
         $workflow = $process->getDefinition()['forms'] ?? [];
 
-        if(count($workflow) > 0) {
+        $showPublishLink = false;
+        if(count($workflow) > 0) { // workflow must not bet empty
+            if($previousVersion !== null) {
+                // previous version exists
+                if($process->getStatus() == ProcessStatus::NEW && $previousVersion->getStatus() == ProcessStatus::IN_DISTRIBUTION) {
+                    // previous version is in distribution and the current is new
+                    $showPublishLink = true;
+                }
+            } else {
+                // previous version does not exist
+                if($process->getStatus() == ProcessStatus::NEW) {
+                    // current version is new
+                    $showPublishLink = true;
+                }
+            }
+        }
+
+        if($showPublishLink) {
             $links[] = LinkBuilder::createSimpleLink('Publish', $this->createURL('publish', $params), 'link');
         }
 
@@ -268,6 +295,23 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
             $el = HTML::el('a');
             $el->href($this->createURLString('editor2', $_params))
                 ->text('View')
+                ->class('grid-link');
+
+            return $el;
+        };
+
+        $edit = $list->addAction('Copy');
+        $edit->setTitle('Copy');
+        $edit->onCanRender[] = function() {
+            return true;
+        };
+        $edit->onRender[] = function(mixed $primaryKey, ArrayRow $row, ListRow $_row, HTML $html) use ($params) {
+            $_params = $params;
+            $_params['primaryKey'] = $primaryKey;
+
+            $el = HTML::el('a');
+            $el->href($this->createURLString('editor2', $_params))
+                ->text('Copy')
                 ->class('grid-link');
 
             return $el;
@@ -416,6 +460,8 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
 
         $process = $this->app->processManager->getProcessEntityById($request->get('processId'));
 
+        $isFirst = empty($process->getWorkflow());
+
         $primaryKey = null;
         $operation = null;
         if($request->get('primaryKey') !== null) {
@@ -456,7 +502,7 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
         }
 
         if($operation != 'view') {
-            $form->addButton('View form')
+            $form->addButton('Check form')
                 ->setOnClick('sendLiveview()');
 
             $form->addSubmit('Save');
@@ -466,8 +512,19 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
 
         $arb->setAction($this, 'editorLiveview2')
             ->setMethod('POST')
-            ->setHeader(['code' => '_code'])
+            ->setHeader(['code' => '_code', 'isFirst' => '_isFirst'])
             ->setFunctionName('editorLiveview')
+            ->setFunctionArguments(['_code', '_isFirst'])
+            ->updateHTMLElement('form-live-view', 'form');
+
+        $form->addScript($arb);
+
+        $arb = new AjaxRequestBuilder();
+
+        $arb->setAction($this, 'editorServiceLiveview')
+            ->setMethod('POST')
+            ->setHeader(['code' => '_code'])
+            ->setFunctionName('editorServiceLiveview')
             ->setFunctionArguments(['_code'])
             ->updateHTMLElement('form-live-view', 'form');
 
@@ -491,10 +548,24 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
 
                 var _json = "";
 
+                if(_actor == "$SERVICE_USER$") {
+                    try {
+                        _json = JSON.parse(_code);
+
+                        editorServiceLiveview(JSON.stringify(_json));
+                    } catch(exception) {
+                        alert("Could not parse JSON. Reason: " + exception);
+                    }
+
+                    return;
+                }
+
                 try {
                     _json = JSON.parse(_code);
 
-                    editorLiveview(JSON.stringify(_json));
+                    $("#form-live-view").html("<div id=\"center\"><img src=\"resources/loading.gif\" width=\"64px\"></div>");
+
+                    editorLiveview(JSON.stringify(_json), ' . ($isFirst ? 'true' : 'false') . ');
                 } catch(exception) {
                     alert("Could not parse JSON. Reason: " + exception);
                 }
@@ -545,13 +616,6 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
 
         $definition = $process->getDefinition();
 
-        $_definition = [
-            ProcessEntity::DEFINITION_FORM_ACTOR => $actor,
-            ProcessEntity::DEFINITION_FORM_FORM => $form
-        ];
-
-        $definition[ProcessEntity::DEFINITION_FORMS][] = $_definition;
-
         $data = [
             'definition' => base64_encode(json_encode($definition))
         ];
@@ -575,6 +639,7 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
 
     public function actionEditorLiveview2() {
         $jsonCode = $this->httpRequest->get('code');
+        $isFirst = $this->httpRequest->get('isFirst') == 'true';
 
         $decodedJson = json_decode($jsonCode, true);
 
@@ -589,6 +654,12 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
         $helper->setSkipAttributes(['action']);
         $helper->addSkipElementAttributes('userSelect', 'containerId');
         $helper->addSkipElementAttributes('userSelectSearch', 'containerId');
+        $helper->setEditor();
+        if(!$isFirst) {
+            $helper->checkForHandleButtons();
+        } else {
+            $helper->checkForNoHandleButtons();
+        }
 
         try {
             $code = $helper->render();
@@ -606,63 +677,120 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
         $oldProcessId = null;
         if($this->httpRequest->get('oldProcessId') !== null) {
             $oldProcessId = $this->httpRequest->get('oldProcessId');
+        } else {
+            $previousVersion = null;
+            try {
+                $previousVersion = $this->app->processManager->getPreviousVersionForProcessId($processId, true);
+            } catch(AException $e) {}
+            
+            if($previousVersion !== null) {
+                $oldProcessId = $previousVersion->getId();
+            }
         }
-
-        // update status
-        // disable old versions
-        // write to containers in distribution
-        // disable old container versions
 
         try {
             $this->app->processRepository->beginTransaction(__METHOD__);
 
+            $fmText = 'Successfully published new process';
+
+            if($oldProcessId !== null) {
+                // Remove old process version from distribution
+                $this->app->processManager->updateProcess($oldProcessId, [
+                    'status' => ProcessStatus::NOT_IN_DISTRIBUTION
+                ]);
+
+                $fmText .= ' version';
+            }
+
+            $fmText .= '.';
+
+            // Add new process version to distribution
             $this->app->processManager->updateProcess($processId, [
                 'status' => ProcessStatus::IN_DISTRIBUTION
             ]);
 
-            if($oldProcessId !== null) {
-                $this->app->processManager->updateProcess($oldProcessId, [
-                    'status' => ProcessStatus::NOT_IN_DISTRIBUTION
-                ]);
-            }
+            $this->app->processRepository->commit($this->getUserId(), __METHOD__);
 
+            $this->flashMessage($fmText, 'success');
+        } catch(AException $e) {
+            $this->app->processRepository->rollback(__METHOD__);
+
+            $this->flashMessage('Could not publish new process' . ($oldProcessId !== null ? ' version.' : '.') . ' Reason: ' . $e->getMessage(), 'error', 10);
+        }
+
+        try {
             $process = $this->app->processManager->getProcessEntityById($processId);
 
-            $containers = $this->app->containerManager->getAllContainers(true, true);
+            $containers = $this->app->containerManager->getContainersInDistribution();
 
             foreach($containers as $container) {
                 /**
                  * @var \App\Entities\ContainerEntity $container
                  */
-                if(!$container->isInDistribution()) continue;
-
                 $dbConn = $this->app->dbManager->getConnectionToDatabase($container->getDefaultDatabase()->getName());
 
                 $processRepository = new ProcessRepository($dbConn, $this->logger, $this->app->transactionLogRepository, $this->getUserId());
 
-                $processRepository->removeCurrentDistributionProcessFromDistributionForUniqueProcessId($uniqueProcessId);
+                try {
+                    $processRepository->beginTransaction(__METHOD__);
 
-                $processRepository->addNewProcess(
-                    $processId,
-                    $uniqueProcessId,
-                    $process->getTitle(),
-                    $process->getDescription(),
-                    base64_encode(json_encode($process->getDefinition())),
-                    $this->getUserId(),
-                    ContainerProcessStatus::IN_DISTRIBUTION
-                );
+                    // Remove previous process version in container
+                    $processRepository->removeCurrentDistributionProcessFromDistributionForUniqueProcessId($uniqueProcessId);
+
+                    // Add new process version to container
+                    $processRepository->addNewProcess(
+                        $processId,
+                        $uniqueProcessId,
+                        $process->getTitle(),
+                        $process->getDescription(),
+                        base64_encode(json_encode($process->getDefinition())),
+                        $this->getUserId(),
+                        ContainerProcessStatus::IN_DISTRIBUTION
+                    );
+
+                    $processRepository->commit($this->getUserId(), __METHOD__);
+                } catch(AException $e) {
+                    $processRepository->rollback(__METHOD__);
+
+                    throw $e;
+                }
             }
 
-            $this->app->processRepository->commit($this->getUserId(), __METHOD__);
-
-            $this->flashMessage('Successfully published process.', 'success');
+            $this->flashMessage('Successfully published new process ' . ($oldProcessId !== null ? 'version ' : '') . 'to distribution.', 'success');
         } catch(AException $e) {
-            $this->app->processRepository->rollback(__METHOD__);
-
-            $this->flashMessage('Could not publish process.', 'error', 10);
+            $this->flashMessage('Could not publish new process ' . ($oldProcessId !== null ? 'version ' : '') . 'to distribution. Reason: ' . $e->getMessage(), 'error', 10);
         }
 
         $this->redirect($this->createFullURL('SuperAdmin:Processes', 'list'));
+    }
+
+    public function actionEditorServiceLiveview() {
+        $jsonCode = $this->httpRequest->get('code');
+
+        $decodedJson = json_decode($jsonCode, true);
+
+        if($decodedJson === null) {
+            return new JsonResponse(['error' => '1', 'errorMsg' => 'The form JSON entered is incorrect.']);
+        }
+
+        try {
+            ProcessEditorHelper::checkServiceUserDefinition($decodedJson);
+        } catch(AException $e) {
+            return new JsonResponse(['error' => '1', 'errorMsg' => 'Form validation failed. Reason: ' . $e->getMessage()]);
+        }
+
+        $operations = ProcessEditorHelper::getServiceUserDefinitionUpdateOperations($decodedJson);
+
+        $code = '<ul>';
+        foreach($operations as $key => $value) {
+            if($value === null) {
+                $value = 'NULL';
+            }
+            $code .= '<li>' . $key . ' => ' . $value . '</li>';
+        }
+        $code .= '</ul>';
+
+        return new JsonResponse(['form' => $code]);
     }
 }
 

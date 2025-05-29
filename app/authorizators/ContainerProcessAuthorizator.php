@@ -3,6 +3,7 @@
 namespace App\Authorizators;
 
 use App\Constants\Container\ProcessInstanceOfficerTypes;
+use App\Constants\Container\SystemGroups;
 use App\Core\DatabaseConnection;
 use App\Logger\Logger;
 use App\Managers\Container\GroupManager;
@@ -100,6 +101,14 @@ class ContainerProcessAuthorizator extends AAuthorizator {
         $workflow = [];
         foreach($forms as $form) {
             $workflow[] = $form['actor'];
+        }
+
+        if(!array_key_exists('workflowIndex', $instanceData)) {
+            if($this->groupManager->isUserMemberOfGroupTitle($userId, SystemGroups::ADMINISTRATORS)) {
+                return true;
+            } else {
+                return false;
+            }
         }
 
         $currentIndex = $instanceData['workflowIndex'];

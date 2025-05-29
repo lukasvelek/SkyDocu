@@ -2,7 +2,7 @@
 
 namespace App\Data\Db\Migrations\Containers;
 
-use App\Core\DB\ABaseMigration;
+use App\Core\DB\AContainerBaseMigration;
 use App\Core\DB\Helpers\TableSchema;
 use App\Core\DB\Helpers\TableSeeding;
 
@@ -12,7 +12,7 @@ use App\Core\DB\Helpers\TableSeeding;
  * @author Lukas Velek
  * @version 1.0 from 03/26/2025
  */
-class migration_2025_03_26_0003_external_system_tokens extends ABaseMigration {
+class migration_2025_03_26_0003_external_system_tokens extends AContainerBaseMigration {
     public function up(): TableSchema {
         $table = $this->getTableSchema();
 

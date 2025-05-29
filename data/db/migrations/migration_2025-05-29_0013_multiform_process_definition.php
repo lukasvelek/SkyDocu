@@ -6,7 +6,7 @@ use App\Core\DB\ABaseMigration;
 use App\Core\DB\Helpers\TableSchema;
 use App\Core\DB\Helpers\TableSeeding;
 
-class migration_2025_05_28_0012_multiform_process_definition extends ABaseMigration {
+class migration_2025_05_29_0013_multiform_process_definition extends ABaseMigration {
     public function up(): TableSchema {
         return $this->getTableSchema();
     }

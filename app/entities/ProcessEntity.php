@@ -2,8 +2,6 @@
 
 namespace App\Entities;
 
-use App\Exceptions\GeneralException;
-
 /**
  * ProcessEntity describes a general process
  * 
@@ -16,6 +14,13 @@ class ProcessEntity extends AEntity {
     public const DEFINITION_FORM_ACTOR = 'actor';
     public const DEFINITION_FORM_FORM = 'form';
 
+    public const METADATA_DEFINITION_NAME = 'name';
+    public const METADATA_DEFINITION_LABEL = 'label';
+    public const METADATA_DEFINITION_DESCRIPTION = 'description';
+    public const METADATA_DEFINITION_TYPE = 'type';
+    public const METADATA_DEFINITION_DEFAULT_VALUE = 'defaultValue';
+    public const METADATA_DEFINITION_IS_EDITABLE = 'isEditable';
+
     private string $processId;
     private string $uniqueProcessId;
     private string $title;
@@ -25,6 +30,7 @@ class ProcessEntity extends AEntity {
     private string $userId;
     private string $dateCreated;
     private array $definition;
+    private array $metadataDefinition;
     
     // FROM DEFINITION
     private string $colorCombo;
@@ -45,6 +51,7 @@ class ProcessEntity extends AEntity {
      * @param string $userId User ID
      * @param string $dateCreated Date created
      * @param array $definition Definition
+     * @param array $metadataDefinition Metadata definition
      */
     public function __construct(
         string $processId,
@@ -55,7 +62,8 @@ class ProcessEntity extends AEntity {
         int $status,
         string $userId,
         string $dateCreated,
-        array $definition
+        array $definition,
+        array $metadataDefinition
     ) {
         $this->processId = $processId;
         $this->uniqueProcessId = $uniqueProcessId;
@@ -66,6 +74,7 @@ class ProcessEntity extends AEntity {
         $this->userId = $userId;
         $this->dateCreated = $dateCreated;
         $this->definition = $definition;
+        $this->metadataDefinition = $metadataDefinition;
         
         // process definition
         if(array_key_exists(self::DEFINITION_COLOR_COMBO, $this->definition)) {
@@ -194,6 +203,30 @@ class ProcessEntity extends AEntity {
         return $this->definition;
     }
 
+    /**
+     * Returns metadata definition
+     */
+    public function getMetadataDefinition(): array {
+        return $this->metadataDefinition;
+    }
+
+    /**
+     * Returns metadata definition for metadata name or null
+     * 
+     * @param string $name Metadata name
+     */
+    public function getMetadataDefinitionForMetadataName(string $name): ?array {
+        $data = null;
+
+        foreach($this->metadataDefinition as $md) {
+            if($md[self::METADATA_DEFINITION_NAME] == $name) {
+                $data = $md;
+            }
+        }
+
+        return $data;
+    }
+
     public static function createEntityFromDbRow(mixed $row): ?static {
         if($row === null) {
             return null;
@@ -209,7 +242,8 @@ class ProcessEntity extends AEntity {
             'definition' => '?string',
             'version' => 'int',
             'status' => 'int',
-            'dateCreated' => 'string'
+            'dateCreated' => 'string',
+            'metadataDefinition' => '?string'
         ]);
 
         return new self(
@@ -221,7 +255,8 @@ class ProcessEntity extends AEntity {
             $row->status,
             $row->userId,
             $row->dateCreated,
-            json_decode(base64_decode($row->definition), true)
+            json_decode(base64_decode($row->definition), true) ?? [],
+            json_decode(base64_decode($row->metadataDefinition), true) ?? []
         );
     }
 }

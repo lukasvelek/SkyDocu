@@ -2,6 +2,7 @@
 
 namespace App\Modules\SuperAdminModule;
 
+use App\Constants\Container\CustomMetadataTypes;
 use App\Constants\Container\ProcessStatus as ContainerProcessStatus;
 use App\Constants\ProcessColorCombos;
 use App\Constants\ProcessStatus;
@@ -9,9 +10,11 @@ use App\Core\AjaxRequestBuilder;
 use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
 use App\Core\Http\JsonResponse;
+use App\Entities\ProcessEntity;
 use App\Exceptions\AException;
 use App\Helpers\LinkHelper;
 use App\Helpers\ProcessEditorHelper;
+use App\Lib\Forms\Reducers\ProcessMetadataEditorReducer;
 use App\Repositories\Container\ProcessRepository;
 use App\UI\FormBuilder2\JSON2FB;
 use App\UI\HTML\HTML;
@@ -173,7 +176,8 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
 
         $links = [
             $this->createBackFullUrl('SuperAdmin:Processes', 'list'),
-            LinkBuilder::createSimpleLink('New workflow step', $this->createURL('editor2', $params), 'link')
+            LinkBuilder::createSimpleLink('New workflow step', $this->createURL('editor2', $params), 'link'),
+            LinkBuilder::createSimpleLink('New metadata', $this->createURL('metadataEditor', $params), 'link')
         ];
 
         $process = $this->app->processManager->getProcessEntityById($this->httpRequest->get('processId'));
@@ -207,6 +211,78 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
         }
 
         $this->template->links = LinkHelper::createLinksFromArray($links);
+    }
+
+    protected function createComponentMetadataList(HttpRequest $request) {
+        $processId = $request->get('processId');
+
+        $params = [
+            'processId' => $request->get('processId'),
+            'uniqueProcessId' => $request->get('uniqueProcessId')
+        ];
+
+        if($request->get('oldProcessId') !== null) {
+            $params['oldProcessId'] = $request->get('oldProcessId');
+        }
+
+        $process = $this->app->processManager->getProcessEntityById($processId);
+
+        $metadata = $process->getMetadataDefinition()['metadata'] ?? [];
+
+        $datasource = [];
+        foreach($metadata as $md) {
+            $datasource[] = [
+                'name' => $md[ProcessEntity::METADATA_DEFINITION_NAME],
+                'type' => CustomMetadataTypes::toString($md[ProcessEntity::METADATA_DEFINITION_TYPE]),
+                'description' => $md[ProcessEntity::METADATA_DEFINITION_DESCRIPTION]
+            ];
+        }
+
+        $list = $this->componentFactory->getListBuilder();
+
+        $list->setListName('processMetadataList');
+        $list->setDataSource($datasource);
+
+        $list->addColumnText('name', 'Name');
+        $list->addColumnText('description', 'Description');
+        $list->addColumnText('type', 'Type');
+
+        $edit = $list->addAction('edit');
+        $edit->setTitle('Edit');
+        $edit->onCanRender[] = function() {
+            return true;
+        };
+        $edit->onRender[] = function(mixed $primaryKey, ArrayRow $row, ListRow $_row, HTML $html) use ($params) {
+            $_params = $params;
+            $_params['primaryKey'] = $primaryKey;
+            $_params['operation'] = 'edit';
+
+            $el = HTML::el('a');
+            $el->href($this->createURLString('metadataEditor', $_params))
+                ->text('Edit')
+                ->class('grid-link');
+
+            return $el;
+        };
+        
+        $delete = $list->addAction('delete');
+        $delete->setTitle('Delete');
+        $delete->onCanRender[] = function() {
+            return true;
+        };
+        $delete->onRender[] = function(mixed $primaryKey, ArrayRow $row, ListRow $_row, HTML $html) use ($params) {
+            $_params = $params;
+            $_params['primaryKey'] = $primaryKey;
+
+            $el = HTML::el('a');
+            $el->href($this->createURLString('deleteMetadata', $_params))
+                ->text('Delete')
+                ->class('grid-link');
+
+            return $el;
+        };
+
+        return $list;
     }
 
     protected function createComponentWorkflowList(HttpRequest $request) {
@@ -791,6 +867,205 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
         $code .= '</ul>';
 
         return new JsonResponse(['form' => $code]);
+    }
+
+    public function renderMetadataEditor() {
+        $params = [
+            'processId' => $this->httpRequest->get('processId'),
+            'uniqueProcessId' => $this->httpRequest->get('uniqueProcessId')
+        ];
+
+        if($this->httpRequest->get('oldProcessId') !== null) {
+            $params['oldProcessId'] = $this->httpRequest->get('oldProcessId');
+        }
+
+        $this->template->links = $this->createBackUrl('workflowList', $params);
+    }
+
+    protected function createComponentProcessMetadataEditor(HttpRequest $request) {
+        $params = [
+            'processId' => $request->get('processId'),
+            'uniqueProcessId' => $request->get('uniqueProcessId')
+        ];
+
+        if($request->get('oldProcessId') !== null) {
+            $params['oldProcessId'] = $request->get('oldProcessId');
+        }
+
+        $metadata = null;
+        if($request->get('operation') == 'edit') {
+            $process = $this->app->processManager->getProcessEntityById($request->get('processId'));
+
+            $metadata = $process->getMetadataDefinition()[$request->get('primaryKey')];
+        }
+
+        $allTypes = CustomMetadataTypes::getAll();
+
+        $types = [];
+        foreach($allTypes as $key => $value) {
+            if($key >= 100) {
+                break;
+            }
+
+            $type = [
+                'value' => $key,
+                'text' => $value
+            ];
+
+            if($metadata !== null) {
+                if($key == $metadata[ProcessEntity::METADATA_DEFINITION_TYPE]) {
+                    $type['selected'] = 'selected';
+                }
+            }
+
+            $types[] = $type;
+        }
+
+        $form = $this->componentFactory->getFormBuilder();
+
+        $form->setAction($this->createURL('saveMetadataEditor', ($metadata !== null ? array_merge($params, ['primaryKey' => $request->get('primaryKey'), 'operation' => 'edit']) : $params)));
+
+        $name = $form->addTextInput('name', 'Name:')
+            ->setRequired();
+
+        if($metadata !== null) {
+            $name->setValue($metadata[ProcessEntity::METADATA_DEFINITION_NAME]);
+        }
+
+        $label = $form->addTextInput('label', 'Label:')
+            ->setRequired();
+
+        if($metadata !== null) {
+            $label->setValue($metadata[ProcessEntity::METADATA_DEFINITION_LABEL]);
+        }
+
+        $description = $form->addTextArea('description', 'Description:')
+            ->setRequired();
+
+        if($metadata !== null) {
+            $description->setContent($metadata[ProcessEntity::METADATA_DEFINITION_DESCRIPTION]);
+        }
+
+        $form->addSelect('type', 'Type:')
+            ->addRawOptions($types)
+            ->setRequired();
+
+        $form->addTextArea('defaultValue', 'Default value:');
+
+        $form->addCheckboxInput('isEditable', 'Is editable?')
+            ->setChecked();
+
+        $form->addSubmit($metadata !== null ? 'Save' : 'Create');
+        
+        return $form;
+    }
+
+    public function handleSaveMetadataEditor(FormRequest $fr) {
+        $processId = $this->httpRequest->get('processId');
+        $uniqueProcessId = $this->httpRequest->get('uniqueProcessId');
+        $oldProcessId = $this->httpRequest->get('oldProcessId');
+
+        $operation = $this->httpRequest->get('operation');
+        $primaryKey = $this->httpRequest->get('primaryKey');
+
+        $params = [
+            'processId' => $processId,
+            'uniqueProcessId' => $uniqueProcessId
+        ];
+
+        if($oldProcessId !== null) {
+            $params['oldProcessId'] = $oldProcessId;
+        }
+
+        $process = $this->app->processManager->getProcessEntityById($processId);
+        $metadata = $process->getMetadataDefinition();
+
+        $tmp = [
+            ProcessEntity::METADATA_DEFINITION_TYPE => $fr->type,
+            ProcessEntity::METADATA_DEFINITION_NAME => $fr->name,
+            ProcessEntity::METADATA_DEFINITION_DESCRIPTION => $fr->description,
+            ProcessEntity::METADATA_DEFINITION_DEFAULT_VALUE => $fr->defaultValue,
+            ProcessEntity::METADATA_DEFINITION_LABEL => $fr->label
+        ];
+
+        if(isset($fr->{ProcessEntity::METADATA_DEFINITION_IS_EDITABLE}) && $fr->{ProcessEntity::METADATA_DEFINITION_IS_EDITABLE} == 'on') {
+            $tmp[ProcessEntity::METADATA_DEFINITION_IS_EDITABLE] = 1;
+        } else {
+            $tmp[ProcessEntity::METADATA_DEFINITION_IS_EDITABLE] = 0;
+        }
+
+        if($operation == 'edit') {
+            $metadata['metadata'][$primaryKey] = $tmp;
+        } else {
+            $metadata['metadata'][] = $tmp;
+        }
+
+        try {
+            $this->app->processRepository->beginTransaction(__METHOD__);
+
+            $this->app->processManager->updateProcess($processId, [
+                'metadataDefinition' => base64_encode(json_encode($metadata))
+            ]);
+
+            $this->app->processRepository->commit($this->getUserId(), __METHOD__);
+
+            if($operation == 'edit') {
+                $this->flashMessage('Successfully updated metadata.', 'success');
+            } else {
+                $this->flashMessage('Successfully created new metadata.', 'success');
+            }
+        } catch(AException $e) {
+            $this->app->processRepository->rollback(__METHOD__);
+
+            if($operation == 'edit') {
+                $this->flashMessage('Could not edit metadata. Reason: ' . $e->getMessage(), 'error', 10);
+            } else {
+                $this->flashMessage('Could not create new metadata. Reason: ' . $e->getMessage(), 'error', 10);
+            }
+        }
+
+        $this->redirect($this->createURL('workflowList', $params));
+    }
+
+    public function handleDeleteMetadata() {
+        $processId = $this->httpRequest->get('processId');
+        $uniqueProcessId = $this->httpRequest->get('uniqueProcessId');
+        $oldProcessId = $this->httpRequest->get('oldProcessId');
+
+        $primaryKey = $this->httpRequest->get('primaryKey');
+
+        $params = [
+            'processId' => $processId,
+            'uniqueProcessId' => $uniqueProcessId
+        ];
+
+        if($oldProcessId !== null) {
+            $params['oldProcessId'] = $oldProcessId;
+        }
+
+        try {
+            $process = $this->app->processManager->getProcessEntityById($processId);
+
+            $metadata = $process->getMetadataDefinition();
+
+            unset($metadata[$primaryKey]);
+
+            $this->app->processRepository->beginTransaction(__METHOD__);
+
+            $this->app->processManager->updateProcess($processId, [
+                'metadataDefinition' => base64_encode(json_encode($metadata))
+            ]);
+
+            $this->app->processRepository->commit($this->getUserId(), __METHOD__);
+
+            $this->flashMessage('Successfully deleted metadata.', 'success');
+        } catch(AException $e) {
+            $this->app->processRepository->rollback(__METHOD__);
+
+            $this->flashMessage('Could not delete metadata. Reason: ' . $e->getMessage(), 'error', 10);
+        }
+
+        $this->redirect($this->createURL('workflowList', $params));
     }
 }
 

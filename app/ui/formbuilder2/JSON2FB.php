@@ -5,7 +5,10 @@ namespace App\UI\FormBuilder2;
 use App\Constants\AConstant;
 use App\Constants\Container\ProcessInstanceOperations;
 use App\Core\Router;
+use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
+use App\Repositories\Container\ProcessMetadataRepository;
+use App\Repositories\TransactionLogRepository;
 use App\UI\FormBuilder2\FormState\FormStateListHelper;
 
 /**
@@ -54,6 +57,7 @@ class JSON2FB {
     private bool $isEditor = false;
     private bool $checkHandleButtons = false;
     private bool $checkNoHandleButtons = false;
+    private ?string $processId = null;
     
     /**
      * Class constructor
@@ -71,6 +75,15 @@ class JSON2FB {
         $this->skipElementAttributes = [];
         $this->formData = [];
         $this->customUrlParams = [];
+    }
+
+    /**
+     * Sets process ID
+     * 
+     * @param string $processId Process ID
+     */
+    public function setProcessId(string $processId) {
+        $this->processId = $processId;
     }
 
     /**
@@ -579,6 +592,50 @@ class JSON2FB {
                             }
                         } else {
                             throw new GeneralException('Class \'' . $const . '\' does not exist.');
+                        }
+                    } else if(array_key_exists('valuesFromInternalMetadata', $element)) {
+                        $metadataName = $element['valuesFromInternalMetadata'];
+
+                        if($this->processId !== null && $this->containerId !== null) {
+                            try {
+                                $process = $this->form->app->processManager->getProcessEntityById($this->processId);
+
+                                $container = $this->form->app->containerManager->getContainerById($this->containerId);
+
+                                $conn = $this->form->app->dbManager->getConnectionToDatabase($container->getDefaultDatabase()->getName());
+
+                                $tlogRepository = new TransactionLogRepository($conn, $this->form->app->logger);
+
+                                $processMetadataRepository = new ProcessMetadataRepository($conn, $this->form->app->logger, $tlogRepository, $this->form->app->currentUser->getId());
+
+                                $uniqueProcessId = $process->getUniqueProcessId();
+
+                                $qb = $processMetadataRepository->composeQueryForProcessMetadata($uniqueProcessId);
+
+                                $qb->andWhere('title = ?', [$metadataName])
+                                    ->execute();
+
+                                $row = $qb->fetch();
+
+                                if($row === null) {
+                                    throw new GeneralException('No metadata with title \'' . $metadataName . '\' exists.');
+                                }
+
+                                $metadataId = $row['metadataId'];
+
+                                $qb = $processMetadataRepository->composeQueryForProcessMetadataValues($metadataId);
+
+                                $qb->execute();
+
+                                while($row = $qb->fetchAssoc()) {
+                                    $value = $row['metadataKey'];
+                                    $text = $row['title'];
+
+                                    $elem->addRawOption($value, $text);
+                                }
+                            } catch(AException $e) {
+                                throw new GeneralException('Could not obtain metadata values for metadata \'' . $metadataName . '\'.', $e);
+                            }
                         }
                     }
                 }

@@ -111,19 +111,25 @@ class ContainerCreationSlaveService extends AService {
         $qb->execute();
 
         $insertProcesses = [];
+        $insertMetadata = [];
         while($row = $qb->fetchAssoc()) {
-            /*$insertProcesses[] = [
-                'processId' => $row['processId'],
-                'uniqueProcessId' => $row['uniqueProcessId'],
-                'title' => $row['title'],
-                'description' => $row['description'],
-                'form' => $row['form'],
-                'workflow' => $row['workflow'],
-                'workflowConfiguration' => $row['workflowConfiguration'],
-                'userId' => $row['userId'],
-                'status' => 1,
-                'colorCombo' => $row['colorCombo']
-            ];*/
+            $metadataDefinition = $row['metadataDefinition'];
+
+            if($metadataDefinition !== null) {
+                $metadataDefinition = json_decode(base64_decode($metadataDefinition), true);
+
+                foreach($metadataDefinition['metadata'] as $meta) {
+                    $insertMetadata[] = [
+                        'title' => $meta['name'],
+                        'guiTitle' => $meta['label'],
+                        'type' => $meta['type'],
+                        'defaultValue' => $meta['defaultValue'],
+                        'isSystem' => 1,
+                        'isRequired' => 1,
+                        'uniqueProcessId' => $row['uniqueProcessId']
+                    ];
+                }
+            }
 
             $insertProcesses[] = [
                 'processId' => $row['processId'],
@@ -140,6 +146,10 @@ class ContainerCreationSlaveService extends AService {
 
         foreach($insertProcesses as $data) {
             $container->processManager->insertNewProcessFromDataArray($data);
+        }
+
+        foreach($insertMetadata as $data) {
+            $container->processMetadataManager->addNewMetadata($data);
         }
     }
 }

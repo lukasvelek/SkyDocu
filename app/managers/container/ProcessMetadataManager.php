@@ -131,6 +131,22 @@ class ProcessMetadataManager extends AManager {
 
         return $values;
     }
+
+    /**
+     * Adds new metadata
+     * 
+     * @param array $data Data
+     * @throws GeneralException
+     */
+    public function addNewMetadata(array $data) {
+        $metadataId = $this->createId(EntityManager::C_PROCESS_CUSTOM_METADATA);
+
+        $data['metadataId'] = $metadataId;
+
+        if(!$this->processMetadataRepository->insertNewMetadata($data)) {
+            throw new GeneralException('Database error.');
+        }
+    }
 }
 
 ?>

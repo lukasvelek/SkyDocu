@@ -183,6 +183,36 @@ class ProcessManager extends AManager {
         }
     }
 
+    public function getPreviousVersionInDistributionForProcessId(string $processId, bool $returnEntity = false): null|DatabaseRow|ProcessEntity {
+        try {
+            $process = $this->getProcessEntityById($processId);
+
+            if($process->getVersion() > 1) {
+                $previousVersion = null;
+                $run = true;
+
+                while($run) {
+                    try {
+                        $previousVersion = $this->getPreviousVersionForProcessId($processId, true);
+
+                        if($previousVersion->getStatus() == ProcessStatus::IN_DISTRIBUTION) {
+                            $run = false;
+                        }
+                    } catch(AException $e) {
+                        $run = false;
+                        $previousVersion = null;
+                    }
+                }
+
+                return $previousVersion;
+            }
+
+            return null;
+        } catch(AException $e) {
+            throw $e;
+        }
+    }
+
     /**
      * Returns next version for process ID
      * 

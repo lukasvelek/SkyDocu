@@ -15,7 +15,10 @@ use App\Exceptions\AException;
 use App\Helpers\LinkHelper;
 use App\Helpers\ProcessEditorHelper;
 use App\Lib\Forms\Reducers\ProcessMetadataEditorReducer;
+use App\Managers\EntityManager;
+use App\Repositories\Container\ProcessMetadataRepository;
 use App\Repositories\Container\ProcessRepository;
+use App\Repositories\ContentRepository;
 use App\UI\FormBuilder2\JSON2FB;
 use App\UI\HTML\HTML;
 use App\UI\LinkBuilder;
@@ -196,6 +199,23 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
                 if($process->getStatus() == ProcessStatus::NEW && $previousVersion->getStatus() == ProcessStatus::IN_DISTRIBUTION) {
                     // previous version is in distribution and the current is new
                     $showPublishLink = true;
+                } else if($process->getStatus() == ProcessStatus::NEW && $previousVersion->getStatus() == ProcessStatus::NOT_IN_DISTRIBUTION) {
+                    // previous version is not in distribution and the current is new
+                    // we must check if there is a version before the current one that is in distribution
+                    $run = true;
+                    $_pv = $previousVersion;
+                    while($run) {
+                        try {
+                            $_pv = $this->app->processManager->getPreviousVersionForProcessId($_pv->getId(), true);
+                        } catch(AException $e) {
+                            $run = false;
+                        }
+
+                        if($_pv->getStatus() == ProcessStatus::IN_DISTRIBUTION) {
+                            $showPublishLink = true;
+                            $run = false;
+                        }
+                    }
                 }
             } else {
                 // previous version does not exist
@@ -763,7 +783,7 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
         } else {
             $previousVersion = null;
             try {
-                $previousVersion = $this->app->processManager->getPreviousVersionForProcessId($processId, true);
+                $previousVersion = $this->app->processManager->getPreviousVersionInDistributionForProcessId($processId, true);
             } catch(AException $e) {}
             
             if($previousVersion !== null) {
@@ -801,6 +821,9 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
             $this->flashMessage('Could not publish new process' . ($oldProcessId !== null ? ' version.' : '.') . ' Reason: ' . $e->getMessage(), 'error', 10);
         }
 
+        $process = $this->app->processManager->getProcessEntityById($processId);
+        $hasMetadata = !empty($process->getMetadataDefinition());
+
         try {
             $process = $this->app->processManager->getProcessEntityById($processId);
 
@@ -813,6 +836,10 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
                 $dbConn = $this->app->dbManager->getConnectionToDatabase($container->getDefaultDatabase()->getName());
 
                 $processRepository = new ProcessRepository($dbConn, $this->logger, $this->app->transactionLogRepository, $this->getUserId());
+                $processMetadataRepository = new ProcessMetadataRepository($dbConn, $this->logger, $this->app->transactionLogRepository, $this->getUserId());
+
+                $contentRepository = new ContentRepository($dbConn, $this->logger, $this->app->transactionLogRepository, $this->getUserId());
+                $entityManager = new EntityManager($this->logger, $contentRepository);
 
                 try {
                     $processRepository->beginTransaction(__METHOD__);
@@ -830,6 +857,45 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
                         $this->getUserId(),
                         ContainerProcessStatus::IN_DISTRIBUTION
                     );
+
+                    // Add process metadata
+                    if($hasMetadata) {
+                        $qb = $processMetadataRepository->composeQueryForProcessMetadata($uniqueProcessId);
+                        $qb->execute();
+
+                        $cMetadata = [];
+                        $delete = [];
+                        while($row = $qb->fetchAssoc()) {
+                            foreach($process->getMetadataDefinition()['metadata'] as $m) {
+                                if($m['type'] != $row['type'] &&
+                                    $m['name'] == $row['title'] &&
+                                    $m['label'] != $row['guiTitle']) {
+                                    $delete[] = $row['metadataId'];
+                                    $cMetadata[] = $m['name'];
+                                }
+                            }
+                        }
+
+                        foreach($delete as $metadataId) {
+                            $processMetadataRepository->removeMetadataValuesForMetadataId($metadataId);
+                            $processMetadataRepository->removeMetadata($metadataId);
+                        }
+
+                        foreach($cMetadata as $name) {
+                            $data = [
+                                'metadataId' => $entityManager->generateEntityId(EntityManager::C_PROCESS_CUSTOM_METADATA),
+                                'uniqueProcessId' => $uniqueProcessId,
+                                'title' => $name,
+                                'guiTitle' => $process->getMetadataDefinitionForMetadataName($name)['label'],
+                                'type' => $process->getMetadataDefinitionForMetadataName($name)['type'],
+                                'defaultValue' => $process->getMetadataDefinitionForMetadataName($name)['defaultValue'],
+                                'isRequired' => 1,
+                                'isSystem' => 1
+                            ];
+
+                            $processMetadataRepository->insertNewMetadata($data);
+                        }
+                    }
 
                     $processRepository->commit($this->getUserId(), __METHOD__);
                 } catch(AException $e) {

@@ -92,10 +92,10 @@ class BackgroundServiceScheduleHelper {
     /**
      * Returns the date of next run
      * 
-     * @param array $schedule Schedule
+     * @param ?array $schedule Schedule
      * @param DatabaseRow $service Service database row
      */
-    public static function getNextRun(array $schedule, DatabaseRow $service) {
+    public static function getNextRun(?array $schedule, DatabaseRow $service) {
         if($schedule === null) {
             return null;
         }

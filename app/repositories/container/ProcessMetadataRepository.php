@@ -89,6 +89,53 @@ class ProcessMetadataRepository extends ARepository {
 
         return $qb->fetchBool();
     }
+
+    /**
+     * Removes metadata values for metadata ID
+     * 
+     * @param string $metadataId Metadata ID
+     */
+    public function removeMetadataValuesForMetadataId(string $metadataId): bool {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->delete()
+            ->from('process_metadata_values')
+            ->where('metadataId = ?', [$metadataId])
+            ->execute();
+
+        return $qb->fetchBool();
+    }
+
+    /**
+     * Removes metadata
+     * 
+     * @param string $metadataId Metadata ID
+     */
+    public function removeMetadata(string $metadataId): bool {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->delete()
+            ->from('process_metadata')
+            ->where('metadataId = ?', [$metadataId])
+            ->execute();
+
+        return $qb->fetchBool();
+    }
+
+    /**
+     * Inserts new metadata
+     * 
+     * @param array $data Metadata data
+     */
+    public function insertNewMetadata(array $data): bool {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->insert('process_metadata', array_keys($data))
+            ->values(array_values($data))
+            ->execute();
+
+        return $qb->fetchBool();
+    }
 }
 
 ?>

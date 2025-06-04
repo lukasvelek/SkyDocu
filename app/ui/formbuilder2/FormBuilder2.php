@@ -439,6 +439,22 @@ class FormBuilder2 extends AComponent {
     }
 
     /**
+     * Adds a file link
+     * 
+     * @param string $name Element name
+     * @param ?string Label text or null
+     */
+    public function addFileLink(string $name, ?string $label = null): FileLink {
+        $fl = new FileLink($name);
+
+        $this->elements[$name] = &$fl;
+
+        $this->processLabel($name, $label);
+
+        return $fl;
+    }
+
+    /**
      * Adds single-line text input
      * 
      * @param string $name Element name

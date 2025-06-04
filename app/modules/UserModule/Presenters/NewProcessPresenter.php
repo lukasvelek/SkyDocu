@@ -8,6 +8,7 @@ use App\Constants\Container\ProcessGridViews;
 use App\Constants\Container\ProcessInstanceOfficerTypes;
 use App\Constants\Container\ProcessInstanceOperations;
 use App\Constants\Container\ProcessInstanceStatus;
+use App\Core\FileUploadManager;
 use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
 use App\Core\Http\JsonResponse;
@@ -115,7 +116,48 @@ class NewProcessPresenter extends AUserPresenter {
             $workflow[] = $form['actor'];
         }
 
-        if(($index + 1) <= count($workflow)) {
+        $rawFormData = $fr->getData();
+
+        // FILE UPLOAD HANDLING
+        if(!empty($_FILES)) {
+            // has a file
+
+            try {
+                $this->fileStorageRepository->beginTransaction(__METHOD__);
+
+                $fum = new FileUploadManager();
+
+                $data = $fum->uploadFileForProcessInstance($_FILES['file'], $processId, $instanceId, $this->getUserId());
+                
+                if(empty($data)) {
+                    throw new GeneralException('Could not upload file.');
+                }
+
+                $fileId = $this->fileStorageManager->createNewProcessInstanceFile(
+                    $instanceId,
+                    $this->getUserId(),
+                    $data[FileUploadManager::FILE_FILENAME],
+                    $data[FileUploadManager::FILE_FILEPATH],
+                    $data[FileUploadManager::FILE_FILESIZE]
+                );
+
+                $file = $this->fileStorageManager->getFileById($fileId, true);
+
+                $rawFormData['file'] = [
+                    'hash' => $file->hash
+                ];
+
+                $this->fileStorageRepository->commit($this->getUserId(), __METHOD__);
+            } catch(AException $e) {
+                $this->fileStorageRepository->rollback(__METHOD__);
+                
+                $this->flashMessage('Could not start a new process instance. Reason: ' . $e->getMessage(), 'error', 10);
+                $this->redirect($this->createURL('select'));
+            }
+        }
+        // END OF FILE UPLOAD HANDLING
+
+        /*if(($index + 1) <= count($workflow)) {
             foreach($forms as $form) {
                 $_form = json_decode($form['form'], true);
 
@@ -125,13 +167,13 @@ class NewProcessPresenter extends AUserPresenter {
                     }
                 }
             }
-        }
+        }*/
 
         $formData = [
             'forms' => [
                 [
                     'userId' => $this->getUserId(),
-                    'data' => $fr->getData()
+                    'data' => $rawFormData
                 ]
             ],
             'workflowIndex' => 1,

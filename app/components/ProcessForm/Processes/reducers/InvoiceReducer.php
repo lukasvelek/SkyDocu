@@ -93,7 +93,7 @@ class InvoiceReducer extends ABaseFormReducer {
         
         if($lastInstance !== null) {
             $data = $lastInstance->data;
-            $data = unserialize($data);
+            $data = unserialize($data)['forms'][0]['data'];
 
             $invoiceNo = $data['invoiceNo'];
 

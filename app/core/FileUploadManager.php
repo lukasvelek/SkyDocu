@@ -24,6 +24,42 @@ class FileUploadManager {
     ];
 
     /**
+     * Uploads a file for process instance
+     * 
+     * @param array $fileData Result of $_FILES[FILE_INPUT_NAME]
+     * @param string $processId Process ID
+     * @param string $processInstanceId Process instance ID
+     * @param string $userId User ID
+     */
+    public function uploadFileForProcessInstance(array $fileData, string $processId, string $processInstanceId, string $userId): array {
+        $dirpath = $this->generateFolderPath("$processId\\$processInstanceId", $userId);
+        $filepath = $dirpath . $this->generateFilename($fileData['name'], "$processId\\$processInstanceId", $userId);
+
+        // CHECKS
+        if(!$this->checkType($filepath)) {
+            throw new GeneralException('File extension for file \'' . $filepath . '\' is not supported. Supported file extensions are: ' . implode(', ', self::$ALLOWED_EXTENSIONS));
+        }
+        if(!$this->checkFileSize($fileData)) {
+            throw new GeneralException('File is too big. Only files with size up to 500 MB are supported.');
+        }
+        // END OF CHECKS
+
+        if(!$this->createFolderPath($dirpath)) {
+            throw new GeneralException('Could not create end file path.');
+        }
+
+        if(move_uploaded_file($fileData['tmp_name'], $filepath)) {
+            return [
+                self::FILE_FILENAME => $fileData['name'],
+                self::FILE_FILEPATH => $filepath,
+                self::FILE_FILESIZE => $this->getFileSize($fileData)
+            ];
+        } else {
+            throw new GeneralException('File upload error.');
+        }
+    }
+
+    /**
      * Uploads a file
      * 
      * @param array $fileData Result of $_FILES[FILE_INPUT_NAME]
@@ -128,14 +164,14 @@ class FileUploadManager {
     /**
      * Generates end directory path
      * 
-     * @param string $documentId Document ID
+     * @param string $entityId Entity ID
      * @param string $userId User ID
      */
-    private function generateFolderPath(?string $documentId, string $userId): string {
+    private function generateFolderPath(?string $entityId, string $userId): string {
         $path = APP_ABSOLUTE_DIR . CONTAINERS_DIR . 'uploads\\' . $userId . '\\';
 
-        if($documentId !== null) {
-            $path .= $documentId . '\\';
+        if($entityId !== null) {
+            $path .= $entityId . '\\';
         }
 
         return $path;
@@ -154,14 +190,14 @@ class FileUploadManager {
      * Generates filename
      * 
      * @param string $filename Filename
-     * @param string $documentId Document ID
+     * @param string $entityId Entity ID
      * @param string $userId User ID
      */
-    private function generateFilename(string $filename, ?string $documentId, string $userId) {
+    private function generateFilename(string $filename, ?string $entityId, string $userId) {
         $hash = HashManager::createHash(8, false);
         $text = $hash . $filename . $userId;
-        if($documentId !== null) {
-            $text .= $documentId;
+        if($entityId !== null) {
+            $text .= $entityId;
         }
         return md5($text) . '.' . strtolower(pathinfo($filename, PATHINFO_EXTENSION));
     }

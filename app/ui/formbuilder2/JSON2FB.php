@@ -4,9 +4,11 @@ namespace App\UI\FormBuilder2;
 
 use App\Constants\AConstant;
 use App\Constants\Container\ProcessInstanceOperations;
+use App\Core\Container;
 use App\Core\Router;
 use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
+use App\Helpers\UnitConversionHelper;
 use App\Repositories\Container\ProcessMetadataRepository;
 use App\Repositories\TransactionLogRepository;
 use App\UI\FormBuilder2\FormState\FormStateListHelper;
@@ -58,6 +60,8 @@ class JSON2FB {
     private bool $checkHandleButtons = false;
     private bool $checkNoHandleButtons = false;
     private ?string $processId = null;
+
+    private ?Container $container;
     
     /**
      * Class constructor
@@ -75,6 +79,12 @@ class JSON2FB {
         $this->skipElementAttributes = [];
         $this->formData = [];
         $this->customUrlParams = [];
+
+        if($this->containerId !== null) {
+            $this->container = new Container($this->form->app, $this->containerId);
+        } else {
+            $this->container = null;
+        }
     }
 
     /**
@@ -524,6 +534,13 @@ class JSON2FB {
                         $elem = $this->form->addTextInput($name, $label);
 
                         break;
+
+                    case self::FILE:
+                        if($this->container !== null) {
+                            $elem = $this->form->addFileLink($name, $label);
+                        }
+
+                        break;
                 }
             }
 
@@ -638,6 +655,21 @@ class JSON2FB {
                             }
                         }
                     }
+                } else if($elem instanceof FileLink) {
+                    $hash = $this->formData[$name]['hash'];
+
+                    $file = $this->container->fileStorageManager->getFileByHash($hash);
+
+                    $fileUrl = Router::generateUrl([
+                        'page' => 'User:FileStorage',
+                        'action' => 'download',
+                        'hash' => $hash
+                    ]);
+
+                    $fileSize = UnitConversionHelper::convertBytesToUserFriendly($file->filesize);
+
+                    $elem->setFileUrl($fileUrl);
+                    $elem->setFileName($file->filename . ' (' . $fileSize . ')');
                 }
 
                 // FORM DATA
@@ -650,7 +682,9 @@ class JSON2FB {
                                 $elem->{'setContent'}($fdv);
                             }
 
-                            $elem->setReadonly();
+                            if(method_exists($elem, 'setReadonly')) {
+                                $elem->setReadonly();
+                            }
                         }
                     }
                 }

@@ -52,9 +52,9 @@ class ProcessesPresenter extends ASuperAdminPresenter {
             }
 
             try {
-                $nextVersion = $this->app->processManager->getNextVersionForProcessId($row->processId);
+                $nextVersion = $this->app->processManager->getNextVersionForProcessId($row->processId, true);
 
-                if($nextVersion !== null) {
+                if($nextVersion !== null && $nextVersion->getStatus() == ProcessStatus::NEW) {
                     return false;
                 }
             } catch(AException $e) {}

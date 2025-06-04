@@ -33,7 +33,7 @@ class ProcessManager extends AManager {
     public function createNewProcessFromExisting(string $oldProcessId): array {
         $process = $this->getProcessById($oldProcessId);
 
-        return $this->createNewProcess(
+        [$newProcessId, $uniqueProcessId] = $this->createNewProcess(
             $process->title,
             $process->description,
             $process->userId,
@@ -41,6 +41,12 @@ class ProcessManager extends AManager {
             $oldProcessId,
             ProcessStatus::NEW
         );
+
+        $this->updateProcess($newProcessId, [
+            'metadataDefinition' => $process->metadataDefinition
+        ]);
+
+        return [$newProcessId, $uniqueProcessId];
     }
 
     /**
@@ -60,8 +66,8 @@ class ProcessManager extends AManager {
         if($oldProcessId !== null) {
             $process = $this->getProcessById($oldProcessId);
 
-            $version = (int)($process->version) + 1;
             $uniqueProcessId = $process->uniqueProcessId;
+            $version = (int)($this->getHighestVersionForUniqueProcessId($uniqueProcessId)) + 1;
         } else {
             $uniqueProcessId = $this->createId(EntityManager::PROCESSES_UNIQUE);
         }
@@ -204,6 +210,21 @@ class ProcessManager extends AManager {
         } catch(AException $e) {
             throw $e;
         }
+    }
+
+    /**
+     * Returns the highest version used for unique process ID
+     * 
+     * @param string $uniqueProcessId Unique process ID
+     */
+    public function getHighestVersionForUniqueProcessId(string $uniqueProcessId): string {
+        $qb = $this->processRepository->composeQueryForProcesses();
+        $qb->andWhere('uniqueProcessId = ?', [$uniqueProcessId])
+            ->orderBy('version', 'DESC')
+            ->limit(1)
+            ->execute();
+
+        return $qb->fetch('version');
     }
 }
 

@@ -542,9 +542,11 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
         $operation = null;
         if($request->get('primaryKey') !== null) {
             $primaryKey = $request->get('primaryKey');
+            //$params['primaryKey'] = $primaryKey;
         }
         if($request->get('operation') !== null) {
             $operation = $request->get('operation');
+            //$params['operation'] = $operation;
         }
 
         $form = $this->componentFactory->getFormBuilder();
@@ -691,6 +693,11 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
         $process = $this->app->processManager->getProcessEntityById($processId);
 
         $definition = $process->getDefinition();
+
+        $definition['forms'][] = [
+            'actor' => $actor,
+            'form' => $form
+        ];
 
         $data = [
             'definition' => base64_encode(json_encode($definition))
@@ -896,7 +903,7 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
         if($request->get('operation') == 'edit') {
             $process = $this->app->processManager->getProcessEntityById($request->get('processId'));
 
-            $metadata = $process->getMetadataDefinition()[$request->get('primaryKey')];
+            $metadata = $process->getMetadataDefinition()['metadata'][$request->get('primaryKey')];
         }
 
         $allTypes = CustomMetadataTypes::getAll();

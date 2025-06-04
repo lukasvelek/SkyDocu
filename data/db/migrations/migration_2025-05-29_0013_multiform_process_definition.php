@@ -59,9 +59,10 @@ class migration_2025_05_29_0013_multiform_process_definition extends ABaseMigrat
                 'title' => 'Invoice',
                 'description' => 'New Invoice',
                 'userId' => $this->getTechnicalUserId(),
-                'definition' => '',
+                'definition' => 'eyJjb2xvckNvbWJvIjoiYmx1ZSIsImZvcm1zIjpbeyJhY3RvciI6IiRDVVJSRU5UX1VTRVIkIiwiZm9ybSI6IntcIm5hbWVcIjogXCJpbnZvaWNlRm9ybVwiLFwiZWxlbWVudHNcIjogW3tcIm5hbWVcIjogXCJpbnZvaWNlTm9cIixcImxhYmVsXCI6IFwiSW52b2ljZSBOby46XCIsXCJ0eXBlXCI6IFwidGV4dFwiLFwiYXR0cmlidXRlc1wiOiBbXCJyZXF1aXJlZFwiLFwicmVhZG9ubHlcIl19LHtcIm5hbWVcIjogXCJjb21wYW55XCIsXCJ0eXBlXCI6IFwic2VsZWN0U2VhcmNoXCIsXCJzZWFyY2hCeUxhYmVsXCI6IFwiQ29tcGFueSBuYW1lOlwiLFwibGFiZWxcIjpcIkNvbXBhbnk6XCIsXCJhY3Rpb25OYW1lXCI6IFwic2VhcmNoQ29tcGFuaWVzXCIsXCJhdHRyaWJ1dGVzXCI6IFtcInJlcXVpcmVkXCJdfSx7XCJuYW1lXCI6IFwic3VtXCIsXCJ0eXBlXCI6IFwibnVtYmVyXCIsXCJsYWJlbFwiOiBcIlN1bTpcIixcImF0dHJpYnV0ZXNcIjogW1wicmVxdWlyZWRcIl19LHtcIm5hbWVcIjogXCJzdW1DdXJyZW5jeVwiLFwidHlwZVwiOiBcInNlbGVjdFwiLFwibGFiZWxcIjogXCJTdW0gY3VycmVuY3k6XCIsXCJhdHRyaWJ1dGVzXCI6IFtcInJlcXVpcmVkXCJdfSx7XCJuYW1lXCI6IFwiZmlsZVwiLFwidHlwZVwiOiBcImZpbGVcIixcImxhYmVsXCI6IFwiSW52b2ljZSBmaWxlOlwiLFwiYXR0cmlidXRlc1wiOiBbXCJyZXF1aXJlZFwiXX1dLFwicmVkdWNlclwiOiBcIlxcXFxBcHBcXFxcQ29tcG9uZW50c1xcXFxQcm9jZXNzRm9ybVxcXFxQcm9jZXNzZXNcXFxccmVkdWNlcnNcXFxcSW52b2ljZVJlZHVjZXJcIn0ifSx7ImFjdG9yIjoiJEFDQ09VTlRBTlRTJCIsImZvcm0iOiJ7XHJcbiBcIm5hbWVcIjogXCJpbnZvaWNlUHJvY2Vzc1wiLFxyXG4gXCJlbGVtZW50c1wiOiBbXHJcbiAge1xyXG4gICBcIm5hbWVcIjogXCJhY2NlcHRcIixcclxuICAgXCJ0eXBlXCI6IFwic3VibWl0XCIsXHJcbiAgIFwidGV4dFwiOiBcIkFjY2VwdFwiXHJcbiAgfSxcclxuICB7XHJcbiAgIFwibmFtZVwiOiBcInJlamVjdFwiLFxyXG4gICBcInR5cGVcIjogXCJyZWplY3RCdXR0b25cIlxyXG4gIH1cclxuIF1cclxufSJ9LHsiYWN0b3IiOiIkQUNDT1VOVEFOVFMkIiwiZm9ybSI6IntcclxuIFwibmFtZVwiOiBcImludm9pY2VQcm9jZXNzXCIsXHJcbiBcImVsZW1lbnRzXCI6IFtcclxuICB7XHJcbiAgIFwibmFtZVwiOiBcImFyY2hpdmVcIixcclxuICAgXCJ0eXBlXCI6IFwiYXJjaGl2ZUJ1dHRvblwiXHJcbiAgfVxyXG4gXVxyXG59In1dfQ==',
                 'version' => 1,
-                'status' => 2
+                'status' => 2,
+                'metadataDefinition' => 'eyJtZXRhZGF0YSI6W3sidHlwZSI6IjIiLCJuYW1lIjoiY29tcGFuaWVzIiwiZGVzY3JpcHRpb24iOiJDb21wYW5pZXMgbGlzdCIsImRlZmF1bHRWYWx1ZSI6IiIsImxhYmVsIjoiQ29tcGFuaWVzIiwiaXNFZGl0YWJsZSI6MH1dfQ=='
             ])
         ;
 

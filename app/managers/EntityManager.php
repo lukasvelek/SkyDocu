@@ -88,7 +88,7 @@ class EntityManager extends AManager {
         while($run) {
             $entityId = HashManager::createEntityId();
 
-            $primaryKeyName = $this->getPrimaryKeyNameByCategory($category);
+            $primaryKeyName = $this->getPrimaryKeyNameByCategory($category, ($customConn->getName() != DB_MASTER_NAME));
 
             $cr = new ContentRepository($customConn, $this->logger, $this->contentRepository->transactionLogRepository);
             $unique = $cr->checkIdIsUnique($category, $primaryKeyName, $entityId);
@@ -119,7 +119,7 @@ class EntityManager extends AManager {
         while($run) {
             $entityId = HashManager::createEntityId();
 
-            $primaryKeyName = $this->getPrimaryKeyNameByCategory($category);
+            $primaryKeyName = $this->getPrimaryKeyNameByCategory($category, ($this->contentRepository->conn->getName() != DB_MASTER_NAME));
 
             $unique = $this->contentRepository->checkIdIsUnique($category, $primaryKeyName, $entityId);
 
@@ -137,60 +137,88 @@ class EntityManager extends AManager {
     /**
      * Returns primary key for given category (database table)
      * 
+     * @param string $category Database table name
+     * @param bool $isContainer Is container or master?
+     * 
      * @return string Primary key
      */
-    public static function getPrimaryKeyNameByCategory(string $category) {
-        return match($category) {
-            self::USERS => 'userId',
-            self::TRANSACTIONS => 'transactionId',
-            self::GRID_EXPORTS => 'exportId',
-            self::GROUPS => 'groupId',
-            self::GROUP_USERS => 'groupUserId',
-            self::CONTAINERS => 'containerId',
-            self::CONTAINER_CREATION_STATUS => 'statusId',
-            self::CONTAINER_STATUS_HISTORY => 'historyId',
-            self::SERVICE_HISTORY => 'historyId',
-            self::CONTAINER_USAGE_STATISTICS => 'entryId',
-            self::CONTAINER_INVITES => 'inviteId',
-            self::CONTAINER_INVITE_USAGE => 'entryId',
-            self::USER_ABSENCE => 'absenceId',
-            self::USER_SUBSTITUTES => 'entryId',
-            self::CONTAINER_DATABASES => 'entryId',
-            self::CONTAINER_DATABASE_TABLES => 'entryId',
-            self::CONTAINER_DATABASE_TABLE_COLUMNS => 'entryId',
-            self::SYSTEM_SERVICES => 'serviceId',
-            self::PROCESSES => 'processId',
-            self::PROCESSES_UNIQUE => 'uniqueProcessId',
+    public static function getPrimaryKeyNameByCategory(string $category, bool $isContainer = false) {
+        if($isContainer) {
+            return match($category) {
+                self::C_GROUPS => 'groupId',
+                self::C_DOCUMENT_CLASSES => 'classId',
+                self::C_DOCUMENT_CLASS_GROUP_RIGHTS => 'rightId',
+                self::C_DOCUMENT_FOLDERS => 'folderId',
+                self::C_DOCUMENT_FOLDER_GROUP_RELATION => 'relationId',
+                self::C_GROUP_STANDARD_OPERATION_RIGHTS => 'rightId',
+                self::C_PROCESS_TYPES => 'typeId',
+                self::C_DOCUMENTS => 'documentId',
+                self::C_DOCUMENTS_CUSTOM_METADATA => 'entryId',
+                self::C_GROUP_USERS_RELATION => 'relationId',
+                self::C_CUSTOM_METADATA => 'metadataId',
+                self::C_CUSTOM_METADATA_FOLDER_RELATION => 'relationId',
+                self::C_CUSTOM_METADATA_LIST_VALUES => 'valueId',
+                self::C_GRID_CONFIGURATION => 'configurationId',
+                self::C_PROCESSES => 'processId',
+                self::C_PROCESS_INSTANCES => 'instanceId',
+                self::C_DOCUMENT_SHARING => 'sharingId',
+                self::C_ARCHIVE_FOLDERS => 'folderId',
+                self::C_ARCHIVE_FOLDER_DOCUMENT_RELATION => 'relationId',
+                self::C_FILE_STORAGE => 'fileId',
+                self::C_DOCUMENT_FILE_RELATION => 'relationId',
+                self::C_PROCESS_CUSTOM_METADATA_VALUES => 'valueId',
+                self::C_PROCESS_CUSTOM_METADATA => 'metadataId',
+                self::C_EXTERNAL_SYSTEMS => 'systemId',
+                self::C_EXTERNAL_SYSTEM_LOG => 'entryId',
+                self::C_EXTERNAL_SYSTEM_TOKENS => 'tokenId',
+                self::C_EXTERNAL_SYSTEM_RIGHTS => 'rightId',
+                self::C_PROPERTY_ITEMS_USER_RELATION => 'relationId',
 
-            self::C_GROUPS => 'groupId',
-            self::C_DOCUMENT_CLASSES => 'classId',
-            self::C_DOCUMENT_CLASS_GROUP_RIGHTS => 'rightId',
-            self::C_DOCUMENT_FOLDERS => 'folderId',
-            self::C_DOCUMENT_FOLDER_GROUP_RELATION => 'relationId',
-            self::C_GROUP_STANDARD_OPERATION_RIGHTS => 'rightId',
-            self::C_PROCESS_TYPES => 'typeId',
-            self::C_DOCUMENTS => 'documentId',
-            self::C_DOCUMENTS_CUSTOM_METADATA => 'entryId',
-            self::C_GROUP_USERS_RELATION => 'relationId',
-            self::C_CUSTOM_METADATA => 'metadataId',
-            self::C_CUSTOM_METADATA_FOLDER_RELATION => 'relationId',
-            self::C_CUSTOM_METADATA_LIST_VALUES => 'valueId',
-            self::C_GRID_CONFIGURATION => 'configurationId',
-            self::C_PROCESSES => 'processId',
-            self::C_PROCESS_INSTANCES => 'instanceId',
-            self::C_DOCUMENT_SHARING => 'sharingId',
-            self::C_ARCHIVE_FOLDERS => 'folderId',
-            self::C_ARCHIVE_FOLDER_DOCUMENT_RELATION => 'relationId',
-            self::C_FILE_STORAGE => 'fileId',
-            self::C_DOCUMENT_FILE_RELATION => 'relationId',
-            self::C_PROCESS_CUSTOM_METADATA_VALUES => 'valueId',
-            self::C_PROCESS_CUSTOM_METADATA => 'metadataId',
-            self::C_EXTERNAL_SYSTEMS => 'systemId',
-            self::C_EXTERNAL_SYSTEM_LOG => 'entryId',
-            self::C_EXTERNAL_SYSTEM_TOKENS => 'tokenId',
-            self::C_EXTERNAL_SYSTEM_RIGHTS => 'rightId',
-            self::C_PROPERTY_ITEMS_USER_RELATION => 'relationId'
-        };
+                self::USERS => 'userId',
+                self::TRANSACTIONS => 'transactionId',
+                self::GRID_EXPORTS => 'exportId',
+                self::GROUPS => 'groupId',
+                self::GROUP_USERS => 'groupUserId',
+                self::CONTAINERS => 'containerId',
+                self::CONTAINER_CREATION_STATUS => 'statusId',
+                self::CONTAINER_STATUS_HISTORY => 'historyId',
+                self::SERVICE_HISTORY => 'historyId',
+                self::CONTAINER_USAGE_STATISTICS => 'entryId',
+                self::CONTAINER_INVITES => 'inviteId',
+                self::CONTAINER_INVITE_USAGE => 'entryId',
+                self::USER_ABSENCE => 'absenceId',
+                self::USER_SUBSTITUTES => 'entryId',
+                self::CONTAINER_DATABASES => 'entryId',
+                self::CONTAINER_DATABASE_TABLES => 'entryId',
+                self::CONTAINER_DATABASE_TABLE_COLUMNS => 'entryId',
+                self::SYSTEM_SERVICES => 'serviceId',
+                self::PROCESSES => 'processId',
+                self::PROCESSES_UNIQUE => 'uniqueProcessId'
+            };
+        } else {
+            return match($category) {
+                self::USERS => 'userId',
+                self::TRANSACTIONS => 'transactionId',
+                self::GRID_EXPORTS => 'exportId',
+                self::GROUPS => 'groupId',
+                self::GROUP_USERS => 'groupUserId',
+                self::CONTAINERS => 'containerId',
+                self::CONTAINER_CREATION_STATUS => 'statusId',
+                self::CONTAINER_STATUS_HISTORY => 'historyId',
+                self::SERVICE_HISTORY => 'historyId',
+                self::CONTAINER_USAGE_STATISTICS => 'entryId',
+                self::CONTAINER_INVITES => 'inviteId',
+                self::CONTAINER_INVITE_USAGE => 'entryId',
+                self::USER_ABSENCE => 'absenceId',
+                self::USER_SUBSTITUTES => 'entryId',
+                self::CONTAINER_DATABASES => 'entryId',
+                self::CONTAINER_DATABASE_TABLES => 'entryId',
+                self::CONTAINER_DATABASE_TABLE_COLUMNS => 'entryId',
+                self::SYSTEM_SERVICES => 'serviceId',
+                self::PROCESSES => 'processId',
+                self::PROCESSES_UNIQUE => 'uniqueProcessId'
+            };
+        }
     }
 
     /**

@@ -19,50 +19,34 @@
                 <hr>
 
                 <div class="row">
-                    <div class="col-md" id="form">
-                        $component workflowEditor$
-                    </div>
-
                     <div class="col-md">
                         <div class="row">
-                            <div class="col-md" id="center">
-                                <p id="page-text">Workflow variables</p>
+                            <div class="col-md">
+                                <p class="widget-title">Workflow</p>
                             </div>
                         </div>
 
                         <div class="row">
                             <div class="col-md" id="grid">
-                                $component workflowVariablesList$
+                                $component workflowList$
                             </div>
                         </div>
+                    </div>
+                </div>
 
-                        <br>
-
+                <hr>
+                
+                <div class="row">
+                    <div class="col-md">
                         <div class="row">
                             <div class="col-md">
-                                <p>You can define exact users with their ID. Example: <br>
-                                    $CURRENT_USER_ID$
-                                </p>
-
-                                <p>You can define exact groups with their ID. Example: <br>
-                                    $GROUP_ID$
-                                </p>
+                                <p class="widget-title">Metadata</p>
                             </div>
                         </div>
 
                         <div class="row">
-                            <div class="col-md">
-                                <p id="page-text">Available actions</p>
-                                $AVAILABLE_ACTIONS$
-                            </div>
-                        </div>
-
-                        <hr>
-
-                        <div class="row">
-                            <div class="col-md">
-                                <p id="page-text">Workflow users</p>
-                                <div id="workflow-view"></div>
+                            <div class="col-md" id="grid">
+                                $component metadataList$
                             </div>
                         </div>
                     </div>

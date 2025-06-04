@@ -20,7 +20,7 @@ abstract class ABaseMigration {
     private string $migrationFullname;
     private string $migrationNumber;
     private ?TableSchema $tableSchema = null;
-    private DatabaseConnection $conn;
+    protected DatabaseConnection $conn;
     private Logger $logger;
 
     protected DatabaseConnection $masterConn;

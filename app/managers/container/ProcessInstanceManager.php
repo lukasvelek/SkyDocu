@@ -6,6 +6,7 @@ use App\Constants\Container\ProcessInstanceOfficerTypes;
 use App\Constants\Container\ProcessInstanceStatus;
 use App\Constants\Container\SystemGroups;
 use App\Core\DB\DatabaseRow;
+use App\Entities\ProcessInstanceDataEntity;
 use App\Exceptions\GeneralException;
 use App\Logger\Logger;
 use App\Managers\AManager;
@@ -19,7 +20,7 @@ use App\Repositories\Container\ProcessInstanceRepository;
  * @author Lukas Velek
  */
 class ProcessInstanceManager extends AManager {
-    private ProcessInstanceRepository $processInstanceRepository;
+    public ProcessInstanceRepository $processInstanceRepository;
     private GroupManager $groupManager;
     private UserManager $userManager;
 
@@ -83,11 +84,12 @@ class ProcessInstanceManager extends AManager {
     /**
      * Evaluates next process instance officer for given process workflow
      * 
+     * @param DatabaseRow $instance Instance
      * @param array $workflow Process workflow
      * @param string $currentUserId Current user ID
      * @param int $index Workflow index
      */
-    public function evaluateNextProcessInstanceOfficer(array $workflow, string $currentUserId, int $index): array {
+    public function evaluateNextProcessInstanceOfficer(DatabaseRow $instance, array $workflow, string $currentUserId, int $index): array {
         if(($index + 1) > count($workflow)) {
             return [null, null];
         }
@@ -135,6 +137,17 @@ class ProcessInstanceManager extends AManager {
                 $group = $this->groupManager->getGroupByTitle(SystemGroups::ADMINISTRATORS);
                 $result = $group->groupId;
                 $type = ProcessInstanceOfficerTypes::GROUP;
+                break;
+
+            case '$INSTANCE_AUTHOR$':
+                $instanceData = ProcessInstanceDataEntity::createFromSerializedData($instance->data);
+                $result = $instanceData->getWorkflowHistory()[0]['userId'];
+                $type = ProcessInstanceOfficerTypes::USER;
+                break;
+
+            case '$SERVICE_USER$':
+                $result = $this->userManager->getServiceUserId();
+                $type = ProcessInstanceOfficerTypes::USER;
                 break;
 
             default:
@@ -208,20 +221,8 @@ class ProcessInstanceManager extends AManager {
      * @param string $userId User ID
      */
     public function cancelProcessInstance(string $instanceId, string $userId) {
-        $instance = $this->getProcessInstanceById($instanceId);
-        $data = unserialize($instance->data);
-
-        $data['workflowHistory'][][$userId] = [
-            'operation' => 'cancel',
-            'date' => date('Y-m-d H:i:s')
-        ];
-
-        $dataToUpdate = [
-            'status' => ProcessInstanceStatus::CANCELED,
-            'data' => serialize($data)
-        ];
-
-        $this->updateInstance($instanceId, $dataToUpdate);
+        $this->changeProcessInstanceStatus($instanceId, ProcessInstanceStatus::CANCELED);
+        $this->addWorkflowHistoryEntryToProcessInstance($instanceId, $userId, 'cancel');
     }
 
     /**
@@ -231,19 +232,7 @@ class ProcessInstanceManager extends AManager {
      * @param string $userId User ID
      */
     public function acceptProcessInstance(string $instanceId, string $userId) {
-        $instance = $this->getProcessInstanceById($instanceId);
-        $data = unserialize($instance->data);
-
-        $data['workflowHistory'][][$userId] = [
-            'operation' => 'accept',
-            'date' => date('Y-m-d H:i:s')
-        ];
-
-        $dataToUpdate = [
-            'data' => serialize($data)
-        ];
-
-        $this->updateInstance($instanceId, $dataToUpdate);
+        $this->addWorkflowHistoryEntryToProcessInstance($instanceId, $userId, 'accept');
     }
 
     /**
@@ -253,20 +242,19 @@ class ProcessInstanceManager extends AManager {
      * @param string $userId User ID
      */
     public function rejectProcessInstance(string $instanceId, string $userId) {
-        $instance = $this->getProcessInstanceById($instanceId);
-        $data = unserialize($instance->data);
+        $this->changeProcessInstanceStatus($instanceId, ProcessInstanceStatus::FINISHED);
+        $this->addWorkflowHistoryEntryToProcessInstance($instanceId, $userId, 'reject');
+    }
 
-        $data['workflowHistory'][][$userId] = [
-            'operation' => 'reject',
-            'date' => date('Y-m-d H:i:s')
-        ];
-
-        $dataToUpdate = [
-            'data' => serialize($data),
-            'status' => ProcessInstanceStatus::FINISHED
-        ];
-
-        $this->updateInstance($instanceId, $dataToUpdate);
+    /**
+     * Finishes process instance
+     * 
+     * @param string $instanceId Process instance ID
+     * @param string $userId User ID
+     */
+    public function finishProcessInstance(string $instanceId, string $userId) {
+        $this->changeProcessInstanceStatus($instanceId, ProcessInstanceStatus::FINISHED);
+        $this->addWorkflowHistoryEntryToProcessInstance($instanceId, $userId, 'finish');
     }
 
     /**
@@ -276,20 +264,26 @@ class ProcessInstanceManager extends AManager {
      * @param string $userId User ID
      */
     public function archiveProcessInstance(string $instanceId, string $userId) {
+        $this->changeProcessInstanceStatus($instanceId, ProcessInstanceStatus::ARCHIVED);
+        $this->addWorkflowHistoryEntryToProcessInstance($instanceId, $userId, 'archive');
+    }
+
+    /**
+     * Adds workflow history entry to process instance
+     * 
+     * @param string $instanceId Instance ID
+     * @param string $userId User ID
+     * @param string $operation Operation
+     */
+    private function addWorkflowHistoryEntryToProcessInstance(string $instanceId, string $userId, string $operation) {
         $instance = $this->getProcessInstanceById($instanceId);
-        $data = unserialize($instance->data);
+        $instanceData = ProcessInstanceDataEntity::createFromSerializedData($instance->data);
 
-        $data['workflowHistory'][][$userId] = [
-            'operation' => 'archive',
-            'date' => date('Y-m-d H:i:s')
-        ];
+        $instanceData->addNewWorkflowHistoryEntry($userId, $operation);
 
-        $dataToUpdate = [
-            'data' => serialize($data),
-            'status' => ProcessInstanceStatus::ARCHIVED
-        ];
-
-        $this->updateInstance($instanceId, $dataToUpdate);
+        $this->updateInstance($instanceId, [
+            'data' => $instanceData->serialize()
+        ]);
     }
 
     /**
@@ -299,18 +293,19 @@ class ProcessInstanceManager extends AManager {
      * @param string $officerId Officer ID
      * @param int $officerType Officer type
      */
-    public function moveProcessInstanceToNextOfficer(string $instanceId, string $officerId, int $officerType) {
+    public function moveProcessInstanceToNextOfficer(string $instanceId, string $userId, string $officerId, int $officerType) {
         $instance = $this->getProcessInstanceById($instanceId);
-        $data = unserialize($instance->data);
-        $index = (int)$data['workflowIndex'];
 
-        $data['workflowIndex'] = $index + 1;
+        $instanceData = ProcessInstanceDataEntity::createFromSerializedData($instance->data);
+        $instanceData->incrementWorkflowIndex();
 
         $this->updateInstance($instanceId, [
             'currentOfficerId' => $officerId,
             'currentOfficerType' => $officerType,
-            'data' => serialize($data)
+            'data' => $instanceData->serialize()
         ]);
+
+        $this->addWorkflowHistoryEntryToProcessInstance($instanceId, $userId, 'accept');
     }
 
     /**

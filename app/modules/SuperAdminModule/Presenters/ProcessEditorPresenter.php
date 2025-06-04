@@ -2,7 +2,7 @@
 
 namespace App\Modules\SuperAdminModule;
 
-use App\Constants\Container\ProcessInstanceOperations;
+use App\Constants\Container\CustomMetadataTypes;
 use App\Constants\Container\ProcessStatus as ContainerProcessStatus;
 use App\Constants\ProcessColorCombos;
 use App\Constants\ProcessStatus;
@@ -10,10 +10,21 @@ use App\Core\AjaxRequestBuilder;
 use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
 use App\Core\Http\JsonResponse;
+use App\Entities\ProcessEntity;
 use App\Exceptions\AException;
-use App\Exceptions\GeneralException;
+use App\Helpers\LinkHelper;
+use App\Helpers\ProcessEditorHelper;
+use App\Lib\Forms\Reducers\ProcessMetadataEditorReducer;
+use App\Managers\EntityManager;
+use App\Repositories\Container\ProcessMetadataRepository;
 use App\Repositories\Container\ProcessRepository;
+use App\Repositories\ContentRepository;
 use App\UI\FormBuilder2\JSON2FB;
+use App\UI\HTML\HTML;
+use App\UI\LinkBuilder;
+use App\UI\ListBuilder\ArrayRow;
+use App\UI\ListBuilder\ListAction;
+use App\UI\ListBuilder\ListRow;
 
 class ProcessEditorPresenter extends ASuperAdminPresenter {
     public function __construct() {
@@ -28,8 +39,7 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
         $process = null;
         if($request->get('processId') !== null && $request->get('uniqueProcessId') !== null) {
             $processId = $this->httpRequest->get('processId');
-
-            $process = $this->app->processManager->getProcessById($processId);
+            $process = $this->app->processManager->getProcessEntityById($processId);
         }
 
         $form = $this->componentFactory->getFormBuilder();
@@ -49,14 +59,14 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
             ->setRequired();
 
         if($process !== null) {
-            $title->setValue($process->title);
+            $title->setValue($process->getTitle());
         }
 
         $description = $form->addTextArea('description', 'Description:')
             ->setRequired();
 
         if($process !== null) {
-            $description->setContent($process->description);
+            $description->setContent($process->getDescription());
         }
             
         $colors = [];
@@ -67,9 +77,9 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
             ];
 
             if($process !== null) {
-                if($process->colorCombo !== null && $process->colorCombo == $key) {
+                if($process->getColorCombo() !== null && $process->getColorCombo() == $key) {
                     $color['selected'] = 'selected';
-                } else if($process->colorCombo === null && $key == ProcessColorCombos::GREEN) {
+                } else if($process->getColorCombo() === null && $key == ProcessColorCombos::GREEN) {
                     $color['selected'] = 'selected';
                 }
             }
@@ -91,129 +101,528 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
         $description = $fr->description;
         $colorCombo = $fr->colorCombo;
 
-        $json = json_encode(['title' => $title, 'description' => $description, 'colorCombo' => $colorCombo]);
-
-        $params = [];
-
-        if($this->httpRequest->get('processId') !== null && $this->httpRequest->get('uniqueProcessId') !== null) {
-            $params['processId'] = $this->httpRequest->get('processId');
-            $params['uniqueProcessId'] = $this->httpRequest->get('uniqueProcessId');
+        $oldProcessId = null;
+        if($this->httpRequest->get('processId') !== null) {
+            $oldProcessId = $this->httpRequest->get('processId');
         }
 
-        $params['formdata'] = base64_encode($json);
+        $definition = [
+            'colorCombo' => $colorCombo
+        ];
 
-        $this->redirect($this->createURL('editor', $params));
-    }
+        if($oldProcessId !== null) {
+            $oldProcess = $this->app->processManager->getProcessEntityById($oldProcessId);
 
-    public function handleEditor(?FormRequest $fr = null) {
-        if($fr !== null) {
-            try {
-                $oldProcessId = null;
-                if($this->httpRequest->get('processId') !== null) {
-                    $oldProcessId = $this->httpRequest->get('processId');
-                }
-
-                $formdata = $this->httpRequest->get('formdata');
-                $formdata = json_decode(base64_decode($formdata), true);
-
-                $title = $formdata['title'];
-                $description = $formdata['description'];
-                $colorCombo = $formdata['colorCombo'];
-
-                $code = base64_encode($fr->formDefinition);
-
-                if($oldProcessId !== null) {
-                    $oldProcess = $this->app->processManager->getProcessById($oldProcessId);
-
-                    if($oldProcess->title == $title &&
-                        $oldProcess->description == $description &&
-                        json_decode(base64_decode($oldProcess->form), true) == json_decode(base64_decode($code), true)) {
-                        // is the same - lets go straight to the workflow editor
-
-                        $params = [
-                            'processId' => $oldProcessId,
-                            'uniqueProcessId' => $oldProcess->uniqueProcessId
-                        ];
-
-                        $this->redirect($this->createURL('workflowEditor', $params));
-                    }
-                }
-
-                $this->app->processRepository->beginTransaction(__METHOD__);
-
-                // add new version
-                [$processId, $uniqueProcessId] = $this->app->processManager->createNewProcess($title, $description, $this->getUserId(), $colorCombo, $code, $oldProcessId, ProcessStatus::NEW);
-
-                $this->app->processRepository->commit($this->getUserId(), __METHOD__);
-
-                $this->flashMessage('Successfully created a new process. Now, you have to define workflow.', 'success');
+            if($oldProcess->getTitle() == $title &&
+                $oldProcess->getDescription() == $description &&
+                $oldProcess->getColorCombo() == $colorCombo) {
+                // it is the same - no saving
 
                 $params = [
-                    'processId' => $processId,
-                    'uniqueProcessId' => $uniqueProcessId
+                    'processId' => $oldProcessId,
+                    'uniqueProcessId' => $oldProcess->getUniqueProcessId()
                 ];
-    
-                if($oldProcessId !== null) {
-                    $params['oldProcessId'] = $oldProcessId;
+
+                $this->redirect($this->createURL('workflowList', $params));
+            }
+
+            $definition = $oldProcess->getDefinition();
+            $definition['colorCombo'] = $colorCombo;
+        }
+
+        try {
+            $this->app->processRepository->beginTransaction(__METHOD__);
+
+            [$processId, $uniqueProcessId] = $this->app->processManager->createNewProcess(
+                $title,
+                $description,
+                $this->getUserId(),
+                $definition,
+                $oldProcessId,
+                ProcessStatus::NEW
+            );
+
+            $params = [
+                'processId' => $processId,
+                'uniqueProcessId' => $uniqueProcessId
+            ];
+
+            if($oldProcessId !== null) {
+                $params['oldProcessId'] = $oldProcessId;
+            } else {
+                $params['isNew'] = 1;
+            }
+
+            $this->app->processRepository->commit($this->getUserId(), __METHOD__);
+
+            $this->flashMessage('Successfully created a new process. Now, you have to define the workflow.', 'success');
+
+            $this->redirect($this->createURL('workflowList', $params));
+        } catch(AException $e) {
+            $this->app->processRepository->rollback(__METHOD__);
+
+            $this->flashMessage('Could not create a new process. Reason: ' . $e->getMessage(), 'error', 10);
+
+            $this->redirect($this->createFullURL('SuperAdmin:Processes', 'list'));
+        }
+    }
+
+    public function renderWorkflowList() {
+        $params = [
+            'processId' => $this->httpRequest->get('processId'),
+            'uniqueProcessId' => $this->httpRequest->get('uniqueProcessId')
+        ];
+
+        if($this->httpRequest->get('oldProcessId') !== null) {
+            $params['oldProcessId'] = $this->httpRequest->get('oldProcessId');
+        }
+
+        $links = [
+            $this->createBackFullUrl('SuperAdmin:Processes', 'list'),
+            LinkBuilder::createSimpleLink('New workflow step', $this->createURL('editor2', $params), 'link'),
+            LinkBuilder::createSimpleLink('New metadata', $this->createURL('metadataEditor', $params), 'link')
+        ];
+
+        $process = $this->app->processManager->getProcessEntityById($this->httpRequest->get('processId'));
+
+        $previousVersion = null;
+        try {
+            $previousVersion = $this->app->processManager->getPreviousVersionForProcessId($process->getId(), true);
+        } catch(AException $e) {}
+
+        $workflow = $process->getDefinition()['forms'] ?? [];
+
+        $showPublishLink = false;
+        if(count($workflow) > 0) { // workflow must not bet empty
+            if($previousVersion !== null) {
+                // previous version exists
+                if($process->getStatus() == ProcessStatus::NEW && $previousVersion->getStatus() == ProcessStatus::IN_DISTRIBUTION) {
+                    // previous version is in distribution and the current is new
+                    $showPublishLink = true;
+                } else if($process->getStatus() == ProcessStatus::NEW && $previousVersion->getStatus() == ProcessStatus::NOT_IN_DISTRIBUTION) {
+                    // previous version is not in distribution and the current is new
+                    // we must check if there is a version before the current one that is in distribution
+                    $run = true;
+                    $_pv = $previousVersion;
+                    while($run) {
+                        try {
+                            $_pv = $this->app->processManager->getPreviousVersionForProcessId($_pv->getId(), true);
+                        } catch(AException $e) {
+                            $run = false;
+                        }
+
+                        if($_pv->getStatus() == ProcessStatus::IN_DISTRIBUTION) {
+                            $showPublishLink = true;
+                            $run = false;
+                        }
+                    }
                 }
-
-                $this->redirect($this->createURL('workflowEditor', $params));
-            } catch(AException $e) {
-                $this->app->processRepository->rollback(__METHOD__);
-
-                $this->flashMessage('Could not create a new process. Reason: ' . $e->getMessage(), 'error', 10);
-
-                $this->redirect($this->createFullURL('SuperAdmin:Processes', 'list'));
+            } else {
+                // previous version does not exist
+                if($process->getStatus() == ProcessStatus::NEW) {
+                    // current version is new
+                    $showPublishLink = true;
+                }
             }
         }
-    }
 
-    public function renderEditor() {
-        $this->template->links = $this->createBackFullUrl('SuperAdmin:Processes', 'list');
-    }
-
-    protected function createComponentProcessEditor(HttpRequest $request) {
-        $params = [];
-
-        $process = null;
-        if($request->get('processId') !== null && $request->get('uniqueProcessId') !== null) {
-            $processId = $this->httpRequest->get('processId');
-
-            $process = $this->app->processManager->getProcessById($processId);
-
-            $params['processId'] = $processId;
-            $params['uniqueProcessId'] = $process->uniqueProcessId;
+        if($showPublishLink) {
+            $links[] = LinkBuilder::createSimpleLink('Publish', $this->createURL('publish', $params), 'link');
         }
 
-        $params['formdata'] = $request->get('formdata');
+        $this->template->links = LinkHelper::createLinksFromArray($links);
+    }
+
+    protected function createComponentMetadataList(HttpRequest $request) {
+        $processId = $request->get('processId');
+
+        $params = [
+            'processId' => $request->get('processId'),
+            'uniqueProcessId' => $request->get('uniqueProcessId')
+        ];
+
+        if($request->get('oldProcessId') !== null) {
+            $params['oldProcessId'] = $request->get('oldProcessId');
+        }
+
+        $process = $this->app->processManager->getProcessEntityById($processId);
+
+        $metadata = $process->getMetadataDefinition()['metadata'] ?? [];
+
+        $datasource = [];
+        foreach($metadata as $md) {
+            $datasource[] = [
+                'name' => $md[ProcessEntity::METADATA_DEFINITION_NAME],
+                'type' => CustomMetadataTypes::toString($md[ProcessEntity::METADATA_DEFINITION_TYPE]),
+                'description' => $md[ProcessEntity::METADATA_DEFINITION_DESCRIPTION]
+            ];
+        }
+
+        $list = $this->componentFactory->getListBuilder();
+
+        $list->setListName('processMetadataList');
+        $list->setDataSource($datasource);
+
+        $list->addColumnText('name', 'Name');
+        $list->addColumnText('description', 'Description');
+        $list->addColumnText('type', 'Type');
+
+        $edit = $list->addAction('edit');
+        $edit->setTitle('Edit');
+        $edit->onCanRender[] = function() {
+            return true;
+        };
+        $edit->onRender[] = function(mixed $primaryKey, ArrayRow $row, ListRow $_row, HTML $html) use ($params) {
+            $_params = $params;
+            $_params['primaryKey'] = $primaryKey;
+            $_params['operation'] = 'edit';
+
+            $el = HTML::el('a');
+            $el->href($this->createURLString('metadataEditor', $_params))
+                ->text('Edit')
+                ->class('grid-link');
+
+            return $el;
+        };
+        
+        $delete = $list->addAction('delete');
+        $delete->setTitle('Delete');
+        $delete->onCanRender[] = function() {
+            return true;
+        };
+        $delete->onRender[] = function(mixed $primaryKey, ArrayRow $row, ListRow $_row, HTML $html) use ($params) {
+            $_params = $params;
+            $_params['primaryKey'] = $primaryKey;
+
+            $el = HTML::el('a');
+            $el->href($this->createURLString('deleteMetadata', $_params))
+                ->text('Delete')
+                ->class('grid-link');
+
+            return $el;
+        };
+
+        return $list;
+    }
+
+    protected function createComponentWorkflowList(HttpRequest $request) {
+        $processId = $request->get('processId');
+
+        $process = $this->app->processManager->getProcessEntityById($processId);
+        $workflow = $process->getWorkflow();
+
+        $count = count($workflow);
+
+        $datasource = [];
+        $i = 1;
+        foreach($workflow as $w) {
+            $datasource[] = [
+                'workflow' => $w,
+                'index' => $i
+            ];
+            $i++;
+        }
+
+        $params = [
+            'processId' => $request->get('processId'),
+            'uniqueProcessId' => $request->get('uniqueProcessId')
+        ];
+
+        if($request->get('oldProcessId') !== null) {
+            $params['oldProcessId'] = $request->get('oldProcessId');
+        }
+
+        $list = $this->componentFactory->getListBuilder();
+
+        $list->setListName('processWorkflowList');
+        $list->setDataSource($datasource);
+
+        $list->addColumnText('index', '#');
+        $list->addColumnText('workflow', 'Workflow');
+
+        $up = $list->addAction('up');
+        $up->setTitle('&uarr;');
+        $up->onCanRender[] = function(ArrayRow $row, ListRow $_row, ListAction &$action) use ($count) {
+            $isFirst = $_row->index == 1;
+            return $count > 1 && !$isFirst;
+        };
+        $up->onRender[] = function(mixed $primaryKey, ArrayRow $row, ListRow $_row, HTML $html) use ($params) {
+            $_params = $params;
+            $_params['primaryKey'] = $primaryKey;
+            $_params['direction'] = 'up';
+
+            $el = HTML::el('a');
+            $el->href($this->createURLString('moveWorkflowStep', $_params))
+                ->text('&uarr;')
+                ->class('grid-link');
+
+            return $el;
+        };
+
+        $down = $list->addAction('down');
+        $down->setTitle('&darr;');
+        $down->onCanRender[] = function(ArrayRow $row, ListRow $_row, ListAction &$action) use ($count) {
+            $isLast = $_row->index == $count;
+            return $count > 1 && !$isLast;
+        };
+        $down->onRender[] = function(mixed $primaryKey, ArrayRow $row, ListRow $_row, HTML $html) use ($params) {
+            $_params = $params;
+            $_params['primaryKey'] = $primaryKey;
+            $_params['direction'] = 'down';
+
+            $el = HTML::el('a');
+            $el->href($this->createURLString('moveWorkflowStep', $_params))
+                ->text('&darr;')
+                ->class('grid-link');
+
+            return $el;
+        };
+
+        $view = $list->addAction('view');
+        $view->setTitle('View');
+        $view->onCanRender[] = function() {
+            return true;
+        };
+        $view->onRender[] = function(mixed $primaryKey, ArrayRow $row, ListRow $_row, HTML $html) use ($params) {
+            $_params = $params;
+            $_params['primaryKey'] = $primaryKey;
+            $_params['operation'] = 'view';
+
+            $el = HTML::el('a');
+            $el->href($this->createURLString('editor2', $_params))
+                ->text('View')
+                ->class('grid-link');
+
+            return $el;
+        };
+
+        $edit = $list->addAction('Copy');
+        $edit->setTitle('Copy');
+        $edit->onCanRender[] = function() {
+            return true;
+        };
+        $edit->onRender[] = function(mixed $primaryKey, ArrayRow $row, ListRow $_row, HTML $html) use ($params) {
+            $_params = $params;
+            $_params['primaryKey'] = $primaryKey;
+
+            $el = HTML::el('a');
+            $el->href($this->createURLString('editor2', $_params))
+                ->text('Copy')
+                ->class('grid-link');
+
+            return $el;
+        };
+
+        $delete = $list->addAction('delete');
+        $delete->setTitle('Delete');
+        $delete->onCanRender[] = function() {
+            return true;
+        };
+        $delete->onRender[] = function(mixed $primaryKey, ArrayRow $row, ListRow $_row, HTML $html) use ($params) {
+            $_params = $params;
+            $_params['primaryKey'] = $primaryKey;
+
+            $el = HTML::el('a');
+            $el->href($this->createURLString('deleteWorkflowStep', $_params))
+                ->text('Delete')
+                ->class('grid-link');
+
+            return $el;
+        };
+
+        return $list;
+    }
+
+    public function handleMoveWorkflowStep() {
+        $direction = $this->httpRequest->get('direction');
+        $primaryKey = $this->httpRequest->get('primaryKey');
+        $processId = $this->httpRequest->get('processId');
+
+        $params = [
+            'processId' => $this->httpRequest->get('processId'),
+            'uniqueProcessId' => $this->httpRequest->get('uniqueProcessId')
+        ];
+
+        if($this->httpRequest->get('oldProcessId') !== null) {
+            $params['oldProcessId'] = $this->httpRequest->get('oldProcessId');
+        }
+
+        $process = $this->app->processManager->getProcessEntityById($processId);
+
+        $definition = $process->getDefinition();
+
+        $forms = $definition['forms'];
+
+        $nextPrimaryKey = $direction == 'up' ? ($primaryKey - 1) : ($primaryKey + 1);
+
+        $newForms = [];
+        foreach($forms as $index => $form) {
+            if($index == $primaryKey) continue;
+            $newForms[] = $form;
+        }
+
+        array_splice($newForms, $nextPrimaryKey, 0, [$forms[$primaryKey]]);
+
+        $definition['forms'] = $newForms;
+
+        try {
+            $this->app->processRepository->beginTransaction(__METHOD__);
+
+            $this->app->processManager->updateProcess($processId, [
+                'definition' => base64_encode(json_encode($definition))
+            ]);
+
+            $this->app->processRepository->commit($this->getUserId(), __METHOD__);
+
+            $this->flashMessage('Successfully moved workflow step ' . $direction . '.', 'success');
+        } catch(AException $e) {
+            $this->app->processRepository->rollback(__METHOD__);
+
+            $this->flashMessage('Could not move workflow step ' . $direction . '. Reason: ' . $e->getMessage(), 'error', 10);
+        }
+
+        $this->redirect($this->createURL('workflowList', $params));
+    }
+
+    public function handleDeleteWorkflowStep() {
+        $primaryKey = $this->httpRequest->get('primaryKey');
+        $processId = $this->httpRequest->get('processId');
+
+        $params = [
+            'processId' => $this->httpRequest->get('processId'),
+            'uniqueProcessId' => $this->httpRequest->get('uniqueProcessId')
+        ];
+
+        if($this->httpRequest->get('oldProcessId') !== null) {
+            $params['oldProcessId'] = $this->httpRequest->get('oldProcessId');
+        }
+
+        $process = $this->app->processManager->getProcessEntityById($processId);
+
+        $definition = $process->getDefinition();
+
+        $forms = $definition['forms'];
+        
+        $newForms = [];
+        foreach($forms as $index => $form) {
+            if($index == $primaryKey) continue;
+
+            $newForms[] = $form;
+        }
+
+        $definition['forms'] = $newForms;
+
+        try {
+            $this->app->processRepository->beginTransaction(__METHOD__);
+
+            $this->app->processManager->updateProcess($processId, [
+                'definition' => base64_encode(json_encode($definition))
+            ]);
+
+            $this->app->processRepository->commit($this->getUserId(), __METHOD__);
+
+            $this->flashMessage('Successfully deleted workflow step.', 'success');
+        } catch(AException $e) {
+            $this->app->processRepository->rollback(__METHOD__);
+
+            $this->flashMessage('Could not delete workflow step. Reason: ' . $e->getMessage(), 'error', 10);
+        }
+
+        $this->redirect($this->createURL('workflowList', $params));
+    }
+
+    public function renderEditor2() {
+        $params = [
+            'processId' => $this->httpRequest->get('processId'),
+            'uniqueProcessId' => $this->httpRequest->get('uniqueProcessId')
+        ];
+
+        if($this->httpRequest->get('oldProcessId') !== null) {
+            $params['oldProcessId'] = $this->httpRequest->get('oldProcessId');
+        }
+
+        $this->template->links = $this->createBackUrl('workflowList', $params);
+    }
+
+    protected function createComponentProcessWorkflowEditor(HttpRequest $request) {
+        $params = [
+            'processId' => $request->get('processId'),
+            'uniqueProcessId' => $request->get('uniqueProcessId')
+        ];
+
+        if($request->get('oldProcessId') !== null) {
+            $params['oldProcessId'] = $request->get('oldProcessId');
+        }
+
+        $process = $this->app->processManager->getProcessEntityById($request->get('processId'));
+
+        $isFirst = empty($process->getWorkflow());
+
+        $primaryKey = null;
+        $operation = null;
+        if($request->get('primaryKey') !== null) {
+            $primaryKey = $request->get('primaryKey');
+            //$params['primaryKey'] = $primaryKey;
+        }
+        if($request->get('operation') !== null) {
+            $operation = $request->get('operation');
+            //$params['operation'] = $operation;
+        }
 
         $form = $this->componentFactory->getFormBuilder();
 
-        $form->setAction($this->createURL('editor', $params));
+        $form->setAction($this->createURL('saveWorkflowEditor', $params));
 
-        $form->addLabel('formDefinition_label', 'Form JSON definition:')
+        $actor = $form->addTextInput('actor', 'Actor:')
             ->setRequired();
 
-        $formDefinition = $form->addTextArea('formDefinition')
+        if($primaryKey !== null) {
+            $actor->setValue($process->getDefinition()['forms'][$primaryKey]['actor']);
+
+            if($operation == 'view') {
+                $actor->setReadonly();
+            }
+        }
+
+        $form->addLabel('formDefinitionLbl', 'Form definition:')
+            ->setRequired();
+
+        $fd = $form->addTextArea('formDefinition')
             ->setRequired()
             ->setLines(20);
 
-        if($process !== null) {
-            $dbForm = base64_decode($process->form);
-            $formDefinition->setContent($dbForm);
+        if($primaryKey !== null) {
+            $fd->setContent($process->getDefinition()['forms'][$primaryKey]['form']);
+
+            if($operation == 'view') {
+                $fd->setReadonly();
+            }
         }
 
-        $form->addButton('View')
-            ->setOnClick('sendLiveview()');
+        if($operation != 'view') {
+            $form->addButton('Check form')
+                ->setOnClick('sendLiveview()');
 
-        $form->addSubmit('Save');
+            $form->addSubmit('Save');
+        }
 
         $arb = new AjaxRequestBuilder();
 
-        $arb->setAction($this, 'editorLiveview')
+        $arb->setAction($this, 'editorLiveview2')
+            ->setMethod('POST')
+            ->setHeader(['code' => '_code', 'isFirst' => '_isFirst'])
+            ->setFunctionName('editorLiveview')
+            ->setFunctionArguments(['_code', '_isFirst'])
+            ->updateHTMLElement('form-live-view', 'form');
+
+        $form->addScript($arb);
+
+        $arb = new AjaxRequestBuilder();
+
+        $arb->setAction($this, 'editorServiceLiveview')
             ->setMethod('POST')
             ->setHeader(['code' => '_code'])
-            ->setFunctionName('editorLiveview')
+            ->setFunctionName('editorServiceLiveview')
             ->setFunctionArguments(['_code'])
             ->updateHTMLElement('form-live-view', 'form');
 
@@ -228,25 +637,112 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
                     return;
                 }
 
+                const _actor = $("#actor").val();
+
+                if(_actor == "$SERVICE_USER$") {
+                    alert("No form is used for service steps.");
+                    return;
+                }
+
                 var _json = "";
+
+                if(_actor == "$SERVICE_USER$") {
+                    try {
+                        _json = JSON.parse(_code);
+
+                        editorServiceLiveview(JSON.stringify(_json));
+                    } catch(exception) {
+                        alert("Could not parse JSON. Reason: " + exception);
+                    }
+
+                    return;
+                }
 
                 try {
                     _json = JSON.parse(_code);
 
-                    editorLiveview(JSON.stringify(_json));
+                    $("#form-live-view").html("<div id=\"center\"><img src=\"resources/loading.gif\" width=\"64px\"></div>");
+
+                    editorLiveview(JSON.stringify(_json), ' . ($isFirst ? 'true' : 'false') . ');
                 } catch(exception) {
                     alert("Could not parse JSON. Reason: " + exception);
                 }
             }
         ';
 
+        if($operation == 'view') {
+            $code .= ' sendLiveview();';
+        }
+
         $form->addScript($code);
 
         return $form;
     }
+    
+    public function handleSaveWorkflowEditor(FormRequest $fr) {
+        $actor = $fr->actor;
+        $form = $fr->formDefinition;
 
-    public function actionEditorLiveview() {
+        $params = [
+            'processId' => $this->httpRequest->get('processId'),
+            'uniqueProcessId' => $this->httpRequest->get('uniqueProcessId')
+        ];
+
+        if($this->httpRequest->get('oldProcessId') !== null) {
+            $params['oldProcessId'] = $this->httpRequest->get('oldProcessId');
+        }
+
+        $possibleActors = [
+            '$CURRENT_USER$',
+            '$ACCOUNTANTS$',
+            '$ARCHIVISTS$',
+            '$PROPERTY_MANAGERS$',
+            '$CURRENT_USER_SUPERIOR$',
+            '$ADMINISTRATORS$',
+            '$SERVICE_USER$',
+            '$INSTANCE_AUTHOR$'
+        ];
+
+        if(!in_array($actor, $possibleActors) && !str_starts_with($actor, '$GID_') && !str_starts_with($actor, '$UID_')) {
+            $this->flashMessage('Unknown actor defined. See docs for possible values.', 'error', 10);
+            $this->redirect($this->createURL('editor2', $params));
+        }
+
+        $processId = $this->httpRequest->get('processId');
+
+        $process = $this->app->processManager->getProcessEntityById($processId);
+
+        $definition = $process->getDefinition();
+
+        $definition['forms'][] = [
+            'actor' => $actor,
+            'form' => $form
+        ];
+
+        $data = [
+            'definition' => base64_encode(json_encode($definition))
+        ];
+
+        try {
+            $this->app->processRepository->beginTransaction(__METHOD__);
+
+            $this->app->processManager->updateProcess($processId, $data);
+
+            $this->app->processRepository->commit($this->getUserId(), __METHOD__);
+
+            $this->flashMessage('Successfully saved process workflow step.', 'success');
+        } catch(AException $e) {
+            $this->app->processRepository->rollback(__METHOD__);
+
+            $this->flashMessage('Could not save process workflow step. Reason: ' . $e->getMessage(), 'error', 10);
+        }
+
+        $this->redirect($this->createURL('workflowList', $params));
+    }
+
+    public function actionEditorLiveview2() {
         $jsonCode = $this->httpRequest->get('code');
+        $isFirst = $this->httpRequest->get('isFirst') == 'true';
 
         $decodedJson = json_decode($jsonCode, true);
 
@@ -261,6 +757,12 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
         $helper->setSkipAttributes(['action']);
         $helper->addSkipElementAttributes('userSelect', 'containerId');
         $helper->addSkipElementAttributes('userSelectSearch', 'containerId');
+        $helper->setEditor();
+        if(!$isFirst) {
+            $helper->checkForHandleButtons();
+        } else {
+            $helper->checkForNoHandleButtons();
+        }
 
         try {
             $code = $helper->render();
@@ -271,24 +773,189 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
         }
     }
 
-    public function renderWorkflowEditor() {
-        $this->template->links = $this->createBackFullUrl('SuperAdmin:Processes', 'list');
+    public function handlePublish() {
+        $processId = $this->httpRequest->get('processId');
+        $uniqueProcessId = $this->httpRequest->get('uniqueProcessId');
 
-        $this->template->current_user_id = sprintf('$UID_%s$', $this->getUserId());
-        $this->template->group_id = sprintf('$GID_%s$', $this->app->groupManager->getGroupByTitle('containerManagers')->groupId);
-
-        $actionsCode = '<ul>';
-        foreach(ProcessInstanceOperations::getAll() as $key => $text) {
-            $actionsCode .= '<li>' . $text . ' -> ' . $key . '</li>';
+        $oldProcessId = null;
+        if($this->httpRequest->get('oldProcessId') !== null) {
+            $oldProcessId = $this->httpRequest->get('oldProcessId');
+        } else {
+            $previousVersion = null;
+            try {
+                $previousVersion = $this->app->processManager->getPreviousVersionInDistributionForProcessId($processId, true);
+            } catch(AException $e) {}
+            
+            if($previousVersion !== null) {
+                $oldProcessId = $previousVersion->getId();
+            }
         }
-        $actionsCode .= '</ul>';
 
-        $this->template->available_actions = $actionsCode;
+        try {
+            $this->app->processRepository->beginTransaction(__METHOD__);
+
+            $fmText = 'Successfully published new process';
+
+            if($oldProcessId !== null) {
+                // Remove old process version from distribution
+                $this->app->processManager->updateProcess($oldProcessId, [
+                    'status' => ProcessStatus::NOT_IN_DISTRIBUTION
+                ]);
+
+                $fmText .= ' version';
+            }
+
+            $fmText .= '.';
+
+            // Add new process version to distribution
+            $this->app->processManager->updateProcess($processId, [
+                'status' => ProcessStatus::IN_DISTRIBUTION
+            ]);
+
+            $this->app->processRepository->commit($this->getUserId(), __METHOD__);
+
+            $this->flashMessage($fmText, 'success');
+        } catch(AException $e) {
+            $this->app->processRepository->rollback(__METHOD__);
+
+            $this->flashMessage('Could not publish new process' . ($oldProcessId !== null ? ' version.' : '.') . ' Reason: ' . $e->getMessage(), 'error', 10);
+        }
+
+        $process = $this->app->processManager->getProcessEntityById($processId);
+        $hasMetadata = !empty($process->getMetadataDefinition());
+
+        try {
+            $process = $this->app->processManager->getProcessEntityById($processId);
+
+            $containers = $this->app->containerManager->getContainersInDistribution();
+
+            foreach($containers as $container) {
+                /**
+                 * @var \App\Entities\ContainerEntity $container
+                 */
+                $dbConn = $this->app->dbManager->getConnectionToDatabase($container->getDefaultDatabase()->getName());
+
+                $processRepository = new ProcessRepository($dbConn, $this->logger, $this->app->transactionLogRepository, $this->getUserId());
+                $processMetadataRepository = new ProcessMetadataRepository($dbConn, $this->logger, $this->app->transactionLogRepository, $this->getUserId());
+
+                $contentRepository = new ContentRepository($dbConn, $this->logger, $this->app->transactionLogRepository, $this->getUserId());
+                $entityManager = new EntityManager($this->logger, $contentRepository);
+
+                try {
+                    $processRepository->beginTransaction(__METHOD__);
+
+                    // Remove previous process version in container
+                    $processRepository->removeCurrentDistributionProcessFromDistributionForUniqueProcessId($uniqueProcessId);
+
+                    // Add new process version to container
+                    $processRepository->addNewProcess(
+                        $processId,
+                        $uniqueProcessId,
+                        $process->getTitle(),
+                        $process->getDescription(),
+                        base64_encode(json_encode($process->getDefinition())),
+                        $this->getUserId(),
+                        ContainerProcessStatus::IN_DISTRIBUTION
+                    );
+
+                    // Add process metadata
+                    if($hasMetadata) {
+                        $qb = $processMetadataRepository->composeQueryForProcessMetadata($uniqueProcessId);
+                        $qb->execute();
+
+                        $cMetadata = [];
+                        $delete = [];
+                        while($row = $qb->fetchAssoc()) {
+                            foreach($process->getMetadataDefinition()['metadata'] as $m) {
+                                if($m['type'] != $row['type'] &&
+                                    $m['name'] == $row['title'] &&
+                                    $m['label'] != $row['guiTitle']) {
+                                    $delete[] = $row['metadataId'];
+                                    $cMetadata[] = $m['name'];
+                                }
+                            }
+                        }
+
+                        foreach($delete as $metadataId) {
+                            $processMetadataRepository->removeMetadataValuesForMetadataId($metadataId);
+                            $processMetadataRepository->removeMetadata($metadataId);
+                        }
+
+                        foreach($cMetadata as $name) {
+                            $data = [
+                                'metadataId' => $entityManager->generateEntityId(EntityManager::C_PROCESS_CUSTOM_METADATA),
+                                'uniqueProcessId' => $uniqueProcessId,
+                                'title' => $name,
+                                'guiTitle' => $process->getMetadataDefinitionForMetadataName($name)['label'],
+                                'type' => $process->getMetadataDefinitionForMetadataName($name)['type'],
+                                'defaultValue' => $process->getMetadataDefinitionForMetadataName($name)['defaultValue'],
+                                'isRequired' => 1,
+                                'isSystem' => 1
+                            ];
+
+                            $processMetadataRepository->insertNewMetadata($data);
+                        }
+                    }
+
+                    $processRepository->commit($this->getUserId(), __METHOD__);
+                } catch(AException $e) {
+                    $processRepository->rollback(__METHOD__);
+
+                    throw $e;
+                }
+            }
+
+            $this->flashMessage('Successfully published new process ' . ($oldProcessId !== null ? 'version ' : '') . 'to distribution.', 'success');
+        } catch(AException $e) {
+            $this->flashMessage('Could not publish new process ' . ($oldProcessId !== null ? 'version ' : '') . 'to distribution. Reason: ' . $e->getMessage(), 'error', 10);
+        }
+
+        $this->redirect($this->createFullURL('SuperAdmin:Processes', 'list'));
     }
 
-    protected function createComponentWorkflowEditor(HttpRequest $request) {
-        $form = $this->componentFactory->getFormBuilder();
+    public function actionEditorServiceLiveview() {
+        $jsonCode = $this->httpRequest->get('code');
 
+        $decodedJson = json_decode($jsonCode, true);
+
+        if($decodedJson === null) {
+            return new JsonResponse(['error' => '1', 'errorMsg' => 'The form JSON entered is incorrect.']);
+        }
+
+        try {
+            ProcessEditorHelper::checkServiceUserDefinition($decodedJson);
+        } catch(AException $e) {
+            return new JsonResponse(['error' => '1', 'errorMsg' => 'Form validation failed. Reason: ' . $e->getMessage()]);
+        }
+
+        $operations = ProcessEditorHelper::getServiceUserDefinitionUpdateOperations($decodedJson);
+
+        $code = '<ul>';
+        foreach($operations as $key => $value) {
+            if($value === null) {
+                $value = 'NULL';
+            }
+            $code .= '<li>' . $key . ' => ' . $value . '</li>';
+        }
+        $code .= '</ul>';
+
+        return new JsonResponse(['form' => $code]);
+    }
+
+    public function renderMetadataEditor() {
+        $params = [
+            'processId' => $this->httpRequest->get('processId'),
+            'uniqueProcessId' => $this->httpRequest->get('uniqueProcessId')
+        ];
+
+        if($this->httpRequest->get('oldProcessId') !== null) {
+            $params['oldProcessId'] = $this->httpRequest->get('oldProcessId');
+        }
+
+        $this->template->links = $this->createBackUrl('workflowList', $params);
+    }
+
+    protected function createComponentProcessMetadataEditor(HttpRequest $request) {
         $params = [
             'processId' => $request->get('processId'),
             'uniqueProcessId' => $request->get('uniqueProcessId')
@@ -298,242 +965,180 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
             $params['oldProcessId'] = $request->get('oldProcessId');
         }
 
-        $form->setAction($this->createURL('finalSaveProcess', $params));
-        
-        $form->addLabel('workflowDefinition_lbl', 'Workflow definition:')
-            ->setRequired();
+        $metadata = null;
+        if($request->get('operation') == 'edit') {
+            $process = $this->app->processManager->getProcessEntityById($request->get('processId'));
 
-        $form->addTextArea('workflowDefinition')
-            ->setRequired()
-            ->setLines(20);
+            $metadata = $process->getMetadataDefinition()['metadata'][$request->get('primaryKey')];
+        }
 
-        $form->addButton('Verify')
-            ->setOnClick('sendVerify()');
+        $allTypes = CustomMetadataTypes::getAll();
 
-        $form->addSubmit('Save');
+        $types = [];
+        foreach($allTypes as $key => $value) {
+            if($key >= 100) {
+                break;
+            }
 
-        $arb = new AjaxRequestBuilder();
+            $type = [
+                'value' => $key,
+                'text' => $value
+            ];
 
-        $arb->setAction($this, 'editorVerify')
-            ->setMethod('POST')
-            ->setHeader(['code' => '_code'])
-            ->setFunctionName('editorVerify')
-            ->setFunctionArguments(['_code'])
-            ->updateHTMLElement('workflow-view', 'workflow');
-
-        $form->addScript($arb);
-
-        $code = '
-            function sendVerify() {
-                const _code = $("#workflowDefinition").val();
-
-                if(_code == "") {
-                    alert("No workflow definition entered.");
-                    return;
-                }
-
-                var _json = "";
-
-                try {
-                    _json = JSON.parse(_code);
-
-                    editorVerify(JSON.stringify(_json));
-                } catch(exception) {
-                    alert("Could not parse JSON. Reason: " + exception);
+            if($metadata !== null) {
+                if($key == $metadata[ProcessEntity::METADATA_DEFINITION_TYPE]) {
+                    $type['selected'] = 'selected';
                 }
             }
-        ';
 
-        $form->addScript($code);
+            $types[] = $type;
+        }
 
+        $form = $this->componentFactory->getFormBuilder();
+
+        $form->setAction($this->createURL('saveMetadataEditor', ($metadata !== null ? array_merge($params, ['primaryKey' => $request->get('primaryKey'), 'operation' => 'edit']) : $params)));
+
+        $name = $form->addTextInput('name', 'Name:')
+            ->setRequired();
+
+        if($metadata !== null) {
+            $name->setValue($metadata[ProcessEntity::METADATA_DEFINITION_NAME]);
+        }
+
+        $label = $form->addTextInput('label', 'Label:')
+            ->setRequired();
+
+        if($metadata !== null) {
+            $label->setValue($metadata[ProcessEntity::METADATA_DEFINITION_LABEL]);
+        }
+
+        $description = $form->addTextArea('description', 'Description:')
+            ->setRequired();
+
+        if($metadata !== null) {
+            $description->setContent($metadata[ProcessEntity::METADATA_DEFINITION_DESCRIPTION]);
+        }
+
+        $form->addSelect('type', 'Type:')
+            ->addRawOptions($types)
+            ->setRequired();
+
+        $form->addTextArea('defaultValue', 'Default value:');
+
+        $form->addCheckboxInput('isEditable', 'Is editable?')
+            ->setChecked();
+
+        $form->addSubmit($metadata !== null ? 'Save' : 'Create');
+        
         return $form;
     }
 
-    private function getWorkflowFromJson(array $decodedJson) {
-        $workflow = $decodedJson['workflow'];
+    public function handleSaveMetadataEditor(FormRequest $fr) {
+        $processId = $this->httpRequest->get('processId');
+        $uniqueProcessId = $this->httpRequest->get('uniqueProcessId');
+        $oldProcessId = $this->httpRequest->get('oldProcessId');
 
-        $workflowUsers = [];
+        $operation = $this->httpRequest->get('operation');
+        $primaryKey = $this->httpRequest->get('primaryKey');
 
-        foreach($workflow as $w) {
-            $name = $w['name'];
+        $params = [
+            'processId' => $processId,
+            'uniqueProcessId' => $uniqueProcessId
+        ];
 
-            switch($name) {
-                case '$CURRENT_USER$':
-                    $workflowUsers[] = '$CURRENT_USER$';
-                    break;
-
-                case '$ACCOUNTANTS$':
-                    $workflowUsers[] = '$ACCOUNTANTS$';
-                    break;
-
-                case '$ARCHIVISTS$':
-                    $workflowUsers[] = '$ARCHIVISTS$';
-                    break;
-
-                case '$PROPERTY_MANAGERS$':
-                    $workflowUsers[] = '$PROPERTY_MANAGERS$';
-                    break;
-
-                case '$CURRENT_USER_SUPERIOR$':
-                    $workflowUsers[] = '$CURRENT_USER_SUPERIOR$';
-                    break;
-
-                case '$ADMINISTRATORS$':
-                    $workflowUsers[] = '$ADMINISTRATORS$';
-                    break;
-            }
+        if($oldProcessId !== null) {
+            $params['oldProcessId'] = $oldProcessId;
         }
 
-        return $workflowUsers;
-    }
+        $process = $this->app->processManager->getProcessEntityById($processId);
+        $metadata = $process->getMetadataDefinition();
 
-    private function getWorkflowActions(array $decodedJson) {
-        $workflow = $decodedJson['workflow'];
+        $tmp = [
+            ProcessEntity::METADATA_DEFINITION_TYPE => $fr->type,
+            ProcessEntity::METADATA_DEFINITION_NAME => $fr->name,
+            ProcessEntity::METADATA_DEFINITION_DESCRIPTION => $fr->description,
+            ProcessEntity::METADATA_DEFINITION_DEFAULT_VALUE => $fr->defaultValue,
+            ProcessEntity::METADATA_DEFINITION_LABEL => $fr->label
+        ];
 
-        $workflowActions = [];
-
-        foreach($workflow as $index => $w) {
-            if(!array_key_exists('actions', $w)) {
-                throw new GeneralException('Attribute \'action\' is not defined.');
-            }
-            
-            $name = $w['name'];
-            $actions = $w['actions'];
-
-            $okActions = [];
-
-            foreach($actions as $action) {
-                if(!in_array($action, ProcessInstanceOperations::getAllConstants())) continue;
-
-                $okActions[] = $action;
-            }
-
-            $workflowActions[$name . '_' . $index] = $okActions;
+        if(isset($fr->{ProcessEntity::METADATA_DEFINITION_IS_EDITABLE}) && $fr->{ProcessEntity::METADATA_DEFINITION_IS_EDITABLE} == 'on') {
+            $tmp[ProcessEntity::METADATA_DEFINITION_IS_EDITABLE] = 1;
+        } else {
+            $tmp[ProcessEntity::METADATA_DEFINITION_IS_EDITABLE] = 0;
         }
 
-        return $workflowActions;
-    }
-
-    public function actionEditorVerify() {
-        $jsonCode = $this->httpRequest->get('code');
-
-        $decodedJson = json_decode($jsonCode, true);
-
-        if($decodedJson === null) {
-            return new JsonResponse(['error' => '1', 'errorMsg' => 'The form JSON entered is incorrect.']);
+        if($operation == 'edit') {
+            $metadata['metadata'][$primaryKey] = $tmp;
+        } else {
+            $metadata['metadata'][] = $tmp;
         }
 
-        $workflowUsers = $this->getWorkflowFromJson($decodedJson);
-        $workflowActions = $this->getWorkflowActions($decodedJson);
-
-        $workflowUsersPrettified = '<ol>';
-        foreach($workflowUsers as $index => $workflowUser) {
-            $workflowUsersPrettified .= '
-                <li>' . $workflowUser . ' (will be filled on activation)<ul>';
-
-            foreach($workflowActions[$workflowUser . '_' . $index] as $action) {
-                $workflowUsersPrettified .= '<li>' . ProcessInstanceOperations::toString($action) . '</li>';
-            }
-
-            $workflowUsersPrettified .= '</ul></li>';
-        }
-        $workflowUsersPrettified .= '</ol>';
-
-        try {
-            return new JsonResponse(['workflow' => $workflowUsersPrettified]);
-        } catch(AException $e) {
-            return new JsonResponse(['error' => '1', 'errorMsg' => $e->getMessage()]);
-        }
-    }
-
-    protected function createComponentWorkflowVariablesList(HttpRequest $request) {
-        $list = $this->componentFactory->getListBuilder();
-
-        $list->setListName('workflowVariablesList');
-
-        $variables = [];
-
-        $addVariable = function(string $name, string $description) use (&$variables) {
-            $variables[] = [
-                'name' => $name,
-                'description' => $description
-            ];
-        };
-
-        $addVariable('$CURRENT_USER$', 'Current user');
-        $addVariable('$ACCOUNTANTS$', 'Accountants group');
-        $addVariable('$ARCHIVISTS$', 'Archivists group');
-        $addVariable('$PROPERTY_MANAGERS$', 'Property managers');
-        $addVariable('$CURRENT_USER_SUPERIOR$', 'Current user\'s superior');
-        $addVariable('$ADMINISTRATORS$', 'Administrators');
-
-        $list->setDataSource($variables);
-
-        $list->addColumnText('name', 'Name');
-        $list->addColumnText('description', 'Description');
-
-        return $list;
-    }
-
-    public function handleFinalSaveProcess(FormRequest $fr) {
         try {
             $this->app->processRepository->beginTransaction(__METHOD__);
 
-            $processId = $this->httpRequest->get('processId');
-            $uniqueProcessId = $this->httpRequest->get('uniqueProcessId');
-            $oldProcessId = null;
-            if($this->httpRequest->get('oldProcessId') !== null) {
-                $oldProcessId = $this->httpRequest->get('oldProcessId');
-            }
-
-            $workflowJson = $fr->workflowDefinition;
-            $decodedJson = json_decode($workflowJson, true);
-
-            $workflowUsers = $this->getWorkflowFromJson($decodedJson);
-            $workflowConfiguration = $this->getWorkflowActions($decodedJson);
-
-            $updateData = [
-                'workflow' => serialize($workflowUsers),
-                'workflowConfiguration' => serialize($workflowConfiguration),
-                'status' => ProcessStatus::IN_DISTRIBUTION
-            ];
-
-            $this->app->processManager->updateProcess($processId, $updateData);
-
-            if($oldProcessId !== null) {
-                $this->app->processManager->updateProcess($oldProcessId, ['status' => ProcessStatus::NOT_IN_DISTRIBUTION]);
-            }
-
-            $process = $this->app->processManager->getProcessById($processId);
-
-            $containers = $this->app->containerManager->getAllContainers(true, true);
-
-            foreach($containers as $container) {
-                /**
-                 * @var \App\Entities\ContainerEntity $container
-                 */
-
-                if(!$container->isInDistribution()) continue;
-
-                $dbConn = $this->app->dbManager->getConnectionToDatabase($container->getDefaultDatabase()->getName());
-
-                $processRepository = new ProcessRepository($dbConn, $this->logger, $this->app->userRepository->transactionLogRepository);
-
-                $processRepository->removeCurrentDistributionProcessFromDistributionForUniqueProcessId($uniqueProcessId);
-
-                $processRepository->addNewProcess($processId, $uniqueProcessId, $process->title, $process->description, $process->form, $this->getUserId(), ContainerProcessStatus::IN_DISTRIBUTION, serialize($workflowUsers), serialize($workflowConfiguration), $process->colorCombo);
-            }
+            $this->app->processManager->updateProcess($processId, [
+                'metadataDefinition' => base64_encode(json_encode($metadata))
+            ]);
 
             $this->app->processRepository->commit($this->getUserId(), __METHOD__);
 
-            $this->flashMessage('Successfully saved and published the process.', 'success');
+            if($operation == 'edit') {
+                $this->flashMessage('Successfully updated metadata.', 'success');
+            } else {
+                $this->flashMessage('Successfully created new metadata.', 'success');
+            }
         } catch(AException $e) {
             $this->app->processRepository->rollback(__METHOD__);
 
-            $this->flashMessage('Could not save and publish the process. Reason: ' . $e->getMessage(), 'error', 10);
+            if($operation == 'edit') {
+                $this->flashMessage('Could not edit metadata. Reason: ' . $e->getMessage(), 'error', 10);
+            } else {
+                $this->flashMessage('Could not create new metadata. Reason: ' . $e->getMessage(), 'error', 10);
+            }
         }
 
-        $this->redirect($this->createFullURL('SuperAdmin:Processes', 'list'));
+        $this->redirect($this->createURL('workflowList', $params));
+    }
+
+    public function handleDeleteMetadata() {
+        $processId = $this->httpRequest->get('processId');
+        $uniqueProcessId = $this->httpRequest->get('uniqueProcessId');
+        $oldProcessId = $this->httpRequest->get('oldProcessId');
+
+        $primaryKey = $this->httpRequest->get('primaryKey');
+
+        $params = [
+            'processId' => $processId,
+            'uniqueProcessId' => $uniqueProcessId
+        ];
+
+        if($oldProcessId !== null) {
+            $params['oldProcessId'] = $oldProcessId;
+        }
+
+        try {
+            $process = $this->app->processManager->getProcessEntityById($processId);
+
+            $metadata = $process->getMetadataDefinition();
+
+            unset($metadata[$primaryKey]);
+
+            $this->app->processRepository->beginTransaction(__METHOD__);
+
+            $this->app->processManager->updateProcess($processId, [
+                'metadataDefinition' => base64_encode(json_encode($metadata))
+            ]);
+
+            $this->app->processRepository->commit($this->getUserId(), __METHOD__);
+
+            $this->flashMessage('Successfully deleted metadata.', 'success');
+        } catch(AException $e) {
+            $this->app->processRepository->rollback(__METHOD__);
+
+            $this->flashMessage('Could not delete metadata. Reason: ' . $e->getMessage(), 'error', 10);
+        }
+
+        $this->redirect($this->createURL('workflowList', $params));
     }
 }
 

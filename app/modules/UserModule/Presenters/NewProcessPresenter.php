@@ -4,12 +4,16 @@ namespace App\Modules\UserModule;
 
 use App\Components\ProcessSelect\ProcessSelect;
 use App\Components\ProcessViewsSidebar\ProcessViewsSidebar;
+use App\Constants\Container\ProcessGridViews;
 use App\Constants\Container\ProcessInstanceOfficerTypes;
+use App\Constants\Container\ProcessInstanceOperations;
 use App\Constants\Container\ProcessInstanceStatus;
 use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
 use App\Core\Http\JsonResponse;
+use App\Entities\ProcessInstanceDataEntity;
 use App\Exceptions\AException;
+use App\Exceptions\GeneralException;
 use App\UI\FormBuilder2\JSON2FB;
 
 class NewProcessPresenter extends AUserPresenter {
@@ -42,12 +46,22 @@ class NewProcessPresenter extends AUserPresenter {
     public function handleStartProcess() {
         $processId = $this->httpRequest->get('processId');
 
-        $instanceId = $this->processInstanceManager->generateUniqueInstanceId();
+        try {
+            $instanceId = $this->processInstanceManager->generateUniqueInstanceId();
 
-        $this->redirect($this->createURL('processForm', [
-            'processId' => $processId,
-            'instanceId' => $instanceId
-        ]));
+            if($instanceId === null) {
+                throw new GeneralException('Database error.');
+            }
+
+            $this->redirect($this->createFullURL('User:NewProcess', 'processForm', [
+                'processId' => $processId,
+                'instanceId' => $instanceId,
+                'view' => ProcessGridViews::VIEW_WAITING_FOR_ME
+            ]));
+        } catch(AException $e) {
+            $this->flashMessage('Could not start a process. Reason: ' . $e->getMessage(), 'error', 10);
+            $this->redirect($this->createURL('select'));
+        }
     }
 
     public function renderProcessForm() {
@@ -65,7 +79,9 @@ class NewProcessPresenter extends AUserPresenter {
         $form = $this->componentFactory->getFormBuilder();
         $form->setAction($this->createURL('submitProcessForm', ['processId' => $process->processId, 'instanceId' => $instanceId]));
 
-        $json = json_decode(base64_decode($process->form), true);
+        $definition = json_decode(base64_decode($process->definition), true);
+
+        $json = json_decode($definition['forms'][0]['form'], true);
 
         $json2Fb = new JSON2FB($form, $json, $this->containerId);
         $json2Fb->setSkipAttributes(['action']);
@@ -89,12 +105,48 @@ class NewProcessPresenter extends AUserPresenter {
 
         $description = sprintf('New %s process instance', $process->title);
 
-        $formData = serialize($fr->getData());
+        $index = 0;
+
+        $definition = json_decode(base64_decode($process->definition), true);
+        $forms = $definition['forms'];
+
+        $workflow = [];
+        foreach($forms as $form) {
+            $workflow[] = $form['actor'];
+        }
+
+        if(($index + 1) <= count($workflow)) {
+            foreach($forms as $form) {
+                $_form = json_decode($form['form'], true);
+
+                if($form['actor'] == $workflow[$index]) {
+                    if(array_key_exists('instanceDescription', $_form)) {
+                        //$description = $_form['instanceDescription'];
+                    }
+                }
+            }
+        }
+
+        $formData = [
+            'forms' => [
+                [
+                    'userId' => $this->getUserId(),
+                    'data' => $fr->getData()
+                ]
+            ],
+            'workflowIndex' => 1,
+            'workflowHistory' => [
+                [
+                    'userId' => $this->getUserId(),
+                    'data' => ProcessInstanceDataEntity::createNewWorkflowHistoryEntry(ProcessInstanceOperations::CREATE, null)
+                ]
+            ]
+        ];
 
         $instanceData = [
             'processId' => $processId,
             'userId' => $this->getUserId(),
-            'data' => $formData,
+            'data' => serialize($formData),
             'currentOfficerType' => ProcessInstanceOfficerTypes::NONE,
             'status' => ProcessInstanceStatus::NEW,
             'description' => $description
@@ -115,20 +167,28 @@ class NewProcessPresenter extends AUserPresenter {
             $this->redirect($this->createURL('select'));
         }
 
-        $workflow = unserialize($process->workflow);
+        $instance = $this->processInstanceManager->getProcessInstanceById($instanceId);
 
         // evaluate new officer
-        [$officer, $type] = $this->processInstanceManager->evaluateNextProcessInstanceOfficer($workflow, $this->getUserId(), 0);
+        [$officer, $type] = $this->processInstanceManager->evaluateNextProcessInstanceOfficer($instance, $workflow, $this->getUserId(), 0);
+
+        $runService = false;
+        if($officer == $this->app->userManager->getServiceUserId() && $type == ProcessInstanceOfficerTypes::USER) {
+            $runService = true;
+        }
 
         $formData = $fr->getData();
         $formData['workflowIndex'] = 0;
+        $formData['workflowHistory'][][$this->getUserId()] = [
+            'operation' => ProcessInstanceOperations::CREATE,
+            'date' => date('Y-m-d H:i:s')
+        ];
         $formData = serialize($formData);
 
         $instanceData = [
             'currentOfficerId' => $officer,
             'currentOfficerType' => $type,
-            'status' => ProcessInstanceStatus::IN_PROGRESS,
-            'data' => $formData
+            'status' => ProcessInstanceStatus::IN_PROGRESS
         ];
 
         try {
@@ -143,6 +203,13 @@ class NewProcessPresenter extends AUserPresenter {
             $this->processInstanceRepository->rollback(__METHOD__);
 
             $this->flashMessage('Could not start new process instance. Reason: ' . $e->getMessage(), 'error', 10);
+        }
+
+        if($runService) {
+            $this->app->serviceManager->runService('psuhs.php', [
+                $this->containerId,
+                $instanceId
+            ]);
         }
 
         $this->redirect($this->createFullURL('User:Processes', 'list', ['view' => 'waitingForMe']));

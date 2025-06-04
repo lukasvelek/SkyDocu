@@ -1,18 +1,16 @@
 <?php
 
-namespace App\Data\Db\Migrations\Containers;
+namespace App\Data\Db\Migrations;
 
-use App\Core\DB\AContainerBaseMigration;
+use App\Core\DB\ABaseMigration;
 use App\Core\DB\Helpers\TableSchema;
 use App\Core\DB\Helpers\TableSeeding;
 
-class migration_2025_04_18_0005_old_processes_removal extends AContainerBaseMigration {
+class migration_2025_05_23_0009_multiform_processes extends ABaseMigration {
     public function up(): TableSchema {
         $table = $this->getTableSchema();
 
         $table->drop('processes');
-        $table->drop('process_data');
-        $table->drop('process_types');
 
         return $table;
     }

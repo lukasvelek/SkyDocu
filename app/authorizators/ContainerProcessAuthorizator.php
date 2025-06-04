@@ -3,6 +3,7 @@
 namespace App\Authorizators;
 
 use App\Constants\Container\ProcessInstanceOfficerTypes;
+use App\Constants\Container\SystemGroups;
 use App\Core\DatabaseConnection;
 use App\Logger\Logger;
 use App\Managers\Container\GroupManager;
@@ -91,16 +92,30 @@ class ContainerProcessAuthorizator extends AAuthorizator {
         // will appear in workflow
         $willAppearInWorkflow = false;
 
-        //$process = $this->processManager->getLastProcessForUniqueProcessId($instance->uniqueProcessId);
         $process = $this->processManager->getProcessById($instance->processId);
 
-        $workflow = unserialize($process->workflow);
+        $definition = json_decode(base64_decode($process->definition), true);
+
+        $forms = $definition['forms'];
+
+        $workflow = [];
+        foreach($forms as $form) {
+            $workflow[] = $form['actor'];
+        }
+
+        if(!array_key_exists('workflowIndex', $instanceData)) {
+            if($this->groupManager->isUserMemberOfGroupTitle($userId, SystemGroups::ADMINISTRATORS)) {
+                return true;
+            } else {
+                return false;
+            }
+        }
 
         $currentIndex = $instanceData['workflowIndex'];
 
         if(($currentIndex + 1) < count($workflow)) {
             for($i = $currentIndex; $i < count($workflow); $i++) {
-                [$officer, $type] = $this->processInstanceManager->evaluateNextProcessInstanceOfficer($workflow, $userId, $i);
+                [$officer, $type] = $this->processInstanceManager->evaluateNextProcessInstanceOfficer($instance, $workflow, $userId, $i);
     
                 if($officer === null && $type === null) {
                     // no next workflow

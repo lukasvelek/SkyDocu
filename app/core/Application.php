@@ -397,6 +397,18 @@ class Application {
         }
 
         if ($log) $this->logger->info('Current URL: [module => ' . $this->currentModule . ', presenter => ' . $this->currentPresenter . ', action => ' . $this->currentAction . ']', __METHOD__);
+        
+        $params = [];
+        foreach($_GET as $k => $v) {
+            if(in_array($k, [
+                'page',
+                'action'
+            ])) continue;
+
+            $params[] = sprintf('%s => %s', $k, $v);
+        }
+
+        if ($log) $this->logger->info('Current URL parameters: [' . implode(', ', $params) . ']', __METHOD__);
     }
 }
 

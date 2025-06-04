@@ -3,7 +3,12 @@
 namespace App\UI\FormBuilder2;
 
 use App\Constants\AConstant;
+use App\Constants\Container\ProcessInstanceOperations;
+use App\Core\Router;
+use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
+use App\Repositories\Container\ProcessMetadataRepository;
+use App\Repositories\TransactionLogRepository;
 use App\UI\FormBuilder2\FormState\FormStateListHelper;
 
 /**
@@ -32,6 +37,12 @@ class JSON2FB {
     private const DOCUMENT_SELECT_SEARCH = 'documentSelectSearch';
     private const PROCESS_SELECT_SEARCH = 'processSelectSearch';
 
+    private const ACCEPT_BUTTON = 'acceptButton';
+    private const REJECT_BUTTON = 'rejectButton';
+    private const CANCEL_BUTTON = 'cancelButton';
+    private const FINISH_BUTTON = 'finishButton';
+    private const ARCHIVE_BUTTON = 'archiveButton';
+
     private FormBuilder2 $form;
     private array $json;
     private ?string $containerId;
@@ -41,6 +52,12 @@ class JSON2FB {
     private array $formData;
     private array $customUrlParams;
     private bool $callAfterSubmitReducer = false;
+    private array $skipElementTypes = [];
+    private array $formHandleButtonsParams = [];
+    private bool $isEditor = false;
+    private bool $checkHandleButtons = false;
+    private bool $checkNoHandleButtons = false;
+    private ?string $processId = null;
     
     /**
      * Class constructor
@@ -58,6 +75,38 @@ class JSON2FB {
         $this->skipElementAttributes = [];
         $this->formData = [];
         $this->customUrlParams = [];
+    }
+
+    /**
+     * Sets process ID
+     * 
+     * @param string $processId Process ID
+     */
+    public function setProcessId(string $processId) {
+        $this->processId = $processId;
+    }
+
+    /**
+     * Sets if the form is rendered for form editor
+     * 
+     * @param bool $editor Is editor?
+     */
+    public function setEditor(bool $editor = true) {
+        $this->isEditor = $editor;
+    }
+
+    /**
+     * Checks for form handling buttons
+     */
+    public function checkForHandleButtons() {
+        $this->checkHandleButtons = true;
+    }
+
+    /**
+     * Checks for no form handling buttons
+     */
+    public function checkForNoHandleButtons() {
+        $this->checkNoHandleButtons = true;
     }
 
     /**
@@ -161,12 +210,42 @@ class JSON2FB {
 
     /**
      * Processes all elements
+     * 
+     * @param array $elements Elements
      */
     private function processElements(array $elements) {
         $elementMandatoryAttributes = [
             'name',
             'type'
         ];
+
+        $allElementTypes = [];
+        foreach($elements as $element) {
+            $allElementTypes[] = $element['type'];
+        }
+
+        $getHandlersInForm = function() use ($allElementTypes) {
+            return array_intersect([
+                self::ACCEPT_BUTTON,
+                self::ARCHIVE_BUTTON,
+                self::CANCEL_BUTTON,
+                self::FINISH_BUTTON,
+                self::REJECT_BUTTON,
+                self::SUBMIT
+            ], $allElementTypes);
+        };
+
+        if($this->checkHandleButtons && !$this->isEditor) {
+            if(empty($getHandlersInForm())) {
+                throw new GeneralException('No handle button is defined.');
+            }
+        }
+
+        if($this->checkNoHandleButtons && !$this->isEditor) {
+            if(!empty($getHandlersInForm())) {
+                throw new GeneralException('Handle button is defined.');
+            }
+        }
 
         foreach($elements as $element) {
             foreach($elementMandatoryAttributes as $attr) {
@@ -184,6 +263,8 @@ class JSON2FB {
             }
 
             $elem = null;
+
+            if(in_array($element['type'], $this->skipElementTypes)) continue;
 
             if(empty($this->formData)) {
                 // ELEMENT (INSTANCE) CREATION
@@ -245,6 +326,46 @@ class JSON2FB {
                             $this->throwExceptionForUnsetAttribute('text', $element['type']);
                         } else {
                             $elem = $this->form->addButton($element['text']);
+                        }
+                        break;
+
+                    case self::ACCEPT_BUTTON:
+                        $elem = $this->form->addButton(ProcessInstanceOperations::toString(ProcessInstanceOperations::ACCEPT));
+                        $url = Router::generateUrl(array_merge($this->formHandleButtonsParams, ['operation' => 'accept']));
+                        if(!$this->isEditor) {
+                            $elem->setOnClick('location.href=\'' . $url . '\';');
+                        }
+                        break;
+
+                    case self::CANCEL_BUTTON:
+                        $elem = $this->form->addButton(ProcessInstanceOperations::toString(ProcessInstanceOperations::CANCEL));
+                        $url = Router::generateUrl(array_merge($this->formHandleButtonsParams, ['operation' => 'cancel']));
+                        if(!$this->isEditor) {
+                            $elem->setOnClick('location.href=\'' . $url . '\';');
+                        }
+                        break;
+
+                    case self::FINISH_BUTTON:
+                        $elem = $this->form->addButton(ProcessInstanceOperations::toString(ProcessInstanceOperations::FINISH));
+                        $url = Router::generateUrl(array_merge($this->formHandleButtonsParams, ['operation' => 'finish']));
+                        if(!$this->isEditor) {
+                            $elem->setOnClick('location.href=\'' . $url . '\';');
+                        }
+                        break;
+
+                    case self::ARCHIVE_BUTTON:
+                        $elem = $this->form->addButton(ProcessInstanceOperations::toString(ProcessInstanceOperations::ARCHIVE));
+                        $url = Router::generateUrl(array_merge($this->formHandleButtonsParams, ['operation' => 'archive']));
+                        if(!$this->isEditor) {
+                            $elem->setOnClick('location.href=\'' . $url . '\';');
+                        }
+                        break;
+
+                    case self::REJECT_BUTTON:
+                        $elem = $this->form->addButton(ProcessInstanceOperations::toString(ProcessInstanceOperations::REJECT));
+                        $url = Router::generateUrl(array_merge($this->formHandleButtonsParams, ['operation' => 'reject']));
+                        if(!$this->isEditor) {
+                            $elem->setOnClick('location.href=\'' . $url . '\';');
                         }
                         break;
 
@@ -349,6 +470,46 @@ class JSON2FB {
                         }
                         break;
 
+                    case self::ACCEPT_BUTTON:
+                        $elem = $this->form->addButton(ProcessInstanceOperations::toString(ProcessInstanceOperations::ACCEPT));
+                        $url = Router::generateUrl(array_merge($this->formHandleButtonsParams, ['operation' => 'accept']));
+                        if(!$this->isEditor) {
+                            $elem->setOnClick('location.href=\'' . $url . '\';');
+                        }
+                        break;
+
+                    case self::CANCEL_BUTTON:
+                        $elem = $this->form->addButton(ProcessInstanceOperations::toString(ProcessInstanceOperations::CANCEL));
+                        $url = Router::generateUrl(array_merge($this->formHandleButtonsParams, ['operation' => 'cancel']));
+                        if(!$this->isEditor) {
+                            $elem->setOnClick('location.href=\'' . $url . '\';');
+                        }
+                        break;
+
+                    case self::FINISH_BUTTON:
+                        $elem = $this->form->addButton(ProcessInstanceOperations::toString(ProcessInstanceOperations::FINISH));
+                        $url = Router::generateUrl(array_merge($this->formHandleButtonsParams, ['operation' => 'finish']));
+                        if(!$this->isEditor) {
+                            $elem->setOnClick('location.href=\'' . $url . '\';');
+                        }
+                        break;
+
+                    case self::ARCHIVE_BUTTON:
+                        $elem = $this->form->addButton(ProcessInstanceOperations::toString(ProcessInstanceOperations::ARCHIVE));
+                        $url = Router::generateUrl(array_merge($this->formHandleButtonsParams, ['operation' => 'archive']));
+                        if(!$this->isEditor) {
+                            $elem->setOnClick('location.href=\'' . $url . '\';');
+                        }
+                        break;
+
+                    case self::REJECT_BUTTON:
+                        $elem = $this->form->addButton(ProcessInstanceOperations::toString(ProcessInstanceOperations::REJECT));
+                        $url = Router::generateUrl(array_merge($this->formHandleButtonsParams, ['operation' => 'reject']));
+                        if(!$this->isEditor) {
+                            $elem->setOnClick('location.href=\'' . $url . '\';');
+                        }
+                        break;
+
                     case self::LABEL:
                         if(!array_key_exists('text', $element)) {
                             $this->throwExceptionForUnsetAttribute('text', $element['type']);
@@ -432,6 +593,50 @@ class JSON2FB {
                         } else {
                             throw new GeneralException('Class \'' . $const . '\' does not exist.');
                         }
+                    } else if(array_key_exists('valuesFromInternalMetadata', $element)) {
+                        $metadataName = $element['valuesFromInternalMetadata'];
+
+                        if($this->processId !== null && $this->containerId !== null) {
+                            try {
+                                $process = $this->form->app->processManager->getProcessEntityById($this->processId);
+
+                                $container = $this->form->app->containerManager->getContainerById($this->containerId);
+
+                                $conn = $this->form->app->dbManager->getConnectionToDatabase($container->getDefaultDatabase()->getName());
+
+                                $tlogRepository = new TransactionLogRepository($conn, $this->form->app->logger);
+
+                                $processMetadataRepository = new ProcessMetadataRepository($conn, $this->form->app->logger, $tlogRepository, $this->form->app->currentUser->getId());
+
+                                $uniqueProcessId = $process->getUniqueProcessId();
+
+                                $qb = $processMetadataRepository->composeQueryForProcessMetadata($uniqueProcessId);
+
+                                $qb->andWhere('title = ?', [$metadataName])
+                                    ->execute();
+
+                                $row = $qb->fetch();
+
+                                if($row === null) {
+                                    throw new GeneralException('No metadata with title \'' . $metadataName . '\' exists.');
+                                }
+
+                                $metadataId = $row['metadataId'];
+
+                                $qb = $processMetadataRepository->composeQueryForProcessMetadataValues($metadataId);
+
+                                $qb->execute();
+
+                                while($row = $qb->fetchAssoc()) {
+                                    $value = $row['metadataKey'];
+                                    $text = $row['title'];
+
+                                    $elem->addRawOption($value, $text);
+                                }
+                            } catch(AException $e) {
+                                throw new GeneralException('Could not obtain metadata values for metadata \'' . $metadataName . '\'.', $e);
+                            }
+                        }
                     }
                 }
 
@@ -486,6 +691,30 @@ class JSON2FB {
     public function callAfterSubmitReducer() {
         $this->callAfterSubmitReducer = true;
         $this->form->setCallAfterSubmitReducer(true);
+    }
+
+    /**
+     * Removes buttons
+     */
+    public function removeButtons() {
+        $this->skipElementTypes = [
+            self::ACCEPT_BUTTON,
+            self::ARCHIVE_BUTTON,
+            self::BUTTON,
+            self::CANCEL_BUTTON,
+            self::FINISH_BUTTON,
+            self::REJECT_BUTTON,
+            self::SUBMIT
+        ];
+    }
+
+    /**
+     * Sets form handle buttons URL parameters
+     * 
+     * @param array $params URL parameters
+     */
+    public function setFormHandleButtonsParams(array $params) {
+        $this->formHandleButtonsParams = $params;
     }
 
     /**

@@ -16,6 +16,8 @@ abstract class ABaseFormReducer implements IFormReducer {
     protected Application $app;
     protected HttpRequest $request;
     protected ?Container $container;
+    
+    public array $startupValues = [];
 
     /**
      * Class constructor

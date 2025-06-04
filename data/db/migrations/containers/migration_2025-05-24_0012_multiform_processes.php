@@ -6,13 +6,11 @@ use App\Core\DB\AContainerBaseMigration;
 use App\Core\DB\Helpers\TableSchema;
 use App\Core\DB\Helpers\TableSeeding;
 
-class migration_2025_04_18_0005_old_processes_removal extends AContainerBaseMigration {
+class migration_2025_05_24_0012_multiform_processes extends AContainerBaseMigration {
     public function up(): TableSchema {
         $table = $this->getTableSchema();
 
         $table->drop('processes');
-        $table->drop('process_data');
-        $table->drop('process_types');
 
         return $table;
     }

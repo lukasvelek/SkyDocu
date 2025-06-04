@@ -10,7 +10,6 @@ use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
 use App\Helpers\LinkHelper;
 use App\Repositories\Container\ProcessRepository;
-use App\UI\FormBuilder2\JSON2FB;
 use App\UI\GridBuilder2\Action;
 use App\UI\GridBuilder2\Row;
 use App\UI\HTML\HTML;
@@ -33,7 +32,9 @@ class ProcessesPresenter extends ASuperAdminPresenter {
         $grid = $this->componentFactory->getGridBuilder();
 
         $qb = $this->app->processRepository->composeQueryForProcesses();
-        $qb->andWhere($qb->getColumnInValues('status', [ProcessStatus::NEW, ProcessStatus::IN_DISTRIBUTION]));
+        $qb->andWhere($qb->getColumnInValues('status', [ProcessStatus::NEW, ProcessStatus::IN_DISTRIBUTION]))
+            ->orderBy('title', 'ASC')
+            ->orderBy('version', 'ASC');
 
         $grid->createDataSourceFromQueryBuilder($qb, 'processId');
 
@@ -43,16 +44,33 @@ class ProcessesPresenter extends ASuperAdminPresenter {
         $grid->addColumnText('version', 'Version');
         $grid->addColumnConst('status', 'Status', ProcessStatus::class);
 
-        $viewForm = $grid->addAction('viewForm');
-        $viewForm->setTitle('View form');
-        $viewForm->onCanRender[] = function() {
+        $copy = $grid->addAction('copy');
+        $copy->setTitle('Copy');
+        $copy->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) {
+            if($row->status != ProcessStatus::IN_DISTRIBUTION) {
+                return false;
+            }
+
+            try {
+                $nextVersion = $this->app->processManager->getNextVersionForProcessId($row->processId, true);
+
+                if($nextVersion !== null && $nextVersion->getStatus() == ProcessStatus::NEW) {
+                    return false;
+                }
+            } catch(AException $e) {}
+
             return true;
         };
-        $viewForm->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
+        $copy->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
+            $params = [
+                'processId' => $primaryKey,
+                'uniqueProcessId' => $row->uniqueProcessId
+            ];
+
             $el = HTML::el('a');
-            $el->text('View form')
+            $el->text('Copy')
                 ->class('grid-link')
-                ->href($this->createURLString('viewForm', ['processId' => $primaryKey]));
+                ->href($this->createURLString('copyProcess', $params));
 
             return $el;
         };
@@ -60,13 +78,26 @@ class ProcessesPresenter extends ASuperAdminPresenter {
         $edit = $grid->addAction('edit');
         $edit->setTitle('Edit');
         $edit->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) {
-            return true;
+            return $row->status == ProcessStatus::NEW;
         };
         $edit->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
+            $params = [
+                'processId' => $primaryKey,
+                'uniqueProcessId' => $row->uniqueProcessId
+            ];
+
+            try {
+                $previousProcess = $this->app->processManager->getPreviousVersionForProcessId($primaryKey);
+
+                if($previousProcess !== null) {
+                    $params['oldProcessId'] = $previousProcess->processId;
+                }
+            } catch(AException $e) {}
+
             $el = HTML::el('a');
             $el->text('Edit')
                 ->class('grid-link')
-                ->href($this->createFullURLString('SuperAdmin:ProcessEditor', 'form', ['processId' => $primaryKey, 'uniqueProcessId' => $row->uniqueProcessId]));
+                ->href($this->createFullURLString('SuperAdmin:ProcessEditor', 'form', $params));
 
             return $el;
         };
@@ -86,17 +117,6 @@ class ProcessesPresenter extends ASuperAdminPresenter {
         };
 
         return $grid;
-    }
-
-    public function renderViewForm() {
-        $process = $this->app->processManager->getProcessById($this->httpRequest->get('processId'));
-
-        $form = base64_decode($process->form);
-        $form = new JSON2FB($this->componentFactory->getFormBuilder(), json_decode($form, true), null);
-        $form->setSkipAttributes(['action']);
-
-        $this->template->process_form = $form->render();
-        $this->template->links = $this->createBackUrl('list');
     }
 
     public function handleDeleteForm(?FormRequest $fr = null) {
@@ -164,6 +184,27 @@ class ProcessesPresenter extends ASuperAdminPresenter {
         $form->addSubmit('Delete');
 
         return $form;
+    }
+
+    public function handleCopyProcess() {
+        $processId = $this->httpRequest->get('processId');
+        $uniqueProcessId = $this->httpRequest->get('uniqueProcessId');
+
+        try {
+            $this->app->processRepository->beginTransaction(__METHOD__);
+
+            [$newProcessId, $uniqueProcessId] = $this->app->processManager->createNewProcessFromExisting($processId);
+
+            $this->app->processRepository->commit($this->getUserId(), __METHOD__);
+
+            $this->flashMessage('Successfully created a new copy of process.', 'success');
+        } catch(AException $e) {
+            $this->app->processRepository->rollback(__METHOD__);
+
+            $this->flashMessage('Could not create a new copy of process. Reason: ' . $e->getMessage(), 'error', 10);
+        }
+
+        $this->redirect($this->createURL('list'));
     }
 }
 

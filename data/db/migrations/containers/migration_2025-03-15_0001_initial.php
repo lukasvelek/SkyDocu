@@ -4,9 +4,8 @@ namespace App\Data\Db\Migrations\Containers;
 
 use App\Constants\Container\CustomMetadataTypes;
 use App\Constants\Container\Processes\InvoiceCustomMetadata;
-use App\Constants\Container\StandaloneProcesses;
 use App\Constants\Container\SystemGroups;
-use App\Core\DB\ABaseMigration;
+use App\Core\DB\AContainerBaseMigration;
 use App\Core\DB\Helpers\TableSchema;
 use App\Core\DB\Helpers\TableSeeding;
 use App\Exceptions\GeneralException;
@@ -20,7 +19,7 @@ use App\Managers\EntityManager;
  * @author Lukas Velek
  * @version 1.0 from 03/15/2025
  */
-class migration_2025_03_15_0001_initial extends ABaseMigration {
+class migration_2025_03_15_0001_initial extends AContainerBaseMigration {
     public function up(): TableSchema {
         $table = $this->getTableSchema();
 

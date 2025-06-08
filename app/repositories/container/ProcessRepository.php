@@ -75,7 +75,7 @@ class ProcessRepository extends ARepository {
     public function composeQueryForAvailableProcesses() {
         $qb = $this->commonComposeQuery();
 
-        $qb->andWhere('status = 1');
+        $qb->andWhere('status IN (1,3)'); // in-distribution or custom
 
         return $qb;
     }

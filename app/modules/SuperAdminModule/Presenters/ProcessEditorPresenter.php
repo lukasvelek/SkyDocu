@@ -854,7 +854,7 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
                         $process->getTitle(),
                         $process->getDescription(),
                         base64_encode(json_encode($process->getDefinition())),
-                        $this->getUserId(),
+                        $this->app->userManager->getServiceUserId(), // service user will be displayed as author
                         ContainerProcessStatus::IN_DISTRIBUTION
                     );
 

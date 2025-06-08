@@ -7,5 +7,7 @@ This document is about processes in SkyDocu. Here you can find all information a
 [`3` Process editor](#3-process-editor)
 
 ## `1` About processes
+Processes in SkyDocu represent an action or request with a lifecycle.
+
 ## `2` Process instance lifecycle
 ## `3` Process editor

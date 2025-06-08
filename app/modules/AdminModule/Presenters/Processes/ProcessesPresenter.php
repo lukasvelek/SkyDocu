@@ -35,6 +35,8 @@ class ProcessesPresenter extends AAdminPresenter {
         $grid->addColumnText('title', 'Title');
         $grid->addColumnText('description', 'Description');
         $grid->addColumnUser('userId', 'Author');
+        $grid->addColumnConst('status', 'Status', ProcessStatus::class);
+        $grid->addColumnBoolean('isEnabled', 'Enabled');
 
         $metadata = $grid->addAction('metadata');
         $metadata->setTitle('Metadata');
@@ -68,7 +70,60 @@ class ProcessesPresenter extends AAdminPresenter {
             return $el;
         };
 
+        $disable = $grid->addAction('disable');
+        $disable->setTitle('Disable');
+        $disable->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) {
+            return $row->isEnabled == true;
+        };
+        $disable->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
+            $el = HTML::el('a');
+            $el->text('Disable')
+                ->class('grid-link')
+                ->href($this->createURLString('disableProcess', ['uniqueProcessId' => $row->uniqueProcessId, 'disable' => 1]));
+
+            return $el;
+        };
+
+        $enable = $grid->addAction('enable');
+        $enable->setTitle('Enable');
+        $enable->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) {
+            return $row->isEnabled == false;
+        };
+        $enable->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
+            $el = HTML::el('a');
+            $el->text('Enable')
+                ->class('grid-link')
+                ->href($this->createURLString('disableProcess', ['uniqueProcessId' => $row->uniqueProcessId, 'disable' => 0]));
+
+            return $el;
+        };
+
         return $grid;
+    }
+
+    public function handleDisableProcess() {
+        $uniqueProcessId = $this->httpRequest->get('uniqueProcessId');
+        $disable = $this->httpRequest->get('disable') == 1;
+
+        try {
+            $this->processRepository->beginTransaction(__METHOD__);
+
+            if($disable) {
+                $this->processManager->disableProcessByUniqueProcessId($uniqueProcessId);
+                $this->flashMessage('Process successfully disabled.', 'success');
+            } else {
+                $this->processManager->enableProcessByUniqueProcessId($uniqueProcessId);
+                $this->flashMessage('Process successfully enabled.', 'success');
+            }
+
+            $this->processRepository->commit($this->getUserId(), __METHOD__);
+        } catch(AException $e) {
+            $this->processRepository->rollback(__METHOD__);
+
+            $this->flashMessage('Could not ' . ($disable ? 'disable' : 'enable') . ' process. Reason: ' . $e->getMessage(), 'error', 10);
+        }
+
+        $this->redirect($this->createURL('list'));
     }
 
     public function handleEditForm(?FormRequest $fr = null) {

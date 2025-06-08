@@ -15,6 +15,7 @@ use App\Exceptions\AException;
 use App\Helpers\LinkHelper;
 use App\Helpers\ProcessEditorHelper;
 use App\Lib\Forms\Reducers\ProcessMetadataEditorReducer;
+use App\Managers\Container\ProcessManager;
 use App\Managers\EntityManager;
 use App\Repositories\Container\ProcessMetadataRepository;
 use App\Repositories\Container\ProcessRepository;
@@ -841,8 +842,18 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
                 $contentRepository = new ContentRepository($dbConn, $this->logger, $this->app->transactionLogRepository, $this->getUserId());
                 $entityManager = new EntityManager($this->logger, $contentRepository);
 
+                $processManager = new ProcessManager($this->logger, $entityManager, $processRepository);
+
+                $disable = false;
+
                 try {
                     $processRepository->beginTransaction(__METHOD__);
+
+                    // Get previous process version in container
+                    $lastProcess = $processManager->getLastProcessForUniqueProcessId($uniqueProcessId);
+                    if($lastProcess->isEnabled == false) {
+                        $disable = true;
+                    }
 
                     // Remove previous process version in container
                     $processRepository->removeCurrentDistributionProcessFromDistributionForUniqueProcessId($uniqueProcessId);
@@ -854,8 +865,9 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
                         $process->getTitle(),
                         $process->getDescription(),
                         base64_encode(json_encode($process->getDefinition())),
-                        $this->getUserId(),
-                        ContainerProcessStatus::IN_DISTRIBUTION
+                        $this->app->userManager->getServiceUserId(), // service user will be displayed as author
+                        ContainerProcessStatus::IN_DISTRIBUTION,
+                        !$disable
                     );
 
                     // Add process metadata

@@ -94,6 +94,40 @@ class ProcessManager extends AManager {
 
         return $process->uniqueProcessId;
     }
+
+    /**
+     * Enables process by unique process ID
+     * 
+     * @param string $uniqueProcessId Unique process ID
+     */
+    public function enableProcessByUniqueProcessId(string $uniqueProcessId) {
+        $process = $this->getLastProcessForUniqueProcessId($uniqueProcessId);
+
+        $data = [
+            'isEnabled' => 1
+        ];
+
+        if(!$this->processRepository->updateProcess($process->processId, $data)) {
+            throw new GeneralException('Database error');
+        }
+    }
+
+    /**
+     * Disables process by unique process ID
+     * 
+     * @param string $uniqueProcessId Unique process ID
+     */
+    public function disableProcessByUniqueProcessId(string $uniqueProcessId) {
+        $process = $this->getLastProcessForUniqueProcessId($uniqueProcessId);
+
+        $data = [
+            'isEnabled' => 0
+        ];
+
+        if(!$this->processRepository->updateProcess($process->processId, $data)) {
+            throw new GeneralException('Database error');
+        }
+    }
 }
 
 ?>

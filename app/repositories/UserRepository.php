@@ -228,6 +228,17 @@ class UserRepository extends ARepository {
     public function get(QueryOperation $operation): QueryResult {
         return $this->processPeeQL('users', $operation);
     }
+
+    public function getUserByLoginHash(string $loginHash) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->select(['*'])
+            ->from('users')
+            ->where('loginHash = ?', [$loginHash])
+            ->execute();
+
+        return $qb->fetch();
+    }
 }
 
 ?>

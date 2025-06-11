@@ -5,6 +5,7 @@ namespace App\Modules\UserModule;
 use App\Components\ProcessesGrid\ProcessesGrid;
 use App\Constants\Container\ProcessGridViews;
 use App\Core\Http\HttpRequest;
+use App\UI\LinkBuilder;
 
 class HomePresenter extends AUserPresenter {
     public function __construct() {
@@ -20,39 +21,73 @@ class HomePresenter extends AUserPresenter {
         }
 
         $this->template->permanent_flash_message = $code ?? '';
+
+        $this->addScript('
+            /**
+             * This script is responsible for asynchronous loading of widget data.
+            */
+            const tmp = (() => {
+                new Promise((resolve) => {
+                    waitingForMeWidget_gridRefresh(0, "' . ProcessGridViews::VIEW_WAITING_FOR_ME . '");
+                    startedByMeWidget_gridRefresh(0, "' . ProcessGridViews::VIEW_STARTED_BY_ME . '");
+                });
+            });
+
+            tmp();
+        ');
+
+        $this->template->processes_waiting_for_me_widget_title = LinkBuilder::createSimpleLink('Processes waiting for me', $this->createFullURL('User:Processes', 'list', ['view' => ProcessGridViews::VIEW_WAITING_FOR_ME]), 'widget-title');
+        $this->template->processes_started_by_me_widget_title = LinkBuilder::createSimpleLink('Processes started by me', $this->createFullURL('User:Processes', 'list', ['view' => ProcessGridViews::VIEW_STARTED_BY_ME]), 'widget-title');
     }
 
-    protected function createComponentProcessesWaitingForMeGrid(HttpRequest $request) {
+    protected function createComponentWaitingForMeWidget(HttpRequest $request) {
+        $grid = $this->componentFactory->getGridBuilder($this->containerId);
+        $grid->setApplication($this->app);
+
         $grid = new ProcessesGrid(
-            $this->componentFactory->getGridBuilder($this->containerId),
-            $this->app,
-            $this->gridManager,
+            $grid,
+            $this->processInstanceRepository,
+            ProcessGridViews::VIEW_WAITING_FOR_ME,
+            $this->groupManager,
             $this->processManager,
-            $this->documentManager
+            $this->containerProcessAuthorizator
         );
 
-        $grid->disableActions();
         $grid->disablePagination();
-        $grid->disableControls();
-        $grid->setView(ProcessGridViews::VIEW_WAITING_FOR_ME);
+
+        $grid->disableActionByName('workflowHistory');
+        
+        if($this->isAjax()) {
+            $grid->setLimit(5);
+        } else {
+            $grid->setLimit(0);
+        }
 
         return $grid;
     }
 
-    protected function createComponentProcessesStartedByMeGrid(HttpRequest $request) {
+    protected function createComponentStartedByMeWidget(HttpRequest $request) {
+        $grid = $this->componentFactory->getGridBuilder($this->containerId);
+        $grid->setApplication($this->app);
+
         $grid = new ProcessesGrid(
-            $this->componentFactory->getGridBuilder($this->containerId),
-            $this->app,
-            $this->gridManager,
+            $grid,
+            $this->processInstanceRepository,
+            ProcessGridViews::VIEW_STARTED_BY_ME,
+            $this->groupManager,
             $this->processManager,
-            $this->documentManager
+            $this->containerProcessAuthorizator
         );
 
-        $grid->disableActions();
         $grid->disablePagination();
-        $grid->disableControls();
 
-        $grid->setView(ProcessGridViews::VIEW_STARTED_BY_ME);
+        $grid->disableActionByName('workflowHistory');
+        
+        if($this->isAjax()) {
+            $grid->setLimit(5);
+        } else {
+            $grid->setLimit(0);
+        }
 
         return $grid;
     }

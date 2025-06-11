@@ -107,6 +107,31 @@ class FormStateListHelper {
 
         return $stateList;
     }
+
+    /**
+     * Applies process instance data to form state list
+     * 
+     * @param FormStateList &$stateList Form state list
+     * @param array $instanceData Instance data
+     */
+    public function applyProcessInstanceDataToFormStateList(FormStateList &$stateList, array $instanceData) {
+        foreach($instanceData as $key => $value) {
+            if($stateList->keyExists($key)) {
+                $stateList->$key->value = $value;
+            }
+        }
+    }
+
+    /**
+     * Sets all elements in the form state list readonly
+     * 
+     * @param FormStateList &$stateList Form state list
+     */
+    public function setElementsInFormStateListReadonly(FormStateList &$stateList) {
+        foreach($stateList->getKeys() as $key) {
+            $stateList->$key->isReadonly = true;
+        }
+    }
 }
 
 ?>

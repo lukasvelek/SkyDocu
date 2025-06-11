@@ -18,6 +18,7 @@ use App\Managers\ContainerInviteManager;
 use App\Managers\ContainerManager;
 use App\Managers\EntityManager;
 use App\Managers\GroupManager;
+use App\Managers\ProcessManager;
 use App\Managers\UserAbsenceManager;
 use App\Managers\UserManager;
 use App\Managers\UserSubstituteManager;
@@ -29,6 +30,7 @@ use App\Repositories\ContentRepository;
 use App\Repositories\GridExportRepository;
 use App\Repositories\GroupMembershipRepository;
 use App\Repositories\GroupRepository;
+use App\Repositories\ProcessRepository;
 use App\Repositories\SystemServicesRepository;
 use App\Repositories\TransactionLogRepository;
 use App\Repositories\UserAbsenceRepository;
@@ -77,6 +79,7 @@ class Application {
     public UserAbsenceRepository $userAbsenceRepository;
     public UserSubstituteRepository $userSubstituteRepository;
     public ContainerDatabaseRepository $containerDatabaseRepository;
+    public ProcessRepository $processRepository;
 
     public ServiceManager $serviceManager;
     public UserManager $userManager;
@@ -87,6 +90,7 @@ class Application {
     public UserAbsenceManager $userAbsenceManager;
     public UserSubstituteManager $userSubstituteManager;
     public ContainerDatabaseManager $containerDatabaseManager;
+    public ProcessManager $processManager;
 
     public array $repositories;
 
@@ -135,6 +139,7 @@ class Application {
         $this->containerInviteManager = new ContainerInviteManager($this->logger, $this->entityManager, $this->containerInviteRepository);
         $this->userAbsenceManager = new UserAbsenceManager($this->logger, $this->entityManager, $this->userAbsenceRepository);
         $this->userSubstituteManager = new UserSubstituteManager($this->logger, $this->entityManager, $this->userSubstituteRepository);
+        $this->processManager = new ProcessManager($this->logger, $this->entityManager, $this->processRepository);
 
         $this->initManagers();
 
@@ -392,6 +397,18 @@ class Application {
         }
 
         if ($log) $this->logger->info('Current URL: [module => ' . $this->currentModule . ', presenter => ' . $this->currentPresenter . ', action => ' . $this->currentAction . ']', __METHOD__);
+        
+        $params = [];
+        foreach($_GET as $k => $v) {
+            if(in_array($k, [
+                'page',
+                'action'
+            ])) continue;
+
+            $params[] = sprintf('%s => %s', $k, $v);
+        }
+
+        if ($log) $this->logger->info('Current URL parameters: [' . implode(', ', $params) . ']', __METHOD__);
     }
 }
 

@@ -47,6 +47,13 @@ class StateListToForm {
             // Value handling
             if($element instanceof Select) {
                 $element->setSelectedValue($this->stateList->$key->value);
+
+                // select options
+                $sv = $this->stateList->$key->selectValues;
+
+                if(is_array($sv)) {
+                    $element->addRawOptions($sv);
+                }
             } else if($element instanceof AInput) {
                 $element->setValue($this->stateList->$key->value);
             } else if($element instanceof TextArea) {

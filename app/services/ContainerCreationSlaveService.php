@@ -3,12 +3,16 @@
 namespace App\Services;
 
 use App\Constants\ContainerStatus;
+use App\Core\Application;
 use App\Core\Caching\CacheNames;
+use App\Core\Container;
 use App\Core\ServiceManager;
 use App\Exceptions\AException;
 use App\Exceptions\ServiceException;
 use App\Logger\Logger;
+use App\Managers\Container\ProcessManager as ContainerProcessManager;
 use App\Managers\ContainerManager;
+use App\Managers\ProcessManager;
 use App\Repositories\ContainerRepository;
 use Error;
 use Exception;
@@ -18,12 +22,17 @@ class ContainerCreationSlaveService extends AService {
 
     private ContainerManager $containerManager;
     private ContainerRepository $containerRepository;
+    private ProcessManager $processManager;
+    private Application $app;
+    private ContainerProcessManager $containerProcessManager;
 
-    public function __construct(Logger $logger, ServiceManager $serviceManager, ContainerManager $containerManager, ContainerRepository $containerRepository) {
+    public function __construct(Logger $logger, ServiceManager $serviceManager, ContainerManager $containerManager, ContainerRepository $containerRepository, ProcessManager $processManager, Application $app) {
         parent::__construct('ContainerCreationSlave', $logger, $serviceManager);
 
         $this->containerManager = $containerManager;
         $this->containerRepository = $containerRepository;
+        $this->processManager = $processManager;
+        $this->app = $app;
     }
 
     public function run() {
@@ -79,6 +88,8 @@ class ContainerCreationSlaveService extends AService {
             $this->containerRepository->rollback(__METHOD__);
 
             $this->logError($e->getMessage());
+            $this->logError(var_export($e, true));
+            $this->saveExceptionToFile($e);
 
             $this->containerManager->changeContainerStatus($this->containerId, ContainerStatus::ERROR_DURING_CREATION, $this->serviceManager->getServiceUserId(), 'Status change due to background container creation. An error occured during container creation.');
             $this->containerManager->changeContainerCreationStatus($this->containerId, 0, null);
@@ -89,8 +100,56 @@ class ContainerCreationSlaveService extends AService {
     private function processContainerCreation() {
         try {
             $this->containerManager->createNewContainerAsync($this->containerId);
+            $this->insertProcesses();
         } catch(AException $e) {
             throw $e;
+        }
+    }
+
+    private function insertProcesses() {
+        $qb = $this->processManager->processRepository->composeQueryForProcessesInDistribution();
+        $qb->execute();
+
+        $insertProcesses = [];
+        $insertMetadata = [];
+        while($row = $qb->fetchAssoc()) {
+            $metadataDefinition = $row['metadataDefinition'];
+
+            if($metadataDefinition !== null) {
+                $metadataDefinition = json_decode(base64_decode($metadataDefinition), true);
+
+                foreach($metadataDefinition['metadata'] as $meta) {
+                    $insertMetadata[] = [
+                        'title' => $meta['name'],
+                        'guiTitle' => $meta['label'],
+                        'type' => $meta['type'],
+                        'defaultValue' => $meta['defaultValue'],
+                        'isSystem' => 1,
+                        'isRequired' => 1,
+                        'uniqueProcessId' => $row['uniqueProcessId']
+                    ];
+                }
+            }
+
+            $insertProcesses[] = [
+                'processId' => $row['processId'],
+                'uniqueProcessId' => $row['uniqueProcessId'],
+                'title' => $row['title'],
+                'description' => $row['description'],
+                'definition' => $row['definition'],
+                'userId' => $row['userId'],
+                'status' => 1
+            ];
+        }
+
+        $container = new Container($this->app, $this->containerId);
+
+        foreach($insertProcesses as $data) {
+            $container->processManager->insertNewProcessFromDataArray($data);
+        }
+
+        foreach($insertMetadata as $data) {
+            $container->processMetadataManager->addNewMetadata($data);
         }
     }
 }

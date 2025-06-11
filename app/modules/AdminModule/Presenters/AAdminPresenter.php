@@ -103,18 +103,34 @@ abstract class AAdminPresenter extends AContainerPresenter {
         }
 
         if($this->isProcesses) {
-            $processes = $this->checkActivePage('Processes');
-            $processList = $this->checkActivePage('ProcessList');
+            $processes = $this->checkActivePage('Processes', 'dashboard');
+            $processList = $this->checkActivePage('Processes', 'list') || $this->checkActivePage('ProcessMetadata');
 
             $addLink('Dashboard', $this->createFullURL('Admin:Processes', 'dashboard'), $processes);
-            $addLink('Process list', $this->createFullURL('Admin:ProcessList', 'list'), $processList);
+            $addLink('Process list', $this->createFullURL('Admin:Processes', 'list'), $processList);
         }
     }
 
-    protected function checkActivePage(string $key) {
+    /**
+     * Checks active page
+     * 
+     * @param string $key Presenter name (without Presenter suffix)
+     * @param ?string $action Optional action name for additional checking
+     */
+    protected function checkActivePage(string $key, ?string $action = null): bool {
         $name = substr($this->name, 0, -9); //Presenter
 
-        return $name == $key;
+        if($action === null) {
+            return $name == $key;
+        } else {
+            if($name == $key) {
+                if($this->httpRequest->get('action') == $action) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
     }
 
     protected function createComponentSidebar(HttpRequest $request) {

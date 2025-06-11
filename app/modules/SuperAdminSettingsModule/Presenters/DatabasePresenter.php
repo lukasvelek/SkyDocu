@@ -80,15 +80,18 @@ class DatabasePresenter extends ASuperAdminSettingsPresenter {
             $hasNewer = false;
             if(count($migrations) > 0) {
                 $lastMigration = $migrations[count($migrations) - 1];
-                $lastMigration = FileManager::getFilenameFromPath($lastMigration);
-                $lastMigrationParts = explode('_', $lastMigration);
-                $schema = $lastMigrationParts[2];
-                $date = $lastMigrationParts[1];
 
-                $date = DateTimeFormatHelper::formatDateToUserFriendly($date, $this->app->currentUser->getDateFormat());
-
-                $lastMigration = (int)$schema . " ($date)";
-                $hasNewer = true;
+                if($lastMigration !== null) {
+                    $lastMigration = FileManager::getFilenameFromPath($lastMigration);
+                    $lastMigrationParts = explode('_', $lastMigration);
+                    $schema = $lastMigrationParts[2];
+                    $date = $lastMigrationParts[1];
+    
+                    $date = DateTimeFormatHelper::formatDateToUserFriendly($date, $this->app->currentUser->getDateFormat());
+    
+                    $lastMigration = (int)$schema . " ($date)";
+                    $hasNewer = true;
+                }
             }
 
             $this->template->available_db_schema_in_distribution = $lastMigration;

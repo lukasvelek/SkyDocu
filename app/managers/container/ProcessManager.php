@@ -2,429 +2,130 @@
 
 namespace App\Managers\Container;
 
-use App\Constants\Container\ProcessesGridSystemMetadata;
-use App\Constants\Container\ProcessStatus;
 use App\Core\DB\DatabaseRow;
-use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
-use App\Exceptions\NonExistingEntityException;
-use App\Helpers\ProcessHelper;
 use App\Logger\Logger;
 use App\Managers\AManager;
 use App\Managers\EntityManager;
-use App\Managers\UserAbsenceManager;
-use App\Managers\UserSubstituteManager;
 use App\Repositories\Container\ProcessRepository;
 
-/**
- * ProcessManager is responsible for managing processes
- * 
- * @author Lukas Velek
- */
 class ProcessManager extends AManager {
     public ProcessRepository $processRepository;
-    private GroupManager $groupManager;
-    private UserSubstituteManager $userSubstituteManager;
-    private UserAbsenceManager $userAbsenceManager;
 
-    private array $mProcessesCache;
-    
-    /**
-     * Class constructor
-     * 
-     * @param Logger $logger
-     * @param EntityManager $entityManager
-     * @param ProcessRepository $processRepository
-     * @param GroupManager $groupManager
-     * @param UserSubstituteManager $userSubstituteManager
-     * @param UserAbsenceManager $userAbsenceManager
-     */
-    public function __construct(
-        Logger $logger,
-        EntityManager $entityManager,
-        ProcessRepository $processRepository,
-        GroupManager $groupManager,
-        UserSubstituteManager $userSubstituteManager,
-        UserAbsenceManager $userAbsenceManager
-    ) {
+    public function __construct(Logger $logger, EntityManager $entityManager, ProcessRepository $processRepository) {
         parent::__construct($logger, $entityManager);
-        
+
         $this->processRepository = $processRepository;
-        $this->groupManager = $groupManager;
-        $this->userSubstituteManager = $userSubstituteManager;
-        $this->userAbsenceManager = $userAbsenceManager;
-
-        $this->mProcessesCache = [];
     }
 
     /**
-     * Starts given process
+     * Inserts a new process from data array
      * 
-     * @param ?string $documentId Document ID or null
-     * @param string $type Proces type
-     * @param string $userId Process author user ID
-     * @param string $currentOfficerUserId Process current officer user ID
-     * @param array $workflowUserIds Array of user IDs that are in the workflow
-     * @return string Process ID
+     * @param array $data Data array
+     * @throws GeneralException
      */
-    public function startProcess(?string $documentId, string $type, string $userId, string $currentOfficerId, array $workflowUserIds): string {
-        $processId = $this->createId(EntityManager::C_PROCESSES);
-
-        if($processId === null) {
-            throw new GeneralException('Database error.');
-        }
-
-        $workflowConverted = ProcessHelper::convertWorkflowToDb($workflowUserIds);
-
-        $data = [
-            'type' => $type,
-            'authorUserId' => $userId,
-            'currentOfficerUserId' => $currentOfficerId,
-            'workflowUserIds' => $workflowConverted
-        ];
-
-        if($this->userAbsenceManager->isUserAbsent($currentOfficerId)) {
-            $substitute = $this->userSubstituteManager->getUserOrTheirSubstitute($currentOfficerId);
-
-            if($substitute != $currentOfficerId) {
-                $data['currentOfficerSubstituteUserId'] = $substitute;
-            }
-        }
-
-        if($documentId !== null) {
-            $data['documentId'] = $documentId;
-        }
-
-        if(!$this->processRepository->insertNewProcess($processId, $data)) {
-            throw new GeneralException('Database error.');
-        }
-
-        return $processId;
-    }
-
-    /**
-     * Moves the process to the previous workflow user
-     * 
-     * @param string $processId Process ID
-     * @param string $userId User ID
-     */
-    public function previousWorkflowProcess(string $processId, string $userId) {
-        $process = $this->getProcessById($processId);
-
-        $workflowUsers = ProcessHelper::convertWorkflowFromDb($process);
-
-        $i = 0;
-        foreach($workflowUsers as $workflowUserId) {
-            if($workflowUserId == $process->currentOfficerUserId) {
-                break;
-            }
-
-            $i++;
-        }
-
-        $newOfficer = $workflowUsers[$i - 2];
-
-        $data = [
-            'currentOfficerUserId' => $newOfficer
-        ];
-
-        if($this->userAbsenceManager->isUserAbsent($newOfficer)) {
-            $substitute = $this->userSubstituteManager->getUserOrTheirSubstitute($newOfficer);
-
-            if($substitute != $newOfficer) {
-                $data['currentOfficerSubstituteUserId'] = $substitute;
-            }
+    public function insertNewProcessFromDataArray(array $data) {
+        $processId = null;
+        if(array_key_exists('processId', $data)) {
+            $processId = $data['processId'];
         } else {
-            $data['currentOfficerSubstituteUserId'] = null;
+            $processId = $this->createId(EntityManager::C_PROCESSES);
         }
 
-        if(!$this->processRepository->updateProcess($processId, $data)) {
+        if(!$this->processRepository->addNewProcess(
+            $processId,
+            $data['uniqueProcessId'],
+            $data['title'],
+            $data['description'],
+            $data['definition'],
+            $data['userId'],
+            $data['status']
+        )) {
             throw new GeneralException('Database error.');
         }
-
-        $this->insertProcessMetadataHistory($processId, $userId, ProcessesGridSystemMetadata::CURRENT_OFFICER_USER_ID, $process->currentOfficerUserId, $newOfficer);
     }
 
     /**
-     * Moves the process to the next workflow user
+     * Returns a DatabaseRow instance for process by given $processId
      * 
      * @param string $processId Process ID
-     * @param string $userId User ID
      */
-    public function nextWorkflowProcess(string $processId, string $userId) {
-        $process = $this->getProcessById($processId);
+    public function getProcessById(string $processId): DatabaseRow {
+        $process = $this->processRepository->getProcessById($processId);
 
-        $workflowUsers = ProcessHelper::convertWorkflowFromDb($process);
-
-        $i = 0;
-        foreach($workflowUsers as $workflowUserId) {
-            if($workflowUserId == $process->currentOfficerUserId) {
-                break;
-            }
-
-            $i++;
+        if($process === null) {
+            throw new GeneralException('No process \'' . $processId . '\' was found.');
         }
 
-        $newOfficer = $workflowUsers[$i];
-
-        $data = [
-            'currentOfficerUserId' => $newOfficer
-        ];
-
-        if($this->userAbsenceManager->isUserAbsent($newOfficer)) {
-            $substitute = $this->userSubstituteManager->getUserOrTheirSubstitute($newOfficer);
-
-            if($substitute != $newOfficer) {
-                $data['currentOfficerSubstituteUserId'] = $substitute;
-            }
-        } else {
-            $data['currentOfficerSubstituteUserId'] = null;
-        }
-
-        if(!$this->processRepository->updateProcess($processId, $data)) {
-            throw new GeneralException('Database error.');
-        }
-
-        $this->insertProcessMetadataHistory($processId, $userId, ProcessesGridSystemMetadata::CURRENT_OFFICER_USER_ID, $process->currentOfficerUserId, $newOfficer);
+        return DatabaseRow::createFromDbRow($process);
     }
 
     /**
-     * Cancels given process
+     * Returns last process for unique process ID
      * 
-     * @param string $processId Process ID
-     * @param string $reason Reason of process canceling
-     * @param string $userId User ID
+     * @param string $uniqueProcessId Unique process ID
+     * @throws GeneralException
      */
-    public function cancelProcess(string $processId, string $reason, string $userId) {
-        $process = $this->getProcessById($processId);
+    public function getLastProcessForUniqueProcessId(string $uniqueProcessId): DatabaseRow {
+        $qb = $this->processRepository->commonComposeQuery();
 
-        $data = [
-            'status' => ProcessStatus::CANCELED
-        ];
-
-        if(!$this->processRepository->updateProcess($processId, $data)) {
-            throw new GeneralException('Database error.');
-        }
-
-        $this->insertNewProcessComment($processId, $userId, $reason);
-        $this->insertProcessMetadataHistory($processId, $userId, ProcessesGridSystemMetadata::STATUS, $process->status, ProcessStatus::CANCELED);
-    }
-
-    /**
-     * Finishes given process
-     * 
-     * @param string $processId Process ID
-     * @param string $userId User ID
-     */
-    public function finishProcess(string $processId, string $userId) {
-        $process = $this->getProcessById($processId);
-        
-        $data = [
-            'status' => ProcessStatus::FINISHED,
-            'currentOfficerUserId' => null,
-            'currentOfficerSubstituteUserId' => null
-        ];
-
-        if(!$this->processRepository->updateProcess($processId, $data)) {
-            throw new GeneralException('Database error.');
-        }
-
-        $this->insertProcessMetadataHistory($processId, $userId, ProcessesGridSystemMetadata::STATUS, $process->status, $data['status']);
-        $this->insertProcessMetadataHistory($processId, $userId, ProcessesGridSystemMetadata::CURRENT_OFFICER_USER_ID, $process->currentOfficerUserId, null);
-    }
-
-    /**
-     * Checks if given document is in a process
-     * 
-     * @param string $documentId Document ID
-     * @return bool True if document is in a process or false if not
-     */
-    public function isDocumentInProcess(string $documentId): bool {
-        $processes = $this->processRepository->getProcessesForDocument($documentId);
-
-        return !empty($processes);
-    }
-
-    /**
-     * Checks if given documents are in processes. Returns array of all document IDs that are in processes.
-     * 
-     * @param array $documentIds Array of document IDs
-     * @return array Array of document IDs that are in processes
-     */
-    public function areDocumentsInProcesses(array $documentIds): array {
-        $tmp = $this->processRepository->getActiveProcessCountForDocuments($documentIds);
-
-        $result = [];
-        foreach($tmp as $documentId => $count) {
-            if($count > 0) {
-                $result[] = $documentId;
-            }
-        }
-
-        return $result;
-    }
-
-    /**
-     * Returns process by its ID
-     * 
-     * @param string $processId Process ID
-     * @return DatabaseRow Process database row
-     */
-    public function getProcessById(string $processId) {
-        if(!array_key_exists($processId, $this->mProcessesCache)) {
-            $row = $this->processRepository->getProcessById($processId);
-
-            if($row === null) {
-                throw new NonExistingEntityException('Process does not exist.', null, false);
-            }
-
-            $row = DatabaseRow::createFromDbRow($row);
-
-            $this->mProcessesCache[$processId] = $row;
-        }
-
-        return $this->mProcessesCache[$processId];
-    }
-
-    /**
-     * Starts process and finishes it right after
-     * 
-     * @param string $documentId Document ID
-     * @param string $type Process type
-     * @param string $userId User ID
-     * @param string $currentOfficerUserId Current officer user ID
-     * @param array $workflowUserIds Array of user IDs that are in the process workflow
-     * @return bool True on success or false on failure
-     */
-    public function saveProcess(string $documentId, string $type, string $userId, string $currentOfficerId, array $workflowUserIds): bool {
-        $result = true;
-
-        try {
-            $this->processRepository->beginTransaction(__METHOD__);
-        
-            $processId = $this->startProcess($documentId, $type, $userId, $currentOfficerId, $workflowUserIds);
-            $this->finishProcess($processId, $userId);
-
-            $this->processRepository->commit($userId, __METHOD__);
-        } catch(AException $e) {
-            $this->processRepository->rollback(__METHOD__);
-
-            $result = false;
-        }
-
-        return $result;
-    }
-
-    /**
-     * Inserts a new process comment
-     * 
-     * @param string $processId Process ID
-     * @param string $authorId Author ID
-     * @param string $text Comment text
-     */
-    public function insertNewProcessComment(string $processId, string $authorId, string $text) {
-        $commentId = $this->createId(EntityManager::C_PROCESS_COMMENTS);
-
-        if($commentId === null) {
-            throw new GeneralException('Database error.');
-        }
-
-        if(!$this->processRepository->insertNewProcessComment($commentId, $processId, $authorId, $text)) {
-            throw new GeneralException('Database error.');
-        }
-    }
-
-    /**
-     * Deletes a process comment
-     * 
-     * @param string $processId Process ID
-     * @param string $commentId Comment ID
-     */
-    public function deleteProcessComment(string $processId, string $commentId) {
-        if(!$this->processRepository->deleteProcessCommentById($commentId)) {
-            throw new GeneralException('Database error.');
-        }
-    }
-
-    /**
-     * Inserts process metadata history entry
-     * 
-     * @param string $processId Process ID
-     * @param string $userId User ID
-     * @param string $metadataName Metadata name
-     * @param mixed $oldValue Old metadata value
-     * @param mixed $newValue New metadata value
-     */
-    public function insertProcessMetadataHistory(string $processId, string $userId, string $metadataName, mixed $oldValue, mixed $newValue) {
-        $entryId = $this->createId(EntityManager::C_PROCESS_METADATA_HISTORY);
-
-        if($entryId === null) {
-            throw new GeneralException('Database error.');
-        }
-
-        $data = [
-            'processId' => $processId,
-            'userId' => $userId,
-            'metadataName' => $metadataName
-        ];
-
-        if($oldValue !== null) {
-            $data['oldValue'] = $oldValue;
-        }
-        if($newValue !== null) {
-            $data['newValue'] = $newValue;
-        }
-
-        if(!$this->processRepository->insertNewProcessHistoryEntry($entryId, $data)) {
-            throw new GeneralException('Database error.');
-        }
-    }
-
-    /**
-     * Deletes given process type
-     * 
-     * @param string $typeKey Type key
-     */
-    public function deleteProcessType(string $typeKey) {
-        $qb = $this->processRepository->commonComposeQuery(false);
-        $qb->andWhere('type = ?', [$typeKey])
+        $qb->andWhere('uniqueProcessId = ?', [$uniqueProcessId])
+            ->andWhere('status = 1')
+            ->orderBy('dateCreated', 'DESC')
+            ->limit(1)
             ->execute();
+        
+        $result = $qb->fetch();
 
-        $processIds = [];
-        while($row = $qb->fetchAssoc()) {
-            $processIds[] = $row['processId'];
+        if($result === null) {
+            throw new GeneralException('No process for unique process ID \'' . $uniqueProcessId . '\' exists.');
         }
 
-        foreach($processIds as $processId) {
-            if(!$this->processRepository->deleteProcessDataById($processId)) {
-                throw new GeneralException('Database error.');
-            }
-            if(!$this->processRepository->deleteProcessCommentsForProcessId($processId)) {
-                throw new GeneralException('Database error.');
-            }
-            if(!$this->processRepository->deleteProcessById($processId)) {
-                throw new GeneralException('Database error.');
-            }
-        }
+        return DatabaseRow::createFromDbRow($result);
+    }
 
-        if(!$this->processRepository->deleteProcessTypeByTypeKey($typeKey)) {
-            throw new GeneralException('Database error.');
+    /**
+     * Returns unique process ID for given process ID
+     * 
+     * @param string $processId Process ID
+     */
+    public function getUniqueProcessIdForProcessId(string $processId): string {
+        $process = $this->getProcessById($processId);
+
+        return $process->uniqueProcessId;
+    }
+
+    /**
+     * Enables process by unique process ID
+     * 
+     * @param string $uniqueProcessId Unique process ID
+     */
+    public function enableProcessByUniqueProcessId(string $uniqueProcessId) {
+        $process = $this->getLastProcessForUniqueProcessId($uniqueProcessId);
+
+        $data = [
+            'isEnabled' => 1
+        ];
+
+        if(!$this->processRepository->updateProcess($process->processId, $data)) {
+            throw new GeneralException('Database error');
         }
     }
 
     /**
-     * Inserts new process type
+     * Disables process by unique process ID
      * 
-     * @param string $typeKey Type key
-     * @param string $title GUI title
-     * @param string $description Description
-     * @param bool $enabled True if enabled
+     * @param string $uniqueProcessId Unique process ID
      */
-    public function insertNewProcessType(string $typeKey, string $title, string $description, bool $enabled = true) {
-        $typeId = $this->createId(EntityManager::C_PROCESS_TYPES);
+    public function disableProcessByUniqueProcessId(string $uniqueProcessId) {
+        $process = $this->getLastProcessForUniqueProcessId($uniqueProcessId);
 
-        if(!$this->processRepository->insertNewProcessType($typeId, $typeKey, $title, $description, $enabled)) {
-            throw new GeneralException('Database error.');
+        $data = [
+            'isEnabled' => 0
+        ];
+
+        if(!$this->processRepository->updateProcess($process->processId, $data)) {
+            throw new GeneralException('Database error');
         }
     }
 }

@@ -20,7 +20,7 @@ abstract class ABaseMigration {
     private string $migrationFullname;
     private string $migrationNumber;
     private ?TableSchema $tableSchema = null;
-    private DatabaseConnection $conn;
+    protected DatabaseConnection $conn;
     private Logger $logger;
 
     protected DatabaseConnection $masterConn;
@@ -120,6 +120,38 @@ abstract class ABaseMigration {
     }
 
     /**
+     * Generates unique hash
+     * 
+     * @param int $length Hash length
+     * @param string $tableName Table name
+     * @param string $column Column name
+     */
+    protected function getUniqueHash(int $length, string $tableName, string $column): ?string {
+        $runs = 0;
+        $maxRuns = 1000;
+
+        $final = null;
+        while($runs < $maxRuns) {
+            $hash = HashManager::createHash($length, false);
+
+            $result = $this->conn->query('SELECT COUNT(' . $column . ') AS cnt FROM ' . $tableName . ' WHERE ' . $column . ' = \'' . $hash . '\'');
+
+            if($result !== false) {
+                foreach($result as $row) {
+                    if($row['cnt'] == 0) {
+                        $final = $hash;
+                        break;
+                    }
+                }
+            }
+
+            $runs++;
+        }
+
+        return $final;
+    }
+
+    /**
      * Returns a value from given table by single condition
      * 
      * @param string $tableName Table name
@@ -136,6 +168,43 @@ abstract class ABaseMigration {
             ->execute();
 
         return $qb->fetch($columnName);
+    }
+
+    /**
+     * Returns a unique process ID for process title
+     * 
+     * @param string $processTitle Process title
+     */
+    protected function getUniqueProcessIdForProcessTitle(string $processTitle): mixed {
+        $qb = new QueryBuilder($this->conn, $this->logger, __METHOD__);
+
+        $qb->select(['uniqueProcessId'])
+            ->from('processes')
+            ->where('title = ?', [$processTitle])
+            ->andWhere('status = 1')
+            ->orderBy('dateCreated', 'DESC')
+            ->limit(1)
+            ->execute();
+
+        $result = $qb->fetch('uniqueProcessId');
+
+        return $result;
+    }
+
+    /**
+     * Returns technical user's ID or null if no technical user exists
+     */
+    protected function getTechnicalUserId(): ?string {
+        $sql = 'SELECT userId FROM users WHERE username = "service_user"';
+
+        $result = $this->masterConn->query($sql);
+
+        $userId = null;
+        foreach($result as $row) {
+            $userId = $row['userId'];
+        }
+
+        return $userId;
     }
 }
 

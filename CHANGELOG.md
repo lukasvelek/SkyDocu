@@ -18,6 +18,16 @@ Previously changelog for versions `1.0`-`1.4` has been located in README.md. How
 - Updated process information page
 - Updated ordering in process grids
 - Added support for user custom date and time formats
+- Added conversion tool for JSON form definitions
+    - The tool receives JSON form definition and returns the FormBuilder or HTML code of the form
+- Processes overhaul
+    - Updated workflow
+    - Custom process types
+    - Multistep forms
+    - Process editor
+    - Process versioning
+    - Support for files
+    - Process metadata
 
 ## SkyDocu `1.5` (04/08/2025)
 - Added _Requested containers_ metric to superadministration Container statistics widget

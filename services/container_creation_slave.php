@@ -8,7 +8,7 @@ require_once('CommonService.php');
 global $app;
 
 try {
-    $service = new ContainerCreationSlaveService($app->logger, $app->serviceManager, $app->containerManager, $app->containerRepository);
+    $service = new ContainerCreationSlaveService($app->logger, $app->serviceManager, $app->containerManager, $app->containerRepository, $app->processManager, $app);
     $service->run();
 } catch(Exception|Error $e) {
     throw new ServiceException($e->getMessage(), $e);

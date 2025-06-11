@@ -97,6 +97,8 @@ class GridBuilder extends AComponent {
     private GridBuilderHelper $helper;
     private ?string $containerId;
 
+    private array $disabledActionList;
+
     /**
      * Class constructor
      * 
@@ -130,8 +132,18 @@ class GridBuilder extends AComponent {
         $this->refreshDisabled = false;
         $this->containerId = null;
         $this->filterLabels = [];
+        $this->disabledActionList = [];
 
         $this->helper = new GridBuilderHelper($request);
+    }
+
+    /**
+     * Disables an action
+     * 
+     * @param string $name Action name
+     */
+    public function disableActionByName(string $name) {
+        $this->disabledActionList[] = $name;
     }
 
     /**
@@ -418,7 +430,7 @@ class GridBuilder extends AComponent {
                                     $el->style('background-color', $bgColor);
                                 }
 
-                                $el->style('border-radius', '10px')
+                                $el->style('border-radius', '12px')
                                     ->style('padding', '5px');
                             }
                         }
@@ -643,7 +655,8 @@ class GridBuilder extends AComponent {
             $this->primaryKeyColName,
             $this->actionsDisabled,
             $this->hasCheckboxes,
-            $isSkeleton
+            $isSkeleton,
+            $this->disabledActionList
         );
     }
 

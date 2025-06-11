@@ -4,9 +4,8 @@ namespace App\Data\Db\Migrations\Containers;
 
 use App\Constants\Container\CustomMetadataTypes;
 use App\Constants\Container\Processes\InvoiceCustomMetadata;
-use App\Constants\Container\StandaloneProcesses;
 use App\Constants\Container\SystemGroups;
-use App\Core\DB\ABaseMigration;
+use App\Core\DB\AContainerBaseMigration;
 use App\Core\DB\Helpers\TableSchema;
 use App\Core\DB\Helpers\TableSeeding;
 use App\Exceptions\GeneralException;
@@ -20,7 +19,7 @@ use App\Managers\EntityManager;
  * @author Lukas Velek
  * @version 1.0 from 03/15/2025
  */
-class migration_2025_03_15_0001_initial extends ABaseMigration {
+class migration_2025_03_15_0001_initial extends AContainerBaseMigration {
     public function up(): TableSchema {
         $table = $this->getTableSchema();
 
@@ -146,36 +145,6 @@ class migration_2025_03_15_0001_initial extends ABaseMigration {
             ->text('title')
             ->index(['metadataId']);
 
-        $table->create('processes')
-            ->primaryKey('processId')
-            ->varchar('documentId', 256, true)
-            ->varchar('type')
-            ->varchar('authorUserId')
-            ->varchar('currentOfficerUserId', 256, true)
-            ->varchar('workflowUserIds', 256, true)
-            ->datetimeAuto('dateCreated')
-            ->integer('status', 4)
-            ->default('status', 1)
-            ->varchar('currentOfficerSubstituteUserId', 256, true)
-            ->index(['currentOfficerUserId', 'authorUserId'])
-            ->index(['documentId']);
-
-        $table->create('process_types')
-            ->primaryKey('typeId')
-            ->varchar('typeKey')
-            ->varchar('title')
-            ->text('description')
-            ->bool('isEnabled')
-            ->default('isEnabled', 1);
-
-        $table->create('process_comments')
-            ->primaryKey('commentId')
-            ->varchar('processId')
-            ->varchar('userId')
-            ->text('description')
-            ->datetimeAuto('dateCreated')
-            ->index(['processId']);
-
         $table->create('transaction_log')
             ->primaryKey('transactionId')
             ->varchar('userId')
@@ -188,22 +157,6 @@ class migration_2025_03_15_0001_initial extends ABaseMigration {
             ->text('columnConfiguration')
             ->datetimeAuto('dateCreated')
             ->index(['gridName']);
-
-        $table->create('process_metadata_history')
-            ->primaryKey('entryId')
-            ->varchar('processId')
-            ->varchar('userId')
-            ->varchar('metadataName')
-            ->varchar('oldValue', 256, true)
-            ->varchar('newValue', 256, true)
-            ->datetimeAuto('dateCreated')
-            ->index(['processId']);
-
-        $table->create('process_data')
-            ->primaryKey('entryId')
-            ->varchar('processId')
-            ->text('data')
-            ->index(['processId']);
 
         $table->create('archive_folders')
             ->primaryKey('folderId')
@@ -417,32 +370,6 @@ class migration_2025_03_15_0001_initial extends ABaseMigration {
                 'folderId' => $folderIds['Invoices']
             ]);
         }
-
-        $processTypesSeed = $seed->seed(EntityManager::C_PROCESS_TYPES);
-
-        $standaloneProcessIds = [];
-        foreach(StandaloneProcesses::getAll() as $key => $title) {
-            if(StandaloneProcesses::isDisabled($key)) continue;
-
-            $standaloneProcessIds[$key] = $this->getId(EntityManager::C_PROCESS_TYPES);
-
-            $processTypesSeed->add([
-                    'typeId' => $standaloneProcessIds[$key],
-                    'typeKey' => $key,
-                    'title' => $title,
-                    'description' => StandaloneProcesses::getDescription($key)
-            ]);
-        }
-
-        $seed->seed(EntityManager::C_PROCESS_CUSTOM_METADATA)
-            ->add([
-                'metadataId' => $this->getId(EntityManager::C_PROCESS_CUSTOM_METADATA),
-                'typeId' => $standaloneProcessIds[StandaloneProcesses::INVOICE],
-                'title' => 'companies',
-                'guiTitle' => 'Companies',
-                'type' => CustomMetadataTypes::ENUM,
-                'isRequired' => 1
-            ]);
 
         $groupSeed = $seed->seed(EntityManager::C_GROUPS);
 

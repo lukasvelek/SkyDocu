@@ -2,13 +2,13 @@
 
 namespace App\Modules;
 
-use App\Authorizators\DocumentBulkActionAuthorizator;
+use App\Authorizators\ContainerProcessAuthorizator;
 use App\Authorizators\GroupStandardOperationsAuthorizator;
 use App\Authorizators\SupervisorAuthorizator;
 use App\Constants\SessionNames;
 use App\Core\Caching\CacheFactory;
 use App\Core\DatabaseConnection;
-use App\Lib\Processes\ProcessFactory;
+use App\Entities\ApiTokenEntity;
 use App\Managers\Container\ArchiveManager;
 use App\Managers\Container\DocumentManager;
 use App\Managers\Container\EnumManager;
@@ -18,8 +18,9 @@ use App\Managers\Container\FolderManager;
 use App\Managers\Container\GridManager;
 use App\Managers\Container\GroupManager;
 use App\Managers\Container\MetadataManager;
+use App\Managers\Container\ProcessInstanceManager;
 use App\Managers\Container\ProcessManager;
-use App\Managers\Container\StandaloneProcessManager;
+use App\Managers\Container\ProcessMetadataManager;
 use App\Managers\EntityManager;
 use App\Repositories\Container\ArchiveRepository;
 use App\Repositories\Container\DocumentClassRepository;
@@ -33,8 +34,9 @@ use App\Repositories\Container\FolderRepository;
 use App\Repositories\Container\GridRepository;
 use App\Repositories\Container\GroupRepository;
 use App\Repositories\Container\MetadataRepository;
+use App\Repositories\Container\ProcessInstanceRepository;
+use App\Repositories\Container\ProcessMetadataRepository;
 use App\Repositories\Container\ProcessRepository;
-use App\Repositories\Container\TransactionLogRepository;
 use App\Repositories\ContentRepository;
 use ReflectionClass;
 
@@ -58,6 +60,8 @@ abstract class AContainerPresenter extends APresenter {
     protected ExternalSystemLogRepository $externalSystemLogRepository;
     protected ExternalSystemTokenRepository $externalSystemTokenRepository;
     protected ExternalSystemRightsRepository $externalSystemRightsRepository;
+    protected ProcessInstanceRepository $processInstanceRepository;
+    protected ProcessMetadataRepository $processMetadataRepository;
     
     protected EntityManager $entityManager;
     protected FolderManager $folderManager;
@@ -66,17 +70,16 @@ abstract class AContainerPresenter extends APresenter {
     protected MetadataManager $metadataManager;
     protected EnumManager $enumManager;
     protected GridManager $gridManager;
-    protected ProcessManager $processManager;
-    protected StandaloneProcessManager $standaloneProcessManager;
     protected ArchiveManager $archiveManager;
     protected FileStorageManager $fileStorageManager;
     protected ExternalSystemsManager $externalSystemsManager;
+    protected ProcessManager $processManager;
+    protected ProcessInstanceManager $processInstanceManager;
+    protected ProcessMetadataManager $processMetadataManager;
 
-    protected DocumentBulkActionAuthorizator $documentBulkActionAuthorizator;
     protected GroupStandardOperationsAuthorizator $groupStandardOperationsAuthorizator;
     protected SupervisorAuthorizator $supervisorAuthorizator;
-
-    protected ProcessFactory $processFactory;
+    protected ContainerProcessAuthorizator $containerProcessAuthorizator;
 
     protected string $containerId;
 
@@ -117,27 +120,13 @@ abstract class AContainerPresenter extends APresenter {
         $this->initManagers();
         $this->injectCacheFactoryToManagers();
 
-        $this->enumManager->standaloneProcessManager = $this->standaloneProcessManager;
-
         $this->documentManager->enumManager = $this->enumManager;
 
-        $this->documentBulkActionAuthorizator = new DocumentBulkActionAuthorizator($containerConnection, $this->logger, $this->documentManager, $this->documentRepository, $this->app->userManager, $this->groupManager, $this->processManager, $this->archiveManager, $this->folderManager);
         $this->groupStandardOperationsAuthorizator = new GroupStandardOperationsAuthorizator($containerConnection, $this->logger, $this->groupManager);
         $this->supervisorAuthorizator = new SupervisorAuthorizator($containerConnection, $this->logger, $this->groupManager);
+        $this->containerProcessAuthorizator = new ContainerProcessAuthorizator($containerConnection, $this->logger, $this->processManager, $this->processInstanceManager, $this->groupManager, $this->app->userManager);
 
         $this->injectCacheFactoryToAuthorizators();
-
-        $this->processFactory = new ProcessFactory(
-            $this->documentManager,
-            $this->groupStandardOperationsAuthorizator,
-            $this->documentBulkActionAuthorizator,
-            $this->app->userManager,
-            $this->groupManager,
-            $this->app->currentUser,
-            $this->containerId,
-            $this->processManager,
-            $this->archiveManager
-        );
 
         $this->componentFactory->setCacheFactory($this->getContainerCacheFactory());
     }
@@ -147,32 +136,28 @@ abstract class AContainerPresenter extends APresenter {
      */
     private function initManagers() {
         $managers = [
-            'processManager' => [
-                'processRepository',
-                'groupManager',
-                ':userSubstituteManager',
-                ':userAbsenceManager'
-            ],
             'archiveManager' => [
                 'archiveRepository'
             ],
             'fileStorageManager' => [
                 'fileStorageRepository'
             ],
-            'standaloneProcessManager' => [
-                'processManager',
-                ':currentUser',
-                ':userManager',
-                'documentManager',
-                'fileStorageManager',
-                'groupManager',
-                'folderManager'
-            ],
             'externalSystemsManager' => [
                 'externalSystemsRepository',
                 'externalSystemLogRepository',
                 'externalSystemTokenRepository',
                 'externalSystemRightsRepository'
+            ],
+            'processManager' => [
+                'processRepository'
+            ],
+            'processInstanceManager' => [
+                'processInstanceRepository',
+                'groupManager',
+                ':userManager'
+            ],
+            'processMetadataManager' => [
+                'processMetadataRepository'
             ]
         ];
 
@@ -312,6 +297,19 @@ abstract class AContainerPresenter extends APresenter {
 
         $tmp = &$this->containerCacheFactory;
         return $tmp;
+    }
+
+    /**
+     * Returns system API token
+     */
+    protected function getSystemApiToken(): string {
+        $system = $this->externalSystemsManager->getSystemExternalSystem();
+
+        $token = $this->externalSystemsManager->createOrGetToken($system->systemId);
+
+        $entity = ApiTokenEntity::createNewEntity($token, $this->containerId, $system->systemId);
+        $entity->setUserId($this->getUserId());
+        return $entity->convertToToken();
     }
 }
 

@@ -76,11 +76,9 @@ class DocumentsPresenter extends AUserPresenter {
             $this->componentFactory->getGridBuilder($this->containerId),
             $this->app,
             $this->documentManager,
-            $this->documentBulkActionAuthorizator,
             $this->groupStandardOperationsAuthorizator,
             $this->enumManager,
             $this->gridManager,
-            $this->processFactory,
             $this->archiveManager,
             $this->fileStorageManager
         );
@@ -89,7 +87,7 @@ class DocumentsPresenter extends AUserPresenter {
             $documentsGrid->setCurrentFolder($this->currentFolderId);
         }
         $documentsGrid->showCustomMetadata();
-        $documentsGrid->useCheckboxes($this);
+        //$documentsGrid->useCheckboxes($this);
         $documentsGrid->setGridName(GridNames::DOCUMENTS_GRID);
 
         return $documentsGrid;
@@ -313,11 +311,9 @@ class DocumentsPresenter extends AUserPresenter {
             $this->componentFactory->getGridBuilder($this->containerId),
             $this->app,
             $this->documentManager,
-            $this->documentBulkActionAuthorizator,
             $this->groupStandardOperationsAuthorizator,
             $this->enumManager,
             $this->gridManager,
-            $this->processFactory,
             $this->archiveManager,
             $this->fileStorageManager
         );

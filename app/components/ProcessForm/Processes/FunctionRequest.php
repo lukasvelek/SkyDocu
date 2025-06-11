@@ -9,6 +9,7 @@ use App\UI\AComponent;
  * FunctionRequest represents the FunctionRequest standalone process
  * 
  * @author Lukas Velek
+ * @deprecated since 1.6
  */
 class FunctionRequest extends AProcessForm {
     protected function createForm() {

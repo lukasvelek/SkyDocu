@@ -108,6 +108,13 @@ class DatabaseConnection implements IDbQueriable {
         $installer = new DatabaseInstaller($this, new Logger());
         $installer->install();
     }
+
+    /**
+     * Returns the database name
+     */
+    public function getName(): string {
+        return $this->dbName;
+    }
 }
 
 ?>

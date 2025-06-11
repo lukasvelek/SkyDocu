@@ -10,6 +10,7 @@ use App\UI\AComponent;
  * HomeOffice represents the HomeOffice standalone process
  * 
  * @author Lukas Velek
+ * @deprecated since 1.6
  */
 class HomeOffice extends AProcessForm {
     protected function createForm() {
@@ -25,7 +26,7 @@ class HomeOffice extends AProcessForm {
         $this->addSubmit('Start');
 
         $this->setCallReducerOnChange();
-        $this->reducer = new HomeOfficeReducer($this->httpRequest);
+        $this->reducer = new HomeOfficeReducer($this->app, $this->httpRequest);
     }
 
     protected function createAction() {

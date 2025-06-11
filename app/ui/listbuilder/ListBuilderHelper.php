@@ -75,7 +75,7 @@ class ListBuilderHelper {
                         $el = HTML::el('span')
                             ->style('color', 'green')
                             ->style('background-color', 'lightgreen')
-                            ->style('border-radius', '10px')
+                            ->style('border-radius', '12px')
                             ->style('padding', '5px')
                             ->text('&check;');
                         $cell->setContent($el);
@@ -83,7 +83,7 @@ class ListBuilderHelper {
                         $el = HTML::el('span')
                             ->style('color', 'red')
                             ->style('background-color', 'pink')
-                            ->style('border-radius', '10px')
+                            ->style('border-radius', '12px')
                             ->style('padding', '5px')
                             ->text('&times;');
                         $cell->setContent($el);
@@ -116,7 +116,7 @@ class ListBuilderHelper {
 
                                     if($bgColor !== null) {
                                         $el->style('background-color', $bgColor)
-                                            ->style('border-radius', '10px')
+                                            ->style('border-radius', '12px')
                                             ->style('padding', '5px');
                                     }
                                 }
@@ -264,7 +264,7 @@ class ListBuilderHelper {
                     foreach($actionData as $actionName => $action) {
                         if($action instanceof ListAction) {
                             $_action = clone $action;
-                            $_action->inject($row, $_row, $k);
+                            $_action->inject($row, $_row, $_row->index - 1);
                             $_cell = new ListCell();
                             $_cell->setName($actionName);
                             $_cell->setContent($_action->output()->toString());
@@ -289,7 +289,7 @@ class ListBuilderHelper {
                     foreach($actionData as $actionName => $action) {
                         if($action instanceof ListAction) {
                             $_action = clone $action;
-                            $_action->inject($row, $_row, $k);
+                            $_action->inject($row, $_row, $_row->index - 1);
                             $_cell = new ListCell();
                             $_cell->setName($actionName);
                             $_cell->setContent($_action->output()->toString());

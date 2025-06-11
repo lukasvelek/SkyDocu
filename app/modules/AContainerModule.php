@@ -23,7 +23,7 @@ abstract class AContainerModule extends AModule {
         
         $this->container = new Container($this->app, $containerId);
 
-        $this->navbar->inject($this->container->groupManager, $this->container->standaloneProcessManager);
+        $this->navbar->inject($this->container->groupManager);
     }
 
     /**

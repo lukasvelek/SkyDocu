@@ -5,13 +5,13 @@ namespace App\Core\DB;
 use App\Core\DatabaseConnection;
 use App\Logger\Logger;
 use App\Repositories\Container\DocumentRepository;
-use App\Repositories\Container\ProcessRepository;
+use App\Repositories\Container\ProcessInstanceRepository;
 use App\Repositories\ContainerRepository;
 use App\Repositories\GroupRepository;
 use App\Repositories\TransactionLogRepository;
 use App\Repositories\UserRepository;
 use App\Schemas\Containers\GetContainerDocumentsSchema;
-use App\Schemas\Containers\GetContainerProcessSchema;
+use App\Schemas\Containers\GetContainerProcessInstanceSchema;
 use App\Schemas\GetGroupsSchema;
 use App\Schemas\GetContainersSchema;
 use App\Schemas\GetTransactionLogSchema;
@@ -32,6 +32,10 @@ class PeeQL implements IPeeQLWrapperClass {
 
     private array $repositoryParams;
     private bool $isContainer;
+    private string $userId;
+
+    private bool $areRoutesDefined = false;
+    private bool $isSchemaDefined = false;
 
     /**
      * Class constructor
@@ -48,9 +52,17 @@ class PeeQL implements IPeeQLWrapperClass {
         $this->repositoryParams = [$this->conn, $this->logger, $this->transactionLogRepository];
 
         $this->peeql = new PeeQLPeeQL();
+    }
 
-        $this->defineRoutes();
-        $this->defineSchema();
+    /**
+     * Sets user ID
+     * 
+     * @param string $userId User ID
+     */
+    public function setUserId(string $userId) {
+        $this->userId = $userId;
+
+        $this->repositoryParams[] = $this->userId;
     }
 
     /**
@@ -60,7 +72,10 @@ class PeeQL implements IPeeQLWrapperClass {
         $schema = $this->peeql->getSchema();
 
         if($this->isContainer) {
-            $schema->addSchema(GetContainerProcessSchema::class, 'GetProcessesSchema');
+            $schema->addSchema(GetContainerProcessInstanceSchema::class, [
+                'GetProcessInstancesSchema',
+                'GetMyProcessInstancesSchema'
+            ]);
             $schema->addSchema(GetContainerDocumentsSchema::class, 'GetDocumentsSchema');
         } else {
             $schema->addSchema(GetContainersSchema::class, 'GetContainersSchema');
@@ -78,7 +93,7 @@ class PeeQL implements IPeeQLWrapperClass {
         $router = $this->peeql->getRouter();
 
         if($this->isContainer) {
-            $router->addRoute('processes', ProcessRepository::class, $this->repositoryParams);
+            $router->addRoute('processInstances', ProcessInstanceRepository::class, $this->repositoryParams);
             $router->addRoute('documents', DocumentRepository::class, $this->repositoryParams);
         } else {
             $router->addRoute('containers', ContainerRepository::class, $this->repositoryParams);
@@ -95,6 +110,15 @@ class PeeQL implements IPeeQLWrapperClass {
      * @param string $json JSON query
      */
     public function execute(string $json): mixed {
+        if(!$this->isSchemaDefined) {
+            $this->defineSchema();
+            $this->isSchemaDefined = true;
+        }
+        if(!$this->areRoutesDefined) {
+            $this->defineRoutes();
+            $this->areRoutesDefined = true;
+        }
+
         $result = $this->peeql->execute($json);
 
         return $result;

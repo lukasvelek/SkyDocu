@@ -3,7 +3,6 @@
 namespace App\Components\Navbar;
 
 use App\Constants\Container\ProcessReportsViews;
-use App\Constants\Container\StandaloneProcesses;
 use App\Constants\Container\SystemGroups;
 use App\Constants\ContainerStatus;
 use App\Core\Caching\CacheFactory;
@@ -29,7 +28,6 @@ class Navbar extends AComponent {
     private ?int $mode;
     private ?GroupManager $groupManager;
     private CacheFactory $cacheFactory;
-    private ?StandaloneProcessManager $standaloneProcessManager;
 
     /**
      * Class constructor
@@ -47,7 +45,6 @@ class Navbar extends AComponent {
         $this->user = $user;
         $this->hideLinks = [];
         $this->groupManager = null;
-        $this->standaloneProcessManager = null;
     }
 
     /**
@@ -56,9 +53,8 @@ class Navbar extends AComponent {
      * @param GroupManager $groupManager Container GroupManager instance
      * @param StandaloneProcessManager Container StandaloneProcessManager instance
      */
-    public function inject(GroupManager $groupManager, StandaloneProcessManager $standaloneProcessManager) {
+    public function inject(GroupManager $groupManager) {
         $this->groupManager = $groupManager;
-        $this->standaloneProcessManager = $standaloneProcessManager;
     }
 
     /**
@@ -101,17 +97,6 @@ class Navbar extends AComponent {
 
                 if($this->app->groupManager->isUserMemberOfSuperadministrators($this->user->getId()) || ($this->groupManager !== null && in_array($this->user->getId(), $this->groupManager->getUsersForGroupTitle(SystemGroups::ADMINISTRATORS)))) {
                     $links['Administration'] = NavbarGeneralLinks::A_SETTINGS;
-                }
-
-                if($this->standaloneProcessManager !== null) {
-                    $processType = null;
-                    foreach($this->standaloneProcessManager->getEnabledProcessTypes() as $_processType) {
-                        if($_processType->typeKey != StandaloneProcesses::REQUEST_PROPERTY_MOVE) {
-                            $processType = $_processType->typeKey;
-                        }
-                    }
-
-                    $links['Reports']['view'] = $processType . '-' . ProcessReportsViews::VIEW_MY;
                 }
 
                 $this->links = $links;

@@ -37,10 +37,12 @@ class FormBuilder2 extends AComponent {
     private bool $callReducerOnChange;
     private bool $isPrerendered;
     private array $additionalLinkParams;
+    private bool $overrideReducerOnStartup = false;
+    private bool $callAfterSubmitReducer = false;
 
     private FormStateListHelper $stateListHelper;
 
-    public ?IFormReducer $reducer;
+    public ?ABaseFormReducer $reducer;
     private Router $router;
     private bool $hasFile;
     
@@ -70,12 +72,30 @@ class FormBuilder2 extends AComponent {
     }
 
     /**
+     * If set to true reducer isn't called on startup
+     * 
+     * @param bool $override Override reducer call on start up
+     */
+    public function setOverrideReducerCallOnStartup(bool $override = true) {
+        $this->overrideReducerOnStartup = $override;
+    }
+
+    /**
      * Sets if reducer should be called on every change
      * 
      * @param bool $callReducerOnChange
      */
     public function setCallReducerOnChange(bool $callReducerOnChange = true) {
         $this->callReducerOnChange = $callReducerOnChange;
+    }
+
+    /**
+     * Sets if the after submit reducer method should be called
+     * 
+     * @param bool $callReducer
+     */
+    public function setCallAfterSubmitReducer(bool $callReducer = true) {
+        $this->callAfterSubmitReducer = $callReducer;
     }
 
     /**
@@ -142,6 +162,21 @@ class FormBuilder2 extends AComponent {
     }
 
     /**
+     * Renders the form elements only to HTML code - without the <form> tag
+     */
+    public function renderElementsOnly(): string {
+        $code = '';
+
+        foreach($this->elements as $name => $element) {
+            $row = $this->buildElement($name, $element);
+
+            $code .= $row->render();
+        }
+
+        return $code;
+    }
+
+    /**
      * Build the inner form (the form itself) and returns its HTML code
      * 
      * @return string HTML code
@@ -156,12 +191,22 @@ class FormBuilder2 extends AComponent {
             $form->setFileUpload();
         }
 
+        // APPLIES REDUCER
         if($this->reducer !== null && !$this->httpRequest->isAjax) {
-            $stateList = $this->getStateList();
-            $this->reducer->applyReducer($stateList);
-            $this->applyStateList($stateList);
+            if(!$this->overrideReducerOnStartup && !$this->callAfterSubmitReducer) {
+                $stateList = $this->getStateList();
+                $this->reducer->applyOnStartupReducer($stateList);
+                $this->applyStateList($stateList);
+            }
+
+            if($this->callAfterSubmitReducer) {
+                $stateList = $this->getStateList();
+                $this->reducer->applyAfterSubmitOnOpenReducer($stateList);
+                $this->applyStateList($stateList);
+            }
         }
 
+        // BUILDS ELEMENTS TO ROWS
         foreach($this->elements as $name => $element) {
             $row = $this->buildElement($name, $element);
 
@@ -305,7 +350,17 @@ class FormBuilder2 extends AComponent {
 
         $this->addScript($par);
 
-        $this->addScript('function ' . $this->componentName . '_onChange() { ' . $par->getFunctionName() . '(\'\'); }');
+        $___args = [];
+
+        foreach($this->action as $k => $v) {
+            if(in_array($k, ['page', 'action', 'do'])) continue;
+
+            $___args[] = '\'' . $v . '\'';
+        }
+
+        $__args[] = '\'\'';
+
+        $this->addScript('function ' . $this->componentName . '_onChange() { ' . $par->getFunctionName() . '(' . implode(', ', $___args) . '); }');
 
         $this->router->inject($this->presenter, new ModuleManager());
         if(!$this->router->checkEndpointExists($this->action)) {
@@ -326,7 +381,7 @@ class FormBuilder2 extends AComponent {
             $label = $this->labels[$name];
         }
 
-        if($element instanceof AInteractableElement) {
+        if($label !== null && $element instanceof AInteractableElement) {
             if($element->isRequired()) {
                 $label->setRequired();
             }
@@ -381,6 +436,22 @@ class FormBuilder2 extends AComponent {
         $lbl = new Label($name, $text);
         $this->elements[$name] = &$lbl;
         return $lbl;
+    }
+
+    /**
+     * Adds a file link
+     * 
+     * @param string $name Element name
+     * @param ?string Label text or null
+     */
+    public function addFileLink(string $name, ?string $label = null): FileLink {
+        $fl = new FileLink($name);
+
+        $this->elements[$name] = &$fl;
+
+        $this->processLabel($name, $label);
+
+        return $fl;
     }
 
     /**
@@ -608,6 +679,157 @@ class FormBuilder2 extends AComponent {
     }
 
     /**
+     * Adds form user select with all users
+     * 
+     * @param string $name Element name
+     * @param ?string $label Label text or null
+     * @param ?string $containerId Container ID or null (if no container ID is entered, no users are displayed)
+     */
+    public function addUserSelect(string $name, ?string $label = null, ?string $containerId = null) {
+        $s = new Select($name);
+
+        $this->elements[$name] = &$s;
+
+        $this->processLabel($name, $label);
+
+        // ADD USERS
+        $users = [];
+
+        $getUserJson = function(string $userId) {
+            return [
+                'operation' => 'query',
+                'name' => 'getUsers',
+                'definition' => [
+                    'users' => [
+                        'get' => [
+                            'cols' => [
+                                'userId',
+                                'fullname'
+                            ],
+                            'conditions' => [
+                                [
+                                    'col' => 'userId',
+                                    'value' => $userId,
+                                    'type' => 'eq'
+                                ]
+                            ]
+                        ]
+                    ]
+                ]
+            ];
+        };
+
+        if($containerId !== null) {
+            $container = $this->app->containerManager->getContainerById($containerId);
+
+            $groupUsers = $this->app->groupManager->getGroupUsersForGroupTitle($container->getTitle() . ' - users');
+
+            foreach($groupUsers as $userId) {
+                $user = json_decode($this->app->peeql->execute(json_encode($getUserJson($userId))), true)['data'];
+
+                foreach($user as $row) {
+                    $users[] = [
+                        'value' => $row['userId'],
+                        'text' => $row['fullname']
+                    ];
+                }
+            }
+
+            $s->addRawOptions($users);
+        }
+
+        return $s;
+    }
+
+    /**
+     * Adds user select search
+     * 
+     * @param string $name Element name
+     * @param ?string $label Label text or null
+     * @param ?string $containerId Container ID or null (if no container ID is entered no users are displayed)
+     */
+    public function addUserSelectSearch(string $name, ?string $label = null, ?string $containerId = null) {
+        $this->addTextInput('userSeach', 'Fullname:');
+
+        $btn = $this->addButton('Search users');
+
+        if($containerId !== null) {
+            $btn->setOnClick('searchUsersSubmit()');
+
+            $arb = new AjaxRequestBuilder();
+
+            $arb->setMethod('POST')
+                ->setComponentAction($this->presenter, $this->componentName . '-searchUsers')
+                ->setHeader(['query' => '_query', 'containerId' => '_containerId'])
+                ->setFunctionName('searchUsers')
+                ->setFunctionArguments(['_query', '_containerId'])
+                ->updateHTMLElement($name, 'data');
+
+            $this->addScript($arb);
+
+            $this->addScript('
+                function searchUsersSubmit() {
+                    const query = $("#userSearch").val();
+                    const containerId = "' . $containerId . '";
+
+                    searchUsers(query, containerId);
+                }
+            ');
+        }
+
+        $s = new Select($name);
+
+        $this->elements[$name] = &$s;
+
+        $this->processLabel($name, $label);
+
+        return $s;
+    }
+
+    /**
+     * Adds presenter select search - the handler is in the implementing presenter
+     * 
+     * @param string $actionName Handling action name
+     * @param array $params Parameters
+     * @param string $name Element name
+     * @param string $searchByLabel Search label text
+     * @param string $label Element label
+     */
+    public function addPresenterSelectSearch(string $actionName, array $params, string $name, string $searchByLabel, string $label) {
+        $this->addTextInput($name . 'Search', $searchByLabel);
+
+        $btn = $this->addButton('Search');
+        $btn->setOnClick('search' . ucfirst($name) . 'Submit()');
+
+        $arb = new AjaxRequestBuilder();
+        
+        $arb->setMethod('POST')
+            ->setAction($this->presenter, $actionName, $params)
+            ->setHeader(['query' => '_query'])
+            ->setFunctionName('search' . ucfirst($name))
+            ->setFunctionArguments(['_query'])
+            ->updateHTMLElement($name, 'data');
+
+        $this->addScript($arb);
+
+        $this->addScript('
+            function search' . ucfirst($name) . 'Submit() {
+                const query = $("#' . $name . 'Search").val();
+
+                search' . ucfirst($name) . '(query);
+            }
+        ');
+
+        $s = new Select($name);
+
+        $this->elements[$name] = &$s;
+
+        $this->processLabel($name, $label);
+
+        return $s;
+    }
+
+    /**
      * If $label is not null then a label is created and associated to given element $name
      * 
      * @param string $name Element name
@@ -694,6 +916,54 @@ class FormBuilder2 extends AComponent {
         }
 
         $this->additionalLinkParams[$key] = $data;
+    }
+
+    /**
+     * Handles user select search subform
+     */
+    public function actionSearchUsers() {
+        $query = $this->httpRequest->get('query');
+        $containerId = $this->httpRequest->get('containerId');
+
+        $container = $this->app->containerManager->getContainerById($containerId);
+
+        $groupUsers = $this->app->groupManager->getGroupUsersForGroupTitle($container->getTitle() . ' - users');
+
+        $users = [];
+
+        $getUserJson = function() use ($query) {
+            return [
+                'operation' => 'query',
+                'name' => 'getUsers',
+                'definition' => [
+                    'users' => [
+                        'get' => [
+                            'cols' => [
+                                'userId',
+                                'fullname'
+                            ],
+                            'conditions' => [
+                                [
+                                    'col' => 'fullname',
+                                    'value' => $query,
+                                    'type' => 'like'
+                                ]
+                            ]
+                        ]
+                    ]
+                ]
+            ];
+        };
+
+        $user = json_decode($this->app->peeql->execute(json_encode($getUserJson($query))), true);
+
+        foreach($user as $row) {
+            if(!in_array($row['userId'], $groupUsers)) continue;
+
+            $users[] = '<option value="' . $row['userId'] . '">' . $row['fullname'] . '</option>';
+        }
+
+        return new JsonResponse(['data' => implode('', $users)]);
     }
 }
 

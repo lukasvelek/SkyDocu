@@ -29,6 +29,11 @@ class FormStateList {
         }
     }
 
+    /**
+     * Adds an element
+     * 
+     * @param string $name Element name
+     */
     public function addElement(string $name) {
         $this->_elements[$name] = new FormState($name);
     }
@@ -49,6 +54,15 @@ class FormStateList {
      */
     public function getAll() {
         return $this->_elements;
+    }
+
+    /**
+     * Returns true if given key exists
+     * 
+     * @param string $key Key name
+     */
+    public function keyExists(string $key): bool {
+        return array_key_exists($key, $this->_elements);
     }
 }
 

@@ -2,12 +2,11 @@
 
 namespace App\Core;
 
-use App\Authorizators\DocumentBulkActionAuthorizator;
+use App\Authorizators\ContainerProcessAuthorizator;
 use App\Authorizators\GroupStandardOperationsAuthorizator;
 use App\Authorizators\SupervisorAuthorizator;
 use App\Core\Caching\CacheFactory;
 use App\Entities\ContainerEntity;
-use App\Lib\Processes\ProcessFactory;
 use App\Logger\Logger;
 use App\Managers\Container\ArchiveManager;
 use App\Managers\Container\DocumentManager;
@@ -18,8 +17,9 @@ use App\Managers\Container\FolderManager;
 use App\Managers\Container\GridManager;
 use App\Managers\Container\GroupManager;
 use App\Managers\Container\MetadataManager;
+use App\Managers\Container\ProcessInstanceManager;
 use App\Managers\Container\ProcessManager;
-use App\Managers\Container\StandaloneProcessManager;
+use App\Managers\Container\ProcessMetadataManager;
 use App\Managers\EntityManager;
 use App\Repositories\Container\ArchiveRepository;
 use App\Repositories\Container\DocumentClassRepository;
@@ -33,8 +33,9 @@ use App\Repositories\Container\FolderRepository;
 use App\Repositories\Container\GridRepository;
 use App\Repositories\Container\GroupRepository;
 use App\Repositories\Container\MetadataRepository;
+use App\Repositories\Container\ProcessInstanceRepository;
+use App\Repositories\Container\ProcessMetadataRepository;
 use App\Repositories\Container\ProcessRepository;
-use App\Repositories\Container\TransactionLogRepository;
 use App\Repositories\ContentRepository;
 use ReflectionClass;
 
@@ -64,6 +65,8 @@ class Container {
     public ExternalSystemLogRepository $externalSystemLogRepository;
     public ExternalSystemTokenRepository $externalSystemTokenRepository;
     public ExternalSystemRightsRepository $externalSystemRightsRepository;
+    public ProcessInstanceRepository $processInstanceRepository;
+    public ProcessMetadataRepository $processMetadataRepository;
     
     public EntityManager $entityManager;
     public FolderManager $folderManager;
@@ -72,17 +75,16 @@ class Container {
     public MetadataManager $metadataManager;
     public EnumManager $enumManager;
     public GridManager $gridManager;
-    public ProcessManager $processManager;
-    public StandaloneProcessManager $standaloneProcessManager;
     public ArchiveManager $archiveManager;
     public FileStorageManager $fileStorageManager;
     public ExternalSystemsManager $externalSystemsManager;
+    public ProcessManager $processManager;
+    public ProcessInstanceManager $processInstanceManager;
+    public ProcessMetadataManager $processMetadataManager;
 
-    public DocumentBulkActionAuthorizator $documentBulkActionAuthorizator;
     public GroupStandardOperationsAuthorizator $groupStandardOperationsAuthorizator;
     public SupervisorAuthorizator $supervisorAuthorizator;
-
-    public ProcessFactory $processFactory;
+    public ContainerProcessAuthorizator $containerProcessAuthorizator;
 
     public string $containerId;
     public ContainerEntity $container;
@@ -123,29 +125,16 @@ class Container {
         $this->initManagers();
         $this->injectCacheFactoryToManagers();
 
-        $this->enumManager->standaloneProcessManager = $this->standaloneProcessManager;
         $this->documentManager->enumManager = $this->enumManager;
         
-        $this->documentBulkActionAuthorizator = new DocumentBulkActionAuthorizator($this->conn, $this->logger, $this->documentManager, $this->documentRepository, $this->app->userManager, $this->groupManager, $this->processManager, $this->archiveManager, $this->folderManager);
         $this->groupStandardOperationsAuthorizator = new GroupStandardOperationsAuthorizator($this->conn, $this->logger, $this->groupManager);
         $this->supervisorAuthorizator = new SupervisorAuthorizator($this->conn, $this->logger, $this->groupManager);
+        $this->containerProcessAuthorizator = new ContainerProcessAuthorizator($this->conn, $this->logger, $this->processManager, $this->processInstanceManager, $this->groupManager, $this->app->userManager);
 
         $this->injectCacheFactoryToAuthorizators();
 
         $user = $this->app->userManager->getServiceUserId();
         $serviceUser = $this->app->userManager->getUserById($user);
-
-        $this->processFactory = new ProcessFactory(
-            $this->documentManager,
-            $this->groupStandardOperationsAuthorizator,
-            $this->documentBulkActionAuthorizator,
-            $this->app->userManager,
-            $this->groupManager,
-            $serviceUser,
-            $this->containerId,
-            $this->processManager,
-            $this->archiveManager
-        );
     }
 
     /**
@@ -168,6 +157,12 @@ class Container {
                 $this->$name = new $className($this->conn, $this->logger, $this->app->transactionLogRepository);
                 $this->$name->injectCacheFactory($this->cacheFactory);
                 $this->$name->setContainerId($this->containerId);
+
+                if($this->app->currentUser !== null) {
+                    $this->$name->setUserId($this->app->currentUser->getId());
+                } else {
+                    $this->$name->setUserId($this->app->userManager->getServiceUserId());
+                }
             }
         }
     }
@@ -177,32 +172,28 @@ class Container {
      */
     private function initManagers() {
         $managers = [
-            'processManager' => [
-                'processRepository',
-                'groupManager',
-                ':userSubstituteManager',
-                ':userAbsenceManager'
-            ],
             'archiveManager' => [
                 'archiveRepository'
             ],
             'fileStorageManager' => [
                 'fileStorageRepository'
             ],
-            'standaloneProcessManager' => [
-                'processManager',
-                ':currentUser',
-                ':userManager',
-                'documentManager',
-                'fileStorageManager',
-                'groupManager',
-                'folderManager'
-            ],
             'externalSystemsManager' => [
                 'externalSystemsRepository',
                 'externalSystemLogRepository',
                 'externalSystemTokenRepository',
                 'externalSystemRightsRepository'
+            ],
+            'processManager' => [
+                'processRepository'
+            ],
+            'processInstanceManager' => [
+                'processInstanceRepository',
+                'groupManager',
+                ':userManager'
+            ],
+            'processMetadataManager' => [
+                'processMetadataRepository'
             ]
         ];
 

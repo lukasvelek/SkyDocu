@@ -27,6 +27,7 @@ Previously changelog for versions `1.0`-`1.4` has been located in README.md. How
     - Process editor
     - Process versioning
     - Support for files
+    - Process metadata
 
 ## SkyDocu `1.5` (04/08/2025)
 - Added _Requested containers_ metric to superadministration Container statistics widget

@@ -33,9 +33,13 @@ class JobQueueManager extends AManager {
         array $params,
         ?DateTime $executionDate
     ) {
+        $jobId = $this->createId(EntityManager::JOB_QUEUE);
+
         $data = [
+            'jobId' => $jobId,
             'type' => $type,
-            'params' => json_encode($params)
+            'params' => json_encode($params),
+            'dateModified' => DateTime::now()
         ];
 
         if($executionDate === null) {
@@ -43,10 +47,6 @@ class JobQueueManager extends AManager {
         }
 
         $data['executionDate'] = $executionDate->getResult();
-
-        $jobId = $this->createId(EntityManager::JOB_QUEUE);
-        
-        $data['jobId'] = $jobId;
 
         if(!$this->jobQueueRepository->insertNewJob($data)) {
             throw new GeneralException('Database error.');

@@ -380,9 +380,7 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
 
                 //$this->app->containerManager->deleteContainer($containerId);
 
-                /**
-                 * Use async deletion instead of sync
-                 */
+                // Use async deletion instead of sync
 
                 $this->app->jobQueueManager->insertNewJob(
                     JobQueueTypes::DELETE_CONTAINER,

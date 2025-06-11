@@ -18,6 +18,7 @@ use App\Managers\ContainerInviteManager;
 use App\Managers\ContainerManager;
 use App\Managers\EntityManager;
 use App\Managers\GroupManager;
+use App\Managers\JobQueueManager;
 use App\Managers\ProcessManager;
 use App\Managers\UserAbsenceManager;
 use App\Managers\UserManager;
@@ -30,6 +31,7 @@ use App\Repositories\ContentRepository;
 use App\Repositories\GridExportRepository;
 use App\Repositories\GroupMembershipRepository;
 use App\Repositories\GroupRepository;
+use App\Repositories\JobQueueRepository;
 use App\Repositories\ProcessRepository;
 use App\Repositories\SystemServicesRepository;
 use App\Repositories\TransactionLogRepository;
@@ -80,6 +82,7 @@ class Application {
     public UserSubstituteRepository $userSubstituteRepository;
     public ContainerDatabaseRepository $containerDatabaseRepository;
     public ProcessRepository $processRepository;
+    public JobQueueRepository $jobQueueRepository;
 
     public ServiceManager $serviceManager;
     public UserManager $userManager;
@@ -91,6 +94,7 @@ class Application {
     public UserSubstituteManager $userSubstituteManager;
     public ContainerDatabaseManager $containerDatabaseManager;
     public ProcessManager $processManager;
+    public JobQueueManager $jobQueueManager;
 
     public array $repositories;
 
@@ -140,6 +144,7 @@ class Application {
         $this->userAbsenceManager = new UserAbsenceManager($this->logger, $this->entityManager, $this->userAbsenceRepository);
         $this->userSubstituteManager = new UserSubstituteManager($this->logger, $this->entityManager, $this->userSubstituteRepository);
         $this->processManager = new ProcessManager($this->logger, $this->entityManager, $this->processRepository);
+        $this->jobQueueManager = new JobQueueManager($this->logger, $this->entityManager, $this->jobQueueRepository);
 
         $this->initManagers();
 
@@ -172,7 +177,9 @@ class Application {
             $this->containerManager,
             $this->containerInviteManager,
             $this->userAbsenceManager,
-            $this->userSubstituteManager
+            $this->userSubstituteManager,
+            $this->processManager,
+            $this->jobQueueManager
         ] as $manager) {
             $manager->injectCacheFactory($this->cacheFactory);
         }

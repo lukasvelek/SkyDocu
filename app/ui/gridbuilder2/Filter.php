@@ -17,7 +17,7 @@ class Filter implements IHTMLOutput {
     private string $componentName;
 
     /**
-     * Methods called with parameters: QueryBuilder &$qb, Filter $filter
+     * Methods called with parameters: QueryBuilder &$qb, Filter $filter, mixed $value
      */
     public array $onSqlExecute;
 

@@ -11,9 +11,9 @@ use QueryBuilder\QueryBuilder;
  */
 class JobQueueProcessingHistoryRepository extends ARepository {
     /**
-     * Composes query for processing history
+     * Composes common query for processing history
      */
-    public function composeQueryForProcessingHistory(): QueryBuilder {
+    public function commonComposeQuery(): QueryBuilder {
         $qb = $this->qb(__METHOD__);
 
         $qb->select(['*'])
@@ -35,6 +35,18 @@ class JobQueueProcessingHistoryRepository extends ARepository {
             ->execute();
 
         return $qb->fetchBool();
+    }
+
+    /**
+     * Composes query for processing history of job ID
+     * 
+     * @param string $jobId Job ID
+     */
+    public function composeQueryForJobId(string $jobId): QueryBuilder {
+        $qb = $this->commonComposeQuery();
+        $qb->andWhere('jobId = ?', [$jobId]);
+
+        return $qb;
     }
 }
 

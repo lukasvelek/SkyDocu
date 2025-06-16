@@ -2,12 +2,14 @@
 
 namespace App\Modules\SuperAdminSettingsModule;
 
+use App\Constants\JobQueueProcessingHistoryTypes;
 use App\Constants\JobQueueStatus;
 use App\Constants\JobQueueTypes;
 use App\Core\Datetypes\DateTime;
 use App\Core\DB\DatabaseRow;
 use App\Core\Http\HttpRequest;
 use App\Helpers\LinkHelper;
+use App\UI\GridBuilder2\Action;
 use App\UI\GridBuilder2\Cell;
 use App\UI\GridBuilder2\Filter;
 use App\UI\GridBuilder2\Row;
@@ -63,6 +65,20 @@ class JobQueuePresenter extends ASuperAdminSettingsPresenter {
             return $el;
         };
 
+        $history = $grid->addAction('history');
+        $history->setTitle('History');
+        $history->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) {
+            return $row->status != JobQueueStatus::NEW;
+        };
+        $history->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
+            $el = HTML::el('a');
+            $el->text('History')
+                ->href($this->createURLString('historyList', ['jobId' => $primaryKey]))
+                ->class('grid-link');
+            
+            return $el;
+        };
+
         $grid->addFilter('status', JobQueueStatus::NEW, JobQueueStatus::getAll());
         $grid->addFilter('type', JobQueueTypes::DELETE_CONTAINER, JobQueueTypes::getAll());
         $filter = $grid->addFilter('isScheduled', 0, ['No', 'Yes']);
@@ -73,6 +89,32 @@ class JobQueuePresenter extends ASuperAdminSettingsPresenter {
                 $qb->andWhere('(status = ? AND executionDate <= ?)', [JobQueueStatus::NEW, DateTime::now()]);
             }
         };
+
+        return $grid;
+    }
+
+    public function renderHistoryList() {
+        $links = [
+            $this->createBackUrl('list')
+        ];
+
+        $this->template->links = LinkHelper::createLinksFromArray($links);
+    }
+
+    protected function createComponentJobHistoryGrid() {
+        $jobId = $this->httpRequest->get('jobId');
+
+        $grid = $this->componentFactory->getGridBuilder();
+        $grid->addQueryDependency('jobId', $jobId);
+
+        $qb = $this->app->jobQueueProcessingHistoryRepository->composeQueryForJobId($jobId);
+        $qb->orderBy('dateCreated', 'DESC');
+
+        $grid->createDataSourceFromQueryBuilder($qb, 'entryId');
+
+        $grid->addColumnConst('type', 'Type', JobQueueProcessingHistoryTypes::class);
+        $grid->addColumnText('description', 'Description');
+        $grid->addColumnDatetime('dateCreated', 'Date created');
 
         return $grid;
     }

@@ -98,7 +98,7 @@ class JobQueueManager extends AManager {
     ) {
         $data = [
             'status' => $newStatus,
-            'statusMessage' => $statusMessage
+            'statusText' => $statusMessage
         ];
 
         $this->updateJob($jobId, $data);

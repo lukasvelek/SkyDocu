@@ -54,9 +54,10 @@ class CreateTableSchema extends ABaseTableSchema {
      * Adds a FOREIGN KEY column that also is indexed
      * 
      * @param string $name Column name
+     * @param bool $isNull Is column nullable
      */
-    public function foreignKey(string $name): static {
-        $this->varchar($name, 256);
+    public function foreignKey(string $name, bool $isNull = false): static {
+        $this->varchar($name, 256, $isNull);
         return $this->index([$name]);
     }
 

@@ -31,6 +31,7 @@ use App\Repositories\ContentRepository;
 use App\Repositories\GridExportRepository;
 use App\Repositories\GroupMembershipRepository;
 use App\Repositories\GroupRepository;
+use App\Repositories\JobQueueProcessingHistoryRepository;
 use App\Repositories\JobQueueRepository;
 use App\Repositories\ProcessRepository;
 use App\Repositories\SystemServicesRepository;
@@ -83,6 +84,7 @@ class Application {
     public ContainerDatabaseRepository $containerDatabaseRepository;
     public ProcessRepository $processRepository;
     public JobQueueRepository $jobQueueRepository;
+    public JobQueueProcessingHistoryRepository $jobQueueProcessingHistoryRepository;
 
     public ServiceManager $serviceManager;
     public UserManager $userManager;
@@ -144,7 +146,7 @@ class Application {
         $this->userAbsenceManager = new UserAbsenceManager($this->logger, $this->entityManager, $this->userAbsenceRepository);
         $this->userSubstituteManager = new UserSubstituteManager($this->logger, $this->entityManager, $this->userSubstituteRepository);
         $this->processManager = new ProcessManager($this->logger, $this->entityManager, $this->processRepository);
-        $this->jobQueueManager = new JobQueueManager($this->logger, $this->entityManager, $this->jobQueueRepository);
+        $this->jobQueueManager = new JobQueueManager($this->logger, $this->entityManager, $this->jobQueueRepository, $this->jobQueueProcessingHistoryRepository);
 
         $this->initManagers();
 

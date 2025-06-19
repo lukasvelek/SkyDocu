@@ -14,11 +14,11 @@ class ExceptionHelper {
      * @param ?Throwable $e Throwable instance
      * @param string $hash
      */
-    public static function saveExceptionToFile(?Throwable $e, string $hash) {
+    public static function saveExceptionToFile(?Throwable $e, string $hash): bool {
         global $app;
 
         if($app === null) {
-            return;
+            return false;
         }
 
         $date = new DateTime();
@@ -26,7 +26,13 @@ class ExceptionHelper {
 
         $filePath = 'exception_' . $date . '_' . $hash . '.html';
 
-        FileManager::saveFile(APP_ABSOLUTE_DIR . LOG_DIR, $filePath, self::createHTML($e, get_class($e), $e->getMessage()));
+        $result = FileManager::saveFile(APP_ABSOLUTE_DIR . LOG_DIR, $filePath, self::createHTML($e, get_class($e), $e->getMessage()));
+
+        if($result === false) {
+            return false;
+        }
+
+        return true;
     }
 
     /**

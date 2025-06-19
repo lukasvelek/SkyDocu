@@ -2,6 +2,7 @@
 
 namespace App\Modules\SuperAdminModule;
 
+use App\Constants\JobQueueTypes;
 use App\Constants\ProcessStatus;
 use App\Core\DB\DatabaseRow;
 use App\Core\Http\FormRequest;
@@ -98,6 +99,20 @@ class ProcessesPresenter extends ASuperAdminPresenter {
             $el->text('Edit')
                 ->class('grid-link')
                 ->href($this->createFullURLString('SuperAdmin:ProcessEditor', 'form', $params));
+
+            return $el;
+        };
+
+        $changeVisibility = $grid->addAction('changeVisibility');
+        $changeVisibility->setTitle('Change visibility');
+        $changeVisibility->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) {
+            return $row->status == ProcessStatus::IN_DISTRIBUTION;
+        };
+        $changeVisibility->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
+            $el = HTML::el('a');
+            $el->text('Change visibility')
+                ->class('grid-link')
+                ->href($this->createURLString('changeVisibilityForm', ['processId' => $primaryKey]));
 
             return $el;
         };
@@ -202,6 +217,84 @@ class ProcessesPresenter extends ASuperAdminPresenter {
             $this->app->processRepository->rollback(__METHOD__);
 
             $this->flashMessage('Could not create a new copy of process. Reason: ' . $e->getMessage(), 'error', 10);
+        }
+
+        $this->redirect($this->createURL('list'));
+    }
+
+    public function renderChangeVisibilityForm() {
+        $links = [
+            $this->createBackUrl('list')
+        ];
+
+        $this->template->links = LinkHelper::createLinksFromArray($links);
+    }
+
+    protected function createComponentChangeVisibilityForm() {
+        $processId = $this->httpRequest->get('processId');
+        $process = $this->app->processManager->getProcessEntityById($processId);
+
+        $possibleValues = [
+            'Hidden',
+            'Visible'
+        ];
+
+        $values = [];
+        foreach($possibleValues as $k => $v) {
+            $value = [
+                'value' => $k,
+                'text' => $v
+            ];
+
+            if(($process->isVisible() && $k == 1) ||
+                (!$process->isVisible() && $k == 0)) {
+                $value['selected'] = 'selected';
+            }
+
+            $values[] = $value;
+        }
+
+        $form = $this->componentFactory->getFormBuilder();
+
+        $form->setAction($this->createURL('changeProcessVisibility', ['processId' => $processId]));
+
+        $form->addSelect('visibility', 'Visibility:')
+            ->addRawOptions($values);
+
+        $form->addSubmit('Save');
+
+        return $form;
+    }
+
+    public function handleChangeProcessVisibility(FormRequest $fr) {
+        $processId = $this->httpRequest->get('processId');
+
+        try {
+            $this->app->processRepository->beginTransaction(__METHOD__);
+            
+            $data = [
+                'isVisible' => $fr->visibility
+            ];
+
+            $this->app->processManager->updateProcess($processId, $data);
+
+            $jobParams = [
+                'processId' => $processId
+            ];
+
+            $this->app->jobQueueManager->insertNewJob(
+                JobQueueTypes::CHANGE_PROCESS_VISIBILITY_IN_DISTRIBUTION,
+                $jobParams,
+                null
+            );
+
+            $this->app->processRepository->commit($this->getUserId(), __METHOD__);
+
+            $this->flashMessage('Successfully changed process visibility. The change will be visible in containers shortly.', 'success');
+        } catch(AException $e) {
+            $this->app->processRepository->rollback(__METHOD__);
+
+            $this->flashMessage('Could not change process visibility. Reason: ' . $e->getMessage(), 'error', 10);
         }
 
         $this->redirect($this->createURL('list'));

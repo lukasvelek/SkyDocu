@@ -57,6 +57,10 @@ class JobQueueService extends AService {
                     case JobQueueTypes::PUBLISH_PROCESS_VERSION_TO_DISTRIBUTION:
                         $this->_PUBLISH_PROCESS_VERSION_TO_DISTRIBUTION($job);
                         break;
+
+                    case JobQueueTypes::CHANGE_PROCESS_VISIBILITY_IN_DISTRIBUTION:
+                        $this->_CHANGE_PROCESS_VISIBILITY_IN_DISTRIBUTION($job);
+                        break;
                 }
 
                 $this->endJob($job);
@@ -165,14 +169,17 @@ class JobQueueService extends AService {
         $params = $this->parseParams($job);
 
         $processId = $params['processId'];
-        $containerIds = $params['containers'];
         $hasMetadata = $params['hasMetadata'] == 1;
+
+        $containers = $this->app->containerManager->getContainersInDistribution();
 
         $process = $this->app->processManager->getProcessEntityById($processId);
 
-        $this->logJob($job, sprintf('Found process ID \'%s\' that will be published to containers (count: %d).', $processId, count($containerIds)));
+        $this->logJob($job, sprintf('Found process ID \'%s\' that will be published to containers (count: %d).', $processId, count($containers)));
 
-        foreach($containerIds as $containerId) {
+        foreach($containers as $_container) {
+            $containerId = $_container->getId();
+            
             $this->logJob($job, sprintf('Processing publishing to container \'%s\'.', $containerId));
 
             try {
@@ -254,6 +261,42 @@ class JobQueueService extends AService {
                 $container->processRepository->commit($this->app->userManager->getServiceUserId(), __METHOD__);
 
                 $this->logJob($job, sprintf('Finished processing publishing to container \'%s\'.', $containerId));
+            } catch(AException $e) {
+                $container->processRepository->rollback(__METHOD__);
+
+                $this->errorJob($job, $e);
+            }
+        }
+    }
+
+    private function _CHANGE_PROCESS_VISIBILITY_IN_DISTRIBUTION(DatabaseRow $job) {
+        $params = $this->parseParams($job);
+
+        $processId = $params['processId'];
+
+        $containers = $this->app->containerManager->getContainersInDistribution();
+        $process = $this->app->processManager->getProcessEntityById($processId);
+
+        $this->logJob($job, sprintf('Changing visibility of process \'%s\'.', $processId));
+        $this->logJob($job, sprintf('Found %d containers in distribution.', count($containers)));
+
+        foreach($containers as $_container) {
+            $containerId = $_container->getId();
+            
+            try {
+                $this->logJob($job, sprintf('Processing container \'%s\'.', $containerId));
+
+                $container = $this->getContainerInstance($containerId);
+
+                $container->processRepository->beginTransaction(__METHOD__);
+
+                $container->processManager->updateProcess($processId, [
+                    'isVisible' => ($process->isVisible() ? 1 : 0)
+                ]);
+
+                $container->processRepository->commit($this->app->userManager->getServiceUserId(), __METHOD__);
+
+                $this->logJob($job, sprintf('Container \'%s\' processed.', $containerId));
             } catch(AException $e) {
                 $container->processRepository->rollback(__METHOD__);
 

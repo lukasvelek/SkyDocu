@@ -828,7 +828,6 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
 
         $jobParams = [
             'processId' => $processId,
-            'containers' => $this->app->containerManager->getContainersInDistribution(),
             'hasMetadata' => ($hasMetadata ? 1 : 0)
         ];
 

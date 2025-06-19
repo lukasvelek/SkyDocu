@@ -2,12 +2,13 @@
 
 namespace App\Services;
 
+use App\Constants\Container\ProcessStatus;
 use App\Constants\JobQueueProcessingHistoryTypes;
 use App\Constants\JobQueueTypes;
 use App\Core\Application;
-use App\Core\Container;
 use App\Core\DB\DatabaseRow;
 use App\Exceptions\AException;
+use App\Managers\EntityManager;
 use Exception;
 
 class JobQueueService extends AService {
@@ -51,6 +52,10 @@ class JobQueueService extends AService {
 
                     case JobQueueTypes::DELETE_CONTAINER_PROCESS_INSTANCE:
                         $this->_DELETE_CONTAINER_PROCESS_INSTANCE($job);
+                        break;
+
+                    case JobQueueTypes::PUBLISH_PROCESS_VERSION_TO_DISTRIBUTION:
+                        $this->_PUBLISH_PROCESS_VERSION_TO_DISTRIBUTION($job);
                         break;
                 }
 
@@ -109,6 +114,15 @@ class JobQueueService extends AService {
     }
 
     /**
+     * Logs job debug message
+     * 
+     * @param DatabaseRow $job Job
+     */
+    private function logDebug(DatabaseRow $job, string $message) {
+        $this->app->jobQueueManager->insertNewProcessingHistoryEntry($job->jobId, JobQueueProcessingHistoryTypes::DEBUG_MESSAGE, $message);
+    }
+
+    /**
      *                  ======================================
      *                  =            JOB HANDLERS            =
      *                  ======================================
@@ -140,6 +154,112 @@ class JobQueueService extends AService {
         $this->logJob($job, sprintf('Deleting process instance \'%s\'.', $params['instanceId']));
         $container->processInstanceManager->deleteProcessInstance($params['instanceId']);
         $this->logJob($job, sprintf('Deleted process instance \'%s\'.', $params['instanceId']));
+    }
+
+    /**
+     * Handles process version publishing to distribution
+     * 
+     * @param DatabaseRow $job Job
+     */
+    private function _PUBLISH_PROCESS_VERSION_TO_DISTRIBUTION(DatabaseRow $job) {
+        $params = $this->parseParams($job);
+
+        $processId = $params['processId'];
+        $containerIds = $params['containers'];
+        $hasMetadata = $params['hasMetadata'] == 1;
+
+        $process = $this->app->processManager->getProcessEntityById($processId);
+
+        $this->logJob($job, sprintf('Found process ID \'%s\' that will be published to containers (count: %d).', $processId, count($containerIds)));
+
+        foreach($containerIds as $containerId) {
+            $this->logJob($job, sprintf('Processing publishing to container \'%s\'.', $containerId));
+
+            try {
+                $container = $this->getContainerInstance($containerId);
+
+                $disable = false;
+
+                $container->processRepository->beginTransaction(__METHOD__);
+
+                try {
+                    $this->logJob($job, sprintf('Checking if container \'%s\' has a previous version.', $containerId));
+                    $lastProcess = $container->processManager->getLastProcessForUniqueProcessId($process->getUniqueProcessId());
+
+                    if($lastProcess->isEnabled == false) {
+                        $disable = true;
+                    }
+
+                    $this->logJob($job, sprintf('Previous version found.'));
+                } catch(AException $e) {
+                    $this->logJob($job, sprintf('Previous version not found.'));
+                }
+
+                $this->logJob($job, sprintf('Removing current process version form distribution.'));
+                $container->processRepository->removeCurrentDistributionProcessFromDistributionForUniqueProcessId($process->getUniqueProcessId());
+
+                $this->logJob($job, sprintf('Adding new process version to the container.'));
+                $container->processRepository->addNewProcess(
+                    $processId,
+                    $process->getUniqueProcessId(),
+                    $process->getTitle(),
+                    $process->getDescription(),
+                    base64_encode(json_encode($process->getDefinition())),
+                    $this->app->userManager->getServiceUserId(),
+                    ProcessStatus::IN_DISTRIBUTION,
+                    !$disable
+                );
+
+                if($hasMetadata) {
+                    $this->logJob($job, 'Process version has metadata.');
+                    $qb = $container->processMetadataRepository->composeQueryForProcessMetadata($process->getUniqueProcessId());
+                    $qb->execute();
+
+                    $cMetadata = [];
+                    $delete = [];
+                    while($row = $qb->fetchAssoc()) {
+                        foreach($process->getMetadataDefinition()['metadata'] as $m) {
+                            if($m['type'] != $row['type'] &&
+                                $m['name'] == $row['title'] &&
+                                $m['label'] != $row['guiTitle']) {
+                                $delete[] = $row['metadataId'];
+                                $cMetadata[] = $m['name'];
+                            }
+                        }
+                    }
+
+                    $this->logJob($job, sprintf('Removing all previous metadata for process.'));
+                    foreach($delete as $metadataId) {
+                        $container->processMetadataRepository->removeMetadataValuesForMetadataId($metadataId);
+                        $container->processMetadataRepository->removeMetadata($metadataId);
+                    }
+
+                    $this->logJob($job, sprintf('Creating new metadata for process.'));
+                    foreach($cMetadata as $name) {
+                        $data = [
+                            'metadataId' => $container->entityManager->generateEntityId(EntityManager::C_PROCESS_CUSTOM_METADATA),
+                            'uniqueProcessId' => $process->getUniqueProcessId(),
+                            'title' => $name,
+                            'guiTitle' => $process->getMetadataDefinitionForMetadataName($name)['label'],
+                            'type' => $process->getMetadataDefinitionForMetadataName($name)['type'],
+                            'defaultValue' => $process->getMetadataDefinitionForMetadataName($name)['defaultValue'],
+                            'isRequired' => 1,
+                            'isSystem' => 1
+                        ];
+
+                        $container->processMetadataRepository->insertNewMetadata($data);
+                    }
+                }
+
+                $container->processRepository->commit($this->app->userManager->getServiceUserId(), __METHOD__);
+
+                $this->logJob($job, sprintf('Finished processing publishing to container \'%s\'.', $containerId));
+            } catch(AException $e) {
+                $container->processRepository->rollback(__METHOD__);
+
+                $this->errorJob($job, $e);
+            }
+        }
     }
 
     /**

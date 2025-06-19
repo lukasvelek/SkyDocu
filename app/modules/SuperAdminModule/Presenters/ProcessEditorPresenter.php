@@ -4,6 +4,7 @@ namespace App\Modules\SuperAdminModule;
 
 use App\Constants\Container\CustomMetadataTypes;
 use App\Constants\Container\ProcessStatus as ContainerProcessStatus;
+use App\Constants\JobQueueTypes;
 use App\Constants\ProcessColorCombos;
 use App\Constants\ProcessStatus;
 use App\Core\AjaxRequestBuilder;
@@ -825,7 +826,29 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
         $process = $this->app->processManager->getProcessEntityById($processId);
         $hasMetadata = !empty($process->getMetadataDefinition());
 
+        $jobParams = [
+            'processId' => $processId,
+            'containers' => $this->app->containerManager->getContainersInDistribution(),
+            'hasMetadata' => ($hasMetadata ? 1 : 0)
+        ];
+
         try {
+            $this->app->jobQueueRepository->beginTransaction(__METHOD__);
+
+            $this->app->jobQueueManager->insertNewJob(
+                JobQueueTypes::PUBLISH_PROCESS_VERSION_TO_DISTRIBUTION,
+                $jobParams,
+                null
+            );
+
+            $this->app->jobQueueRepository->commit($this->getUserId(), __METHOD__);
+
+            $this->flashMessage('Successfully published process version to the distribution. New process version will be published to containers in background and will be available in containers shortly.', 'success');
+        } catch(AException $e) {
+            $this->flashMessage('Could not publish process version. Reason: ' . $e->getMessage(), 'error', 10);
+        }
+
+        /*try {
             $process = $this->app->processManager->getProcessEntityById($processId);
 
             $containers = $this->app->containerManager->getContainersInDistribution();
@@ -834,7 +857,7 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
                 /**
                  * @var \App\Entities\ContainerEntity $container
                  */
-                $dbConn = $this->app->dbManager->getConnectionToDatabase($container->getDefaultDatabase()->getName());
+                /*$dbConn = $this->app->dbManager->getConnectionToDatabase($container->getDefaultDatabase()->getName());
 
                 $processRepository = new ProcessRepository($dbConn, $this->logger, $this->app->transactionLogRepository, $this->getUserId());
                 $processMetadataRepository = new ProcessMetadataRepository($dbConn, $this->logger, $this->app->transactionLogRepository, $this->getUserId());
@@ -920,7 +943,7 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
             $this->flashMessage('Successfully published new process ' . ($oldProcessId !== null ? 'version ' : '') . 'to distribution.', 'success');
         } catch(AException $e) {
             $this->flashMessage('Could not publish new process ' . ($oldProcessId !== null ? 'version ' : '') . 'to distribution. Reason: ' . $e->getMessage(), 'error', 10);
-        }
+        }*/
 
         $this->redirect($this->createFullURL('SuperAdmin:Processes', 'list'));
     }

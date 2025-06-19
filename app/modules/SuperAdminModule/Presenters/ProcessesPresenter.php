@@ -44,6 +44,7 @@ class ProcessesPresenter extends ASuperAdminPresenter {
         $grid->addColumnUser('userId', 'Author');
         $grid->addColumnText('version', 'Version');
         $grid->addColumnConst('status', 'Status', ProcessStatus::class);
+        $grid->addColumnBoolean('isVisible', 'Visible');
 
         $copy = $grid->addAction('copy');
         $copy->setTitle('Copy');

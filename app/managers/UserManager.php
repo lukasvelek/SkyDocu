@@ -10,7 +10,7 @@ use App\Logger\Logger;
 use App\Repositories\UserRepository;
 
 class UserManager extends AManager {
-    private UserRepository $userRepository;
+    public UserRepository $userRepository;
 
     public function __construct(
         Logger $logger,

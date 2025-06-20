@@ -250,6 +250,14 @@ class DatabaseMigrationManager {
                         foreach($sqls as $sql) {
                             $this->query($sql, __METHOD__, ($this->containerId === null));
                         }
+
+                        if($this->containerId !== null) {
+                            $this->query($this->getContainerUpdateDbSchemaSQL((int)$migrationNumber), __METHOD__);
+                        } else {
+                            if(!$this->saveSystemLastMigration($fileName)) {
+                                throw new GeneralException('Could not save last migration run for system.');
+                            }
+                        }
     
                         $this->masterConn->commit();
                     } catch(Exception $e) {

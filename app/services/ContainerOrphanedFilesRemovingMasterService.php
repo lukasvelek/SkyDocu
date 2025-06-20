@@ -2,20 +2,13 @@
 
 namespace App\Services;
 
-use App\Constants\ContainerStatus;
-use App\Core\ServiceManager;
+use App\Core\Application;
 use App\Exceptions\AException;
-use App\Logger\Logger;
-use App\Managers\ContainerManager;
 use Exception;
 
 class ContainerOrphanedFilesRemovingMasterService extends AService {
-    private ContainerManager $containerManager;
-
-    public function __construct(Logger $logger, ServiceManager $serviceManager, ContainerManager $containerManager) {
-        parent::__construct('ContainerOrphanedFilesRemovingMaster', $logger, $serviceManager);
-
-        $this->containerManager = $containerManager;
+    public function __construct(Application $app) {
+        parent::__construct('ContainerOrphanedFilesRemovingMaster', $app);
     }
 
     public function run() {
@@ -35,7 +28,7 @@ class ContainerOrphanedFilesRemovingMasterService extends AService {
 
     private function innerRun() {
         // Service executes all commands here
-        $this->startSlaveServiceForAllContainers($this->containerManager, 'cofrs_slave.php');
+        $this->startSlaveServiceForAllContainers($this->app->containerManager, 'cofrs_slave.php');
     }
 }
 

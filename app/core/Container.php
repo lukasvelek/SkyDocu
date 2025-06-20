@@ -129,7 +129,7 @@ class Container {
         
         $this->groupStandardOperationsAuthorizator = new GroupStandardOperationsAuthorizator($this->conn, $this->logger, $this->groupManager);
         $this->supervisorAuthorizator = new SupervisorAuthorizator($this->conn, $this->logger, $this->groupManager);
-        $this->containerProcessAuthorizator = new ContainerProcessAuthorizator($this->conn, $this->logger, $this->processManager, $this->processInstanceManager, $this->groupManager, $this->app->userManager);
+        $this->containerProcessAuthorizator = new ContainerProcessAuthorizator($this->conn, $this->logger, $this->processManager, $this->processInstanceManager, $this->groupManager, $this->app->userManager, $this->app->jobQueueRepository);
 
         $this->injectCacheFactoryToAuthorizators();
 

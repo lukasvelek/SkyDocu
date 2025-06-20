@@ -128,6 +128,18 @@ class ProcessManager extends AManager {
             throw new GeneralException('Database error');
         }
     }
+
+    /**
+     * Updates process
+     * 
+     * @param string $processId Process ID
+     * @param array $data Data array
+     */
+    public function updateProcess(string $processId, array $data) {
+        if(!$this->processRepository->updateProcess($processId, $data)) {
+            throw new GeneralException('Database error');
+        }
+    }
 }
 
 ?>

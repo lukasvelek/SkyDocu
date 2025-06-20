@@ -85,6 +85,22 @@ class ProcessInstanceRepository extends ARepository {
         $operation->addCondition('currentOfficerId', $this->userId, QueryCondition::TYPE_EQ);
         return $this->processPeeQL('process_instances', $operation);
     }
+
+    /**
+     * Deletes process instance
+     * 
+     * @param string $instanceId Instance ID
+     */
+    public function deleteProcessInstance(string $instanceId): bool {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->delete()
+            ->from('process_instances')
+            ->where('instanceId = ?', [$instanceId])
+            ->execute();
+
+        return $qb->fetchBool();
+    }
 }
 
 ?>

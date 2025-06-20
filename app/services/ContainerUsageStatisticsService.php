@@ -3,24 +3,15 @@
 namespace App\Services;
 
 use App\Constants\ContainerStatus;
+use App\Core\Application;
 use App\Core\FileManager;
-use App\Core\ServiceManager;
 use App\Exceptions\AException;
-use App\Logger\Logger;
-use App\Managers\ContainerManager;
 use App\Managers\EntityManager;
-use App\Repositories\ContainerRepository;
 use Exception;
 
 class ContainerUsageStatisticsService extends AService {
-    private ContainerRepository $containerRepository;
-    private ContainerManager $containerManager;
-
-    public function __construct(Logger $logger, ServiceManager $serviceManager, ContainerRepository $containerRepository, ContainerManager $containerManager) {
-        parent::__construct('ContainerUsageStatistics', $logger, $serviceManager);
-
-        $this->containerRepository = $containerRepository;
-        $this->containerManager = $containerManager;
+    public function __construct(Application $app) {
+        parent::__construct('ContainerUsageStatistics', $app);
     }
 
     public function run() {
@@ -58,7 +49,7 @@ class ContainerUsageStatisticsService extends AService {
     }
 
     private function getAllContainers() {
-        $containersQb = $this->containerRepository->composeQueryForContainers();
+        $containersQb = $this->app->containerRepository->composeQueryForContainers();
         $containersQb->andWhere($containersQb->getColumnInValues('status', [ContainerStatus::NOT_RUNNING, ContainerStatus::RUNNING]))
             ->execute();
 
@@ -169,7 +160,7 @@ class ContainerUsageStatisticsService extends AService {
                 $averageTimeTaken = (float)$measuredData['averageTimeTaken'];
                 $totalTimeTaken = (float)$measuredData['totalTimeTaken'];
 
-                $count = $this->containerRepository->getContainerUsageStatisticsForDate($containerId, $date);
+                $count = $this->app->containerRepository->getContainerUsageStatisticsForDate($containerId, $date);
                 if($count > 0) {
                     $this->logInfo('Analysis results for date \'' . $date . '\' already exist skipping.');
 
@@ -179,17 +170,17 @@ class ContainerUsageStatisticsService extends AService {
                 }
 
                 try {
-                    $this->containerRepository->beginTransaction(__METHOD__);
+                    $this->app->containerRepository->beginTransaction(__METHOD__);
                     
-                    $entryId = $this->containerManager->entityManager->generateEntityId(EntityManager::CONTAINER_USAGE_STATISTICS);
+                    $entryId = $this->app->containerManager->entityManager->generateEntityId(EntityManager::CONTAINER_USAGE_STATISTICS);
 
-                    $this->containerRepository->insertNewContainerUsageStatisticsEntry($entryId, $containerId, $totalSqlQueries, $averageTimeTaken, $date, $totalTimeTaken);
+                    $this->app->containerRepository->insertNewContainerUsageStatisticsEntry($entryId, $containerId, $totalSqlQueries, $averageTimeTaken, $date, $totalTimeTaken);
 
-                    $this->containerRepository->commit($this->serviceManager->getServiceUserId(), __METHOD__);
+                    $this->app->containerRepository->commit($this->serviceManager->getServiceUserId(), __METHOD__);
 
                     $this->logInfo('Analysis results saved to the database.');
                 } catch(AException $e) {
-                    $this->containerRepository->rollback(__METHOD__);
+                    $this->app->containerRepository->rollback(__METHOD__);
 
                     $this->logInfo('Could not save analysis results to the database.');
                 }

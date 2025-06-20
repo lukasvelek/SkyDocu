@@ -2,19 +2,13 @@
 
 namespace App\Services;
 
-use App\Core\ServiceManager;
+use App\Core\Application;
 use App\Exceptions\AException;
-use App\Logger\Logger;
-use App\Repositories\ContainerRepository;
 use Exception;
 
 class ContainerCreationMasterService extends AService {
-    private ContainerRepository $containerRepository;
-
-    public function __construct(Logger $logger, ServiceManager $serviceManager, ContainerRepository $containerRepository) {
-        parent::__construct('ContainerCreationMaster', $logger, $serviceManager);
-
-        $this->containerRepository = $containerRepository;
+    public function __construct(Application $app) {
+        parent::__construct('ContainerCreationMaster', $app);
     }
 
     public function run() {
@@ -36,7 +30,7 @@ class ContainerCreationMasterService extends AService {
         // Service executes all commands here
         $this->getCount();
 
-        $qb = $this->containerRepository->composeQueryForContainersAwaitingCreation();
+        $qb = $this->app->containerRepository->composeQueryForContainersAwaitingCreation();
         $qb->execute();
 
         while($row = $qb->fetchAssoc()) {
@@ -54,7 +48,7 @@ class ContainerCreationMasterService extends AService {
     }
 
     private function getCount() {
-        $qb = $this->containerRepository->composeQueryForContainersAwaitingCreation();
+        $qb = $this->app->containerRepository->composeQueryForContainersAwaitingCreation();
         $qb->select(['COUNT(*) AS cnt'])
             ->execute();
 

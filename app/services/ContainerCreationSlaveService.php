@@ -6,33 +6,16 @@ use App\Constants\ContainerStatus;
 use App\Core\Application;
 use App\Core\Caching\CacheNames;
 use App\Core\Container;
-use App\Core\ServiceManager;
 use App\Exceptions\AException;
 use App\Exceptions\ServiceException;
-use App\Logger\Logger;
-use App\Managers\Container\ProcessManager as ContainerProcessManager;
-use App\Managers\ContainerManager;
-use App\Managers\ProcessManager;
-use App\Repositories\ContainerRepository;
 use Error;
 use Exception;
 
 class ContainerCreationSlaveService extends AService {
     private string $containerId;
 
-    private ContainerManager $containerManager;
-    private ContainerRepository $containerRepository;
-    private ProcessManager $processManager;
-    private Application $app;
-    private ContainerProcessManager $containerProcessManager;
-
-    public function __construct(Logger $logger, ServiceManager $serviceManager, ContainerManager $containerManager, ContainerRepository $containerRepository, ProcessManager $processManager, Application $app) {
-        parent::__construct('ContainerCreationSlave', $logger, $serviceManager);
-
-        $this->containerManager = $containerManager;
-        $this->containerRepository = $containerRepository;
-        $this->processManager = $processManager;
-        $this->app = $app;
+    public function __construct(Application $app) {
+        parent::__construct('ContainerCreationSlave', $app);
     }
 
     public function run() {
@@ -65,41 +48,41 @@ class ContainerCreationSlaveService extends AService {
         $this->containerId = $argv[1];
 
         try {
-            $this->containerManager->changeContainerStatus($this->containerId, ContainerStatus::IS_BEING_CREATED, $this->serviceManager->getServiceUserId(), 'Status change due to background container creation. Container is being created.');
-            $this->containerManager->changeContainerCreationStatus($this->containerId, 0, null);
+            $this->app->containerManager->changeContainerStatus($this->containerId, ContainerStatus::IS_BEING_CREATED, $this->serviceManager->getServiceUserId(), 'Status change due to background container creation. Container is being created.');
+            $this->app->containerManager->changeContainerCreationStatus($this->containerId, 0, null);
             $this->logInfo('Changed container status to \'' . ContainerStatus::toString(ContainerStatus::IS_BEING_CREATED) . '\'.');
 
-            $this->containerRepository->beginTransaction(__METHOD__);
+            $this->app->containerRepository->beginTransaction(__METHOD__);
 
             $this->logInfo('Creating container.');
             $this->processContainerCreation();
             $this->logInfo('Container created.');
 
-            $this->containerRepository->commit($this->serviceManager->getServiceUserId(), __METHOD__);
+            $this->app->containerRepository->commit($this->serviceManager->getServiceUserId(), __METHOD__);
 
-            $this->containerManager->changeContainerStatus($this->containerId, ContainerStatus::NOT_RUNNING, $this->serviceManager->getServiceUserId(), 'Status change due to background container creation. Container is created and not running.');
-            $this->containerManager->changeContainerCreationStatus($this->containerId, 100, null);
+            $this->app->containerManager->changeContainerStatus($this->containerId, ContainerStatus::NOT_RUNNING, $this->serviceManager->getServiceUserId(), 'Status change due to background container creation. Container is created and not running.');
+            $this->app->containerManager->changeContainerCreationStatus($this->containerId, 100, null);
             $this->logInfo('Changed container status to \'' . ContainerStatus::toString(ContainerStatus::NOT_RUNNING) . '\'.');
 
             $this->cacheFactory->invalidateCacheByNamespace(CacheNames::GROUP_MEMBERSHIPS);
             $this->cacheFactory->invalidateCacheByNamespace(CacheNames::USER_GROUP_MEMBERSHIPS);
             $this->cacheFactory->invalidateCacheByNamespace(CacheNames::NAVBAR_CONTAINER_SWITCH_USER_MEMBERSHIPS);
         } catch(AException|Exception|Error $e) {
-            $this->containerRepository->rollback(__METHOD__);
+            $this->app->containerRepository->rollback(__METHOD__);
 
             $this->logError($e->getMessage());
             $this->logError(var_export($e, true));
             $this->saveExceptionToFile($e);
 
-            $this->containerManager->changeContainerStatus($this->containerId, ContainerStatus::ERROR_DURING_CREATION, $this->serviceManager->getServiceUserId(), 'Status change due to background container creation. An error occured during container creation.');
-            $this->containerManager->changeContainerCreationStatus($this->containerId, 0, null);
+            $this->app->containerManager->changeContainerStatus($this->containerId, ContainerStatus::ERROR_DURING_CREATION, $this->serviceManager->getServiceUserId(), 'Status change due to background container creation. An error occured during container creation.');
+            $this->app->containerManager->changeContainerCreationStatus($this->containerId, 0, null);
             $this->logInfo('Changed container status to \'' . ContainerStatus::toString(ContainerStatus::ERROR_DURING_CREATION) . '\'.');
         }
     }
 
     private function processContainerCreation() {
         try {
-            $this->containerManager->createNewContainerAsync($this->containerId);
+            $this->app->containerManager->createNewContainerAsync($this->containerId);
             $this->insertProcesses();
         } catch(AException $e) {
             throw $e;
@@ -107,7 +90,7 @@ class ContainerCreationSlaveService extends AService {
     }
 
     private function insertProcesses() {
-        $qb = $this->processManager->processRepository->composeQueryForProcessesInDistribution();
+        $qb = $this->app->processManager->processRepository->composeQueryForProcessesInDistribution();
         $qb->execute();
 
         $insertProcesses = [];

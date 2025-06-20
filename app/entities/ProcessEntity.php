@@ -31,6 +31,7 @@ class ProcessEntity extends AEntity {
     private string $dateCreated;
     private array $definition;
     private array $metadataDefinition;
+    private bool $isVisible;
     
     // FROM DEFINITION
     private string $colorCombo;
@@ -63,7 +64,8 @@ class ProcessEntity extends AEntity {
         string $userId,
         string $dateCreated,
         array $definition,
-        array $metadataDefinition
+        array $metadataDefinition,
+        bool $isVisible
     ) {
         $this->processId = $processId;
         $this->uniqueProcessId = $uniqueProcessId;
@@ -75,6 +77,7 @@ class ProcessEntity extends AEntity {
         $this->dateCreated = $dateCreated;
         $this->definition = $definition;
         $this->metadataDefinition = $metadataDefinition;
+        $this->isVisible = $isVisible;
         
         // process definition
         if(array_key_exists(self::DEFINITION_COLOR_COMBO, $this->definition)) {
@@ -227,6 +230,13 @@ class ProcessEntity extends AEntity {
         return $data;
     }
 
+    /**
+     * Returns true if process is visible or false if not
+     */
+    public function isVisible(): bool {
+        return $this->isVisible;
+    }
+
     public static function createEntityFromDbRow(mixed $row): ?static {
         if($row === null) {
             return null;
@@ -243,7 +253,8 @@ class ProcessEntity extends AEntity {
             'version' => 'int',
             'status' => 'int',
             'dateCreated' => 'string',
-            'metadataDefinition' => '?string'
+            'metadataDefinition' => '?string',
+            'isVisible' => 'int'
         ]);
 
         return new self(
@@ -256,7 +267,8 @@ class ProcessEntity extends AEntity {
             $row->userId,
             $row->dateCreated,
             json_decode(base64_decode($row->definition), true) ?? [],
-            json_decode(base64_decode($row->metadataDefinition), true) ?? []
+            json_decode(base64_decode($row->metadataDefinition), true) ?? [],
+            ($row->isVisible == 1)
         );
     }
 }

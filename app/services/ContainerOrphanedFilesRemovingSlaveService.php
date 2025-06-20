@@ -3,33 +3,20 @@
 namespace App\Services;
 
 use App\Constants\Container\DocumentStatus;
+use App\Core\Application;
+use App\Core\Container;
 use App\Core\Datetypes\DateTime;
-use App\Core\DB\DatabaseManager;
 use App\Core\FileManager;
-use App\Core\ServiceManager;
 use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
 use App\Exceptions\ServiceException;
-use App\Logger\Logger;
-use App\Managers\Container\FileStorageManager;
-use App\Managers\ContainerManager;
-use App\Managers\EntityManager;
-use App\Repositories\Container\DocumentRepository;
-use App\Repositories\Container\FileStorageRepository;
-use App\Repositories\ContentRepository;
 use Exception;
 
 class ContainerOrphanedFilesRemovingSlaveService extends AService {
     private string $containerId;
 
-    private ContainerManager $containerManager;
-    private DatabaseManager $dbManager;
-
-    public function __construct(Logger $logger, ServiceManager $serviceManager, ContainerManager $containerManager, DatabaseManager $dbManager) {
-        parent::__construct('ContainerOrphanedFilesRemovingSlave', $logger, $serviceManager);
-
-        $this->containerManager = $containerManager;
-        $this->dbManager = $dbManager;
+    public function __construct(Application $app) {
+        parent::__construct('ContainerOrphanedFilesRemovingSlave', $app);
     }
 
     public function run() {
@@ -61,24 +48,12 @@ class ContainerOrphanedFilesRemovingSlaveService extends AService {
 
         $this->containerId = $argv[1];
 
-        $container = $this->containerManager->getContainerById($this->containerId);
+        $container = $this->getContainerInstance($this->containerId);
 
-        try {
-            $containerConn = $this->dbManager->getConnectionToDatabase($container->getDefaultDatabase()->getName());
-        } catch(AException|Exception $e) {
-            $this->logError(sprintf('Could not connect to database for container \'%s\'.', $this->containerId));
-        }
-
-        $contentRepository = new ContentRepository($containerConn, $this->logger, $this->containerManager->containerRepository->transactionLogRepository);
-        $entityManager = new EntityManager($this->logger, $contentRepository);
-        $fileStorageRepository = new FileStorageRepository($containerConn, $this->logger, $this->containerManager->containerRepository->transactionLogRepository);
-        $fileStorageManager = new FileStorageManager($this->logger, $entityManager, $fileStorageRepository);
-        $documentRepository = new DocumentRepository($containerConn, $this->logger, $this->containerManager->containerRepository->transactionLogRepository);
-
-        $this->processFiles($fileStorageManager, $documentRepository);
+        $this->processFiles($container);
     }
 
-    private function processFiles(FileStorageManager $fileStorageManager, DocumentRepository $documentRepository) {
+    private function processFiles(Container $container) {
         
         /**
          * 1. get all files
@@ -91,7 +66,7 @@ class ContainerOrphanedFilesRemovingSlaveService extends AService {
         $fileIdsToDelete = [];
 
         // get all files
-        $qb = $fileStorageManager->fileStorageRepository->composeQueryForStoredFiles();
+        $qb = $container->fileStorageManager->fileStorageRepository->composeQueryForStoredFiles();
         $qb->execute();
 
         $fileIds = [];
@@ -102,7 +77,7 @@ class ContainerOrphanedFilesRemovingSlaveService extends AService {
         $this->logInfo(sprintf('Found %d files stored for container.', count($fileIds)));
 
         // get all document-file relations
-        $qb = $fileStorageManager->fileStorageRepository->composeQueryForFileDocumentRelations();
+        $qb = $container->fileStorageManager->fileStorageRepository->composeQueryForFileDocumentRelations();
         $qb->execute();
 
         $documentIds = [];
@@ -115,7 +90,7 @@ class ContainerOrphanedFilesRemovingSlaveService extends AService {
         $this->logInfo(sprintf('Found %d document-file relations for container.', count($documentIds)));
 
         // get all documents
-        $qb = $documentRepository->composeQueryForDocuments();
+        $qb = $container->documentRepository->composeQueryForDocuments();
         $qb->andWhere($qb->getColumnInValues('documentId', $documentIds))
             ->regenerateSQL()
             ->execute();
@@ -145,7 +120,7 @@ class ContainerOrphanedFilesRemovingSlaveService extends AService {
                 continue;
             }
 
-            $file = $fileStorageManager->fileStorageRepository->getFileById($fileId);
+            $file = $container->fileStorageManager->fileStorageRepository->getFileById($fileId);
             
             $fileToFilePathMapping[$fileId] = $file['filepath'];
 
@@ -164,15 +139,15 @@ class ContainerOrphanedFilesRemovingSlaveService extends AService {
 
         foreach($fileIdsToDelete as $fileId) {
             try {
-                $fileStorageManager->fileStorageRepository->beginTransaction(__METHOD__);
+                $container->fileStorageManager->fileStorageRepository->beginTransaction(__METHOD__);
 
                 $documentId = array_search($fileId, $documentToFileMapping);
 
-                if(!$fileStorageManager->fileStorageRepository->deleteDocumentFileRelation($documentId, $fileId)) {
+                if(!$container->fileStorageManager->fileStorageRepository->deleteDocumentFileRelation($documentId, $fileId)) {
                     throw new GeneralException('Database error 1.');
                 }
 
-                if(!$fileStorageManager->fileStorageRepository->deleteStoredFile($fileId)) {
+                if(!$container->fileStorageManager->fileStorageRepository->deleteStoredFile($fileId)) {
                     throw new GeneralException('Database error 2.');
                 }
 
@@ -183,11 +158,11 @@ class ContainerOrphanedFilesRemovingSlaveService extends AService {
                     throw new GeneralException('File error.');
                 }
 
-                $fileStorageManager->fileStorageRepository->commit($this->serviceManager->getServiceUserId(), __METHOD__);
+                $container->fileStorageManager->fileStorageRepository->commit($this->serviceManager->getServiceUserId(), __METHOD__);
 
                 $this->logInfo(sprintf('File \'%s\' deleted.', $fileId));
             } catch(AException $e) {
-                $fileStorageManager->fileStorageRepository->rollback(__METHOD__);
+                $container->fileStorageManager->fileStorageRepository->rollback(__METHOD__);
 
                 $this->logInfo(sprintf('File \'%s\' could not be deleted. Reason: ' . $e->getMessage(), $fileId));
             }

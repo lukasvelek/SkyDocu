@@ -8,7 +8,7 @@ require_once('CommonService.php');
 global $app;
 
 try {
-    $service = new ContainerOrphanedFilesRemovingSlaveService($app->logger, $app->serviceManager, $app->containerManager, $app->dbManager);
+    $service = new ContainerOrphanedFilesRemovingSlaveService($app);
     $service->run();
 } catch(Exception|Error $e) {
     throw new ServiceException($e->getMessage(), $e);

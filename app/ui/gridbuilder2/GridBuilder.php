@@ -542,7 +542,7 @@ class GridBuilder extends AComponent {
                 }
                 if(!empty($this->filters[$name]->onSqlExecute)) {
                     foreach($this->filters[$name]->onSqlExecute as $sql) {
-                        $sql($qb, $this->filters[$name]);
+                        $sql($qb, $this->filters[$name], $value);
                     }
                 } else {
                     $qb->andWhere($name . ' = ?', [$value]);

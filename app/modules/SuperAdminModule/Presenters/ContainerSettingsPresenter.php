@@ -10,6 +10,7 @@ use App\Constants\Container\StandaloneProcesses;
 use App\Constants\ContainerEnvironments;
 use App\Constants\ContainerInviteUsageStatus;
 use App\Constants\ContainerStatus;
+use App\Constants\JobQueueTypes;
 use App\Core\Caching\CacheNames;
 use App\Core\Datetypes\DateTime;
 use App\Core\DB\DatabaseMigrationManager;
@@ -377,15 +378,33 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
                     throw new GeneralException('Incorrect password entered.');
                 }
 
-                $this->app->containerManager->deleteContainer($containerId);
+                //$this->app->containerManager->deleteContainer($containerId);
+
+                // Use async deletion instead of sync
+
+                $this->app->jobQueueManager->insertNewJob(
+                    JobQueueTypes::DELETE_CONTAINER,
+                    [
+                        'containerId' => $containerId
+                    ],
+                    null
+                );
+
+                $this->app->containerManager->changeContainerStatus($containerId, ContainerStatus::NOT_RUNNING, $this->getUserId(), 'Container is scheduled for deletion.');
+                
+                /**
+                 * @var \App\Modules\SuperAdminModule\SuperAdminModule $module
+                 */
+                $module = &$this->module;
+                $module->navbar?->revalidateContainerSwitch();
 
                 $this->app->containerRepository->commit($this->getUserId(), __METHOD__);
 
-                $this->flashMessage('Container deleted.', 'success');
+                $this->flashMessage('Container scheduled for deleting.', 'success');
             } catch(AException $e) {
                 $this->app->containerRepository->rollback(__METHOD__);
 
-                $this->flashMessage('Could not delete container. Reason: ' . $e->getMessage(), 'error', 10);
+                $this->flashMessage('Could not schedule container deletion. Reason: ' . $e->getMessage(), 'error', 10);
             }
 
             $this->redirect($this->createFullURL('SuperAdmin:Containers', 'list'));

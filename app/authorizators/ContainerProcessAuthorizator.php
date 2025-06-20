@@ -4,12 +4,14 @@ namespace App\Authorizators;
 
 use App\Constants\Container\ProcessInstanceOfficerTypes;
 use App\Constants\Container\SystemGroups;
+use App\Constants\JobQueueTypes;
 use App\Core\DatabaseConnection;
 use App\Logger\Logger;
 use App\Managers\Container\GroupManager;
 use App\Managers\Container\ProcessInstanceManager;
 use App\Managers\Container\ProcessManager;
 use App\Managers\UserManager;
+use App\Repositories\JobQueueRepository;
 
 /**
  * ContainerProcessAuthorizator contains useful methods for checking rights on processes
@@ -21,14 +23,16 @@ class ContainerProcessAuthorizator extends AAuthorizator {
     private ProcessInstanceManager $processInstanceManager;
     private GroupManager $groupManager;
     private UserManager $userManager;
+    private JobQueueRepository $jobQueueRepository;
     
-    public function __construct(DatabaseConnection $conn, Logger $logger, ProcessManager $processManager, ProcessInstanceManager $processInstanceManager, GroupManager $groupManager, UserManager $userManager) {
+    public function __construct(DatabaseConnection $conn, Logger $logger, ProcessManager $processManager, ProcessInstanceManager $processInstanceManager, GroupManager $groupManager, UserManager $userManager, JobQueueRepository $jobQueueRepository) {
         parent::__construct($conn, $logger);
 
         $this->processManager = $processManager;
         $this->processInstanceManager = $processInstanceManager;
         $this->groupManager = $groupManager;
         $this->userManager = $userManager;
+        $this->jobQueueRepository = $jobQueueRepository;
     }
 
     /**
@@ -138,6 +142,34 @@ class ContainerProcessAuthorizator extends AAuthorizator {
         }
 
         return ($isCurrentOfficer || $hasAppearedInWorkflow || $willAppearInWorkflow);
+    }
+
+    /**
+     * Checks if user can delete process instance
+     * 
+     * @param string $instanceId Instance ID
+     * @param string $userId User ID
+     */
+    public function canUserDeleteProcessInstance(string $instanceId, string $userId): bool {
+        $qb = $this->jobQueueRepository->commonComposeQuery();
+        $qb->andWhere('type = ?', [JobQueueTypes::DELETE_CONTAINER_PROCESS_INSTANCE])
+            ->andWhere('params LIKE ?', ['%"instanceId":"' . $instanceId . '"%'])
+            ->execute();
+
+        $items = [];
+        while($row = $qb->fetchAssoc()) {
+            $items[] = $row;
+        }
+
+        $userGroups = $this->groupManager->getGroupsForUser($userId);
+        $adminGroup = $this->groupManager->getGroupByTitle(SystemGroups::ADMINISTRATORS)->groupId;
+        $processSupervisorGroup = $this->groupManager->getGroupByTitle(SystemGroups::PROCESS_SUPERVISOR)->groupId;
+
+        if(!empty($items)) {
+            return false;
+        }
+
+        return empty($items) || (in_array($adminGroup, $userGroups) || in_array($processSupervisorGroup, $userGroups));
     }
 }
 

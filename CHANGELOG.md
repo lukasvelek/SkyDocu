@@ -28,6 +28,12 @@ Previously changelog for versions `1.0`-`1.4` has been located in README.md. How
     - Process versioning
     - Support for files
     - Process metadata
+- Job Queue
+    - Certain jobs should be performed in background
+    - Process version adding to distribution
+    - Process instance data removal
+    - Changing process visibility from superadministration
+    - Added background service
 
 ## SkyDocu `1.5` (04/08/2025)
 - Added _Requested containers_ metric to superadministration Container statistics widget

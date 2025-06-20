@@ -331,6 +331,18 @@ class ProcessInstanceManager extends AManager {
             'description' => $description
         ]);
     }
+
+    /**
+     * Deletes process instance
+     * 
+     * @param string $instanceId Instance ID
+     * @throws GeneralException
+     */
+    public function deleteProcessInstance(string $instanceId) {
+        if(!$this->processInstanceRepository->deleteProcessInstance($instanceId)) {
+            throw new GeneralException('Database error.');
+        }
+    }
 }
 
 ?>

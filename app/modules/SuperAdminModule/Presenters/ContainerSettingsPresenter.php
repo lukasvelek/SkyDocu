@@ -337,14 +337,15 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
             throw new RequiredAttributeIsNotSetException('containerId');
         }
 
+        $container = $this->app->containerManager->getContainerById($containerId);
+
         $containerDeleteLink = HTML::el('a')
             ->class('link')
             ->href($this->createURLString('containerDeleteForm', ['containerId' => $containerId]))
             ->style('color', 'red')
             ->text('Delete')
             ->title('Delete')
-            ->toString()
-        ;
+            ->toString();
 
         $this->template->container_delete_link = $containerDeleteLink;
 
@@ -356,7 +357,12 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
             ->title('Remove from distribution')
             ->toString();
 
-        $this->template->container_remove_from_distribution_link = $removeFromDistribLink;
+            
+        if(!in_array($container->getStatus(), [ContainerStatus::ERROR_DURING_CREATION, ContainerStatus::IS_BEING_CREATED, ContainerStatus::NEW, ContainerStatus::REQUESTED])) {
+            $this->template->container_remove_from_distribution_link = $removeFromDistribLink;
+        } else {
+            $this->template->container_remove_from_distribution_link = '';
+        }
     }
 
     public function handleContainerDeleteForm(?FormRequest $fr = null) {
@@ -378,8 +384,6 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
                     throw new GeneralException('Incorrect password entered.');
                 }
 
-                //$this->app->containerManager->deleteContainer($containerId);
-
                 // Use async deletion instead of sync
 
                 $this->app->jobQueueManager->insertNewJob(
@@ -390,7 +394,7 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
                     null
                 );
 
-                $this->app->containerManager->changeContainerStatus($containerId, ContainerStatus::NOT_RUNNING, $this->getUserId(), 'Container is scheduled for deletion.');
+                $this->app->containerManager->changeContainerStatus($containerId, ContainerStatus::SCHEDULED_FOR_REMOVAL, $this->getUserId(), 'Container is scheduled for deletion.');
                 
                 /**
                  * @var \App\Modules\SuperAdminModule\SuperAdminModule $module

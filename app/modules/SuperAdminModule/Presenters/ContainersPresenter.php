@@ -52,7 +52,9 @@ class ContainersPresenter extends ASuperAdminPresenter {
         $settings = $grid->addAction('settings');
         $settings->setTitle('Settings');
         $settings->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) {
-            return $this->app->groupManager->isUserMemberOfContainerManagers($this->getUserId());
+            $isContainerManager = $this->app->groupManager->isUserMemberOfContainerManagers($this->getUserId());
+
+            return ($isContainerManager && ($row->status != ContainerStatus::SCHEDULED_FOR_REMOVAL));
         };
         $settings->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
             $el = HTML::el('a')

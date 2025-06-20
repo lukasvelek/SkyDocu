@@ -22,6 +22,10 @@
 
 - $INSTANCE_AUTHOR$
 
+- $UID_$
+
+- $GID_$
+
 ## Possible attributes in form definition
 - name
 - instanceDescription

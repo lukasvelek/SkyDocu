@@ -2,10 +2,7 @@
 
 namespace App\Services;
 
-use App\Constants\Container\ProcessInstanceOfficerTypes;
 use App\Constants\Container\ProcessInstanceOperations;
-use App\Constants\Container\ProcessInstanceStatus;
-use App\Core\DatabaseConnection;
 use App\Core\DB\DatabaseManager;
 use App\Core\ServiceManager;
 use App\Exceptions\AException;
@@ -127,7 +124,7 @@ class ProcessServiceUserHandlingService extends AService {
                 $workflow[] = $_form['actor'];
             }
 
-            [$officer, $officerType] = $instanceManager->evaluateNextProcessInstanceOfficer($workflow, $this->userManager->getServiceUserId(), $workflowIndex + 1);
+            [$officer, $officerType] = $instanceManager->evaluateNextProcessInstanceOfficer($instance, $workflow, $this->userManager->getServiceUserId(), $workflowIndex + 1);
 
             $instanceManager->moveProcessInstanceToNextOfficer($this->instanceId, $this->userManager->getServiceUserId(), $officer, $officerType);
 

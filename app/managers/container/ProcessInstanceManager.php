@@ -116,12 +116,6 @@ class ProcessInstanceManager extends AManager {
                 $type = ProcessInstanceOfficerTypes::GROUP;
                 break;
 
-            case '$PROPERTY_MANAGERS$':
-                $group = $this->groupManager->getGroupByTitle(SystemGroups::PROPERTY_MANAGERS);
-                $result = $group->groupId;
-                $type = ProcessInstanceOfficerTypes::GROUP;
-                break;
-
             case '$CURRENT_USER_SUPERIOR$':
                 $user = $this->userManager->getUserById($currentUserId);
                 if($user->getSuperiorUserId() === null) {

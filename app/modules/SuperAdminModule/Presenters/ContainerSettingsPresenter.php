@@ -6,12 +6,12 @@ use App\Components\ContainerUsageAverageResponseTimeGraph\ContainerUsageAverageR
 use App\Components\ContainerUsageStatsGraph\ContainerUsageStatsGraph;
 use App\Components\ContainerUsageTotalResponseTimeGraph\ContainerUsageTotalResponseTimeGraph;
 use App\Components\Widgets\FileStorageStatsForContainerWidget\FileStorageStatsForContainerWidget;
-use App\Constants\Container\StandaloneProcesses;
+use App\Constants\Container\ProcessStatus;
 use App\Constants\ContainerEnvironments;
 use App\Constants\ContainerInviteUsageStatus;
 use App\Constants\ContainerStatus;
 use App\Constants\JobQueueTypes;
-use App\Core\Caching\CacheNames;
+use App\Core\Container;
 use App\Core\Datetypes\DateTime;
 use App\Core\DB\DatabaseMigrationManager;
 use App\Core\DB\DatabaseRow;
@@ -25,7 +25,6 @@ use App\Helpers\LinkHelper;
 use App\Managers\Container\FileStorageManager;
 use App\Managers\EntityManager;
 use App\Repositories\Container\FileStorageRepository;
-use App\Repositories\Container\ProcessRepository;
 use App\Repositories\ContentRepository;
 use App\UI\GridBuilder2\Action;
 use App\UI\GridBuilder2\Cell;
@@ -884,192 +883,33 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
     }
 
     public function renderProcesses() {
-        $this->template->links = LinkBuilder::createSimpleLink('Add process', $this->createURL('addProcessForm', ['containerId' => $this->httpRequest->get('containerId')]), 'link');
+        $this->template->links = ''; //LinkBuilder::createSimpleLink('Add process', $this->createURL('addProcessForm', ['containerId' => $this->httpRequest->get('containerId')]), 'link');
     }
 
     protected function createComponentContainerProcessesGrid(HttpRequest $request) {
-        $grid = $this->componentFactory->getGridBuilder($request->get('containerId'));
+        $containerId = $this->httpRequest->get('containerId');
 
-        $container = $this->app->containerManager->getContainerById($request->get('containerId'));
-        $containerConn = $this->app->dbManager->getConnectionToDatabase($container->getDefaultDatabase()->getName());
+        $grid = $this->componentFactory->getGridBuilder($containerId);
 
-        $processRepository = new ProcessRepository($containerConn, $this->logger, $this->app->transactionLogRepository);
-        $processRepository->setContainerId($container->getId());
+        $container = new Container($this->app, $containerId);
 
-        $qb = $processRepository->composeQueryForProcessTypes();
+        $qb = $container->processRepository->composeQueryForAvailableProcesses();
 
-        $grid->createDataSourceFromQueryBuilder($qb, 'typeId');
-
+        $grid->createDataSourceFromQueryBuilder($qb, 'processId');
+        $grid->addQueryDependency('containerId', $containerId);
+        
         $grid->addColumnText('title', 'Title');
-        $grid->addColumnBoolean('isEnabled', 'Enabled');
-
-        $enable = $grid->addAction('enable');
-        $enable->setTitle('Enable');
-        $enable->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) {
-            return $row->isEnabled == false;
-        };
-        $enable->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) use ($request) {
-            $el = HTML::el('a');
-            $el->text('Enable')
-                ->class('grid-link')
-                ->href($this->createURLString('modifyContainerProcess', ['containerId' => $request->get('containerId'), 'type' => $row->typeKey, 'param' => 'enable']));
-
-            return $el;
-        };
-
-        $disable = $grid->addAction('disable');
-        $disable->setTitle('Disable');
-        $disable->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) {
-            return $row->isEnabled == true;
-        };
-        $disable->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) use ($request) {
-            $el = HTML::el('a');
-            $el->text('Disable')
-                ->class('grid-link')
-                ->href($this->createURLString('modifyContainerProcess', ['containerId' => $request->get('containerId'), 'type' => $row->typeKey, 'param' => 'disable']));
-
-            return $el;
-        };
+        $grid->addColumnText('description', 'Description');
+        $grid->addColumnUser('userId', 'Author');
+        $grid->addColumnConst('status', 'Status', ProcessStatus::class);
+        $grid->addColumnBoolean('isEnabled', 'Is enabled');
+        $grid->addColumnBoolean('isVisible', 'Is visible');
+        $grid->addColumnDatetime('dateCreated', 'Date created');
 
         return $grid;
     }
 
-    public function handleModifyContainerProcess() {
-        $action = $this->httpRequest->get('param');
-        $type = $this->httpRequest->get('type');
-
-        $data = [];
-        if($action == 'enable') {
-            $data['isEnabled'] = 1;
-        } else {
-            $data['isEnabled'] = 0;
-        }
-
-        $container = $this->app->containerManager->getContainerById($this->httpRequest->get('containerId'));
-        $containerConn = $this->app->dbManager->getConnectionToDatabase($container->getDefaultDatabase()->getName());
-
-        $processRepository = new ProcessRepository($containerConn, $this->logger, $this->app->transactionLogRepository);
-        $processRepository->setContainerId($container->getId());
-        
-        try {
-            $processRepository->beginTransaction(__METHOD__);
-
-            if(!$processRepository->updateProcessType($type, $data)) {
-                throw new GeneralException('Database error.');
-            }
-
-            $processRepository->commit($this->getUserId(), __METHOD__);
-
-            $this->flashMessage('Process ' . ($action == 'enable' ? 'enabled' : 'disabled') . '.', 'success');
-        } catch(AException $e) {
-            $processRepository->rollback(__METHOD__);
-
-            $this->flashMessage('Process could not be ' . ($action == 'enable' ? 'enabled' : 'disabled') . '. Reason: ' . $e->getMessage(), 'error');
-        }
-
-        $this->redirect($this->createURL('processes', ['containerId' => $this->httpRequest->get('containerId')]));
-    }
-
-    public function handleAddProcessForm(?FormRequest $fr = null) {
-        if($fr !== null) {
-            $container = $this->app->containerManager->getContainerById($this->httpRequest->get('containerId'));
-            $containerConn = $this->app->dbManager->getConnectionToDatabase($container->getDefaultDatabase()->getName());
-
-            $processRepository = new ProcessRepository($containerConn, $this->logger, $this->app->transactionLogRepository);
-            $contentRepository = new ContentRepository($containerConn, $this->logger, $this->app->transactionLogRepository);
-
-            $processRepository->setContainerId($container->getId());
-            $contentRepository->setContainerId($container->getId());
-
-            $entityManager = new EntityManager($this->logger, $contentRepository);
-
-            try {
-                $processRepository->beginTransaction(__METHOD__);
-                
-                $typeId = $entityManager->generateEntityId(EntityManager::C_PROCESS_TYPES);
-
-                $result = $processRepository->insertNewProcessType(
-                    $typeId,
-                    $fr->process,
-                    StandaloneProcesses::toString($fr->process),
-                    StandaloneProcesses::getDescription($fr->process)
-                );
-
-                if($result === false) {
-                    throw new GeneralException('Database error.');
-                }
-
-                $this->cacheFactory->invalidateCacheByNamespace(CacheNames::PROCESS_TYPES);
-
-                $processRepository->commit($this->getUserId(), __METHOD__);
-
-                $this->flashMessage('Process added to container.', 'success');
-            } catch(AException $e) {
-                $processRepository->rollback(__METHOD__);
-
-                $this->flashMessage('Could not add new process. Reason: ' . $e->getMessage(), 'error');
-            }
-
-            $this->redirect($this->createURL('processes', ['containerId' => $this->httpRequest->get('containerId')]));
-        }
-    }
-
-    public function renderAddProcessForm() {
-        $this->template->links = $this->createBackUrl('processes', ['containerId' => $this->httpRequest->get('containerId')]);
-    }
-
-    protected function createComponentContainerAddProcessForm(HttpRequest $request) {
-        $form = $this->componentFactory->getFormBuilder();
-
-        $form->setAction($this->createURL('addProcessForm', ['containerId' => $request->get('containerId')]));
-
-        $container = $this->app->containerManager->getContainerById($request->get('containerId'));
-        $containerConn = $this->app->dbManager->getConnectionToDatabase($container->getDefaultDatabase()->getName());
-
-        $processRepository = new ProcessRepository($containerConn, $this->logger, $this->app->transactionLogRepository);
-        $processRepository->setContainerId($container->getId());
-        
-        $qb = $processRepository->composeQueryForProcessTypes()
-            ->execute();
-
-        $processesDb = [];
-        while($row = $qb->fetchAssoc()) {
-            $processesDb[] = $row['typeKey'];
-        }
-
-        $processes = StandaloneProcesses::getAll();
-        $processSelect = [];
-        foreach($processes as $key => $title) {
-            if(in_array($key, $processesDb)) continue;
-            $processSelect[] = [
-                'value' => $key,
-                'text' => $title
-            ];
-        }
-
-        $empty = false;
-        if(empty($processSelect)) {
-            $empty = true;
-            $processSelect[] = [
-                'value' => 'none',
-                'text' => 'No processes found'
-            ];
-        }
-
-        $form->addSelect('process', 'Process:')
-            ->addRawOptions($processSelect)
-            ->setRequired()
-            ->setDisabled($empty);
-
-        $form->addSubmit('Add')
-            ->setDisabled($empty);
-
-        return $form;
-    }
-
-    public function renderListDatabases() {
-
-    }
+    public function renderListDatabases() {}
 
     protected function createComponentContainerDatabasesGrid(HttpRequest $request) {
         $grid = $this->componentFactory->getGridBuilder($request->get('containerId'));

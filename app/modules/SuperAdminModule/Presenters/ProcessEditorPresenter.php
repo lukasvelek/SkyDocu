@@ -691,7 +691,6 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
             '$CURRENT_USER$',
             '$ACCOUNTANTS$',
             '$ARCHIVISTS$',
-            '$PROPERTY_MANAGERS$',
             '$CURRENT_USER_SUPERIOR$',
             '$ADMINISTRATORS$',
             '$SERVICE_USER$',

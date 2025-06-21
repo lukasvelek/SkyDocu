@@ -8,7 +8,7 @@ require_once('CommonService.php');
 global $app;
 
 try {
-    $service = new ProcessServiceUserHandlingService($app->logger, $app->serviceManager, $app->containerManager, $app->userManager, $app->dbManager, $app->userRepository);
+    $service = new ProcessServiceUserHandlingService($app);
     $service->run();
 } catch(Exception|Error $e) {
     throw new ServiceException($e->getMessage(), $e);

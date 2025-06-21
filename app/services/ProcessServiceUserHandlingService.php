@@ -3,42 +3,20 @@
 namespace App\Services;
 
 use App\Constants\Container\ProcessInstanceOperations;
-use App\Core\DB\DatabaseManager;
-use App\Core\ServiceManager;
+use App\Constants\Container\ProcessInstanceSystemStatus;
+use App\Core\Application;
+use App\Core\Container;
 use App\Exceptions\AException;
 use App\Exceptions\ServiceException;
 use App\Helpers\ProcessEditorHelper;
-use App\Logger\Logger;
-use App\Managers\Container\GroupManager;
-use App\Managers\Container\ProcessInstanceManager;
-use App\Managers\Container\ProcessManager;
-use App\Managers\ContainerManager;
-use App\Managers\EntityManager;
-use App\Managers\UserManager;
-use App\Repositories\Container\GroupRepository;
-use App\Repositories\Container\ProcessInstanceRepository;
-use App\Repositories\Container\ProcessRepository;
-use App\Repositories\ContentRepository;
-use App\Repositories\TransactionLogRepository;
-use App\Repositories\UserRepository;
 use Exception;
 
 class ProcessServiceUserHandlingService extends AService {
     private string $containerId;
     private string $instanceId;
 
-    private ContainerManager $containerManager;
-    private UserManager $userManager;
-    private DatabaseManager $dbManager;
-    private UserRepository $userRepository;
-
-    public function __construct(Logger $logger, ServiceManager $serviceManager, ContainerManager $containerManager, UserManager $userManager, DatabaseManager $dbManager, UserRepository $userRepository) {
-        parent::__construct('ProcessServiceUserHandling', $logger, $serviceManager);
-
-        $this->containerManager = $containerManager;
-        $this->userManager = $userManager;
-        $this->dbManager = $dbManager;
-        $this->userRepository = $userRepository;
+    public function __construct(Application $app) {
+        parent::__construct('ProcessServiceUserHandling', $app);
     }
 
     public function run() {
@@ -71,31 +49,23 @@ class ProcessServiceUserHandlingService extends AService {
         $this->containerId = $argv[1];
         $this->instanceId = $argv[2];
 
-        $container = $this->containerManager->getContainerById($this->containerId, true);
+        $container = new Container($this->app, $this->containerId);
 
-        $conn = $this->dbManager->getConnectionToDatabase($container->getDefaultDatabase()->getName());
-
-        $transactionLogRepository = new TransactionLogRepository($conn, $this->logger);
-        $contentRepository = new ContentRepository($conn, $this->logger, $transactionLogRepository);
-        $entityManager = new EntityManager($this->logger, $contentRepository);
-        $processInstanceRepository = new ProcessInstanceRepository($conn, $this->logger, $transactionLogRepository);
-        $groupRepository = new GroupRepository($conn, $this->logger, $transactionLogRepository);
-        $groupManager = new GroupManager($this->logger, $entityManager, $groupRepository, $this->userRepository);
-        $instanceManager = new ProcessInstanceManager($this->logger, $entityManager, $processInstanceRepository, $groupManager, $this->userManager);
-        $processRepository = new ProcessRepository($conn, $this->logger, $transactionLogRepository);
-        $processManager = new ProcessManager($this->logger, $entityManager, $processRepository);
-
-        $this->handleOperations($instanceManager, $processManager);
+        $this->handleOperations($container);
     }
 
-    private function handleOperations(ProcessInstanceManager $instanceManager, ProcessManager $processManager) {
+    private function handleOperations(Container $container) {
         $this->logInfo('Started processing instance ID \'' . $this->instanceId . '\'.');
 
         try {
-            $instance = $instanceManager->getProcessInstanceById($this->instanceId);
+            $instance = $container->processInstanceManager->getProcessInstanceById($this->instanceId);
+
+            $container->processInstanceManager->updateInstance($this->instanceId, [
+                'systemStatus' => ProcessInstanceSystemStatus::IN_PROGRESS
+            ]);
 
             $processId = $instance->processId;
-            $process = $processManager->getProcessById($processId);
+            $process = $container->processManager->getProcessById($processId);
 
             $instanceData = unserialize($instance->data);
 
@@ -109,12 +79,12 @@ class ProcessServiceUserHandlingService extends AService {
             $operations = ProcessEditorHelper::getServiceUserDefinitionUpdateOperations($form);
 
             if(array_key_exists('status', $operations)) {
-                $instanceManager->changeProcessInstanceStatus($this->instanceId, $operations['status']);
+                $container->processInstanceManager->changeProcessInstanceStatus($this->instanceId, $operations['status']);
 
                 $this->logInfo(sprintf('Changed instance status %d => %d', $instance->status, $operations['status']));
             }
             if(array_key_exists('instanceDescription', $operations)) {
-                $instanceManager->changeProcessInstanceDescription($this->instanceId, $operations['instanceDescription']);
+                $container->processInstanceManager->changeProcessInstanceDescription($this->instanceId, $operations['instanceDescription']);
                 
                 $this->logInfo(sprintf('Changed instance description \'%s\' => \'%s\'.', $instance->description, $operations['instanceDescription']));
             }
@@ -124,21 +94,22 @@ class ProcessServiceUserHandlingService extends AService {
                 $workflow[] = $_form['actor'];
             }
 
-            [$officer, $officerType] = $instanceManager->evaluateNextProcessInstanceOfficer($instance, $workflow, $this->userManager->getServiceUserId(), $workflowIndex + 1);
+            [$officer, $officerType] = $container->processInstanceManager->evaluateNextProcessInstanceOfficer($instance, $workflow, $this->app->userManager->getServiceUserId(), $workflowIndex + 1);
 
-            $instanceManager->moveProcessInstanceToNextOfficer($this->instanceId, $this->userManager->getServiceUserId(), $officer, $officerType);
+            $container->processInstanceManager->moveProcessInstanceToNextOfficer($this->instanceId, $this->app->userManager->getServiceUserId(), $officer, $officerType);
 
-            $instance = $instanceManager->getProcessInstanceById($this->instanceId);
+            $instance = $container->processInstanceManager->getProcessInstanceById($this->instanceId);
 
             $instanceData = unserialize($instance->data);
 
-            $instanceData['workflowHistory'][][$this->userManager->getServiceUserId()] = [
+            $instanceData['workflowHistory'][][$this->app->userManager->getServiceUserId()] = [
                 'operation' => ProcessInstanceOperations::PROCESS,
                 'date' => date('Y-m-d H:i:s')
             ];
 
-            $instanceManager->updateInstance($this->instanceId, [
-                'data' => serialize($instanceData)
+            $container->processInstanceManager->updateInstance($this->instanceId, [
+                'data' => serialize($instanceData),
+                'systemStatus' => ProcessInstanceSystemStatus::FINISHED
             ]);
 
             $this->logInfo('Finished processing instance ID \'' . $this->instanceId . '\'.');

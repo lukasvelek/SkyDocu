@@ -2,8 +2,10 @@
 
 namespace App\Modules\UserModule;
 
+use App\Constants\Container\ProcessInstanceOfficerTypes;
 use App\Constants\Container\ProcessInstanceOperations;
 use App\Constants\Container\ProcessInstanceStatus;
+use App\Constants\Container\ProcessInstanceSystemStatus;
 use App\Core\Http\FormRequest;
 use App\Entities\ProcessInstanceDataEntity;
 use App\Exceptions\AException;
@@ -156,6 +158,19 @@ class ProcessPresenter extends AUserPresenter {
                             $this->processInstanceManager->moveProcessInstanceToNextOfficer($instanceId, $this->getUserId(), $officer, $officerType);
                             $description = sprintf('%s waiting for your reaction', $process->title);
                             $fm = 'Process successfully moved to next officer.';
+
+                            if($officer == $this->app->userManager->getServiceUserId() && $officerType == ProcessInstanceOfficerTypes::USER) {
+                                // service user
+
+                                $this->processInstanceManager->updateInstance($instanceId, [
+                                    'systemStatus' => ProcessInstanceSystemStatus::NEW
+                                ]);
+
+                                $this->app->serviceManager->runService('psuhs.php', [
+                                    $this->containerId,
+                                    $instanceId
+                                ]);
+                            }
                         }
 
                         break;
@@ -188,6 +203,19 @@ class ProcessPresenter extends AUserPresenter {
                             $this->processInstanceManager->moveProcessInstanceToNextOfficer($instanceId, $this->getUserId(), $officer, $officerType);
                             $description = sprintf('%s waiting for your reaction', $process->title);
                             $fm = 'Process successfully moved to next officer.';
+
+                            if($officer == $this->app->userManager->getServiceUserId() && $officerType == ProcessInstanceOfficerTypes::USER) {
+                                // service user
+                                
+                                $this->processInstanceManager->updateInstance($instanceId, [
+                                    'systemStatus' => ProcessInstanceSystemStatus::NEW
+                                ]);
+
+                                $this->app->serviceManager->runService('psuhs.php', [
+                                    $this->containerId,
+                                    $instanceId
+                                ]);
+                            }
                         }
                         break;
                 

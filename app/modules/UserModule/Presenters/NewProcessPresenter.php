@@ -8,6 +8,7 @@ use App\Constants\Container\ProcessGridViews;
 use App\Constants\Container\ProcessInstanceOfficerTypes;
 use App\Constants\Container\ProcessInstanceOperations;
 use App\Constants\Container\ProcessInstanceStatus;
+use App\Constants\Container\ProcessInstanceSystemStatus;
 use App\Core\FileUploadManager;
 use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
@@ -232,6 +233,10 @@ class NewProcessPresenter extends AUserPresenter {
             'currentOfficerType' => $type,
             'status' => ProcessInstanceStatus::IN_PROGRESS
         ];
+
+        if($runService) {
+            $instanceData['systemStatus'] = ProcessInstanceSystemStatus::NEW;
+        }
 
         try {
             $this->processInstanceRepository->beginTransaction(__METHOD__);

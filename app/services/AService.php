@@ -12,6 +12,7 @@ use App\Core\ServiceManager;
 use App\Helpers\ExceptionHelper;
 use App\Logger\Logger;
 use App\Managers\ContainerManager;
+use Error;
 use Exception;
 
 /**
@@ -126,9 +127,9 @@ abstract class AService implements IRunnable {
     /**
      * Saves exception to file
      * 
-     * @param Exception $e Exception
+     * @param Exception|Error $e Exception
      */
-    protected function saveExceptionToFile(Exception $e): bool {
+    protected function saveExceptionToFile(Exception|Error $e): bool {
         if(FileManager::folderExists(LOG_DIR)) {
             return ExceptionHelper::saveExceptionToFile($e, HashManager::createHash(8, false));
         }

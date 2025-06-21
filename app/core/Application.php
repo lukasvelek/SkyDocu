@@ -6,6 +6,7 @@ use App\Authenticators\UserAuthenticator;
 use App\Constants\SessionNames;
 use App\Core\Caching\CacheFactory;
 use App\Core\DB\DatabaseManager;
+use App\Core\DB\PeeQL;
 use App\Core\Http\HttpRequest;
 use App\Entities\UserEntity;
 use App\Exceptions\AException;
@@ -17,6 +18,8 @@ use App\Managers\ContainerInviteManager;
 use App\Managers\ContainerManager;
 use App\Managers\EntityManager;
 use App\Managers\GroupManager;
+use App\Managers\JobQueueManager;
+use App\Managers\ProcessManager;
 use App\Managers\UserAbsenceManager;
 use App\Managers\UserManager;
 use App\Managers\UserSubstituteManager;
@@ -28,6 +31,9 @@ use App\Repositories\ContentRepository;
 use App\Repositories\GridExportRepository;
 use App\Repositories\GroupMembershipRepository;
 use App\Repositories\GroupRepository;
+use App\Repositories\JobQueueProcessingHistoryRepository;
+use App\Repositories\JobQueueRepository;
+use App\Repositories\ProcessRepository;
 use App\Repositories\SystemServicesRepository;
 use App\Repositories\TransactionLogRepository;
 use App\Repositories\UserAbsenceRepository;
@@ -76,6 +82,9 @@ class Application {
     public UserAbsenceRepository $userAbsenceRepository;
     public UserSubstituteRepository $userSubstituteRepository;
     public ContainerDatabaseRepository $containerDatabaseRepository;
+    public ProcessRepository $processRepository;
+    public JobQueueRepository $jobQueueRepository;
+    public JobQueueProcessingHistoryRepository $jobQueueProcessingHistoryRepository;
 
     public ServiceManager $serviceManager;
     public UserManager $userManager;
@@ -86,10 +95,14 @@ class Application {
     public UserAbsenceManager $userAbsenceManager;
     public UserSubstituteManager $userSubstituteManager;
     public ContainerDatabaseManager $containerDatabaseManager;
+    public ProcessManager $processManager;
+    public JobQueueManager $jobQueueManager;
 
     public array $repositories;
 
     public CacheFactory $cacheFactory;
+
+    public PeeQL $peeql;
 
     /**
      * The Application constructor. It creates objects of all used classes.
@@ -115,6 +128,8 @@ class Application {
 
         $this->cacheFactory = new CacheFactory();
 
+        $this->transactionLogRepository = new TransactionLogRepository($this->db, $this->logger);
+
         $this->initRepositories();
 
         $this->userAuth = new UserAuthenticator($this->userRepository, $this->logger);
@@ -130,6 +145,8 @@ class Application {
         $this->containerInviteManager = new ContainerInviteManager($this->logger, $this->entityManager, $this->containerInviteRepository);
         $this->userAbsenceManager = new UserAbsenceManager($this->logger, $this->entityManager, $this->userAbsenceRepository);
         $this->userSubstituteManager = new UserSubstituteManager($this->logger, $this->entityManager, $this->userSubstituteRepository);
+        $this->processManager = new ProcessManager($this->logger, $this->entityManager, $this->processRepository);
+        $this->jobQueueManager = new JobQueueManager($this->logger, $this->entityManager, $this->jobQueueRepository, $this->jobQueueProcessingHistoryRepository);
 
         $this->initManagers();
 
@@ -146,6 +163,8 @@ class Application {
                 throw new GeneralException('Could not install database. Reason: ' . $e->getMessage(), $e);
             }
         }
+
+        $this->peeql = new PeeQL($this->db, $this->logger, $this->transactionLogRepository);
     }
 
     /**
@@ -160,7 +179,9 @@ class Application {
             $this->containerManager,
             $this->containerInviteManager,
             $this->userAbsenceManager,
-            $this->userSubstituteManager
+            $this->userSubstituteManager,
+            $this->processManager,
+            $this->jobQueueManager
         ] as $manager) {
             $manager->injectCacheFactory($this->cacheFactory);
         }
@@ -183,7 +204,9 @@ class Application {
                 $name = $rp->getName();
                 $className = (string)$rt;
 
-                $this->$name = new $className($this->db, $this->logger);
+                if($name == 'transactionLogRepository') continue;
+
+                $this->$name = new $className($this->db, $this->logger, $this->transactionLogRepository);
                 
                 if(method_exists($this->$name, 'injectCacheFactory')) {
                     $this->$name->injectCacheFactory($this->cacheFactory);
@@ -383,6 +406,18 @@ class Application {
         }
 
         if ($log) $this->logger->info('Current URL: [module => ' . $this->currentModule . ', presenter => ' . $this->currentPresenter . ', action => ' . $this->currentAction . ']', __METHOD__);
+        
+        $params = [];
+        foreach($_GET as $k => $v) {
+            if(in_array($k, [
+                'page',
+                'action'
+            ])) continue;
+
+            $params[] = sprintf('%s => %s', $k, $v);
+        }
+
+        if ($log) $this->logger->info('Current URL parameters: [' . implode(', ', $params) . ']', __METHOD__);
     }
 }
 

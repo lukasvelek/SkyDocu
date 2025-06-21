@@ -86,8 +86,19 @@ class ListBuilder extends AComponent {
         return $this->helper->addColumn($name, $label, ListColumnTypes::COL_TYPE_CONST, $constClass);
     }
 
+    /**
+     * Adds action
+     * 
+     * @param string $action Action name
+     */
     public function addAction(string $name): ListAction {
         return $this->helper->addAction($name);
+    }
+
+    public function startup() {
+        parent::startup();
+
+        $this->helper->setApplication($this->app);
     }
 
     public function prerender() {

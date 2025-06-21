@@ -8,6 +8,7 @@ use App\Constants\SessionNames;
 use App\Core\Datetypes\DateTime;
 use App\Core\Http\HttpRequest;
 use App\Helpers\ColorHelper;
+use App\UI\FormBuilder2\JSON2FB;
 
 class HomePresenter extends AAdminPresenter {
     public function __construct() {
@@ -76,6 +77,56 @@ class HomePresenter extends AAdminPresenter {
     public function renderColorCombo() {
         [$fgColor, $bgColor] = ColorHelper::createColorCombination();
         $this->template->color_combo = '<div style="color: ' . $fgColor . '; background-color: ' . $bgColor . '; width: 1000px; height: 100px; text-align: center; font-size: 20px; border: 1px solid ' . $fgColor . '">Lorem ipsum (FG: ' . $fgColor . ', BG: ' . $bgColor . ')</div>';
+    }
+
+    public function renderJsontofb() {
+        $json = [
+            'name' => 'JsonForm',
+            'description' => 'Test',
+            'action' => $this->createURL('jsontofb'),
+            'elements' => [
+                [
+                    'name' => 'username',
+                    'type' => 'text',
+                    'label' => 'Username:',
+                    'attributes' => [
+                        'required' => true
+                    ]
+                ],
+                [
+                    'name' => 'password',
+                    'type' => 'password',
+                    'label' => 'Password:',
+                    'attributes' => [
+                        'required' => true
+                    ]
+                ],
+                [
+                    'name' => 'age',
+                    'type' => 'select',
+                    'label' => 'Age:',
+                    'attributes' => [
+                        'required' => true
+                    ],
+                    'values' => [
+                        '1-18',
+                        '19-65',
+                        '65-100'
+                    ]
+                ],
+                [
+                    'name' => 'submit',
+                    'type' => 'submit',
+                    'text' => 'Submit'
+                ]
+            ]
+        ];
+
+        $form = $this->componentFactory->getFormBuilder();
+
+        $json2Fb = new JSON2FB($form, $json, $this->containerId);
+        
+        $this->template->json_form = $json2Fb->render();
     }
 }
 

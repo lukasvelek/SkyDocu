@@ -10,6 +10,8 @@ use App\Exceptions\GeneralException;
 use App\Exceptions\RequiredAttributeIsNotSetException;
 use App\Helpers\BackgroundServiceScheduleHelper;
 use App\Helpers\FormHelper;
+use App\Helpers\LinkHelper;
+use App\UI\LinkBuilder;
 
 class BackgroundServicesPresenter extends ASuperAdminSettingsPresenter {
     public function __construct() {
@@ -19,11 +21,14 @@ class BackgroundServicesPresenter extends ASuperAdminSettingsPresenter {
     public function renderList() {
         $serviceId = $this->httpRequest->get('serviceId');
 
-        if($serviceId === null) {
-            $this->template->links = [];
-        } else {
-            $this->template->links = $this->createBackUrl('list');
+        $links = [
+            LinkBuilder::createSimpleLink('Job queue', $this->createFullURL('SuperAdminSettings:JobQueue', 'list'), 'link')
+        ];
+        if($serviceId !== null) {
+            $links[] = $this->createBackUrl('list');
         }
+
+        $this->template->links = LinkHelper::createLinksFromArray($links);
     }
 
     protected function createComponentBgServicesGrid(HttpRequest $request) {

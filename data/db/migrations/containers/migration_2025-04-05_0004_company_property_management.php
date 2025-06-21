@@ -2,10 +2,8 @@
 
 namespace App\Data\Db\Migrations\Containers;
 
-use App\Constants\Container\CustomMetadataTypes;
-use App\Constants\Container\StandaloneProcesses;
 use App\Constants\Container\SystemGroups;
-use App\Core\DB\ABaseMigration;
+use App\Core\DB\AContainerBaseMigration;
 use App\Core\DB\Helpers\TableSchema;
 use App\Core\DB\Helpers\TableSeeding;
 use App\Managers\EntityManager;
@@ -16,7 +14,7 @@ use App\Managers\EntityManager;
  * @author Lukas Velek
  * @version 1.0 from 04/05/2025
  */
-class migration_2025_04_05_0004_company_property_management extends ABaseMigration {
+class migration_2025_04_05_0004_company_property_management extends AContainerBaseMigration {
     public function up(): TableSchema {
         $table = $this->getTableSchema();
 
@@ -42,16 +40,16 @@ class migration_2025_04_05_0004_company_property_management extends ABaseMigrati
     public function seeding(): TableSeeding {
         $seed = $this->getTableSeeding();
 
-        if($this->getValueFromTableByConditions(EntityManager::C_GROUPS, 'groupId', 'title', SystemGroups::PROPERTY_MANAGERS) === null) {
+        /*if($this->getValueFromTableByConditions(EntityManager::C_GROUPS, 'groupId', 'title', SystemGroups::PROPERTY_MANAGERS) === null) {
             $groupSeed = $seed->seed(EntityManager::C_GROUPS);
         
             $groupSeed->add([
                 'groupId' => $this->getId(EntityManager::C_GROUPS),
                 'title' => SystemGroups::PROPERTY_MANAGERS
             ]);
-        }
+        }*/
 
-        $processMetadata = $seed->seed(EntityManager::C_PROCESS_CUSTOM_METADATA);
+        /*$processMetadata = $seed->seed(EntityManager::C_PROCESS_CUSTOM_METADATA);
 
         $processMetadata->add([
             'metadataId' => $this->getId(EntityManager::C_PROCESS_CUSTOM_METADATA),
@@ -65,7 +63,7 @@ class migration_2025_04_05_0004_company_property_management extends ABaseMigrati
             'guiTitle' => 'Items',
             'type' => CustomMetadataTypes::ENUM,
             'isRequired' => 1
-        ]);
+        ]);*/
 
         return $seed;
     }

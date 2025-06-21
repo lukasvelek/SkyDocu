@@ -66,8 +66,8 @@ class Logger implements ILoggerCallable {
      * @param string $text Text
      * @param string $serviceName Service name
      */
-    public function serviceInfo(string $text, string $serviceName) {
-        $this->logService($serviceName, $text, self::LOG_INFO);
+    public function serviceInfo(string $text, string $serviceName): bool {
+        return $this->logService($serviceName, $text, self::LOG_INFO);
     }
 
     /**
@@ -76,8 +76,8 @@ class Logger implements ILoggerCallable {
      * @param string $text Text
      * @param string $serviceName Service name
      */
-    public function serviceError(string $text, string $serviceName) {
-        $this->logService($serviceName, $text, self::LOG_ERROR);
+    public function serviceError(string $text, string $serviceName): bool {
+        return $this->logService($serviceName, $text, self::LOG_ERROR);
     }
 
     /**
@@ -87,16 +87,18 @@ class Logger implements ILoggerCallable {
      * @param string $text Text
      * @param string $type Message type
      */
-    private function logService(string $serviceName, string $text, string $type = self::LOG_INFO) {
+    private function logService(string $serviceName, string $text, string $type = self::LOG_INFO): bool {
         $oldSpecialFilename = $this->specialFilename;
         $this->specialFilename = 'service-log';
 
         $date = new DateTime();
         $text = '[' . $date . '] [' . strtoupper($type) . '] ' . $serviceName . ': ' . $text;
 
-        $this->writeLog($text);
+        $result = $this->writeLog($text);
 
         $this->specialFilename = $oldSpecialFilename;
+
+        return $result;
     }
 
     /**

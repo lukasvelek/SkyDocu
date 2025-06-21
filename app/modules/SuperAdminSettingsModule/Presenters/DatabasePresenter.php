@@ -10,6 +10,7 @@ use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
+use App\Helpers\DateTimeFormatHelper;
 use App\UI\HTML\HTML;
 
 class DatabasePresenter extends ASuperAdminSettingsPresenter {
@@ -22,6 +23,8 @@ class DatabasePresenter extends ASuperAdminSettingsPresenter {
         $migrationParts = explode('_', $migration);
         $schema = $migrationParts[2];
         $date = $migrationParts[1];
+
+        $date = DateTimeFormatHelper::formatDateToUserFriendly($date, $this->app->currentUser->getDateFormat());
 
         $this->template->current_db_schema = (int)$schema . " ($date)";
 
@@ -37,6 +40,8 @@ class DatabasePresenter extends ASuperAdminSettingsPresenter {
             $lastMigrationParts = explode('_', $lastMigration);
             $schema = $lastMigrationParts[2];
             $date = $lastMigrationParts[1];
+
+            $date = DateTimeFormatHelper::formatDateToUserFriendly($date, $this->app->currentUser->getDateFormat());
 
             $lastMigration = (int)$schema . " ($date)";
             $hasNewer = true;
@@ -60,7 +65,10 @@ class DatabasePresenter extends ASuperAdminSettingsPresenter {
 
         $this->template->containers_in_distribution = count($containers);
         if(count($containers) > 0) {
-            $this->template->current_db_schema_in_distribution = $containers[0]->getDefaultDatabase()->getDbSchema() . ' (' . DatabaseMigrationManager::getMigrationReleaseDateFromNumber($containers[0]->getDefaultDatabase()->getDbSchema(), true) . ')';
+            $date = DatabaseMigrationManager::getMigrationReleaseDateFromNumber($containers[0]->getDefaultDatabase()->getDbSchema(), true);
+            $date = DateTimeFormatHelper::formatDateToUserFriendly($date, $this->app->currentUser->getDateFormat());
+
+            $this->template->current_db_schema_in_distribution = $containers[0]->getDefaultDatabase()->getDbSchema() . ' (' . $date . ')';
 
             $dmm = new DatabaseMigrationManager($this->app->systemServicesRepository->conn, null, $this->logger);
             $dmm->setContainer($containers[0]->getId());
@@ -72,13 +80,18 @@ class DatabasePresenter extends ASuperAdminSettingsPresenter {
             $hasNewer = false;
             if(count($migrations) > 0) {
                 $lastMigration = $migrations[count($migrations) - 1];
-                $lastMigration = FileManager::getFilenameFromPath($lastMigration);
-                $lastMigrationParts = explode('_', $lastMigration);
-                $schema = $lastMigrationParts[2];
-                $date = $lastMigrationParts[1];
 
-                $lastMigration = (int)$schema . " ($date)";
-                $hasNewer = true;
+                if($lastMigration !== null) {
+                    $lastMigration = FileManager::getFilenameFromPath($lastMigration);
+                    $lastMigrationParts = explode('_', $lastMigration);
+                    $schema = $lastMigrationParts[2];
+                    $date = $lastMigrationParts[1];
+    
+                    $date = DateTimeFormatHelper::formatDateToUserFriendly($date, $this->app->currentUser->getDateFormat());
+    
+                    $lastMigration = (int)$schema . " ($date)";
+                    $hasNewer = true;
+                }
             }
 
             $this->template->available_db_schema_in_distribution = $lastMigration;
@@ -95,7 +108,7 @@ class DatabasePresenter extends ASuperAdminSettingsPresenter {
                 $this->template->distrib_db_schema_update_link = '';
             }
 
-            $allContainers = $this->app->containerManager->getAllContainers(false);
+            $allContainers = $this->app->containerManager->getAllContainers(false, true);
             $this->template->containers_total = count($allContainers);
         } else {
             $this->template->current_db_schema_in_distribution = '-';

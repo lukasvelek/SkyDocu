@@ -72,6 +72,23 @@ class FileStorageRepository extends ARepository {
     }
 
     /**
+     * Inserts a new process file relation
+     * 
+     * @param string $relationId Relation ID
+     * @param string $instanceId Instance ID
+     * @param string $fileId File ID
+     */
+    public function createNewFileProcessInstanceRelation(string $relationId, string $instanceId, string $fileId): bool {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->insert('process_file_relation', ['relationId', 'instanceId', 'fileId'])
+            ->values([$relationId, $instanceId, $fileId])
+            ->execute();
+
+        return $qb->fetchBool();
+    }
+
+    /**
      * Returns a file for given document
      * 
      * @param string $documentId Document ID

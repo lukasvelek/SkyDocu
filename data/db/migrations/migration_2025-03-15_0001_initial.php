@@ -272,11 +272,18 @@ class migration_2025_03_15_0001_initial extends ABaseMigration {
 
             $schedule = json_encode($arr, JSON_FORCE_OBJECT);
 
+            $enabled = '1';
+
+            if($service == 'ProcessSubstitute') {
+                $enabled = '0';
+            }
+
             $serviceSeed->add([
                 'serviceId' => $serviceIds[$service],
                 'title' => $service,
                 'scriptPath' => $path,
-                'schedule' => $schedule
+                'schedule' => $schedule,
+                'isEnabled' => $enabled
             ]);
         }
 

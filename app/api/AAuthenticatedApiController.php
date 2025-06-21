@@ -7,6 +7,7 @@ use App\Constants\Container\ExternalSystemLogActionTypes;
 use App\Constants\Container\ExternalSystemLogMessages;
 use App\Constants\Container\ExternalSystemLogObjectTypes;
 use App\Constants\ContainerStatus;
+use App\Entities\ApiTokenEntity;
 use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
 
@@ -16,28 +17,30 @@ use App\Exceptions\GeneralException;
  * @author Lukas Velek
  */
 abstract class AAuthenticatedApiController extends AApiClass {
-    protected string $token;
+    protected ApiTokenEntity $token;
     protected string $systemId;
+    protected ?string $userId = null;
 
     protected function startup() {
         $this->getToken();
-
+        
+        $this->app->currentUser = $this->app->userManager->getUserById($this->userId, true);
+        
         parent::startup();
-
+        
         $this->auth();
+
+        $this->peeql->setUserId($this->userId);
     }
 
     /**
      * Gets token data
      */
     private function getToken() {
-        $token = base64_decode($this->get('token'));
-
-        $tokenParts = explode(';', $token);
-
-        $this->token = $tokenParts[0];
-        $this->containerId = $tokenParts[1];
-        $this->systemId = $tokenParts[2];
+        $this->token = ApiTokenEntity::convertFromToken($this->get('token'));
+        $this->containerId = $this->token->getContainerId();
+        $this->systemId = $this->token->getEntityId();
+        $this->userId = $this->token->getUserId();
     }
 
     /**
@@ -45,7 +48,7 @@ abstract class AAuthenticatedApiController extends AApiClass {
      */
     private function auth() {
         $externalSystemAuthenticator = new ExternalSystemAuthenticator($this->externalSystemsManager, $this->app->logger);
-        $externalSystemAuthenticator->authByToken($this->token);
+        $externalSystemAuthenticator->authByToken($this->token->getToken());
 
         $container = $this->app->containerManager->getContainerById($this->containerId, true);
 
@@ -67,6 +70,19 @@ abstract class AAuthenticatedApiController extends AApiClass {
         } catch(AException $e) {
             throw new GeneralException('Could not save a log entry. Reason: ' . $e->getMessage(), $e);
         }
+    }
+
+    /**
+     * Logs PeeQL API
+     * 
+     * @param int $objectType Object type
+     */
+    protected function logPeeQL(int $objectType) {
+        $entity = strtolower(ExternalSystemLogObjectTypes::toString($objectType));
+
+        $message = sprintf(ExternalSystemLogMessages::PEEQL, $entity);
+
+        $this->createLog($message, ExternalSystemLogActionTypes::PEEQL, $objectType);
     }
 
     /**

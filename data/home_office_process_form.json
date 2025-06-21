@@ -1,0 +1,56 @@
+{
+    "name": "homeOfficeForm",
+    "forms": [
+        {
+            "actor": "$CURRENT_USER$",
+            "form": {
+                "title": "Home office",
+                "elements": [
+                    {
+                        "name": "reason",
+                        "type": "textarea",
+                        "label": "Reason:",
+                        "attributes": [
+                            "required"
+                        ]
+                    },
+                    {
+                        "name": "dateFrom",
+                        "type": "date",
+                        "label": "Date from:",
+                        "attributes": [
+                            "required"
+                        ]
+                    },
+                    {
+                        "name": "dateTo",
+                        "type": "date",
+                        "label": "Date to:",
+                        "attributes": [
+                            "required"
+                        ]
+                    }
+                ],
+                "reducer": "\\App\\Components\\ProcessForm\\Processes\\Reducers\\HomeOfficeReducer"
+            }
+        },
+        {
+            "actor": "$CURRENT_USER_SUPERIOR$",
+            "form": {
+                "title": "Home office",
+                "elements": [
+                    {
+                        "name": "acceptButton",
+                        "type": "button",
+                        "formAction": "accept"
+                    },
+                    {
+                        "name": "cancelButton",
+                        "type": "button",
+                        "formAction": "cancel"
+                    }
+                ]
+            }
+        }
+    ]
+}

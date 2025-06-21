@@ -81,3 +81,12 @@ async function copyTextToClipboardWithLink(_text, _link, _beforeText, _afterText
 
     $("#" + _link).html(_beforeText);
 }
+
+/**
+ * Displays loading animation in given DOM element
+ * 
+ * @param {string} _element 
+ */
+function showLoadingAnimation(_element) {
+    $("#" + _element).html("<div id=\"center\"><img src=\"resources/loading.gif\" width=\"64px\"></div>");
+}

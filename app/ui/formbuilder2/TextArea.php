@@ -30,6 +30,19 @@ class TextArea extends AInteractableElement {
      */
     public function setContent(?string $content) {
         $this->content = $content;
+
+        return $this;
+    }
+
+    /**
+     * Sets the number of lines
+     * 
+     * @param int $lines Line count
+     */
+    public function setLines(int $lines) {
+        $this->attributes['rows'] = $lines;
+
+        return $this;
     }
 
     /**

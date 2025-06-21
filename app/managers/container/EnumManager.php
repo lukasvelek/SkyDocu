@@ -25,7 +25,6 @@ class EnumManager extends AManager {
     private UserRepository $userRepository;
     private GroupManager $groupManager;
     private ContainerEntity $container;
-    public StandaloneProcessManager $standaloneProcessManager;
 
     /**
      * Class constructor
@@ -91,29 +90,9 @@ class EnumManager extends AManager {
             case CustomMetadataTypes::SYSTEM_USER:
                 return $this->getSystemUsersEnum();
 
-            case CustomMetadataTypes::SYSTEM_INVOICE_SUM_CURRENCY:
-                return $this->getInvoiceSumCurrencyEnum();
-
-            case CustomMetadataTypes::SYSTEM_INVOICE_COMPANIES:
-                return $this->getInvoiceCompaniesEnum();
-
             default:
                 return null;
         }
-    }
-
-    /**
-     * Returns an instance of InvoiceCompaniesEnum containing available invoice companies
-     */
-    private function getInvoiceCompaniesEnum(): InvoiceCompaniesEnum {
-        return new InvoiceCompaniesEnum($this->standaloneProcessManager);
-    }
-
-    /**
-     * Returns an instance of InvoiceSumCurrencyEnum containing available invoice sum currencies
-     */
-    private function getInvoiceSumCurrencyEnum(): InvoiceSumCurrencyEnum {
-        return new InvoiceSumCurrencyEnum();
     }
 
     /**

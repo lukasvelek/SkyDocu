@@ -16,6 +16,7 @@ class HomePresenter extends ASuperAdminSettingsPresenter {
     protected function createComponentContainerStatsWidget(HttpRequest $request) {
         $widget = new ContainerStatsWidget($request, $this->app->containerManager);
         $widget->setTitleLink($this->createFullURL('SuperAdmin:Containers', 'list'));
+        $widget->setApplication($this->app);
 
         return $widget;
     }

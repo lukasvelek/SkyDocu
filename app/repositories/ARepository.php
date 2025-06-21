@@ -8,6 +8,8 @@ use App\Core\DB\AMultipleDatabaseConnectionHandler;
 use App\Exceptions\DatabaseExecutionException;
 use App\Logger\Logger;
 use App\Managers\EntityManager;
+use PeeQL\Operations\QueryOperation;
+use PeeQL\Result\QueryResult;
 use QueryBuilder\ExpressionBuilder;
 use QueryBuilder\QueryBuilder;
 
@@ -18,8 +20,10 @@ use QueryBuilder\QueryBuilder;
  */
 abstract class ARepository extends AMultipleDatabaseConnectionHandler {
     protected Logger $logger;
-    private TransactionLogRepository $transactionLogRepository;
+    public TransactionLogRepository $transactionLogRepository;
     protected CacheFactory $cacheFactory;
+    private ?string $containerId;
+    protected ?string $userId;
 
     /**
      * Class constructor
@@ -27,11 +31,32 @@ abstract class ARepository extends AMultipleDatabaseConnectionHandler {
      * @param DatabaseConnection $conn Database connection instance
      * @param Logger $logger Logger instance
      */
-    public function __construct(DatabaseConnection $conn, Logger $logger) {
+    public function __construct(DatabaseConnection $conn, Logger $logger, TransactionLogRepository $transactionLogRepository, ?string $userId = null) {
         parent::__construct($conn);
-        $this->logger = $logger;
 
-        $this->transactionLogRepository = new TransactionLogRepository($this->conn, $this->logger);
+        $this->logger = $logger;
+        $this->transactionLogRepository = $transactionLogRepository;
+        $this->userId = $userId;
+
+        $this->containerId = null;
+    }
+
+    /**
+     * Sets current user ID
+     * 
+     * @param string $userId User ID
+     */
+    public function setUserId(string $userId) {
+        $this->userId = $userId;
+    }
+
+    /**
+     * Sets container ID
+     * 
+     * @param string $containerId Container ID
+     */
+    public function setContainerId(string $containerId) {
+        $this->containerId = $containerId;
     }
 
     /**
@@ -101,7 +126,7 @@ abstract class ARepository extends AMultipleDatabaseConnectionHandler {
         $result = $this->conn->commit();
         if($result) {
             $sql = '';
-            if(!$this->logTransaction($userId, $method, $sql)) {
+            if(!$this->logTransaction($userId, $method, $sql, $this->containerId)) {
                 $this->rollback();
                 throw new DatabaseExecutionException('Could not log transcation. Rolling back.', $sql);
             }
@@ -165,10 +190,10 @@ abstract class ARepository extends AMultipleDatabaseConnectionHandler {
      * 
      * @return bool True if successful or false if not
      */
-    private function logTransaction(?string $userId, string $method, string &$sql) {
+    private function logTransaction(?string $userId, string $method, string &$sql, ?string $containerId = null) {
         $transactionId = $this->createEntityId(EntityManager::TRANSACTIONS);
 
-        return $this->transactionLogRepository->createNewEntry($transactionId, $userId, $method, $sql);
+        return $this->transactionLogRepository->createNewEntry($transactionId, $userId, $method, $sql, $containerId);
     }
 
     /**
@@ -178,7 +203,7 @@ abstract class ARepository extends AMultipleDatabaseConnectionHandler {
      * @return ?string Entity ID or null
      */
     public function createEntityId(string $category) {
-        $em = new EntityManager($this->logger, new ContentRepository($this->conn, $this->logger));
+        $em = new EntityManager($this->logger, new ContentRepository($this->conn, $this->logger, $this->transactionLogRepository));
 
         return $em->generateEntityId($category);
     }
@@ -219,6 +244,57 @@ abstract class ARepository extends AMultipleDatabaseConnectionHandler {
             ->execute();
 
         return $qb->fetch();
+    }
+
+    /**
+     * Processes PeeQL into a QueryBuilder instance, executes and fetches the data
+     * 
+     * @param string $tableName Table name
+     * @param QueryOperation $operation QueryOperation instance
+     */
+    protected function processPeeQL(string $tableName, QueryOperation $operation): QueryResult {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->select($operation->getColumns())
+            ->from($tableName);
+
+        $conditions = $operation->getConditions()->getConvertedConditionsAsArray();
+
+        foreach($conditions as $condition) {
+            $qb->andWhere($condition);
+        }
+
+        if($operation->getLimit() !== null) {
+            $qb->limit($operation->getLimit());
+        }
+
+        if($operation->getPage() !== null) {
+            $qb->offset($operation->getPage() - 1);
+        }
+
+        foreach($operation->getOrderBy() as $key => $order) {
+            $qb->orderBy($key, $order);
+        }
+
+        $qb->execute();
+
+        $qr = new QueryResult();
+        $columns = $operation->getColumns();
+
+        $data = [];
+        $i = 0;
+        while($row = $qb->fetchAssoc()) {
+            foreach($columns as $column) {
+                if(array_key_exists($column, $row)) {
+                    $data[$i][$column] = $row[$column];
+                }
+            }
+            $i++;
+        }
+
+        $qr->setResultData($data);
+
+        return $qr;
     }
 }
 

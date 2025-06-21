@@ -35,10 +35,12 @@ abstract class ASuperAdminPresenter extends APresenter {
         $sidebar->addLink('&larr; Back', $this->createFullURL('SuperAdmin:Containers', 'list'));
         $sidebar->addLink('Home', $this->createURL('home', ['containerId' => $containerId]), $home);
         $sidebar->addLink('Status', $this->createURL('status', ['containerId' => $containerId]), $status);
-        if(!in_array($container->getStatus(), [ContainerStatus::ERROR_DURING_CREATION, ContainerStatus::IS_BEING_CREATED, ContainerStatus::NEW, ContainerStatus::REQUESTED])) {
+        if(!in_array($container->getStatus(), [ContainerStatus::ERROR_DURING_CREATION, ContainerStatus::IS_BEING_CREATED, ContainerStatus::REQUESTED, ContainerStatus::SCHEDULED_FOR_REMOVAL])) {
+            $sidebar->addLink('Advanced', $this->createURL('advanced', ['containerId' => $containerId]), $advanced);
+        }
+        if(!in_array($container->getStatus(), [ContainerStatus::ERROR_DURING_CREATION, ContainerStatus::IS_BEING_CREATED, ContainerStatus::NEW, ContainerStatus::REQUESTED, ContainerStatus::SCHEDULED_FOR_REMOVAL])) {
             $sidebar->addLink('Statistics', $this->createURL('usageStatistics', ['containerId' => $containerId]), $usageStatistics);
             $sidebar->addLink('Invites', $this->createURL('invites', ['containerId' => $containerId]), $invites);
-            $sidebar->addLink('Advanced', $this->createURL('advanced', ['containerId' => $containerId]), $advanced);
             $sidebar->addLink('Transaction log', $this->createURL('transactionLog', ['containerId' => $containerId]), $transactionLog);
             $sidebar->addLink('Processes', $this->createURL('processes', ['containerId' => $containerId]), $processes);
             $sidebar->addLink('Databases', $this->createURL('listDatabases', ['containerId' => $containerId]), $databases);

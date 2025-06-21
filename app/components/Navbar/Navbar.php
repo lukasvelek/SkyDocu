@@ -28,7 +28,6 @@ class Navbar extends AComponent {
     private ?int $mode;
     private ?GroupManager $groupManager;
     private CacheFactory $cacheFactory;
-    private ?StandaloneProcessManager $standaloneProcessManager;
 
     /**
      * Class constructor
@@ -46,7 +45,6 @@ class Navbar extends AComponent {
         $this->user = $user;
         $this->hideLinks = [];
         $this->groupManager = null;
-        $this->standaloneProcessManager = null;
     }
 
     /**
@@ -55,9 +53,8 @@ class Navbar extends AComponent {
      * @param GroupManager $groupManager Container GroupManager instance
      * @param StandaloneProcessManager Container StandaloneProcessManager instance
      */
-    public function inject(GroupManager $groupManager, StandaloneProcessManager $standaloneProcessManager) {
+    public function inject(GroupManager $groupManager) {
         $this->groupManager = $groupManager;
-        $this->standaloneProcessManager = $standaloneProcessManager;
     }
 
     /**
@@ -100,12 +97,6 @@ class Navbar extends AComponent {
 
                 if($this->app->groupManager->isUserMemberOfSuperadministrators($this->user->getId()) || ($this->groupManager !== null && in_array($this->user->getId(), $this->groupManager->getUsersForGroupTitle(SystemGroups::ADMINISTRATORS)))) {
                     $links['Administration'] = NavbarGeneralLinks::A_SETTINGS;
-                }
-
-                if($this->standaloneProcessManager !== null) {
-                    $enabledProcessTypes = $this->standaloneProcessManager->getEnabledProcessTypes();
-                    $processType = $enabledProcessTypes[0];
-                    $links['Reports']['view'] = $processType->typeKey . '-' . ProcessReportsViews::VIEW_MY;
                 }
 
                 $this->links = $links;

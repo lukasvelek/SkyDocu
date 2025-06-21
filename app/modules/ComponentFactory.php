@@ -2,20 +2,11 @@
 
 namespace App\Modules;
 
-use App\Components\ProcessForm\CommonProcessForm;
-use App\Components\ProcessForm\Processes\AProcessForm;
-use App\Components\ProcessForm\Processes\ContainerRequest;
-use App\Components\ProcessForm\Processes\FunctionRequest;
-use App\Components\ProcessForm\Processes\HomeOffice;
-use App\Components\ProcessForm\Processes\Invoice;
-use App\Components\ProcessForm\Processes\PropertyMoveRequest;
 use App\Components\Sidebar\Sidebar2;
-use App\Constants\Container\StandaloneProcesses;
 use App\Core\Application;
 use App\Core\Caching\CacheFactory;
 use App\Core\Http\HttpRequest;
 use App\Helpers\GridHelper;
-use App\Managers\Container\StandaloneProcessManager;
 use App\UI\AComponent;
 use App\UI\FormBuilder2\FormBuilder2;
 use App\UI\GridBuilder2\GridBuilder;
@@ -126,43 +117,21 @@ class ComponentFactory {
     }
 
     /**
-     * Returns an instance of a Standalone process by it's name
+     * Creates a component instance by its name with custom parameters
      * 
-     * @param string $name Standalone process name
+     * @param string $className Component class name
+     * @param array $params Optional constructor parameters
      */
-    public function getStandaloneProcessFormByName(
-        string $name,
-        StandaloneProcessManager $standaloneProcessManager
-    ): ?AProcessForm {
-        switch($name) {
-            case StandaloneProcesses::HOME_OFFICE:
-                $form = new HomeOffice($this->request);
-                $this->injectDefault($form, $name);
-                return $form;
+    public function createComponentInstanceByClassName(string $className, array $params = []): AComponent {
+        /**
+         * @var \App\UI\AComponent $obj
+         */
+        $obj = new $className($this->request, ...$params);
 
-            case StandaloneProcesses::FUNCTION_REQUEST:
-                $form = new FunctionRequest($this->request);
-                $this->injectDefault($form, $name);
-                return $form;
+        $obj->setApplication($this->app);
+        $obj->setPresenter($this->presenter);
 
-            case StandaloneProcesses::INVOICE:
-                $form = new Invoice($this->request, $standaloneProcessManager);
-                $this->injectDefault($form, $name);
-                return $form;
-
-            case StandaloneProcesses::CONTAINER_REQUEST:
-                $form = new ContainerRequest($this->request);
-                $this->injectDefault($form, $name);
-                return $form;
-
-            case StandaloneProcesses::REQUEST_PROPERTY_MOVE:
-                $form = new PropertyMoveRequest($this->request, $this->app->userManager, $standaloneProcessManager);
-                $this->injectDefault($form, $name);
-                return $form;
-
-            default:
-                return null;
-        }
+        return $obj;
     }
 }
 

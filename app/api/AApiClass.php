@@ -5,6 +5,7 @@ namespace App\Api;
 use App\Core\Application;
 use App\Core\Container;
 use App\Core\DatabaseConnection;
+use App\Core\DB\PeeQL;
 use App\Core\Http\JsonResponse;
 use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
@@ -29,6 +30,8 @@ abstract class AApiClass {
 
     protected ?array $data = null;
     protected string $containerId;
+
+    protected PeeQL $peeql;
 
     /**
      * Class constructor
@@ -64,13 +67,13 @@ abstract class AApiClass {
         
         $this->conn = $this->app->dbManager->getConnectionToDatabase($container->getDefaultDatabase()->getName());
 
-        $contentRepository = new ContentRepository($this->conn, $this->app->logger);
+        $contentRepository = new ContentRepository($this->conn, $this->app->logger, $this->app->transactionLogRepository);
         $entityManager = new EntityManager($this->app->logger, $contentRepository);
 
-        $externalSystemsRepository = new ExternalSystemsRepository($this->conn, $this->app->logger);
-        $externalSystemLogRepository = new ExternalSystemLogRepository($this->conn, $this->app->logger);
-        $externalSystemTokenRepository = new ExternalSystemTokenRepository($this->conn, $this->app->logger);
-        $externalSystemRightsRepository = new ExternalSystemRightsRepository($this->conn, $this->app->logger);
+        $externalSystemsRepository = new ExternalSystemsRepository($this->conn, $this->app->logger, $this->app->transactionLogRepository);
+        $externalSystemLogRepository = new ExternalSystemLogRepository($this->conn, $this->app->logger, $this->app->transactionLogRepository);
+        $externalSystemTokenRepository = new ExternalSystemTokenRepository($this->conn, $this->app->logger, $this->app->transactionLogRepository);
+        $externalSystemRightsRepository = new ExternalSystemRightsRepository($this->conn, $this->app->logger, $this->app->transactionLogRepository);
 
         $this->externalSystemsManager = new ExternalSystemsManager(
             $this->app->logger,
@@ -82,6 +85,8 @@ abstract class AApiClass {
         );
 
         $this->container = new Container($this->app, $this->containerId);
+
+        $this->peeql = new PeeQL($this->conn, $this->app->logger, $this->app->transactionLogRepository, true);
     }
 
     /**

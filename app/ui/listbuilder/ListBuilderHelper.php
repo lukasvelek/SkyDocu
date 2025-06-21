@@ -5,6 +5,7 @@ namespace App\UI\ListBuilder;
 use App\Constants\AConstant;
 use App\Constants\IBackgroundColorable;
 use App\Constants\IColorable;
+use App\Core\Application;
 use App\Helpers\ArrayHelper;
 use App\Helpers\DateTimeFormatHelper;
 use App\UI\HTML\HTML;
@@ -22,6 +23,8 @@ class ListBuilderHelper {
     private array $actions;
     private array $dataSource;
 
+    private Application $app;
+
     /**
      * Class constructor
      */
@@ -30,6 +33,15 @@ class ListBuilderHelper {
         $this->columnLabels = [];
         $this->actions = [];
         $this->dataSource = [];
+    }
+
+    /**
+     * Sets the application instance
+     * 
+     * @param Application $app Application instance
+     */
+    public function setApplication(Application $app) {
+        $this->app = $app;
     }
 
     /**
@@ -63,7 +75,7 @@ class ListBuilderHelper {
                         $el = HTML::el('span')
                             ->style('color', 'green')
                             ->style('background-color', 'lightgreen')
-                            ->style('border-radius', '10px')
+                            ->style('border-radius', '12px')
                             ->style('padding', '5px')
                             ->text('&check;');
                         $cell->setContent($el);
@@ -71,7 +83,7 @@ class ListBuilderHelper {
                         $el = HTML::el('span')
                             ->style('color', 'red')
                             ->style('background-color', 'pink')
-                            ->style('border-radius', '10px')
+                            ->style('border-radius', '12px')
                             ->style('padding', '5px')
                             ->text('&times;');
                         $cell->setContent($el);
@@ -104,7 +116,7 @@ class ListBuilderHelper {
 
                                     if($bgColor !== null) {
                                         $el->style('background-color', $bgColor)
-                                            ->style('border-radius', '10px')
+                                            ->style('border-radius', '12px')
                                             ->style('padding', '5px');
                                     }
                                 }
@@ -126,7 +138,7 @@ class ListBuilderHelper {
 
                     $el = HTML::el('span')
                         ->title(DateTimeFormatHelper::formatDateToUserFriendly($value, DateTimeFormatHelper::ATOM_FORMAT))
-                        ->text(DateTimeFormatHelper::formatDateToUserFriendly($value));
+                        ->text(DateTimeFormatHelper::formatDateToUserFriendly($value, $this->app->currentUser->getDateFormat()));
 
                     return $el;
                 };
@@ -252,7 +264,7 @@ class ListBuilderHelper {
                     foreach($actionData as $actionName => $action) {
                         if($action instanceof ListAction) {
                             $_action = clone $action;
-                            $_action->inject($row, $_row, $k);
+                            $_action->inject($row, $_row, $_row->index - 1);
                             $_cell = new ListCell();
                             $_cell->setName($actionName);
                             $_cell->setContent($_action->output()->toString());
@@ -277,7 +289,7 @@ class ListBuilderHelper {
                     foreach($actionData as $actionName => $action) {
                         if($action instanceof ListAction) {
                             $_action = clone $action;
-                            $_action->inject($row, $_row, $k);
+                            $_action->inject($row, $_row, $_row->index - 1);
                             $_cell = new ListCell();
                             $_cell->setName($actionName);
                             $_cell->setContent($_action->output()->toString());

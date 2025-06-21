@@ -7,7 +7,7 @@ use App\Core\DB\Helpers\TableSchema;
 use App\Core\DB\Helpers\TableSeeding;
 
 /**
- * This migrations adds a new column to the 'users' table of type datetime with name dateModified.
+ * This migration adds a new column to the 'users' table of type datetime with name dateModified.
  * 
  * @author Lukas Velek
  * @version 1.0 from 04/07/2025

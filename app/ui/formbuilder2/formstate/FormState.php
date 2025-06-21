@@ -17,6 +17,7 @@ class FormState {
     public mixed $value;
     public mixed $minimum;
     public mixed $maximum;
+    public mixed $selectValues;
 
     /**
      * Class constructor
@@ -32,6 +33,7 @@ class FormState {
         $this->value = null;
         $this->minimum = null;
         $this->maximum = null;
+        $this->selectValues = null;
     }
 }
 

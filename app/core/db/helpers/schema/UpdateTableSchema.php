@@ -39,6 +39,36 @@ class UpdateTableSchema extends ABaseTableSchema {
     }
 
     /**
+     * Adds a FOREIGN KEY column that also is indexed
+     * 
+     * @param string $name Column name
+     */
+    public function foreignKey(string $name): static {
+        $this->varchar($name, 256);
+        return $this->index([$name]);
+    }
+
+    /**
+     * Adds a BIT column
+     * 
+     * @param string $name Column name
+     * @param bool $isNull Is column nullable
+     */
+    public function bit(string $name, bool $isNull = false): static {
+        return $this->integer($name, 1, $isNull);
+    }
+
+    /**
+     * Adds an ENUM column
+     * 
+     * @param string $name Column name
+     * @param bool $isNull Is column nullable
+     */
+    public function enum(string $name, bool $isNull = false): static {
+        return $this->integer($name, 4, $isNull);
+    }
+
+    /**
      * Adds a VARCHAR column
      * 
      * @param string $name Column name
@@ -127,6 +157,10 @@ class UpdateTableSchema extends ABaseTableSchema {
     public function default(string $name, mixed $value): static {
         if(is_bool($value)) {
             $value = ($value ? 1 : 0);
+        }
+
+        if($value != 'current_timestamp()') {
+            $value = '\'' . $value . '\'';
         }
 
         $this->addDefaults[$name] = $value;

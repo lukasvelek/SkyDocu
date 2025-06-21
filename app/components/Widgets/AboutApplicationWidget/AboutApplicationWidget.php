@@ -97,7 +97,7 @@ class AboutApplicationWidget extends Widget {
             // not released yet
             return '<span title="This version has not been released yet.">' . APP_VERSION_RELEASE_DATE . '</span>';
         } else {
-            return DateTimeFormatHelper::formatDateToUserFriendly(APP_VERSION_RELEASE_DATE, 'd.m.Y');
+            return DateTimeFormatHelper::formatDateToUserFriendly(APP_VERSION_RELEASE_DATE, $this->app->currentUser->getDateFormat());
         }
     }
 
@@ -136,7 +136,7 @@ class AboutApplicationWidget extends Widget {
         $schema = $migrationParts[2];
         $date = $migrationParts[1];
 
-        $date = '<span title="' . $date . '">' . DateTimeFormatHelper::formatDateToUserFriendly($date, DateTimeFormatHelper::EUROPEAN_FORMAT_DATE_ONLY) . '</span>';
+        $date = '<span title="' . $date . '">' . DateTimeFormatHelper::formatDateToUserFriendly($date, $this->app->currentUser->getDateFormat()) . '</span>';
 
         return (int)$schema . ' (' . $date . ')';
     }

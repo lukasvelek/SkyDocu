@@ -17,6 +17,7 @@ class ExternalSystemLogActionTypes extends AConstant implements IColorable, IBac
     public const UPDATE = 3;
     public const DELETE = 4;
     public const LOGIN = 5;
+    public const PEEQL = 6;
 
     public static function toString($key): ?string {
         return match((int)$key) {
@@ -25,7 +26,8 @@ class ExternalSystemLogActionTypes extends AConstant implements IColorable, IBac
             self::READ => 'Read',
             self::UPDATE => 'Update',
             self::DELETE => 'Delete',
-            self::LOGIN => 'Login'
+            self::LOGIN => 'Login',
+            self::PEEQL => 'PeeQL'
         };
     }
 
@@ -36,7 +38,8 @@ class ExternalSystemLogActionTypes extends AConstant implements IColorable, IBac
             self::READ => 'green',
             self::UPDATE => 'orange',
             self::DELETE => 'red',
-            self::LOGIN => 'purple'
+            self::LOGIN => 'purple',
+            self::PEEQL => 'orange'
         };
     }
 
@@ -47,7 +50,8 @@ class ExternalSystemLogActionTypes extends AConstant implements IColorable, IBac
             self::READ => 'lightgreen',
             self::UPDATE => 'yellow',
             self::DELETE => 'pink',
-            self::LOGIN => 'pink'
+            self::LOGIN => 'pink',
+            self::PEEQL => 'yellow'
         };
     }
 }

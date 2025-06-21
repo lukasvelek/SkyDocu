@@ -233,7 +233,7 @@ class ContainerManager extends AManager {
      * Deletes container and all its data
      * 
      * @param string $containerId Container ID
-     * @param bool $isRequest False if it is a complete container or true if it is just a request
+     * @param bool $isRequest True if it is a request or false if it is not
      */
     public function deleteContainer(string $containerId, bool $isRequest = false) {
         $container = $this->getContainerById($containerId);
@@ -296,9 +296,9 @@ class ContainerManager extends AManager {
 
         $conn = $this->dbManager->getConnectionToDatabase($container->getDefaultDatabase()->getName());
 
-        $userRepository = new UserRepository($this->containerRepository->conn, $this->logger);
-        $groupRepository = new GroupRepository($conn, $this->logger);
-        $contentRepository = new ContentRepository($conn, $this->logger);
+        $userRepository = new UserRepository($this->containerRepository->conn, $this->logger, $this->containerRepository->transactionLogRepository);
+        $groupRepository = new GroupRepository($conn, $this->logger, $this->containerRepository->transactionLogRepository);
+        $contentRepository = new ContentRepository($conn, $this->logger, $this->containerRepository->transactionLogRepository);
         $entityManager = new EntityManager($this->logger, $contentRepository);
 
         $groupManager = new Container\GroupManager($this->logger, $entityManager, $groupRepository, $userRepository);
@@ -407,6 +407,7 @@ class ContainerManager extends AManager {
     public function getContainersInDistribution(): array {
         $qb = $this->containerRepository->composeQueryForContainers();
         $qb->andWhere('isInDistribution = ?', ['1'])
+            ->andWhere($qb->getColumnInValues('status', [ContainerStatus::NOT_RUNNING, ContainerStatus::RUNNING]))
             ->execute();
 
         $containerIds = [];
@@ -427,8 +428,13 @@ class ContainerManager extends AManager {
      * 
      * @param bool $returnEntities If true then an array of entities is returned or if false an array of IDs is returned
      */
-    public function getAllContainers(bool $returnEntities = true): array {
+    public function getAllContainers(bool $returnEntities = true, bool $activeOnly = false): array {
         $qb = $this->containerRepository->composeQueryForContainers();
+
+        if($activeOnly) {
+            $qb->andWhere($qb->getColumnInValues('status', [ContainerStatus::NOT_RUNNING, ContainerStatus::RUNNING]));
+        }
+
         $qb->execute();
 
         $containerIds = [];

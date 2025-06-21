@@ -3,10 +3,12 @@
 namespace App\Api\Login;
 
 use App\Api\AApiClass;
+use App\Api\IAPITokenProcessing;
 use App\Authenticators\ExternalSystemAuthenticator;
 use App\Core\Http\JsonResponse;
+use App\Entities\ApiTokenEntity;
 
-class LoginController extends AApiClass {
+class LoginController extends AApiClass implements IAPITokenProcessing {
     private string $systemId;
 
     protected function startup() {
@@ -20,8 +22,7 @@ class LoginController extends AApiClass {
         $password = $this->get('password');
 
         $token = $this->loginUser($login, $password);
-
-        $this->processToken($token);
+        $token = $this->processToken($token);
 
         return new JsonResponse(['token' => $token]);
     }
@@ -40,13 +41,9 @@ class LoginController extends AApiClass {
         return $this->externalSystemsManager->createOrGetToken($this->systemId);
     }
 
-    /**
-     * Processes token - adds other mandatory variables and encodes it to Base64
-     * 
-     * @param string &$token Token
-     */
-    private function processToken(string &$token) {
-        $token = base64_encode($token . ';' . $this->containerId . ';' . $this->systemId);
+    public function processToken(string $token): string {
+        $entity = ApiTokenEntity::createNewEntity($token, $this->containerId, $this->systemId);
+        return $entity->convertToToken();
     }
 }
 

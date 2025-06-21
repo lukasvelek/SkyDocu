@@ -3,20 +3,14 @@
 namespace App\Services;
 
 use App\Constants\ContainerStatus;
+use App\Core\Application;
 use App\Core\FileManager;
-use App\Core\ServiceManager;
 use App\Exceptions\AException;
-use App\Logger\Logger;
-use App\Repositories\ContainerRepository;
 use Exception;
 
 class LogRotateService extends AService {
-    private ContainerRepository $containerRepository;
-
-    public function __construct(Logger $logger, ServiceManager $serviceManager, ContainerRepository $containerRepository) {
-        parent::__construct('LogRotate', $logger, $serviceManager);
-
-        $this->containerRepository = $containerRepository;
+    public function __construct(Application $app) {
+        parent::__construct('LogRotate', $app);
     }
 
     public function run() {
@@ -136,7 +130,7 @@ class LogRotateService extends AService {
     }
 
     private function getAllContainers() {
-        $containersQb = $this->containerRepository->composeQueryForContainers();
+        $containersQb = $this->app->containerRepository->composeQueryForContainers();
         $containersQb->andWhere($containersQb->getColumnInValues('status', [ContainerStatus::NOT_RUNNING, ContainerStatus::RUNNING]))
             ->execute();
 

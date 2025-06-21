@@ -29,7 +29,7 @@ class GetTransactionLogController extends AReadAPIOperation {
     }
 
     protected function getTransactionLog(int $limit, int $offset): array {
-        $qb = $this->container->transactionLogRepository->composeQueryForTransactionLog();
+        $qb = $this->app->transactionLogRepository->composeQueryForTransactionLog($this->containerId);
 
         $this->appendWhereConditions($qb);
 

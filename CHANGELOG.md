@@ -2,6 +2,7 @@
 Previously changelog for versions `1.0`-`1.4` has been located in README.md. However that location wasn't a very good option and therefore it has been moved here.
 
 ## Index
+[SkyDocu `1.6` (_WIP_)](#skydocu-16-wip)
 [SkyDocu `1.5` (04/08/2025)](#skydocu-15-04082025)  
 [SkyDocu `1.4` (03/22/2025)](#skydocu-14-03222025)  
 [SkyDocu `1.3.1` (02/26/2025)](#skydocu-131-02262025)  
@@ -9,6 +10,31 @@ Previously changelog for versions `1.0`-`1.4` has been located in README.md. How
 [SkyDocu `1.2` (01/27/2025)](#skydocu-12-01272025)  
 [SkyDocu `1.1` (01/07/2025)](#skydocu-11-01072025)  
 [SkyDocu `1.0` (11/29/2024)](#skydocu-10-11292024)
+
+## SkyDocu `1.6` (_WIP_)
+- Global transaction log
+    - All transactions are logged into a single master transaction log
+- Implemented PeeQL to API
+- Updated process information page
+- Updated ordering in process grids
+- Added support for user custom date and time formats
+- Added conversion tool for JSON form definitions
+    - The tool receives JSON form definition and returns the FormBuilder or HTML code of the form
+- Processes overhaul
+    - Updated workflow
+    - Custom process types
+    - Multistep forms
+    - Process editor
+    - Process versioning
+    - Support for files
+    - Process metadata
+- Job Queue
+    - Certain jobs should be performed in background
+    - Process version adding to distribution
+    - Process instance data removal
+    - Changing process visibility from superadministration
+    - Added background service
+- Removed property management
 
 ## SkyDocu `1.5` (04/08/2025)
 - Added _Requested containers_ metric to superadministration Container statistics widget
@@ -18,8 +44,8 @@ Previously changelog for versions `1.0`-`1.4` has been located in README.md. How
     - Right management
     - Logging
 - New application version format implementation
-    - Build and branch are now contained
-- ContainerFileRemovingSlaveService update
+    - Build and branch are now included
+- `ContainerFileRemovingSlaveService` update
 - General services update
 - Bugfixes
 - Global usage graphs
@@ -62,7 +88,7 @@ Previously changelog for versions `1.0`-`1.4` has been located in README.md. How
     - In-container Users grid
     - In-conatiner Groups grid
 - Cache invalidation bug fix
-- FoldersSidebar alphabetical sorting
+- `FoldersSidebar` alphabetical sorting
 - New widgets
 - All process rights update
 - Archive
@@ -91,16 +117,16 @@ Previously changelog for versions `1.0`-`1.4` has been located in README.md. How
 - ErrorModule implementation
 - Core framework updates
 - Bugfixes
-- GridBuilder optimization
+- `GridBuilder` optimization
 - Form reducing & on change AJAX calling capability
 - Processes grid design update
 - Document sharing
 - Core AJAX requests and responses update
 - Updated config.php define checking
-- Empty GridBuilder design update
+- Empty `GridBuilder` design update
 - Accessibility update
-    - GridBuilder column name hints
-    - GridBuilder control hints
+    - `GridBuilder` column name hints
+    - `GridBuilder` control hints
     - Link hints
     - FormBuilder element hints
 - Updated information flash message design

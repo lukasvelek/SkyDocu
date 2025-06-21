@@ -103,7 +103,8 @@ class FileStorageStatsWidget extends Widget {
                 throw new GeneralException('Could not establish connection to database for container ID \'' . $containerId . '\'.', $e);
             }
 
-            $fileStorageRepository = new FileStorageRepository($conn, $this->logger);
+            $fileStorageRepository = new FileStorageRepository($conn, $this->logger, $this->app->transactionLogRepository);
+            $fileStorageRepository->setContainerId($containerId);
 
             $qb = $fileStorageRepository->composeQueryForStoredFiles();
             $qb->select(['COUNT(*) AS cnt'])
@@ -136,7 +137,8 @@ class FileStorageStatsWidget extends Widget {
                 throw new GeneralException('Could not establish connection to database for container ID \'' . $containerId . '\'.', $e);
             }
 
-            $fileStorageRepository = new FileStorageRepository($conn, $this->logger);
+            $fileStorageRepository = new FileStorageRepository($conn, $this->logger, $this->app->transactionLogRepository);
+            $fileStorageRepository->setContainerId($containerId);
 
             $qb = $fileStorageRepository->composeQueryForStoredFiles();
             $qb->select(['COUNT(*) AS cnt'])
@@ -165,7 +167,8 @@ class FileStorageStatsWidget extends Widget {
                 throw new GeneralException('Could not establish connection to database for container ID \'' . $containerId . '\'.', $e);
             }
 
-            $fileStorageRepository = new FileStorageRepository($conn, $this->logger);
+            $fileStorageRepository = new FileStorageRepository($conn, $this->logger, $this->app->transactionLogRepository);
+            $fileStorageRepository->setContainerId($containerId);
 
             $qb = $fileStorageRepository->composeQueryForStoredFiles();
             $qb->execute();
@@ -184,18 +187,14 @@ class FileStorageStatsWidget extends Widget {
      * @return array<string, \App\Entities\ContainerEntity>
      */
     private function getAllContainers(): array {
-        $qb = $this->containerManager->containerRepository->composeQueryForContainers();
-        $qb->execute();
-
-        $containerIds = [];
-        while($row = $qb->fetchAssoc()) {
-            $containerIds[] = $row['containerId'];
-        }
+        $_containers = $this->containerManager->getAllContainers(true, true);
 
         $containers = [];
-        foreach($containerIds as $containerId) {
-            $container = $this->containerManager->getContainerById($containerId, true);
-            $containers[$containerId] = $container;
+        foreach($_containers as $container) {
+            /**
+             * @var \App\Entities\ContainerEntity $container
+             */
+            $containers[$container->getId()] = $container;
         }
 
         return $containers;

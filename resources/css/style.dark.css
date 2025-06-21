@@ -116,7 +116,7 @@ div[class^="fm-"], div[class*="fm-"] {
     padding-right: 20px;
 
     border: 0;
-    border-radius: 10px;
+    border-radius: 12px;
 
     backdrop-filter: blur(5px);
 
@@ -132,7 +132,7 @@ div[class^="fm-"], div[class*="fm-"] {
 #navbar input[type=text] {
     border: 0;
 
-    border-radius: 10px;
+    border-radius: 12px;
     
     padding-left: 10px;
     padding-right: 10px;
@@ -151,7 +151,7 @@ div[class^="fm-"], div[class*="fm-"] {
 
     color: white;
 
-    border-radius: 10px;
+    border-radius: 12px;
 
     padding-left: 10px;
     padding-right: 10px;
@@ -250,7 +250,7 @@ div[class^="fm-"], div[class*="fm-"] {
 #modal-grid tr td {
     border: 0;
     border-collapse: inherit;
-    border-radius: 10px;
+    border-radius: 12px;
 
     background-color: rgba(50, 50, 50, 0.75);
 }
@@ -262,7 +262,7 @@ div[class^="fm-"], div[class*="fm-"] {
 
     border: 0;
     border-collapse: inherit;
-    border-radius: 10px;
+    border-radius: 12px;
 
     background-color: rgba(50, 50, 50, 0.75);
 
@@ -284,7 +284,7 @@ div[class^="fm-"], div[class*="fm-"] {
 
     border: 0;
     border-collapse: inherit;
-    border-radius: 10px;
+    border-radius: 12px;
 }
 
 .grid-cell-action {
@@ -292,14 +292,14 @@ div[class^="fm-"], div[class*="fm-"] {
 
     border: 0;
     border-collapse: inherit;
-    border-radius: 10px;
+    border-radius: 12px;
 }
 
 .grid-control-button, .grid-control-button-last {
     width: 50px;
 
     border: 0;
-    border-radius: 10px;
+    border-radius: 12px;
 
     color: rgb(200, 200, 200);
 
@@ -348,7 +348,7 @@ div[class^="fm-"], div[class*="fm-"] {
     transition: background-color 0.25s;
 
     border: 1px solid rgba(0, 0, 0, 0.75);;
-    border-radius: 10px;
+    border-radius: 12px;
 }
 
 #formSubmit:hover, #form #formSubmit:hover, #form .formSubmit:hover, #form #formButton:hover {
@@ -386,7 +386,7 @@ button #formSubmit {
     background-color: rgba(50, 50, 50, 0.75);
 
     border: 0;
-    border-radius: 10px;
+    border-radius: 12px;
 
     padding: 10px;
 
@@ -416,7 +416,7 @@ a.widget-title:hover {
 
     border: 0;
     border-collapse: inherit;
-    border-radius: 10px;
+    border-radius: 12px;
     
     background-color: rgba(50, 50, 50, 0.75);
 
@@ -432,7 +432,7 @@ a.widget-title:hover {
 
     border: 0;
     border-collapse: inherit;
-    border-radius: 10px;
+    border-radius: 12px;
 }
 
 #skeletonTextAnimation {
@@ -441,7 +441,7 @@ a.widget-title:hover {
     animation-iteration-count: infinite;
     animation-direction: alternate;
 
-    border-radius: 10px;
+    border-radius: 12px;
 }
 
 @keyframes skeletonTextAnimationX {
@@ -458,7 +458,7 @@ a.widget-title:hover {
 
 .process-action-link-finish, .process-action-link-accept, .process-action-link-cancel {
     padding: 5px;
-    border-radius: 10px;
+    border-radius: 12px;
     font-size: 20px; /* inherited from .changelog-item */
     text-decoration: none;
     transition: color 0.25s;

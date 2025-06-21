@@ -10,7 +10,7 @@ namespace App\Core\DB\Helpers\Schema;
 class DropTableSchema extends ABaseTableSchema {
     public function getSQL(): array {
         return [
-            'DROP TABLE IF NOT EXISTS ' . $this->name
+            'DROP TABLE IF EXISTS ' . $this->name
         ];
     }
 }

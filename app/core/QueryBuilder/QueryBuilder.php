@@ -299,12 +299,6 @@ class QueryBuilder
                 throw new QueryBuilderException('Number of condition parameters does not equal to the number of passed parameters.');
             }
 
-            $search = [];
-
-            for($i = 0; $i < ($count - 1); $i++) {
-                $search[] = '?';
-            }
-
             $tmp = [];
             foreach($values as $value) {
                 if($useQuotationMarks === TRUE) {
@@ -316,7 +310,9 @@ class QueryBuilder
 
             $values = $tmp;
 
-            $cond = str_replace($search, $values, $cond);
+            foreach($values as $value) {
+                $cond = preg_replace('/\?/', $value, $cond, 1);
+            }
         }
 
         $this->queryData['where'] = '(' . $cond . ')';
@@ -354,7 +350,7 @@ class QueryBuilder
             $values = $tmp;
 
             foreach($values as $value) {
-                $cond = str_replace('?', $value, $cond);
+                $cond = preg_replace('/\?/', $value, $cond, 1);
             }
         }
 
@@ -397,7 +393,7 @@ class QueryBuilder
             $values = $tmp;
 
             foreach($values as $value) {
-                $cond = str_replace('?', $value, $cond);
+                $cond = preg_replace('/\?/', $value, $cond, 1);
             }
         }
 
@@ -769,10 +765,12 @@ class QueryBuilder
     private function createDeleteSQLQuery() {
         $sql = 'DELETE FROM ' . $this->queryData['table'];
 
-        if(str_starts_with($this->queryData['where'], 'WHERE')) {
-            $sql .= ' ' . $this->queryData['where'];
-        } else {
-            $sql .= ' WHERE ' . $this->queryData['where'];
+        if(array_key_exists('where', $this->queryData)) {
+            if(str_starts_with($this->queryData['where'], 'WHERE')) {
+                $sql .= ' ' . $this->queryData['where'];
+            } else {
+                $sql .= ' WHERE ' . $this->queryData['where'];
+            }
         }
 
         $this->sql = $sql;

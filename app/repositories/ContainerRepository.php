@@ -2,6 +2,9 @@
 
 namespace App\Repositories;
 
+use PeeQL\Operations\QueryOperation;
+use PeeQL\Result\QueryResult;
+
 class ContainerRepository extends ARepository {
     public function composeQueryForContainers() {
         $qb = $this->qb(__METHOD__);
@@ -219,6 +222,10 @@ class ContainerRepository extends ARepository {
         $qb->execute();
 
         return $qb->fetchBool();
+    }
+
+    public function get(QueryOperation $operation): QueryResult {
+        return $this->processPeeQL('containers', $operation);
     }
 }
 

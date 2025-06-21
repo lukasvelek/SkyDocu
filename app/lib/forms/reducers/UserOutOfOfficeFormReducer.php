@@ -2,31 +2,19 @@
 
 namespace App\Lib\Forms\Reducers;
 
-use App\Core\Http\HttpRequest;
+use App\UI\FormBuilder2\ABaseFormReducer;
 use App\UI\FormBuilder2\FormState\FormStateList;
-use App\UI\FormBuilder2\IFormReducer;
 
 /**
  * Default reducer for the User out-of-office form
  * 
  * @author Lukas Velek
  */
-class UserOutOfOfficeFormReducer implements IFormReducer {
-    private HttpRequest $request;
-
-    /**
-     * Class constructor
-     * 
-     * @param HttpRequest $request HttpRequest instance
-     */
-    public function __construct(HttpRequest $request) {
-        $this->request = $request;
-    }
-
+class UserOutOfOfficeFormReducer extends ABaseFormReducer {
     public function applyReducer(FormStateList &$stateList) {
-        if(!$this->request->isAjax) {
+        /*if(!$this->request->isAjax) {
             return;
-        }
+        }*/
 
         if($stateList->dateFrom->value !== null) {
             // dateFrom must be more or equal to the current date
@@ -45,6 +33,10 @@ class UserOutOfOfficeFormReducer implements IFormReducer {
             }
         }
     }
+
+    public function applyOnStartupReducer(FormStateList &$stateList) {}
+
+    public function applyAfterSubmitOnOpenReducer(FormStateList &$stateList) {}
 }
 
 ?>

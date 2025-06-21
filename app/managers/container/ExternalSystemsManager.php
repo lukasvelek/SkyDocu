@@ -313,6 +313,19 @@ class ExternalSystemsManager extends AManager {
             throw new GeneralException('Database error.');
         }
     }
+
+    /**
+     * Returns an instance of DatabaseRow for the default system external system
+     */
+    public function getSystemExternalSystem(): DatabaseRow {
+        $row = $this->externalSystemsRepository->getSystemExternalSystem();
+
+        if($row === null) {
+            throw new GeneralException('No system external system exists.');
+        }
+
+        return DatabaseRow::createFromDbRow($row);
+    }
 }
 
 ?>

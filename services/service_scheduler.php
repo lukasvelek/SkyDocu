@@ -111,6 +111,9 @@ function say(string $text, bool $newLine = true) {
     $app->logger->serviceInfo($text, 'service_scheduler');
 }
 
+/**
+ * Runs the service scheduler forever
+ */
 while(true) {
     run();
 }

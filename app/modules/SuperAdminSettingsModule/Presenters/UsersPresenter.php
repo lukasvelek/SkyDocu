@@ -3,6 +3,8 @@
 namespace App\Modules\SuperAdminSettingsModule;
 
 use App\Constants\AppDesignThemes;
+use App\Constants\DateFormats;
+use App\Constants\TimeFormats;
 use App\Core\DB\DatabaseRow;
 use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
@@ -203,7 +205,9 @@ class UsersPresenter extends ASuperAdminSettingsPresenter {
                 $data = [
                     'username' => $fr->username,
                     'fullname' => $fr->fullname,
-                    'appDesignTheme' => $fr->appDesignTheme
+                    'appDesignTheme' => $fr->appDesignTheme,
+                    'dateFormat' => $fr->dateFormat,
+                    'timeFormat' => $fr->timeFormat
                 ];
 
                 if($fr->isset('email') && $fr->email !== null) {
@@ -245,6 +249,34 @@ class UsersPresenter extends ASuperAdminSettingsPresenter {
 
             $themes[] = $theme;
         }
+
+        $dateFormats = [];
+        foreach(DateFormats::FORMATS as $date) {
+            $format = [
+                'value' => $date,
+                'text' => $date
+            ];
+
+            if($date == $this->app->currentUser->getDateFormat()) {
+                $format['selected'] = 'selected';
+            }
+
+            $dateFormats[] = $format;
+        }
+
+        $timeFormats = [];
+        foreach(TimeFormats::FORMATS as $time) {
+            $format = [
+                'value' => $time,
+                'text' => $time
+            ];
+
+            if($time == $this->app->currentUser->getTimeFormat()) {
+                $format['selected'] = 'selected';
+            }
+
+            $timeFormats[] = $format;
+        }
         
         $form = $this->componentFactory->getFormBuilder();
 
@@ -264,6 +296,14 @@ class UsersPresenter extends ASuperAdminSettingsPresenter {
         $form->addSelect('appDesignTheme', 'App theme:')
             ->setRequired()
             ->addRawOptions($themes);
+
+        $form->addSelect('dateFormat', 'Date format:')
+            ->setRequired()
+            ->addRawOptions($dateFormats);
+
+        $form->addSelect('timeFormat', 'Time format:')
+            ->setRequired()
+            ->addRawOptions($timeFormats);
 
         $form->addSubmit('Save');
 

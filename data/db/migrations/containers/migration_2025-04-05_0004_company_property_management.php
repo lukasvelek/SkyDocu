@@ -40,14 +40,14 @@ class migration_2025_04_05_0004_company_property_management extends AContainerBa
     public function seeding(): TableSeeding {
         $seed = $this->getTableSeeding();
 
-        if($this->getValueFromTableByConditions(EntityManager::C_GROUPS, 'groupId', 'title', SystemGroups::PROPERTY_MANAGERS) === null) {
+        /*if($this->getValueFromTableByConditions(EntityManager::C_GROUPS, 'groupId', 'title', SystemGroups::PROPERTY_MANAGERS) === null) {
             $groupSeed = $seed->seed(EntityManager::C_GROUPS);
         
             $groupSeed->add([
                 'groupId' => $this->getId(EntityManager::C_GROUPS),
                 'title' => SystemGroups::PROPERTY_MANAGERS
             ]);
-        }
+        }*/
 
         /*$processMetadata = $seed->seed(EntityManager::C_PROCESS_CUSTOM_METADATA);
 

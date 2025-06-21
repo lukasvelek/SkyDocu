@@ -8,14 +8,12 @@ class GridNames extends AConstant {
     public const DOCUMENTS_GRID = 'documentsGrid';
     public const PROCESS_GRID = 'processGrid';
     public const PROCESS_REPORTS_GRID = 'processReportsGrid';
-    public const PROPERTY_ITEMS_REPORTS_GRID = 'propertyItemsReportsGrid';
 
     public static function toString($key): ?string {
         $result = match($key) {
             self::DOCUMENTS_GRID => 'Documents grid',
             self::PROCESS_GRID => 'Process grid',
             self::PROCESS_REPORTS_GRID => 'Process reports grid',
-            self::PROPERTY_ITEMS_REPORTS_GRID => 'Property items reports grid',
             default => null
         };
 

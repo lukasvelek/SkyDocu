@@ -9,9 +9,6 @@
 - $ARCHIVISTS$
     - Archivists group
 
-- $PROPERTY_MANAGERS$
-    - Property managers group
-
 - $CURRENT_USER_SUPERIOR$
     - Current user's superior
 

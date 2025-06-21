@@ -175,7 +175,7 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
         $disabled = false;
         $statuses = [];
         foreach(ContainerStatus::getAll() as $key => $value) {
-            if(in_array($container->getStatus(), [ContainerStatus::NEW, ContainerStatus::IS_BEING_CREATED, ContainerStatus::ERROR_DURING_CREATION, ContainerStatus::REQUESTED])) {
+            if(in_array($container->getStatus(), [ContainerStatus::NEW, ContainerStatus::IS_BEING_CREATED, ContainerStatus::ERROR_DURING_CREATION, ContainerStatus::REQUESTED, ContainerStatus::SCHEDULED_FOR_REMOVAL])) {
                 $status = [
                     'text' => $value,
                     'value' => $key
@@ -188,7 +188,7 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
                 $statuses[] = $status;
                 $disabled = true;
             } else {
-                if(in_array($key, [ContainerStatus::IS_BEING_CREATED, ContainerStatus::NEW, ContainerStatus::ERROR_DURING_CREATION, ContainerStatus::REQUESTED])){
+                if(in_array($key, [ContainerStatus::NEW, ContainerStatus::IS_BEING_CREATED, ContainerStatus::ERROR_DURING_CREATION, ContainerStatus::REQUESTED, ContainerStatus::SCHEDULED_FOR_REMOVAL])){
                     continue;
                 }
 

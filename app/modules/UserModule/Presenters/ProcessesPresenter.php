@@ -74,7 +74,8 @@ class ProcessesPresenter extends AUserPresenter {
             $this->app->jobQueueRepository->beginTransaction(__METHOD__);
 
             $this->app->jobQueueManager->insertNewJob(JobQueueTypes::DELETE_CONTAINER_PROCESS_INSTANCE, [
-                'instanceId' => $instanceId
+                'instanceId' => $instanceId,
+                'containerId' => $this->containerId
             ], null);
 
             $this->app->jobQueueRepository->commit($this->getUserId(), __METHOD__);
@@ -84,6 +85,31 @@ class ProcessesPresenter extends AUserPresenter {
             $this->app->jobQueueRepository->rollback(__METHOD__);
 
             $this->flashMessage('Could not enqueue process instance for deletion. Reason: ' . $e->getMessage(), 'error', 10);
+        }
+
+        $this->redirect($this->createURL('list', ['view' => $view]));
+    }
+
+    public function handleCancelInstance() {
+        $instanceId = $this->httpRequest->get('instanceId');
+        $view = $this->httpRequest->get('view');
+
+        try {
+            $this->app->jobQueueRepository->beginTransaction(__METHOD__);
+
+            $this->app->jobQueueManager->insertNewJob(JobQueueTypes::CANCEL_CONTAINER_PROCESS_INSTANCE, [
+                'instanceId' => $instanceId,
+                'containerId' => $this->containerId,
+                'userId' => $this->getUserId()
+            ], null);
+
+            $this->app->jobQueueRepository->commit($this->getUserId(), __METHOD__);
+
+            $this->flashMessage('Process instance was enqueued for cancelation.', 'success');
+        } catch(AException $e) {
+            $this->app->jobQueueRepository->rollback(__METHOD__);
+
+            $this->flashMessage('Could not enqueue process instance for cancelation. Reason: ' . $e->getMessage(), 'error', 10);
         }
 
         $this->redirect($this->createURL('list', ['view' => $view]));

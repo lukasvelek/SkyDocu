@@ -201,11 +201,10 @@ class JobQueueManager extends AManager {
      */
     public function errorJob(string $jobId, AException $e) {
         // change status
-        $this->changeJobStatusWithMessage($jobId, JobQueueStatus::ERROR, 'Job unexpectedly ended due to exception');
+        $this->changeJobStatusWithMessage($jobId, JobQueueStatus::ERROR, 'Job unexpectedly ended due to exception: ' . $e->getMessage() . ' [#' . $e->getHash() . ']');
 
         // create processing history entry
-        $this->insertNewProcessingHistoryEntry($jobId, JobQueueProcessingHistoryTypes::ERROR_MESSAGE, 'Job unexpectedly ended due to exception');
-        $this->insertNewProcessingHistoryEntry($jobId, JobQueueProcessingHistoryTypes::ERROR_MESSAGE, 'Exception: ' . $e->getMessage() . ' [#' . $e->getHash() . ']');
+        $this->insertNewProcessingHistoryEntry($jobId, JobQueueProcessingHistoryTypes::ERROR_MESSAGE, 'Job unexpectedly ended due to exception: ' . $e->getMessage() . ' [#' . $e->getHash() . ']');
     }
 }
 

@@ -233,7 +233,7 @@ class ContainerManager extends AManager {
      * Deletes container and all its data
      * 
      * @param string $containerId Container ID
-     * @param bool $isRequest False if it is a complete container or true if it is just a request
+     * @param bool $isRequest True if it is a request or false if it is not
      */
     public function deleteContainer(string $containerId, bool $isRequest = false) {
         $container = $this->getContainerById($containerId);

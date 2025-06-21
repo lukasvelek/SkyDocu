@@ -169,7 +169,38 @@ class ContainerProcessAuthorizator extends AAuthorizator {
             return false;
         }
 
-        return empty($items) || (in_array($adminGroup, $userGroups) || in_array($processSupervisorGroup, $userGroups));
+        return in_array($adminGroup, $userGroups) || in_array($processSupervisorGroup, $userGroups);
+    }
+
+    /**
+     * Checks if user can cancel process instance
+     * 
+     * @param string $instanceId Instance ID
+     * @param string $userId User ID
+     */
+    public function canUserCancelProcessInstance(string $instanceId, string $userId): bool {
+        $qb = $this->jobQueueRepository->commonComposeQuery();
+        $qb->andWhere('type = ?', [JobQueueTypes::DELETE_CONTAINER_PROCESS_INSTANCE])
+            ->andWhere('params LIKE ?', ['%"instanceId":"' . $instanceId . '"%'])
+            ->execute();
+
+        $items = [];
+        while($row = $qb->fetchAssoc()) {
+            $items[] = $row;
+        }
+
+        $userGroups = $this->groupManager->getGroupsForUser($userId);
+        $adminGroup = $this->groupManager->getGroupByTitle(SystemGroups::ADMINISTRATORS)->groupId;
+        $processSupervisorGroup = $this->groupManager->getGroupByTitle(SystemGroups::PROCESS_SUPERVISOR)->groupId;
+
+        $instance = $this->processInstanceManager->getProcessInstanceById($instanceId);
+        $isAuthor = ($instance->userId == $userId);
+
+        if(!empty($items)) {
+            return false;
+        }
+
+        return in_array($adminGroup, $userGroups) || in_array($processSupervisorGroup, $userGroups) || $isAuthor;
     }
 }
 

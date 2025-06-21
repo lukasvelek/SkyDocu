@@ -61,6 +61,10 @@ class JobQueueService extends AService {
                     case JobQueueTypes::CHANGE_PROCESS_VISIBILITY_IN_DISTRIBUTION:
                         $this->_CHANGE_PROCESS_VISIBILITY_IN_DISTRIBUTION($job);
                         break;
+
+                    case JobQueueTypes::CANCEL_CONTAINER_PROCESS_INSTANCE:
+                        $this->_CANCEL_CONTAINER_PROCESS_INSTANCE($job);
+                        break;
                 }
 
                 $this->endJob($job);
@@ -140,9 +144,21 @@ class JobQueueService extends AService {
     private function _DELETE_CONTAINER(DatabaseRow $job) {
         $params = $this->parseParams($job);
 
-        $this->logJob($job, sprintf('Deleting container \'%s\'.', $params['containerId']));
-        $this->app->containerManager->deleteContainer($params['containerId']);
-        $this->logJob($job, sprintf('Deleted container \'%s\'.', $params['containerId']));
+        try {
+            $this->logJob($job, sprintf('Deleting container %s.', $params['containerId']));
+
+            $this->app->containerRepository->beginTransaction(__METHOD__);
+
+            $this->app->containerManager->deleteContainer($params['containerId']);
+
+            $this->app->containerRepository->commit($this->app->userManager->getServiceUserId(), __METHOD__);
+
+            $this->logJob($job, sprintf('Deleted container %s.', $params['containerId']));
+        } catch(AException $e) {
+            $this->app->containerRepository->rollback(__METHOD__);
+
+            $this->errorJob($job, $e);
+        }
     }
 
     /**
@@ -155,9 +171,21 @@ class JobQueueService extends AService {
         
         $container = $this->getContainerInstance($params['containerId']);
 
-        $this->logJob($job, sprintf('Deleting process instance \'%s\'.', $params['instanceId']));
-        $container->processInstanceManager->deleteProcessInstance($params['instanceId']);
-        $this->logJob($job, sprintf('Deleted process instance \'%s\'.', $params['instanceId']));
+        try {
+            $this->logJob($job, sprintf('Deleting process instance %s.', $params['instanceId']));
+
+            $container->processInstanceRepository->beginTransaction(__METHOD__);
+
+            $container->processInstanceManager->deleteProcessInstance($params['instanceId']);
+
+            $container->processInstanceRepository->commit($this->app->userManager->getServiceUserId(), __METHOD__);
+
+            $this->logJob($job, sprintf('Deleted process instance %s.', $params['instanceId']));
+        } catch(AException $e) {
+            $container->processInstanceRepository->rollback(__METHOD__);
+
+            $this->errorJob($job, $e);
+        }
     }
 
     /**
@@ -175,12 +203,12 @@ class JobQueueService extends AService {
 
         $process = $this->app->processManager->getProcessEntityById($processId);
 
-        $this->logJob($job, sprintf('Found process ID \'%s\' that will be published to containers (count: %d).', $processId, count($containers)));
+        $this->logJob($job, sprintf('Found process ID %s that will be published to containers (count: %d).', $processId, count($containers)));
 
         foreach($containers as $_container) {
             $containerId = $_container->getId();
             
-            $this->logJob($job, sprintf('Processing publishing to container \'%s\'.', $containerId));
+            $this->logJob($job, sprintf('Processing publishing to container %s.', $containerId));
 
             try {
                 $container = $this->getContainerInstance($containerId);
@@ -190,7 +218,7 @@ class JobQueueService extends AService {
                 $container->processRepository->beginTransaction(__METHOD__);
 
                 try {
-                    $this->logJob($job, sprintf('Checking if container \'%s\' has a previous version.', $containerId));
+                    $this->logJob($job, sprintf('Checking if container %s has a previous version.', $containerId));
                     $lastProcess = $container->processManager->getLastProcessForUniqueProcessId($process->getUniqueProcessId());
 
                     if($lastProcess->isEnabled == false) {
@@ -260,7 +288,7 @@ class JobQueueService extends AService {
 
                 $container->processRepository->commit($this->app->userManager->getServiceUserId(), __METHOD__);
 
-                $this->logJob($job, sprintf('Finished processing publishing to container \'%s\'.', $containerId));
+                $this->logJob($job, sprintf('Finished processing publishing to container %s.', $containerId));
             } catch(AException $e) {
                 $container->processRepository->rollback(__METHOD__);
 
@@ -277,14 +305,14 @@ class JobQueueService extends AService {
         $containers = $this->app->containerManager->getContainersInDistribution();
         $process = $this->app->processManager->getProcessEntityById($processId);
 
-        $this->logJob($job, sprintf('Changing visibility of process \'%s\'.', $processId));
+        $this->logJob($job, sprintf('Changing visibility of process %s.', $processId));
         $this->logJob($job, sprintf('Found %d containers in distribution.', count($containers)));
 
         foreach($containers as $_container) {
             $containerId = $_container->getId();
             
             try {
-                $this->logJob($job, sprintf('Processing container \'%s\'.', $containerId));
+                $this->logJob($job, sprintf('Processing container %s.', $containerId));
 
                 $container = $this->getContainerInstance($containerId);
 
@@ -296,12 +324,38 @@ class JobQueueService extends AService {
 
                 $container->processRepository->commit($this->app->userManager->getServiceUserId(), __METHOD__);
 
-                $this->logJob($job, sprintf('Container \'%s\' processed.', $containerId));
+                $this->logJob($job, sprintf('Container %s processed.', $containerId));
             } catch(AException $e) {
                 $container->processRepository->rollback(__METHOD__);
 
                 $this->errorJob($job, $e);
             }
+        }
+    }
+
+    private function _CANCEL_CONTAINER_PROCESS_INSTANCE(DatabaseRow $job) {
+        $params = $this->parseParams($job);
+
+        $instanceId = $params['instanceId'];
+        $containerId = $params['containerId'];
+        $userId = $params['userId'];
+
+        $container = $this->getContainerInstance($containerId);
+
+        try {
+            $this->logJob($job, sprintf('Canceling process instance %s.', $instanceId));
+
+            $container->processInstanceRepository->beginTransaction(__METHOD__);
+
+            $container->processInstanceManager->cancelProcessInstance($instanceId, $userId);
+
+            $container->processInstanceRepository->commit($this->app->userManager->getServiceUserId(), __METHOD__);
+
+            $this->logJob($job, sprintf('Canceled process instance %s.', $instanceId));
+        } catch(AException $e) {
+            $container->processInstanceRepository->rollback(__METHOD__);
+
+            $this->errorJob($job, $e);
         }
     }
 

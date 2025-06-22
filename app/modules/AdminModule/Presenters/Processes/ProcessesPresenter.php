@@ -3,14 +3,17 @@
 namespace App\Modules\AdminModule;
 
 use App\Constants\Container\ProcessStatus;
+use App\Constants\Container\SystemGroups;
 use App\Constants\ProcessColorCombos;
 use App\Core\DB\DatabaseRow;
 use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
+use App\Helpers\LinkHelper;
 use App\UI\GridBuilder2\Action;
 use App\UI\GridBuilder2\Row;
 use App\UI\HTML\HTML;
+use App\UI\LinkBuilder;
 
 class ProcessesPresenter extends AAdminPresenter {
     public function __construct() {
@@ -22,7 +25,13 @@ class ProcessesPresenter extends AAdminPresenter {
     public function renderDashboard() {}
 
     public function renderList() {
-        $this->template->links = '';
+        $links = [];
+
+        if($this->groupManager->isUserMemberOfGroupTitle($this->getUserId(), SystemGroups::PROCESS_DESIGNERS)) {
+            $links[] = LinkBuilder::createSimpleLink('New process', $this->createFullURL('Admin:ProcessEditor', 'form'), 'link');
+        }
+
+        $this->template->links = LinkHelper::createLinksFromArray($links);
     }
 
     protected function createComponentProcessListGrid(HttpRequest $request) {

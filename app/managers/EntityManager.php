@@ -51,6 +51,7 @@ class EntityManager extends AManager {
     public const C_CUSTOM_METADATA_LIST_VALUES = 'custom_metadata_list_values';
     public const C_GRID_CONFIGURATION = 'grid_configuration';
     public const C_PROCESSES = 'processes';
+    public const C_PROCESSES_UNIQUE = 'processes';
     public const C_PROCESS_INSTANCES = 'process_instances';
     public const C_DOCUMENT_SHARING = 'document_sharing';
     public const C_ARCHIVE_FOLDERS = 'archive_folders';
@@ -175,6 +176,7 @@ class EntityManager extends AManager {
                 self::C_EXTERNAL_SYSTEM_TOKENS => 'tokenId',
                 self::C_EXTERNAL_SYSTEM_RIGHTS => 'rightId',
                 self::C_PROCESS_FILE_RELATION => 'relationId',
+                self::C_PROCESSES_UNIQUE => 'uniqueProcessId',
 
                 self::USERS => 'userId',
                 self::TRANSACTIONS => 'transactionId',

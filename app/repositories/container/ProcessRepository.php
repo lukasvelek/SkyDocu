@@ -16,6 +16,16 @@ class ProcessRepository extends ARepository {
         return $qb;
     }
 
+    public function addNewProcessFromArray(array $data): bool {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->insert('processes', array_keys($data))
+            ->values(array_values($data))
+            ->execute();
+
+        return $qb->fetchBool();
+    }
+
     public function addNewProcess(string $processId, string $uniqueProcessId, string $title, string $description, string $definition, string $userId, int $status, bool $isEnabled = true) {
         $qb = $this->qb(__METHOD__);
 

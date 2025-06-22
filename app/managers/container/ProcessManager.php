@@ -2,7 +2,9 @@
 
 namespace App\Managers\Container;
 
+use App\Constants\Container\ProcessStatus;
 use App\Core\DB\DatabaseRow;
+use App\Entities\ContainerProcessEntity;
 use App\Exceptions\GeneralException;
 use App\Logger\Logger;
 use App\Managers\AManager;
@@ -58,6 +60,22 @@ class ProcessManager extends AManager {
         }
 
         return DatabaseRow::createFromDbRow($process);
+    }
+
+    /**
+     * Returns a ContainerProcessEntity instance for process given by $processId
+     * 
+     * @param string $processId Process ID
+     * @throws GeneralException
+     */
+    public function getProcessEntityById(string $processId): ContainerProcessEntity {
+        $process = $this->processRepository->getProcessById($processId);
+
+        if($process === null) {
+            throw new GeneralException('No process \'' . $processId . '\' was found.');
+        }
+
+        return ContainerProcessEntity::createEntityFromDbRow($process);
     }
 
     /**
@@ -139,6 +157,79 @@ class ProcessManager extends AManager {
         if(!$this->processRepository->updateProcess($processId, $data)) {
             throw new GeneralException('Database error');
         }
+    }
+
+    /**
+     * Creates a new process and returns a new process ID and unique process ID
+     * 
+     * @param string $title TItle
+     * @param string $description Description
+     * @param string $authorId Author user ID
+     * @param array $definition Definition
+     * @param ?string $oldProcessId Old process ID
+     */
+    public function createNewProcess(
+        string $title,
+        string $description,
+        string $authorId,
+        array $definition,
+        ?string $oldProcessId
+    ) {
+        $processId = $this->createId(EntityManager::C_PROCESSES);
+
+        $version = 1;
+        $uniqueProcessId = null;
+        if($oldProcessId !== null) {
+            $process = $this->getProcessById($oldProcessId);
+
+            $uniqueProcessId = $process->uniqueProcessId;
+            $version = (int)($this->getHighestVersionForUniqueProcessId($uniqueProcessId)) + 1;
+        } else {
+            $uniqueProcessId = $this->createId(EntityManager::C_PROCESSES_UNIQUE);
+        }
+
+        $data = [
+            'processId' => $processId,
+            'uniqueProcessId' => $uniqueProcessId,
+            'title' => $title,
+            'description' => $description,
+            'userId' => $authorId,
+            'definition' => base64_encode(json_encode($definition)),
+            'status' => ProcessStatus::NEW,
+            'version' => $version
+        ];
+
+        if(!$this->processRepository->addNewProcessFromArray($data)) {
+            throw new GeneralException('Database error');
+        }
+
+        return [$processId, $uniqueProcessId];
+    }
+
+    /**
+     * Returns the highest version used for unique process ID
+     * 
+     * @param string $uniqueProcessId Unique process ID
+     */
+    public function getHighestVersionForUniqueProcessId(string $uniqueProcessId): string {
+        $qb = $this->processRepository->commonComposeQuery();
+        $qb->andWhere('uniqueProcessId = ?', [$uniqueProcessId])
+            ->orderBy('version', 'DESC')
+            ->limit(1)
+            ->execute();
+
+        return $qb->fetch('version');
+    }
+
+    /**
+     * Returns true if the process is custom or false if it is in distribution
+     * 
+     * @param string $processId Process ID
+     */
+    public function isProcessCustom(string $processId): bool {
+        $process = $this->getProcessEntityById($processId);
+
+        return ($process->getVersion() !== null);
     }
 }
 

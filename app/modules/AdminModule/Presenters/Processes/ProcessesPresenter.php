@@ -9,8 +9,10 @@ use App\Core\DB\DatabaseRow;
 use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
+use App\Helpers\GridHelper;
 use App\Helpers\LinkHelper;
 use App\UI\GridBuilder2\Action;
+use App\UI\GridBuilder2\Cell;
 use App\UI\GridBuilder2\Row;
 use App\UI\HTML\HTML;
 use App\UI\LinkBuilder;
@@ -46,6 +48,13 @@ class ProcessesPresenter extends AAdminPresenter {
         $grid->addColumnUser('userId', 'Author');
         $grid->addColumnConst('status', 'Status', ProcessStatus::class);
         $grid->addColumnBoolean('isEnabled', 'Enabled');
+        $grid->addColumnText('version', 'Version');
+        $grid->addColumnBoolean('isCustom', 'Is custom')
+            ->onRenderColumn[] = function(DatabaseRow $row, Row $_row, Cell $cell, HTML $html, mixed $value) {
+                $result = $this->processManager->isProcessCustom($row->processId);
+
+                return GridHelper::createBooleanColumn($result);
+            };
 
         $metadata = $grid->addAction('metadata');
         $metadata->setTitle('Metadata');
@@ -68,7 +77,7 @@ class ProcessesPresenter extends AAdminPresenter {
         $edit = $grid->addAction('edit');
         $edit->setTitle('Edit');
         $edit->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) {
-            return $row->status == ProcessStatus::CUSTOM;
+            return $this->processManager->isProcessCustom($row->processId);
         };
         $edit->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
             $el = HTML::el('a');

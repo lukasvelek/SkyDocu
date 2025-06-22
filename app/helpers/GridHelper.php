@@ -6,6 +6,7 @@ use App\Core\Caching\Cache;
 use App\Core\Caching\CacheFactory;
 use App\Core\Caching\CacheNames;
 use App\Logger\Logger;
+use App\UI\HTML\HTML;
 
 /**
  * GridHelper contains useful function for working with grids
@@ -125,6 +126,29 @@ class GridHelper {
         } else {
             return $this->currentUserId . '_' . $gridName;
         }
+    }
+
+    /**
+     * Creates a boolean column
+     * 
+     * @param bool $value Value
+     */
+    public static function createBooleanColumn(bool $value): HTML {
+        $el = HTML::el('span')
+            ->style('border-radius', '12px')
+            ->style('padding', '5px');
+
+        if($value) {
+            $el->text('&check;')
+                ->style('color', 'green')
+                ->style('background-color', 'lightgreen');
+        } else {
+            $el->text('&times;')
+                ->style('color', 'red')
+                ->style('background-color', 'pink');
+        }
+
+        return $el;
     }
 }
 

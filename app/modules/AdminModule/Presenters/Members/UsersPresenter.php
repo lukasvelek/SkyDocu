@@ -62,8 +62,13 @@ class UsersPresenter extends AAdminPresenter {
 
         $delete = $grid->addAction('delete');
         $delete->setTitle('Delete');
-        $delete->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) {
+        $delete->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) use ($userIds) {
             if($row->isDeleted == true) {
+                return false;
+            }
+
+            // if there is at least one more user
+            if(count($userIds) == 1) {
                 return false;
             }
 

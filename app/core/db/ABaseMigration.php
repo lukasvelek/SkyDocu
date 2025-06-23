@@ -160,7 +160,7 @@ abstract class ABaseMigration {
      * @param string|int|bool $conditionColumnValue Condition column value
      */
     protected function getValueFromTableByConditions(string $tableName, string $columnName, string $conditionColumnName, string|int|bool $conditionColumnValue): mixed {
-        $qb = new QueryBuilder($this->conn, $this->logger, __METHOD__);
+        $qb = $this->qb(__METHOD__);
 
         $qb->select([$columnName])
             ->from($tableName)
@@ -176,7 +176,7 @@ abstract class ABaseMigration {
      * @param string $processTitle Process title
      */
     protected function getUniqueProcessIdForProcessTitle(string $processTitle): mixed {
-        $qb = new QueryBuilder($this->conn, $this->logger, __METHOD__);
+        $qb = $this->qb(__METHOD__);
 
         $qb->select(['uniqueProcessId'])
             ->from('processes')
@@ -205,6 +205,33 @@ abstract class ABaseMigration {
         }
 
         return $userId;
+    }
+
+    /**
+     * Checks if there is a column with given value in given table
+     * 
+     * @param string $tableName Table name
+     * @param string $columnName Column name
+     * @param mixed $columnValue Column value
+     */
+    protected function checkValueExistsInTable(string $tableName, string $columnName, mixed $columnValue): bool {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->select(['COUNT(*) AS cnt'])
+            ->from($tableName)
+            ->where($columnName . ' = ?', [$columnValue])
+            ->execute();
+
+        $row = $qb->fetch('cnt');
+
+        return $row > 0;
+    }
+
+    /**
+     * Returns a new instance of QueryBuilder
+     */
+    private function qb(string $method = __METHOD__): QueryBuilder {
+        return new QueryBuilder($this->conn, $this->logger, $method);
     }
 }
 

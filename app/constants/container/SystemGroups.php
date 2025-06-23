@@ -11,6 +11,7 @@ class SystemGroups extends AConstant {
     public const PROCESS_SUPERVISOR = 'processSupervisor';
     public const ACCOUNTANTS = 'accountants';
     public const CONTAINER_MANAGERS = 'containerManagers';
+    public const PROCESS_DESIGNERS = 'processDesigners';
 
     public static function toString($key): ?string {
         return match($key) {
@@ -20,6 +21,7 @@ class SystemGroups extends AConstant {
             self::PROCESS_SUPERVISOR => 'Process supervisor',
             self::ACCOUNTANTS => 'Accountants',
             self::CONTAINER_MANAGERS => 'Container managers',
+            self::PROCESS_DESIGNERS => 'Process designers',
             default => null
         };
     }

@@ -15,6 +15,7 @@ Previously changelog for versions `1.0`-`1.4` has been located in README.md. How
 ## SkyDocu `1.7` (_WIP_)
 - Added support for custom processes in containers
 - Added process editor to containers
+- Added $CURRENT_USER$ as the actor of the first process step
 
 ## SkyDocu `1.6` (06/21/2025)
 - Global transaction log

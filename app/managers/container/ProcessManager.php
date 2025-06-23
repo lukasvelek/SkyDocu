@@ -89,7 +89,7 @@ class ProcessManager extends AManager {
         $qb = $this->processRepository->commonComposeQuery();
 
         $qb->andWhere('uniqueProcessId = ?', [$uniqueProcessId])
-            ->andWhere('status = 1')
+            ->andWhere('status IN (1,4)') // in distribution or if custom then current
             ->orderBy('dateCreated', 'DESC')
             ->limit(1)
             ->execute();
@@ -263,6 +263,35 @@ class ProcessManager extends AManager {
     }
 
     /**
+     * Returns next version for process ID
+     * 
+     * @param string $processId Process ID
+     * @param bool $returnEntity True if ProcessEntity should be returned or false if DatabaseRow should be returned
+     * @throws AException
+     */
+    public function getNextVersionForProcessId(string $processId, bool $returnEntity = false): null|DatabaseRow|ContainerProcessEntity {
+        try {
+            $process = $this->getProcessEntityById($processId);
+
+            if($process->getVersion() > 1) {
+                $uniqueProcessId = $process->getUniqueProcessId();
+
+                $previousVersion = $this->getProcessByUniqueProcessIdAndVersion($uniqueProcessId, $process->getVersion() + 1);
+
+                if($returnEntity) {
+                    return $this->getProcessEntityById($previousVersion->processId);
+                }
+
+                return $previousVersion;
+            }
+
+            return null;
+        } catch(AException $e) {
+            throw $e;
+        }
+    }
+
+    /**
      * Returns a process by unique process ID and version
      * 
      * @param string $uniqueProcessId Unique process ID
@@ -282,6 +311,25 @@ class ProcessManager extends AManager {
         }
 
         return DatabaseRow::createFromDbRow($result);
+    }
+
+    /**
+     * Creates a new process from existing one - creates a copy and returns the new process' ID
+     * 
+     * @param string $oldProcessId Old process ID
+     */
+    public function createNewProcessFromExisting(string $oldProcessId): array {
+        $process = $this->getProcessById($oldProcessId);
+
+        [$newProcessId, $uniqueProcessId] = $this->createNewProcess(
+            $process->title,
+            $process->description,
+            $process->userId,
+            json_decode(base64_decode($process->definition), true),
+            $oldProcessId
+        );
+
+        return [$newProcessId, $uniqueProcessId];
     }
 }
 

@@ -16,6 +16,8 @@ Previously changelog for versions `1.0`-`1.4` has been located in README.md. How
 - Added support for custom processes in containers
 - Added process editor to containers
 - Added $CURRENT_USER$ as the actor of the first process step
+- Users update
+    - Added container technical account creation from Superadministration
 
 ## SkyDocu `1.6` (06/21/2025)
 - Global transaction log
@@ -38,12 +40,12 @@ Previously changelog for versions `1.0`-`1.4` has been located in README.md. How
     - Certain jobs should be performed in background
     - Process version adding to distribution
     - Process instance data removal
-    - Changing process visibility from superadministration
+    - Changing process visibility from Superadministration
     - Added background service
 - Removed property management
 
 ## SkyDocu `1.5` (04/08/2025)
-- Added _Requested containers_ metric to superadministration Container statistics widget
+- Added _Requested containers_ metric to Superadministration Container statistics widget
 - Code cleanup
 - API endpoints
 - External systems

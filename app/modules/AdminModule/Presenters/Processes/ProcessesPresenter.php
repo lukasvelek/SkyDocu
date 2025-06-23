@@ -13,9 +13,11 @@ use App\Helpers\GridHelper;
 use App\Helpers\LinkHelper;
 use App\UI\GridBuilder2\Action;
 use App\UI\GridBuilder2\Cell;
+use App\UI\GridBuilder2\Filter;
 use App\UI\GridBuilder2\Row;
 use App\UI\HTML\HTML;
 use App\UI\LinkBuilder;
+use QueryBuilder\QueryBuilder;
 
 class ProcessesPresenter extends AAdminPresenter {
     public function __construct() {
@@ -115,6 +117,18 @@ class ProcessesPresenter extends AAdminPresenter {
 
             return $el;
         };
+
+        $grid->addFilter('isCustom', '0', [
+                'No',
+                'Yes'
+            ])
+            ->onSqlExecute[] = function(QueryBuilder &$qb, Filter $filter, mixed $value) {
+                if($value == '0') {
+                    $qb->andWhere($qb->getColumnNotInValues('status', [ProcessStatus::CURRENT, ProcessStatus::NEW, ProcessStatus::OLD]));
+                } else {
+                    $qb->andWhere($qb->getColumnInValues('status', [ProcessStatus::CURRENT, ProcessStatus::NEW, ProcessStatus::OLD]));
+                }
+            };
 
         return $grid;
     }

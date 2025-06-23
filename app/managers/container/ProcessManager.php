@@ -5,6 +5,7 @@ namespace App\Managers\Container;
 use App\Constants\Container\ProcessStatus;
 use App\Core\DB\DatabaseRow;
 use App\Entities\ContainerProcessEntity;
+use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
 use App\Logger\Logger;
 use App\Managers\AManager;
@@ -230,6 +231,57 @@ class ProcessManager extends AManager {
         $process = $this->getProcessEntityById($processId);
 
         return ($process->getVersion() !== null);
+    }
+
+    /**
+     * Returns previous version for process ID
+     * 
+     * @param string $processId Process ID
+     * @param bool $returnEntity True if ProcessEntity should be returned or false if DatabaseRow should be returned
+     * @throws AException
+     */
+    public function getPreviousVersionForProcessId(string $processId, bool $returnEntity = false): null|DatabaseRow|ContainerProcessEntity {
+        try {
+            $process = $this->getProcessEntityById($processId);
+
+            if($process->getVersion() > 1) {
+                $uniqueProcessId = $process->getUniqueProcessId();
+
+                $previousVersion = $this->getProcessByUniqueProcessIdAndVersion($uniqueProcessId, $process->getVersion() - 1);
+
+                if($returnEntity) {
+                    return $this->getProcessEntityById($previousVersion->processId);
+                }
+
+                return $previousVersion;
+            }
+
+            return null;
+        } catch(AException $e) {
+            throw $e;
+        }
+    }
+
+    /**
+     * Returns a process by unique process ID and version
+     * 
+     * @param string $uniqueProcessId Unique process ID
+     * @param int $version Version
+     * @throws GeneralException
+     */
+    public function getProcessByUniqueProcessIdAndVersion(string $uniqueProcessId, int $version): DatabaseRow {
+        $qb = $this->processRepository->commonComposeQuery();
+        $qb->andWhere('uniqueProcessId = ?', [$uniqueProcessId])
+            ->andWhere('version = ?', [$version])
+            ->execute();
+
+        $result = $qb->fetch();
+
+        if($result === null) {
+            throw new GeneralException('No process found for unique process ID and version.');
+        }
+
+        return DatabaseRow::createFromDbRow($result);
     }
 }
 

@@ -11,12 +11,15 @@ class ProcessStatus extends AConstant implements IColorable, IBackgroundColorabl
     public const NOT_IN_DISTRIBUTION = 2;
     public const NEW = 3;
     public const CURRENT = 4;
+    public const OLD = 5;
 
     public static function toString($key): ?string {
         return match((int)$key) {
             self::IN_DISTRIBUTION => 'In distribution',
             self::NOT_IN_DISTRIBUTION => 'Not in distribution',
             self::NEW => 'New',
+            self::CURRENT => 'Current',
+            self::OLD => 'Old',
             default => null
         };
     }
@@ -27,6 +30,7 @@ class ProcessStatus extends AConstant implements IColorable, IBackgroundColorabl
             self::NOT_IN_DISTRIBUTION => 'red',
             self::NEW => 'blue',
             self::CURRENT => 'green',
+            self::OLD => 'red',
             default => 'black'
         };
     }
@@ -37,6 +41,7 @@ class ProcessStatus extends AConstant implements IColorable, IBackgroundColorabl
             self::NOT_IN_DISTRIBUTION => 'pink',
             self::NEW => 'lightblue',
             self::CURRENT => 'lightgreen',
+            self::OLD => 'pink',
             default => null
         };
     }

@@ -500,6 +500,11 @@ class ProcessEditorPresenter extends AAdminPresenter {
             if($operation == 'view') {
                 $actor->setReadonly();
             }
+        } else {
+            if($isFirst) {
+                $actor->setValue('$CURRENT_USER$')
+                    ->setReadonly();
+            }
         }
 
         $form->addLabel('formDefinitionLbl', 'Form definition:')

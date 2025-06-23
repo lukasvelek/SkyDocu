@@ -6,6 +6,7 @@ use App\Constants\Container\ExternalSystemLogActionTypes;
 use App\Constants\Container\ExternalSystemLogObjectTypes;
 use App\Constants\Container\ExternalSystemRightsOperations;
 use App\Core\DB\DatabaseRow;
+use App\Core\HashManager;
 use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
@@ -312,7 +313,7 @@ class ExternalSystemsPresenter extends AAdminPresenter {
             try {
                 $this->externalSystemsRepository->beginTransaction(__METHOD__);
 
-                $password = password_hash($fr->password, PASSWORD_BCRYPT);
+                $password = HashManager::hashPassword($fr->password);
 
                 $this->externalSystemsManager->updateExternalSystem($systemId, ['password' => $password]);
 

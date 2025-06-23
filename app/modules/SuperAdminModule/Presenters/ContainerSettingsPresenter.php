@@ -7,14 +7,17 @@ use App\Components\ContainerUsageStatsGraph\ContainerUsageStatsGraph;
 use App\Components\ContainerUsageTotalResponseTimeGraph\ContainerUsageTotalResponseTimeGraph;
 use App\Components\Widgets\FileStorageStatsForContainerWidget\FileStorageStatsForContainerWidget;
 use App\Constants\Container\ProcessStatus;
+use App\Constants\Container\SystemGroups as ContainerSystemGroups;
 use App\Constants\ContainerEnvironments;
 use App\Constants\ContainerInviteUsageStatus;
 use App\Constants\ContainerStatus;
 use App\Constants\JobQueueTypes;
+use App\Constants\SystemGroups;
 use App\Core\Container;
 use App\Core\Datetypes\DateTime;
 use App\Core\DB\DatabaseMigrationManager;
 use App\Core\DB\DatabaseRow;
+use App\Core\HashManager;
 use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
@@ -362,6 +365,93 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
         } else {
             $this->template->container_remove_from_distribution_link = '';
         }
+
+        $this->template->container_new_technical_account_form_link = LinkBuilder::createSimpleLink('New technical account', $this->createURL('newTechnicalAccountForm', [
+            'containerId' => $containerId
+        ]), 'link');
+    }
+
+    public function renderNewTechnicalAccountForm() {
+        $links = [
+            $this->createBackUrl('advanced', ['containerId' => $this->httpRequest->get('containerId')])
+        ];
+
+        $this->template->links = LinkHelper::createLinksFromArray($links);
+    }
+
+    protected function createComponentContainerNewTechnicalAccountForm() {
+        $form = $this->componentFactory->getFormBuilder();
+
+        $form->setAction($this->createURL('newTechnicalAccountFormSubmit', ['containerId' => $this->httpRequest->get('containerId')]));
+
+        $form->addTextInput('username', 'Username:')
+            ->setRequired();
+
+        $form->addPasswordInput('password', 'Password:')
+            ->setRequired();
+
+        $form->addEmailInput('email', 'Email:');
+
+        $form->addSubmit('Create');
+
+        return $form;
+    }
+
+    public function handleNewTechnicalAccountFormSubmit(FormRequest $fr) {
+        $containerId = $this->httpRequest->get('containerId');
+
+        try {
+            $container = $this->app->containerManager->getContainerById($containerId);
+
+            // create user
+            try {
+                $this->app->userRepository->beginTransaction(__METHOD__);
+
+                $userId = $this->app->userManager->createNewTechnicalUser($fr->username, HashManager::hashPassword($fr->password), $fr->email, $container->getTitle());
+                
+                $this->app->userRepository->commit($this->getUserId(), __METHOD__);
+            } catch(AException $e) {
+                $this->app->userRepository->rollback(__METHOD__);
+                
+                throw new GeneralException('Could not create a new user. Reason: ' . $e->getMessage(), $e);
+            }
+
+            $containerGroup = $this->app->groupManager->getGroupByTitle($container->getTitle() . ' - users');
+            
+            // add to container
+            try {
+                $this->app->userRepository->beginTransaction(__METHOD__);
+
+                $this->app->groupManager->addUserToGroup($userId, $containerGroup->groupId);
+                
+                $this->app->userRepository->commit($this->getUserId(), __METHOD__);
+            } catch(AException $e) {
+                $this->app->userRepository->rollback(__METHOD__);
+                
+                throw new GeneralException('Could not add user to container. Reason: ' . $e->getMessage(), $e);
+            }
+
+            // add to container administrators group
+            try {
+                $container = new Container($this->app, $containerId);
+
+                $container->groupRepository->beginTransaction(__METHOD__);
+                
+                $container->groupManager->addUserToGroupTitle(ContainerSystemGroups::ADMINISTRATORS, $userId);
+
+                $container->groupRepository->commit($this->getUserId(), __METHOD__);
+            } catch(AException $e) {
+                $container->groupRepository->rollback(__METHOD__);
+                
+                throw new GeneralException('Could not add user to container administrators group. Reason: ' . $e->getMessage(), $e);
+            }
+
+            $this->flashMessage('Successfully created a new technical account \'' . $fr->username . '\'.', 'success');
+        } catch(AException $e) {
+            $this->flashMessage($e->getMessage(), 'error', 10);
+        }
+
+        $this->redirect($this->createURL('advanced', ['containerId' => $containerId]));
     }
 
     public function handleContainerDeleteForm(?FormRequest $fr = null) {

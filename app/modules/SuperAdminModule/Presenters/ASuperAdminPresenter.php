@@ -25,7 +25,7 @@ abstract class ASuperAdminPresenter extends APresenter {
 
         $home = $this->checkAction('home');
         $status = $this->checkAction('status', 'listStatusHistory');
-        $advanced = $this->checkAction('advanced');
+        $advanced = $this->checkAction('advanced', 'newTechnicalAccountForm');
         $usageStatistics = $this->checkAction('usageStatistics', 'clearUsageStatistics');
         $invites = $this->checkAction('invites', 'invitesWithoutGrid');
         $transactionLog = $this->checkAction('transactionLog');

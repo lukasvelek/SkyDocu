@@ -6,6 +6,7 @@ use App\Constants\AppDesignThemes;
 use App\Constants\DateFormats;
 use App\Constants\TimeFormats;
 use App\Core\DB\DatabaseRow;
+use App\Core\HashManager;
 use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
@@ -31,7 +32,7 @@ class UsersPresenter extends ASuperAdminSettingsPresenter {
         $grid = $this->componentFactory->getGridBuilder();
 
         $qb = $this->app->userRepository->composeQueryForUsers();
-        $qb->andWhere($qb->getColumnNotInValues('userId', $this->app->groupManager->getAllContainersOnlyUsers()));
+        //$qb->andWhere($qb->getColumnNotInValues('userId', $this->app->groupManager->getAllContainersOnlyUsers()));
 
         $grid->createDataSourceFromQueryBuilder($qb, 'userId');
         $grid->setGridName(GridHelper::GRID_USERS);
@@ -122,7 +123,7 @@ class UsersPresenter extends ASuperAdminSettingsPresenter {
                     $email = $fr->email;
                 }
 
-                $this->app->userManager->createNewUser($fr->username, $fr->fullname, password_hash($fr->password, PASSWORD_BCRYPT), $email);
+                $this->app->userManager->createNewUser($fr->username, $fr->fullname, HashManager::hashPassword($fr->password), $email);
 
                 $this->app->userRepository->commit($this->getUserId(), __METHOD__);
 

@@ -1081,6 +1081,28 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
 
         $this->redirect($this->createURL('listDatabases', ['containerId' => $containerId]));
     }
+
+    public function renderListUsers() {}
+
+    protected function createComponentContainerUsersGrid() {
+        $containerId = $this->httpRequest->get('containerId');
+        $container = $this->app->containerManager->getContainerById($containerId);
+
+        $grid = $this->componentFactory->getGridBuilder();
+
+        $userIds = $this->app->groupManager->getGroupUsersForGroupTitle($container->getTitle() . ' - users');
+
+        $qb = $this->app->userRepository->composeQueryForUsers();
+        $qb->andWhere($qb->getColumnInValues('userId', $userIds));
+
+        $grid->createDataSourceFromQueryBuilder($qb, 'userId');
+
+        $grid->addColumnText('fullname', 'Fullname');
+        $grid->addColumnText('username', 'Username');
+        $grid->addColumnBoolean('isTechnical', 'Is technical');
+
+        return $grid;
+    }
 }
 
 ?>

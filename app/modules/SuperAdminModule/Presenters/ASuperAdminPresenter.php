@@ -31,6 +31,7 @@ abstract class ASuperAdminPresenter extends APresenter {
         $transactionLog = $this->checkAction('transactionLog');
         $processes = $this->checkAction('processes', 'addProcessForm');
         $databases = $this->checkAction('listDatabases');
+        $users = $this->checkAction('listUsers');
 
         $sidebar->addLink('&larr; Back', $this->createFullURL('SuperAdmin:Containers', 'list'));
         $sidebar->addLink('Home', $this->createURL('home', ['containerId' => $containerId]), $home);
@@ -44,6 +45,7 @@ abstract class ASuperAdminPresenter extends APresenter {
             $sidebar->addLink('Transaction log', $this->createURL('transactionLog', ['containerId' => $containerId]), $transactionLog);
             $sidebar->addLink('Processes', $this->createURL('processes', ['containerId' => $containerId]), $processes);
             $sidebar->addLink('Databases', $this->createURL('listDatabases', ['containerId' => $containerId]), $databases);
+            $sidebar->addLink('Users', $this->createURL('listUsers', ['containerId' => $containerId]), $users);
         }
 
         return $sidebar;

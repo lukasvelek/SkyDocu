@@ -12,7 +12,6 @@ use App\Constants\ContainerEnvironments;
 use App\Constants\ContainerInviteUsageStatus;
 use App\Constants\ContainerStatus;
 use App\Constants\JobQueueTypes;
-use App\Constants\SystemGroups;
 use App\Core\Container;
 use App\Core\Datetypes\DateTime;
 use App\Core\DB\DatabaseMigrationManager;
@@ -1089,6 +1088,8 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
         $container = $this->app->containerManager->getContainerById($containerId);
 
         $grid = $this->componentFactory->getGridBuilder();
+
+        $grid->addQueryDependency('containerId', $containerId);
 
         $userIds = $this->app->groupManager->getGroupUsersForGroupTitle($container->getTitle() . ' - users');
 

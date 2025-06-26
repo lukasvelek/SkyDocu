@@ -445,6 +445,21 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
                 throw new GeneralException('Could not add user to container administrators group. Reason: ' . $e->getMessage(), $e);
             }
 
+            // add user to all users group in container
+            $_container = new Container($this->app, $containerId);
+            try {
+
+                $_container->groupRepository->beginTransaction(__METHOD__);
+
+                $_container->groupManager->addUserToAllUsersGroup($userId);
+
+                $_container->groupRepository->commit($this->getUserId(), __METHOD__);
+            } catch(AException $e) {
+                $_container->groupRepository->rollback(__METHOD__);
+
+                throw new GeneralException('Could not add user to the All users group in the container. Reason: ' . $e->getMessage(), $e);
+            }
+
             $this->flashMessage('Successfully created a new technical account \'' . $fr->username . '\'.', 'success');
         } catch(AException $e) {
             $this->flashMessage($e->getMessage(), 'error', 10);

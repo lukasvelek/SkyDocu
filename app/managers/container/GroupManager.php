@@ -3,6 +3,7 @@
 namespace App\Managers\Container;
 
 use App\Constants\Container\GroupStandardOperationRights;
+use App\Constants\Container\SystemGroups;
 use App\Core\Caching\CacheNames;
 use App\Core\DB\DatabaseRow;
 use App\Exceptions\GeneralException;
@@ -148,6 +149,17 @@ class GroupManager extends AManager {
     public function isUserMemberOfGroupTitle(string $userId, string $groupTitle) {
         $users = $this->getUsersForGroupTitle($groupTitle);
         return in_array($userId, $users);
+    }
+
+    /**
+     * Adds user to the All users group
+     * 
+     * @param string $userId User ID
+     */
+    public function addUserToAllUsersGroup(string $userId) {
+        $group = $this->getGroupByTitle(SystemGroups::ALL_USERS);
+
+        $this->addUserToGroupId($group->groupId, $userId);
     }
 }
 

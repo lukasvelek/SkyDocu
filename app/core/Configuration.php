@@ -31,7 +31,7 @@ class Configuration {
         $fullVersion = APP_VERSION . '+Build_' . APP_VERSION_BUILD . $releaseDate . '+Commit_' . $commit;
 
         if(APP_BRANCH == 'PROD') {
-            $fullVersion = APP_VERSION . ' ' . $fullVersion;
+            $fullVersion = APP_VERSION . ' (' . $fullVersion . ')';
         }
 
         return $fullVersion;

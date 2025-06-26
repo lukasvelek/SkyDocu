@@ -971,9 +971,7 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
         return $grid;
     }
 
-    public function renderProcesses() {
-        $this->template->links = ''; //LinkBuilder::createSimpleLink('Add process', $this->createURL('addProcessForm', ['containerId' => $this->httpRequest->get('containerId')]), 'link');
-    }
+    public function renderProcesses() {}
 
     protected function createComponentContainerProcessesGrid(HttpRequest $request) {
         $containerId = $this->httpRequest->get('containerId');
@@ -983,6 +981,7 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
         $container = new Container($this->app, $containerId);
 
         $qb = $container->processRepository->composeQueryForAvailableProcesses();
+        $qb->andWhere('version IS NULL');
 
         $grid->createDataSourceFromQueryBuilder($qb, 'processId');
         $grid->addQueryDependency('containerId', $containerId);

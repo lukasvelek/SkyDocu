@@ -26,11 +26,13 @@ class Configuration {
      */
     public static function getCurrentVersion(): string {
         $releaseDate = (APP_VERSION_RELEASE_DATE != '-' ? ('_' . APP_VERSION_RELEASE_DATE) : '');
-        if(APP_BRANCH == 'TEST') {
-            return APP_VERSION . '+Build_' . APP_VERSION_BUILD . $releaseDate . '+Branch_' . APP_BRANCH;
-        } else {
-            return APP_VERSION . ' (' . APP_VERSION . '+Build_' . APP_VERSION_BUILD . $releaseDate . '+Branch_' . APP_BRANCH . ')';
+        $fullVersion = APP_VERSION . '+Build_' . APP_VERSION_BUILD . $releaseDate . '+Commit_' + APP_VERSION_GITHUB_COMMIT;
+
+        if(APP_BRANCH == 'PROD') {
+            $fullVersion = APP_VERSION . ' ' . $fullVersion;
         }
+
+        return $fullVersion;
     }
 }
 

@@ -19,6 +19,7 @@ Previously changelog for versions `1.0`-`1.4` has been located in README.md. How
 - Users update
     - Added container technical account creation from Superadministration
 - Fixed a bug where custom container processes are visible in container settings in superadministration
+- Added support for technical user creation in containers in superadministration
 
 ## SkyDocu `1.6` (06/21/2025)
 - Global transaction log

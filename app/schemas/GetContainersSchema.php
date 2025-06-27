@@ -22,7 +22,6 @@ class GetContainersSchema extends AQuerySchema {
             'userId',
             'status',
             'dateCreated',
-            'environment',
             'canShowContainerReferent',
             'isInDistribution',
             'permanentFlashMessage'

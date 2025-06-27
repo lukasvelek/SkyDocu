@@ -3,7 +3,6 @@
 namespace App\Managers;
 
 use App\Constants\Container\SystemGroups;
-use App\Constants\ContainerEnvironments;
 use App\Constants\ContainerStatus;
 use App\Core\Caching\CacheNames;
 use App\Core\DatabaseConnection;
@@ -70,14 +69,11 @@ class ContainerManager extends AManager {
 
         $this->containerDatabaseManager->insertNewContainerDatabase($containerId, $databaseName, 'SkyDocu Database', 'Default SkyDocu database', true);
 
-        $environment = (APP_BRANCH == 'PROD' ? ContainerEnvironments::PROD : ContainerEnvironments::TEST);
-
         $data = [
             'containerId' => $containerId,
             'userId' => $callingUserId,
             'title' => $title,
             'description' => $description,
-            'environment' => $environment,
             'canShowContainerReferent' => ($canShowReferent ? 1 : 0),
             'status' => $status
         ];

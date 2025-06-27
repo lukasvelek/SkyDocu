@@ -11,6 +11,7 @@ use App\Core\Http\Ajax\Requests\PostAjaxRequest;
 use App\Core\Http\HttpRequest;
 use App\Core\Http\JsonResponse;
 use App\Core\Router;
+use App\Modules\APresenter;
 use App\Modules\ModuleManager;
 use App\UI\AComponent;
 use App\UI\FormBuilder2\FormState\FormStateList;
@@ -182,7 +183,7 @@ class FormBuilder2 extends AComponent {
      * @return string HTML code
      */
     private function build() {
-        $form = new Form($this->name);
+        $form = new Form($this->componentName);
         $form->setAction($this->action);
         $form->setMethod($this->method);
         $form->setAdditionalLinkParams($this->additionalLinkParams);
@@ -747,8 +748,9 @@ class FormBuilder2 extends AComponent {
      * @param string $name Element name
      * @param ?string $label Label text or null
      * @param ?string $containerId Container ID or null (if no container ID is entered no users are displayed)
+     * @param bool $addNullValue True if NULL value should be added
      */
-    public function addUserSelectSearch(string $name, ?string $label = null, ?string $containerId = null) {
+    public function addUserSelectSearch(string $name, ?string $label = null, ?string $containerId = null, bool $addNullValue = false) {
         $this->addTextInput('userSeach', 'Fullname:');
 
         $btn = $this->addButton('Search users');
@@ -756,23 +758,34 @@ class FormBuilder2 extends AComponent {
         if($containerId !== null) {
             $btn->setOnClick('searchUsersSubmit()');
 
-            $arb = new AjaxRequestBuilder();
+            $par = new PostAjaxRequest($this->httpRequest);
+            $par->setComponentUrl($this, 'searchUsers')
+                ->setData([
+                    'query' => '_query',
+                    'containerId' => '_containerId',
+                    'addNullValue' => '_addNullValue'
+                ])
+                ->addArguments([
+                    '_query',
+                    '_containerId',
+                    '_addNullValue'
+                ]);
 
-            $arb->setMethod('POST')
-                ->setComponentAction($this->presenter, $this->componentName . '-searchUsers')
-                ->setHeader(['query' => '_query', 'containerId' => '_containerId'])
-                ->setFunctionName('searchUsers')
-                ->setFunctionArguments(['_query', '_containerId'])
-                ->updateHTMLElement($name, 'data');
+            $updateOperation = new HTMLPageOperation();
+            $updateOperation->setHtmlEntityId($name)
+                ->setJsonResponseObjectName('data');
 
-            $this->addScript($arb);
+            $par->addOnFinishOperation($updateOperation);
+
+            $this->addScript($par);
 
             $this->addScript('
                 function searchUsersSubmit() {
                     const query = $("#userSearch").val();
                     const containerId = "' . $containerId . '";
+                    const addNullValue = ' . ($addNullValue ? '1' : '0') . ';
 
-                    searchUsers(query, containerId);
+                    ' . $par->getFunctionName() . '(query, containerId, addNullValue);
                 }
             ');
         }
@@ -827,6 +840,17 @@ class FormBuilder2 extends AComponent {
         $this->processLabel($name, $label);
 
         return $s;
+    }
+
+    /**
+     * Adds a horizontal line to the form
+     */
+    public function addHorizontalLine(): DesignElement {
+        $de = new DesignElement('hr');
+
+        $this->elements['hl_' . count($this->elements)] = &$de;
+
+        return $de;
     }
 
     /**
@@ -930,6 +954,7 @@ class FormBuilder2 extends AComponent {
         $groupUsers = $this->app->groupManager->getGroupUsersForGroupTitle($container->getTitle() . ' - users');
 
         $users = [];
+        $users[] = '<option value="null">Not selected</option>';
 
         $getUserJson = function() use ($query) {
             return [

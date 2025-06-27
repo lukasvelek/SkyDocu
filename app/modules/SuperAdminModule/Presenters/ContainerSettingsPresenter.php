@@ -8,7 +8,6 @@ use App\Components\ContainerUsageTotalResponseTimeGraph\ContainerUsageTotalRespo
 use App\Components\Widgets\FileStorageStatsForContainerWidget\FileStorageStatsForContainerWidget;
 use App\Constants\Container\ProcessStatus;
 use App\Constants\Container\SystemGroups as ContainerSystemGroups;
-use App\Constants\ContainerEnvironments;
 use App\Constants\ContainerInviteUsageStatus;
 use App\Constants\ContainerStatus;
 use App\Constants\JobQueueTypes;
@@ -75,10 +74,6 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
         $form->addDateTimeInput('containerDateCreated', 'Date created:')
             ->setDisabled()
             ->setValue($dateCreated);
-
-        $form->addTextInput('containerEnvironment', 'Container environment:')
-            ->setDisabled()
-            ->setValue(ContainerEnvironments::toString($container->getEnvironment()));
 
         $form->addTextInput('containerDbSchema', 'Database schema:')
             ->setDisabled()

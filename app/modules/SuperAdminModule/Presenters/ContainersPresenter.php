@@ -2,7 +2,6 @@
 
 namespace App\Modules\SuperAdminModule;
 
-use App\Constants\ContainerEnvironments;
 use App\Constants\ContainerStatus;
 use App\Core\DB\DatabaseRow;
 use App\Core\Http\FormRequest;
@@ -47,7 +46,6 @@ class ContainersPresenter extends ASuperAdminPresenter {
 
         $grid->addColumnText('title', 'Title');
         $grid->addColumnConst('status', 'Status', ContainerStatus::class);
-        $grid->addColumnConst('environment', 'Environment', ContainerEnvironments::class);
 
         $settings = $grid->addAction('settings');
         $settings->setTitle('Settings');

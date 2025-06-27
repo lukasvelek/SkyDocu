@@ -126,14 +126,6 @@ class ContainersPresenter extends ASuperAdminPresenter {
     }
 
     protected function createComponentForm(HttpRequest $request) {
-        $environments = [];
-        foreach(ContainerEnvironments::getAll() as $value => $text) {
-            $environments[] = [
-                'value' => $value,
-                'text' => $text
-            ];
-        }
-
         $form = $this->componentFactory->getFormBuilder();
 
         $form->setAction($this->createURL('newContainerForm'));
@@ -148,10 +140,6 @@ class ContainersPresenter extends ASuperAdminPresenter {
         $form->addTextArea('description', 'Description:')
             ->setPlaceHolder('Description')
             ->setRequired();
-
-        /*$form->addSelect('environment', 'Environment:')
-            ->addRawOptions($environments)
-            ->setRequired();*/
 
         $form->addCheckboxInput('canShowReferent', 'Is referent visible?')
             ->setChecked();
@@ -171,7 +159,7 @@ class ContainersPresenter extends ASuperAdminPresenter {
                     $canShowReferent = true;
                 }
 
-                $this->app->containerManager->createNewContainer($fr->title, $fr->description, $this->getUserId(), $fr->environment, $canShowReferent, ContainerStatus::REQUESTED);
+                $this->app->containerManager->createNewContainer($fr->title, $fr->description, $this->getUserId(), $canShowReferent, ContainerStatus::REQUESTED);
 
                 $this->app->containerRepository->commit($this->getUserId(), __METHOD__);
 
@@ -191,14 +179,6 @@ class ContainersPresenter extends ASuperAdminPresenter {
     }
 
     protected function createComponentNewContainerRequestForm(HttpRequest $request) {
-        $environments = [];
-        foreach(ContainerEnvironments::getAll() as $value => $text) {
-            $environments[] = [
-                'value' => $value,
-                'text' => $text
-            ];
-        }
-
         $form = $this->componentFactory->getFormBuilder();
 
         $form->setAction($this->createURL('newContainerRequestForm'));
@@ -212,10 +192,6 @@ class ContainersPresenter extends ASuperAdminPresenter {
 
         $form->addTextArea('description', 'Description:')
             ->setPlaceHolder('Description')
-            ->setRequired();
-
-        $form->addSelect('environment', 'Environment:')
-            ->addRawOptions($environments)
             ->setRequired();
 
         $form->addCheckboxInput('canShowReferent', 'Is referent visible?')

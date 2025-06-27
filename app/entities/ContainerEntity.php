@@ -16,7 +16,6 @@ class ContainerEntity extends AEntity {
     private string $userId;
     private int $status;
     private string $dateCreated;
-    private int $environment;
     private bool $canShowContainerReferent;
     private ?string $permanentFlashMessage;
     private bool $isInDistribution;
@@ -29,16 +28,15 @@ class ContainerEntity extends AEntity {
     /**
      * Class constructor
      * 
-     * @param string $containerId
-     * @param string $title
-     * @param string $description
-     * @param string $userId
-     * @param int $status
-     * @param string $dateCreated
-     * @param int $environment
-     * @param bool $canShowContainerReferent
-     * @param ?string $permanentFlashMessage
-     * @param bool $isInDistribution
+     * @param string $containerId Container ID
+     * @param string $title Title
+     * @param string $description Description
+     * @param string $userId User ID
+     * @param int $status Status
+     * @param string $dateCreated Date created
+     * @param bool $canShowContainerReferent Can show container referent?
+     * @param ?string $permanentFlashMessage Permanent flash message
+     * @param bool $isInDistribution Is in distribution?
      */
     public function __construct(
         string $containerId,
@@ -47,7 +45,6 @@ class ContainerEntity extends AEntity {
         string $userId,
         int $status,
         string $dateCreated,
-        int $environment,
         bool $canShowContainerReferent,
         ?string $permanentFlashMessage,
         bool $isInDistribution
@@ -58,7 +55,6 @@ class ContainerEntity extends AEntity {
         $this->userId = $userId;
         $this->status = $status;
         $this->dateCreated = $dateCreated;
-        $this->environment = $environment;
         $this->canShowContainerReferent = $canShowContainerReferent;
         $this->permanentFlashMessage = $permanentFlashMessage;
         $this->isInDistribution = $isInDistribution;
@@ -106,13 +102,6 @@ class ContainerEntity extends AEntity {
      */
     public function getDateCreated(): string {
         return $this->dateCreated;
-    }
-
-    /**
-     * Returns container's environment
-     */
-    public function getEnvironment(): int {
-        return $this->environment;
     }
 
     /**
@@ -186,7 +175,6 @@ class ContainerEntity extends AEntity {
             'userId' => 'string',
             'status' => 'int',
             'dateCreated' => 'string',
-            'environment' => 'int',
             'canShowContainerReferent' => 'bool',
             'permanentFlashMessage' => '?string',
             'isInDistribution' => 'bool'
@@ -199,7 +187,6 @@ class ContainerEntity extends AEntity {
             $row->userId,
             $row->status,
             $row->dateCreated,
-            $row->environment,
             $row->canShowContainerReferent,
             $row->permanentFlashMessage,
             $row->isInDistribution

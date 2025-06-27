@@ -3,7 +3,6 @@
 namespace App\Modules\AnonymModule;
 
 use App\Components\ContainerSelectionForm\ContainerSelectionForm;
-use App\Constants\ContainerEnvironments;
 use App\Constants\ContainerStatus;
 use App\Constants\SessionNames;
 use App\Constants\SystemGroups;
@@ -140,8 +139,7 @@ class LoginPresenter extends AAnonymPresenter {
 
                 array_unshift($containers, $c);
             } else if(str_ends_with($group->title, ' - users')) {
-                $environment = ContainerEnvironments::toString($container->getEnvironment()) ?? '-';
-                $title = substr($group->title, 0, (strlen($group->title) - 8)) . ' (' . $environment . ')';
+                $title = substr($group->title, 0, (strlen($group->title) - 8));
 
                 $c = [
                     'value' => $group->containerId,

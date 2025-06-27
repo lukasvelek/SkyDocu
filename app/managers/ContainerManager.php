@@ -60,11 +60,10 @@ class ContainerManager extends AManager {
      * @param string $title Container title
      * @param string $description Container description
      * @param string $callingUserId Calling user ID
-     * @param int $environment Container environment
      * @param bool $canShowReferent Can show referent
      * @param int $status Container status
      */
-    public function createNewContainer(string $title, string $description, string $callingUserId, int $environment, bool $canShowReferent, int $status = ContainerStatus::NEW) {
+    public function createNewContainer(string $title, string $description, string $callingUserId, bool $canShowReferent, int $status = ContainerStatus::NEW) {
         $containerId = $this->createId(EntityManager::CONTAINERS);
         $databaseName = $this->generateContainerDatabaseName($containerId);
 
@@ -75,7 +74,6 @@ class ContainerManager extends AManager {
             'userId' => $callingUserId,
             'title' => $title,
             'description' => $description,
-            'environment' => $environment,
             'canShowContainerReferent' => ($canShowReferent ? 1 : 0),
             'status' => $status
         ];

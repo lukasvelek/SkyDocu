@@ -2,7 +2,6 @@
 
 namespace App\Components\ContainerSelectionForm;
 
-use App\Constants\ContainerEnvironments;
 use App\Constants\ContainerStatus;
 use App\Core\AjaxRequestBuilder;
 use App\Core\Http\HttpRequest;
@@ -191,7 +190,7 @@ class ContainerSelectionForm extends FormBuilder2 {
 
                 array_unshift($containers, $c);
             } else {
-                $title = substr($group->title, 0, (strlen($group->title) - 8)) . ' (' . ContainerEnvironments::toString($container->getEnvironment()) . ')';
+                $title = substr($group->title, 0, (strlen($group->title) - 8));
 
                 $c = [
                     'value' => $group->containerId,

@@ -266,7 +266,6 @@ class ContainerCreationHelper {
         $configuration = [
             'title' => $container->getTitle(),
             'description' => $container->getDescription(),
-            'environment' => $container->getEnvironment(),
             'canShowContainerReferent' => $container->canShowContainerReferent(),
             'isInDistribution' => $container->isInDistribution()
         ];

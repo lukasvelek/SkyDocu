@@ -1,10 +1,15 @@
+# FOLDERS
 logs/
 cache/
+containers/
+
+# ALL FILES WITH SUFFIX
 *.bak
-config.php
 *.tmp
-install
-migration
-/containers/
+
+# PARTICULAR FILES
+config.php
 service.bat
 User_Guide.md
+install
+migration

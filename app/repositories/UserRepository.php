@@ -177,6 +177,16 @@ class UserRepository extends ARepository {
         return $this->createUsersArrayFromQb($qb);
     }
 
+    public function createNewUser2(array $data): bool {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->insert('users', array_keys($data))
+            ->values(array_values($data))
+            ->execute();
+
+        return $qb->fetchBool();
+    }
+
     public function createNewUser(string $id, string $username, string $password, string $fullname, ?string $email) {
         $qb = $this->qb(__METHOD__);
 

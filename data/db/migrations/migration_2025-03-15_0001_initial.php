@@ -6,6 +6,7 @@ use App\Constants\SystemGroups;
 use App\Core\DB\ABaseMigration;
 use App\Core\DB\Helpers\TableSchema;
 use App\Core\DB\Helpers\TableSeeding;
+use App\Core\HashManager;
 use App\Managers\EntityManager;
 
 /**
@@ -201,14 +202,14 @@ class migration_2025_03_15_0001_initial extends ABaseMigration {
             ->add([
                 'userId' => $userIds['admin'],
                 'username' => 'admin',
-                'password' => password_hash('admin', PASSWORD_BCRYPT),
+                'password' => HashManager::hashPassword('admin'),
                 'fullname' => 'Administrator',
                 'isTechnical' => '1'
             ])
             ->add([
                 'userId' => $userIds['service_user'],
                 'username' => 'service_user',
-                'password' => password_hash('service_user', PASSWORD_BCRYPT),
+                'password' => HashManager::hashPassword('service_user'),
                 'fullname' => 'service_user',
                 'isTechnical' => '1'
             ]);

@@ -5,6 +5,7 @@ namespace App\Modules\AdminModule;
 use App\Constants\Container\SystemGroups;
 use App\Core\Caching\CacheNames;
 use App\Core\DB\DatabaseRow;
+use App\Core\HashManager;
 use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
@@ -113,7 +114,7 @@ class UsersPresenter extends AAdminPresenter {
                     $email = null;
                 }
 
-                $userId = $this->app->userManager->createNewUser($fr->username, $fr->fullname, password_hash($fr->password, PASSWORD_BCRYPT), $email);
+                $userId = $this->app->userManager->createNewUser($fr->username, $fr->fullname, HashManager::hashPassword($fr->password), $email);
 
                 $containerId = $this->httpSessionGet('container');
                 $container = $this->app->containerManager->getContainerById($containerId);

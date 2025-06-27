@@ -117,7 +117,12 @@ class GroupManager extends AManager {
         return DatabaseRow::createFromDbRow($group);
     }
 
-    public function getGroupUsersForGroupTitle(string $title) {
+    /**
+     * Returns an array of user IDs that are members of a group with a title
+     * 
+     * @param string $title Group title
+     */
+    public function getGroupUsersForGroupTitle(string $title): array {
         $group = $this->getGroupByTitle($title);
 
         return $this->getGroupUsersForGroupId($group->groupId);

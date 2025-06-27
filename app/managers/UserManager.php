@@ -4,6 +4,7 @@ namespace App\Managers;
 
 use App\Core\Caching\CacheNames;
 use App\Core\DB\DatabaseRow;
+use App\Core\HashManager;
 use App\Exceptions\GeneralException;
 use App\Exceptions\NonExistingEntityException;
 use App\Logger\Logger;
@@ -42,7 +43,57 @@ class UserManager extends AManager {
         return $user;
     }
 
-    public function createNewUser(string $username, string $fullname, string $password, ?string $email) {
+    /**
+     * Creates a new technical user
+     * 
+     * @param string $username Username
+     * @param string $password Password
+     * @param ?string $email Email
+     * @param string $containerName Container name
+     * @throws GeneralException
+     */
+    public function createNewTechnicalUser(string $username, string $password, ?string $email, string $containerName): string {
+        $userId = $this->createId(EntityManager::USERS);
+        
+        $containerName = strtolower($containerName);
+        $containerName = preg_replace('/[^A-Za-z0-9]/', '_', $containerName);
+        $containerName = substr($containerName, 0, 10);
+
+        $fullname = sprintf('%s_TechnicalUser_%s', $username, $containerName);
+
+        $data = [
+            'userId' => $userId,
+            'username' => $username,
+            'password' => $password,
+            'fullname' => $fullname,
+            'isTechnical' => 1
+        ];
+
+        if($email !== null && $email != '') {
+            $data['email'] = $email;
+        }
+
+        if(!$this->userRepository->createNewUser2($data)) {
+            throw new GeneralException('Database error.');
+        }
+
+        if(!$this->cacheFactory->invalidateCacheByNamespace(CacheNames::USERS) || !$this->cacheFactory->invalidateCacheByNamespace(CacheNames::USERS_USERNAME_TO_ID_MAPPING)) {
+            throw new GeneralException('Could not invalidate cache.');
+        }
+
+        return $userId;
+    }
+
+    /**
+     * Creates a new technical user
+     * 
+     * @param string $username Username
+     * @param string $fullname Fullname
+     * @param string $password Password
+     * @param ?string $email Email
+     * @throws GeneralException
+     */
+    public function createNewUser(string $username, string $fullname, string $password, ?string $email): string {
         $userId = $this->createId(EntityManager::USERS);
 
         if(!$this->userRepository->createNewUser($userId, $username, $password, $fullname, $email)) {

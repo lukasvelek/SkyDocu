@@ -152,6 +152,9 @@ function requireFiles(array $files, bool $createContainer) {
     }
 }
 
+/**
+ * Checks for config.php defines
+ */
 function checkDefines() {
     $defines = [
         'CACHE_DIR',

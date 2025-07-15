@@ -2,13 +2,13 @@
 
 namespace App\Modules\UserModule;
 
+use App\Components\Static\UserProfileStatic\UserProfileStatic;
 use App\Components\UserSubstituteForm\UserSubstituteForm;
 use App\Constants\AppDesignThemes;
 use App\Constants\DateFormats;
 use App\Constants\TimeFormats;
 use App\Core\Http\FormRequest;
 use App\Exceptions\AException;
-use App\Helpers\DateTimeFormatHelper;
 use App\Helpers\LinkHelper;
 use App\Lib\Forms\Reducers\UserOutOfOfficeFormReducer;
 use App\UI\LinkBuilder;
@@ -69,6 +69,18 @@ class UserConfigurationPresenter extends AUserPresenter {
 
     public function renderHome() {
         $this->setTitle('Home - Configuration');
+    }
+
+    protected function createComponentUserProfile() {
+        $userProfile = new UserProfileStatic(
+            $this->httpRequest,
+            $this->app->userAbsenceManager,
+            $this->app->userSubstituteManager,
+            $this->app->userManager
+        );
+
+        $userProfile->setApplication($this->app);
+        $userProfile->setPresenter($this);
 
         $userId = $this->httpRequest->get('userId');
 
@@ -79,17 +91,9 @@ class UserConfigurationPresenter extends AUserPresenter {
             $this->redirect($this->createFullURL('User:Home', 'dashboard'));
         }
 
-        $userProfile = '';
-        $addInfo = function(string $title, string $data) use (&$userProfile) {
-            $userProfile .= '<p><b>' . $title . ':</b> ' . $data . '</p>';
-        };
+        $userProfile->setUser($user);
 
-        $addInfo('Full name', $user->getFullname());
-        $addInfo('Email', ($user->getEmail() ?? '-'));
-        $addInfo('Member since', DateTimeFormatHelper::formatDateToUserFriendly($user->getDateCreated(), $this->app->currentUser->getDatetimeFormat()));
-        $addInfo('ID', $user->getId());
-
-        $this->template->user_profile = $userProfile;
+        return $userProfile;
     }
 
     // #######################

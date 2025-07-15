@@ -2,6 +2,7 @@
 
 namespace App\Modules\UserModule;
 
+use App\Components\Static\UserProfileStatic\UserProfileStatic;
 use App\Constants\Container\SystemGroups;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
@@ -68,7 +69,28 @@ class UserPresenter extends AUserPresenter {
     }
 
     protected function createComponentUserProfile() {
-        
+        $userProfile = new UserProfileStatic(
+            $this->httpRequest,
+            $this->app->userAbsenceManager,
+            $this->app->userSubstituteManager,
+            $this->app->userManager
+        );
+
+        $userProfile->setApplication($this->app);
+        $userProfile->setPresenter($this);
+
+        $userId = $this->httpRequest->get('userId');
+
+        try {
+            $user = $this->app->userManager->getUserById($userId);
+        } catch(AException $e) {
+            $this->flashMessage($e->getMessage(), 'error', 10);
+            $this->redirect($this->createFullURL('User:Home', 'dashboard'));
+        }
+
+        $userProfile->setUser($user);
+
+        return $userProfile;
     }
 }
 

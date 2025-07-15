@@ -226,16 +226,66 @@ class UsersPresenter extends AAdminPresenter {
     }
 
     protected function createComponentEditUserForm() {
+        $userId = $this->httpRequest->get('userId');
+
+        try {
+            $user = $this->app->userManager->getUserById($userId);
+        } catch(AException $e) {
+            $this->flashMessage(sprintf('User \'%s\' does not exist.'), 'error');
+            $this->redirect($this->createURL('list'));
+        }
+
         $form = $this->componentFactory->getFormBuilder();
 
-        $form->setAction($this->createURL('editUserFormSubmit'));
+        $form->setAction($this->createURL('editUserFormSubmit', ['userId' => $userId]));
 
         $form->addTextInput('fullname', 'Fullname:')
-            ->setRequired();
+            ->setRequired()
+            ->setValue($user->getFullname());
 
         $form->addHorizontalLine();
 
-        //$form->addUserSelectSearchInPresenter($this, 'superiorUser', 'Superior user:', $this->containerId, true);
+        $form->addTextInput('userSearchQuery', 'Search user by fullname:');
+        $form->addButton('Search')
+            ->setOnClick('_searchUsers()');
+
+        $select = $form->addSelect('superiorUser', 'Superior user:')
+            ->addRawOption('null', 'Not selected', true);
+
+        if($user->getSuperiorUserId() !== null) {
+            try {
+                $superiorUser = $this->app->userManager->getUserById($user->getSuperiorUserId());
+
+                $select->addRawOption($superiorUser->getId(), $superiorUser->getFullname(), true);
+            } catch(AException $e) {}
+        }
+
+        $form->addSubmit('Create');
+
+        $arb = new AjaxRequestBuilder();
+
+        $arb->setMethod('POST')
+            ->setAction($this, 'searchUsers')
+            ->setHeader([
+                'query' => '_query'
+            ])
+            ->updateHTMLElement('superiorUser', 'users')
+            ->setFunctionName('searchUsers')
+            ->setFunctionArguments(['_query']);
+
+        $form->addScript($arb);
+
+        $form->addScript('
+            async function _searchUsers() {
+                const _query = $("#userSearchQuery").val();
+
+                if(_query.length == 0) {
+                    return;
+                }
+
+                await searchUsers(_query);
+            }
+        ');
 
         $form->addSubmit('Save');
 
@@ -243,7 +293,26 @@ class UsersPresenter extends AAdminPresenter {
     }
 
     public function handleEditUserFormSubmit(FormRequest $fr) {
+        try {
+            $userId = $this->httpRequest->get('userId');
 
+            $this->app->userRepository->beginTransaction(__METHOD__);
+
+            $this->app->userManager->updateUser($userId, [
+                'fullname' => $fr->fullname,
+                'superiorUserId' => $fr->superiorUser
+            ]);
+
+            $this->app->userRepository->commit($this->getUserId(), __METHOD__);
+
+            $this->flashMessage('User has been updated.', 'success');
+        } catch(AException $e) {
+            $this->app->userRepository->rollback(__METHOD__);
+
+            $this->flashMessage('Could not update user. Reason: ' . $e->getMessage(), 'error', 10);
+        }
+
+        $this->redirect($this->createURL('list'));
     }
 
     public function handleDeleteUser() {
@@ -300,7 +369,9 @@ class UsersPresenter extends AAdminPresenter {
         foreach($userIds as $userId) {
             $user = $this->app->userManager->getUserById($userId);
 
-            $users[] = '<option value="' . $user->getId() . '">' . $user->getFullname() . '</option>';
+            if(str_contains($user->getFullname(), $query) || str_contains($user->getUsername(), $query) || str_contains($user->getEmail(), $query)) {
+                $users[] = '<option value="' . $user->getId() . '">' . $user->getFullname() . '</option>';
+            }
         }
 
         return new JsonResponse(['users' => $users]);

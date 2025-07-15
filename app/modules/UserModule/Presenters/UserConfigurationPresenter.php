@@ -5,8 +5,10 @@ namespace App\Modules\UserModule;
 use App\Components\Static\UserProfileStatic\UserProfileStatic;
 use App\Components\UserSubstituteForm\UserSubstituteForm;
 use App\Constants\AppDesignThemes;
+use App\Constants\Container\SystemGroups;
 use App\Constants\DateFormats;
 use App\Constants\TimeFormats;
+use App\Core\HashManager;
 use App\Core\Http\FormRequest;
 use App\Exceptions\AException;
 use App\Helpers\LinkHelper;
@@ -16,6 +18,15 @@ use App\UI\LinkBuilder;
 class UserConfigurationPresenter extends AUserPresenter {
     public function __construct() {
         parent::__construct('UserConfigurationPresenter', 'Configuration');
+    }
+
+    public function startup() {
+        parent::startup();
+
+        if(!($this->httpRequest->get('userId') == $this->getUserId() || $this->groupManager->isUserMemberOfGroupTitle($this->httpRequest->get('userId'), SystemGroups::ADMINISTRATORS))) {
+            $this->flashMessage('This section is not available.', 'error');
+            $this->redirect($this->createFullURL('User:Home', 'dashboard'));
+        }
     }
     
     protected function createComponentSidebar() {
@@ -55,6 +66,14 @@ class UserConfigurationPresenter extends AUserPresenter {
                 'name' => 'appearanceForm'
             ]
         ];
+
+        if($userId == $this->getUserId()) {
+            $links[] = [
+                'title' => 'Change password',
+                'url' => $this->createURL('changePasswordForm', $params),
+                'name' => 'changePasswordForm'
+            ];
+        }
 
         foreach($links as $link) {
             $sidebar->addLink($link['title'], $link['url'], ($link['name'] == $action));
@@ -366,4 +385,54 @@ class UserConfigurationPresenter extends AUserPresenter {
     // #############################
     // #     END OF APPEARANCE     #
     // #############################
+
+    // #############################
+    // #     PASSWORD CHANGING     #
+    // #############################
+
+    public function renderChangePasswordForm() {}
+
+    protected function createComponentChangePasswordForm() {
+        $form = $this->componentFactory->getFormBuilder();
+
+        $form->setAction($this->createURL('changePasswordFormSubmit', ['userId' => $this->httpRequest->get('userId')]));
+
+        $form->addPasswordInput('currentPassword', 'Current password:')
+            ->setRequired();
+
+        $form->addPasswordInput('password', 'Password:')
+            ->setRequired();
+
+        $form->addSubmit('Save');
+
+        return $form;
+    }
+
+    public function handleChangePasswordFormSubmit(FormRequest $fr) {
+        $userId = $this->httpRequest->get('userId');
+
+        try {
+            $this->app->userAuth->authUser2($userId, $fr->currentPassword);
+
+            $this->app->userRepository->beginTransaction(__METHOD__);
+
+            $this->app->userManager->updateUser($userId, [
+                'password' => HashManager::hashPassword($fr->password)
+            ]);
+
+            $this->app->userRepository->commit($this->getUserId(), __METHOD__);
+
+            $this->flashMessage('Successfully changed password.', 'success');
+        } catch(AException $e) {
+            $this->app->userRepository->rollback(__METHOD__);
+
+            $this->flashMessage('Could not change password. Reason: ' . $e->getMessage(), 'error', 10);
+        }
+
+        $this->redirect($this->createURL('changePasswordForm', ['userId' => $userId]));
+    }
+
+    // ####################################
+    // #     END OF PASSWORD CHANGING     #
+    // ####################################
 }

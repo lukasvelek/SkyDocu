@@ -48,7 +48,7 @@ class UserPresenter extends AUserPresenter {
         $this->template->user_profile = $userProfile;
 
         $links = [];
-        if($userId == $this->httpRequest->get('userId') || $this->groupManager->isUserMemberOfGroupTitle($userId, SystemGroups::ADMINISTRATORS)) {
+        if($userId == $this->getUserId() || $this->groupManager->isUserMemberOfGroupTitle($userId, SystemGroups::ADMINISTRATORS)) {
             $links[] = LinkBuilder::createSimpleLink('Configuration', $this->createFullURL('User:UserConfiguration', 'home', ['userId' => $userId]), 'link');
         }
 

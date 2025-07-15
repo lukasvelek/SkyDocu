@@ -135,6 +135,18 @@ abstract class AAjaxRequest implements IAjaxRequest {
     }
 
     /**
+     * Adds multiple arguments
+     * 
+     * These arguments will have to be passed in the JS function's constructor
+     * 
+     * @param array $arguments Arguments
+     */
+    public function addArguments(array $arguments): static {
+        $this->arguments = array_merge($this->arguments, $arguments);
+        return $this;
+    }
+
+    /**
      * Sets the request's URL
      * 
      * @param array $url URL

@@ -70,7 +70,7 @@ class FileStorageRepository extends ARepository {
         $qb->andWhere('hash = ?', [$hash])
             ->execute();
 
-        return $qb->fetchBool();
+        return $qb->fetch();
     }
 
     /**

@@ -281,11 +281,12 @@ class Application {
      * Forces file download
      * 
      * @param string $filepath File path
+     * @param string $filename File name
      */
-    public function forceDownloadFile(string $filepath) {
+    public function forceDownloadFile(string $filepath, string $filename) {
         header('Content-Type: application/octet-stream');
         header('Content-Transfer-Encoding: Binary');
-        header('Content-disposition: attachment; filename="' . basename($filepath . '"'));
+        header('Content-disposition: attachment; filename="' . $filename . '"');
         readfile($filepath);
         exit;
     }

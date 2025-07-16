@@ -21,7 +21,7 @@ class FileStoragePresenter extends AUserPresenter {
 
         $file = $this->app->fileStorageManager->getFileByHash($hash, $this->containerId);
 
-        $this->app->forceDownloadFile($file->filepath);
+        $this->app->forceDownloadFile($file->filepath, $file->filename);
     }
 }
 

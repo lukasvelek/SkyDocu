@@ -70,7 +70,7 @@ class FileStoragePresenter extends AAdminPresenter {
             return true;
         };
         $download->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
-            $url = $this->createURLString('download', ['hash' => $row->hash]);
+            $url = $this->app->fileStorageManager->generateDownloadLinkForFileInDocument($row->fileId, $this->containerId);
 
             $el = HTML::el('a')
                 ->class('grid-link')
@@ -102,18 +102,6 @@ class FileStoragePresenter extends AAdminPresenter {
         $text .= 'Number of files: ' . $count;
 
         return new TextResponse($text);
-    }
-
-    public function handleDownload() {
-        $hash = $this->httpRequest->get('hash');
-
-        if($hash === null) {
-            throw new GeneralException('No hash is given.');
-        }
-
-        $file = $this->app->fileStorageManager->getFileByHash($hash, $this->containerId);
-
-        $this->app->forceDownloadFile($file->filepath);
     }
 }
 

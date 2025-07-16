@@ -16,10 +16,11 @@ Previously changelog for versions `1.0`-`1.4` has been located in README.md. How
 - Added support for custom processes in containers
 - Added process editor to containers
 - Added $CURRENT_USER$ as the actor of the first process step
-- Users update
-    - Added container technical account creation from Superadministration
+- Added container technical account creation from Superadministration
+- Added support for user editing
+- Added support for password changing
+- Reworked user administration UI in containers
 - Fixed a bug where custom container processes are visible in container settings in superadministration
-- Added support for technical user creation in containers in superadministration
 - Removed support for container environments
     - Because SkyDocu itself is split to environments (PROD, TEST, DEV)
 

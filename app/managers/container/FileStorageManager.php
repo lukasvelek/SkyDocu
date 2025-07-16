@@ -80,62 +80,6 @@ class FileStorageManager extends AManager {
     }
 
     /**
-     * Creates a new file
-     * 
-     * @param string $documentId Document ID
-     * @param string $userId User ID
-     * @param string $filename Filename
-     * @param string $filepath Filepath
-     * @param int $filesize Filesize
-     * @return string File ID
-     */
-    public function createNewFile(?string $documentId, string $userId, string $filename, string $filepath, int $filesize): string {
-        $filepath = str_replace('\\', '\\\\', $filepath);
-
-        $fileId = $this->createId(EntityManager::C_FILE_STORAGE);
-
-        $hash = $this->createUniqueHashForDb(256, EntityManager::C_FILE_STORAGE, 'hash');
-
-        if(!$this->fileStorageRepository->createNewStoredFile($fileId, $filename, $filepath, $filesize, $userId, $hash)) {
-            throw new GeneralException('Database error.');
-        }
-
-        if($documentId !== null) {
-            $this->createNewFileDocumentRelation($documentId, $fileId);
-        }
-
-        return $fileId;
-    }
-
-    /**
-     * Creates a new file for process instance
-     * 
-     * @param string $instanceId Instance ID
-     * @param string $userId User ID
-     * @param string $filename Filename
-     * @param string $filepath Filepath
-     * @param int $filesize Filesize
-     * @return string File ID
-     */
-    public function createNewProcessInstanceFile(string $instanceId, string $userId, string $filename, string $filepath, int $filesize): string {
-        $filepath = str_replace('\\', '\\\\', $filepath);
-
-        $fileId = $this->createId(EntityManager::C_FILE_STORAGE);
-
-        $hash = $this->createUniqueHashForDb(256, EntityManager::C_FILE_STORAGE, 'hash');
-
-        if(!$this->fileStorageRepository->createNewStoredFile($fileId, $filename, $filepath, $filesize, $userId, $hash)) {
-            throw new GeneralException('Database error.');
-        }
-
-        if($instanceId !== null) {
-            $this->createNewFileProcessInstanceRelation($instanceId, $fileId);
-        }
-
-        return $fileId;
-    }
-
-    /**
      * Creates a new file-process instance relation
      * 
      * @param string $instanceId Process instance ID

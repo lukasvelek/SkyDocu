@@ -1,8 +1,8 @@
 # FOLDERS
-logs/
-cache/
-containers/
-upload/
+/logs/
+/cache/
+/upload/
+/containers/
 
 # ALL FILES WITH SUFFIX
 *.bak

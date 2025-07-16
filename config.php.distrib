@@ -35,9 +35,10 @@ define('LOG_STOPWATCH', 0);
 //                      DIRECTORIES
 //
 
-define('LOG_DIR', '');
-define('CACHE_DIR', '');
-define('CONTAINERS_DIR', '');
+define('LOG_DIR', 'logs\\');
+define('CACHE_DIR', 'cache\\');
+define('CONTAINERS_DIR', 'containers\\');
+define('UPLOAD_DIR', 'upload\\');
 
 define('APP_ABSOLUTE_DIR', '');
 define('PHP_ABSOLUTE_DIR', '');

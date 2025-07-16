@@ -13,18 +13,18 @@ use App\Managers\Container\FileStorageManager;
  * @author Lukas Velek
  */
 class FileStorageStatsForContainerWidget extends Widget {
-    private FileStorageManager $fileStorageManager;
+    private string $containerId;
 
     /**
      * Class constructor
      * 
      * @param HttpRequest $request
-     * @param FileStorageManager $fileStorageManager
+     * @param string $containerId Container ID
      */
-    public function __construct(HttpRequest $request, FileStorageManager $fileStorageManager) {
+    public function __construct(HttpRequest $request, string $containerId) {
         parent::__construct($request);
 
-        $this->fileStorageManager = $fileStorageManager;
+        $this->containerId = $containerId;
     }
 
     public function startup() {
@@ -68,7 +68,7 @@ class FileStorageStatsForContainerWidget extends Widget {
      * Fetches total file count from database
      */
     private function fetchTotalFileCountFromDb(): mixed {
-        $qb = $this->fileStorageManager->fileStorageRepository->composeQueryForStoredFiles();
+        $qb = $this->app->fileStorageRepository->composeQueryForFilesInStorage($this->containerId);
         $qb->select(['COUNT(*) AS cnt'])
             ->regenerateSQL()
             ->execute();
@@ -79,7 +79,7 @@ class FileStorageStatsForContainerWidget extends Widget {
      * Processes total file size
      */
     private function processTotalFileSize(): string {
-        $qb = $this->fileStorageManager->fileStorageRepository->composeQueryForStoredFiles();
+        $qb = $this->app->fileStorageRepository->composeQueryForFilesInStorage($this->containerId);
         $qb->execute();
         $size = 0;
         while($row = $qb->fetchAssoc()) {

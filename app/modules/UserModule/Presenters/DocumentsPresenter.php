@@ -152,10 +152,9 @@ class DocumentsPresenter extends AUserPresenter {
 
         // FILE ATTACHMENT
         if($this->fileStorageManager->doesDocumentHaveFile($document->documentId)) {
-            $url = $this->fileStorageManager->generateDownloadLinkForFileInDocumentByDocumentId($document->documentId);
-
             $relation = $this->fileStorageManager->getFileRelationForDocumentId($document->documentId);
-            $file = $this->fileStorageManager->getFileById($relation->fileId);
+            $url = $this->app->fileStorageManager->generateDownloadLinkForFileInDocument($relation->fileId, $this->containerId);
+            $file =  $this->app->fileStorageManager->getFileById($relation->fileId);
             $fileSize = UnitConversionHelper::convertBytesToUserFriendly($file->filesize);
 
             $el = HTML::el('a')

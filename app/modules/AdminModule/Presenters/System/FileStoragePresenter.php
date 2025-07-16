@@ -51,7 +51,7 @@ class FileStoragePresenter extends AAdminPresenter {
     protected function createComponentStoredFilesGrid(HttpRequest $request) {
         $grid = $this->componentFactory->getGridBuilder($this->containerId);
 
-        $qb = $this->fileStorageRepository->composeQueryForStoredFiles();
+        $qb = $this->app->fileStorageRepository->composeQueryForFilesInStorage($this->containerId);
 
         $grid->createDataSourceFromQueryBuilder($qb, 'fileId');
 
@@ -85,7 +85,7 @@ class FileStoragePresenter extends AAdminPresenter {
     }
 
     public function actionGetFilesStats() {
-        $qb = $this->fileStorageRepository->composeQueryForStoredFiles();
+        $qb = $this->app->fileStorageRepository->composeQueryForFilesInStorage($this->containerId);
         $qb->execute();
 
         $size = 0;
@@ -111,7 +111,7 @@ class FileStoragePresenter extends AAdminPresenter {
             throw new GeneralException('No hash is given.');
         }
 
-        $file = $this->fileStorageManager->getFileByHash($hash);
+        $file = $this->app->fileStorageManager->getFileByHash($hash, $this->containerId);
 
         $this->app->forceDownloadFile($file->filepath);
     }

@@ -3,6 +3,7 @@
 namespace App\Managers;
 
 use App\Core\DB\DatabaseRow;
+use App\Core\Router;
 use App\Exceptions\GeneralException;
 use App\Exceptions\NonExistingEntityException;
 use App\Logger\Logger;
@@ -92,5 +93,32 @@ class FileStorageManager extends AManager {
         }
 
         return DatabaseRow::createFromDbRow($row);
+    }
+
+    /**
+     * Generates download link for file in document
+     * 
+     * @param string $fileId File ID
+     * @param string $containerId Container ID
+     */
+    public function generateDownloadLinkForFileInDocument(string $fileId, string $containerId): string {
+        $file = $this->getFileById($fileId, $containerId);
+
+        return Router::generateUrl([
+            'page' => 'User:FileStorage',
+            'action' => 'download',
+            'hash' => $file->hash
+        ]);
+    }
+
+    /**
+     * Deletes a file
+     * 
+     * @param string $fileId File ID
+     */
+    public function deleteFile(string $fileId) {
+        if(!$this->fileStorageRepository->deleteStoredFile($fileId)) {
+            throw new GeneralException('Database error.');
+        }
     }
 }

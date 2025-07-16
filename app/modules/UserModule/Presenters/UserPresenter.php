@@ -4,7 +4,6 @@ namespace App\Modules\UserModule;
 
 use App\Components\Static\UserProfileStatic\UserProfileStatic;
 use App\Constants\Container\SystemGroups;
-use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
 use App\Helpers\DateTimeFormatHelper;
 use App\Helpers\LinkHelper;
@@ -51,21 +50,9 @@ class UserPresenter extends AUserPresenter {
         if($userId == $this->getUserId() || $this->groupManager->isUserMemberOfGroupTitle($userId, SystemGroups::ADMINISTRATORS)) {
             $links[] = LinkBuilder::createSimpleLink('Configuration', $this->createFullURL('User:UserConfiguration', 'home', ['userId' => $userId]), 'link');
         }
+        $links[] = LinkBuilder::createSimpleLink('Group memberships', $this->createURL('groupMembershipsGrid', ['userId' => $userId]), 'link');
 
         $this->template->links = LinkHelper::createLinksFromArray($links);
-    }
-
-    protected function createComponentUserGroupMembershipsGrid(HttpRequest $request) {
-        $grid = $this->componentFactory->getGridBuilder($this->containerId);
-
-        $qb = $this->groupManager->composeQueryForGroupsWhereUserIsMember($request->get('userId'));
-
-        $grid->createDataSourceFromQueryBuilder($qb, 'groupId');
-        $grid->addQueryDependency('userId', $request->get('userId'));
-
-        $grid->addColumnConst('title', 'Title', SystemGroups::class);
-
-        return $grid;
     }
 
     protected function createComponentUserProfile() {
@@ -91,6 +78,28 @@ class UserPresenter extends AUserPresenter {
         $userProfile->setUser($user);
 
         return $userProfile;
+    }
+
+    public function renderGroupMembershipsGrid() {
+        $this->setTitle('Group memberships - User');
+        $this->template->links = $this->createBackUrl('profile', ['userId' => $this->httpRequest->get('userId')]);
+    }
+
+    protected function createComponentGroupMembershipsGrid() {
+        $grid = $this->componentFactory->getGridBuilder($this->containerId);
+
+        $qb = $this->groupManager->composeQueryForGroupsWhereUserIsMember($this->httpRequest->get('userId'));
+
+        $grid->createDataSourceFromQueryBuilder($qb, 'groupId');
+        $grid->addQueryDependency('userId', $this->httpRequest->get('userId'));
+
+        $grid->addColumnConst('title', 'Title', SystemGroups::class);
+
+        $grid->disablePagination();
+        $grid->disableActions();
+        $grid->disableRefresh();
+
+        return $grid;
     }
 }
 

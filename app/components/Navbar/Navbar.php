@@ -133,12 +133,12 @@ class Navbar extends AComponent {
             'Logout' => $this->getUserLogoutLink()
         ];
 
-        $containerSwitch = $this->getContainerSwitch();
+        $containerSwitch = '<div class="col-md-4">' . $this->getContainerSwitch() . '</div>';
         if($containerSwitch !== null && $this->mode !== null) {
             $userInfoLinks = array_merge(['Containers' => $containerSwitch], $userInfoLinks);
         }
 
-        $userInfo = '';
+        $userInfo = '<div class="row">';
         if($this->mode !== null) {
             foreach($userInfoLinks as $title => $link) {
                 if(!in_array($title, $this->hideLinks)) {
@@ -146,6 +146,7 @@ class Navbar extends AComponent {
                 }
             }
         }
+        $userInfo .= '</div>';
 
         $this->template->user_info = $userInfo;
     }
@@ -167,11 +168,34 @@ class Navbar extends AComponent {
                 break;
         }
 
-        if($link === null) {
-            return '<span class="navbar-link" style="cursor: pointer" title="' . $this->user->getFullname() . '">' . $this->user->getFullname() . '</span>';
+        $profileImage = $this->user->getFullnameInitials();
+        
+        if($this->user->getProfilePictureFileId() !== null) {
+            $file = $this->app->fileStorageManager->getFileById($this->user->getProfilePictureFileId());
+
+            $profileImage = '
+                <img src="' . $file->filepath . '">
+            ';
         }
 
-        return $this->createLink($link, $this->user->getFullname());
+        $content = '
+            <div class="row">
+                <div class="col-md-1" id="center" style="border-radius: 100px; background-color: lightgrey; height: 32px; width: 32px; color: black">' . $profileImage . '</div>
+                <div class="col-md" id="left">' . $this->user->getFullname() . '</div>
+            </div>
+        ';
+
+        if($link === null) {
+            return '
+                <div class="col-md">
+                    <span class="navbar-link" style="cursor: pointer" title="' . $this->user->getFullname() . '">
+                        ' . $content . '
+                    </span>
+                </div>
+            ';
+        }
+
+        return '<div class="col-md">' . $this->createLink($link, $this->user->getFullname(), $content) . '</div>';
     }
 
     /**
@@ -200,7 +224,7 @@ class Navbar extends AComponent {
             return '';
         }
 
-        return $this->createLink($link, 'Logout');
+        return '<div class="col-md-3">' . $this->createLink($link, 'Logout') . '</div>';
     }
 
     /**
@@ -208,10 +232,14 @@ class Navbar extends AComponent {
      * 
      * @param array $url Link URL
      * @param string $title Link title
+     * @param ?string $content Link content
      * @return string HTML code
      */
-    private function createLink(array $url, string $title) {
-        return '<a class="navbar-link" href="' . LinkBuilder::convertUrlArrayToString($url) . '" title="' . $title . '">' . $title . '</a>';
+    private function createLink(array $url, string $title, ?string $content = null) {
+        if($content === null) {
+            $content = $title;
+        }
+        return '<a class="navbar-link" href="' . LinkBuilder::convertUrlArrayToString($url) . '" title="' . $title . '">' . $content . '</a>';
     }
 
     public function render() {

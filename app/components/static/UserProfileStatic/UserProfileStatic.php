@@ -59,6 +59,7 @@ class UserProfileStatic extends AComponent {
         $template = $this->getTemplate(__DIR__ . '\\template.html');
 
         $template->user_profile = $this->build();
+        $template->user_profile_picture = $this->getProfilePicture();
 
         return $template->render()->getRenderedContent();
     }
@@ -133,6 +134,25 @@ class UserProfileStatic extends AComponent {
         $superior = $this->userManager->getUserById($superiorId);
 
         return $superior->getFullname();
+    }
+
+    /**
+     * Returns user's profile picture
+     */
+    private function getProfilePicture() {
+        $content = $this->user->getFullnameInitials();
+
+        if($this->user->getProfilePictureFileId() !== null) {
+            $file = $this->app->fileStorageManager->getFileById($this->user->getProfilePictureFileId());
+
+            $content = '<img src="' . $file->filepath . '">';
+        }
+
+        return '
+            <div id="center" style="border-radius: 100px; background-color: lightgrey; height: 64px; width: 64px; padding-top: 20px">
+                ' . $content . '
+            </div>
+        ';
     }
 
     public static function createFromComponent(AComponent $component) {}

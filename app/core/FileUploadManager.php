@@ -20,7 +20,10 @@ class FileUploadManager {
         'txt',
         'doc',
         'ppt',
-        'pptx'
+        'pptx',
+        'png',
+        'jpg',
+        'jpeg'
     ];
 
     /**

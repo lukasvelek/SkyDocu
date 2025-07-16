@@ -109,7 +109,7 @@ class UserAuthenticator {
         $row = $this->userRepository->getUserById($userId, true);
 
         if($row === null) {
-            throw new BadCredentialsException('Bad credentials.', null);
+            throw new BadCredentialsException($userId, null);
         }
 
         $rows = $this->userRepository->getUserForAuthentication($row->getUsername());

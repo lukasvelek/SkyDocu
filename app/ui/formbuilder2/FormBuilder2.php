@@ -11,7 +11,6 @@ use App\Core\Http\Ajax\Requests\PostAjaxRequest;
 use App\Core\Http\HttpRequest;
 use App\Core\Http\JsonResponse;
 use App\Core\Router;
-use App\Modules\APresenter;
 use App\Modules\ModuleManager;
 use App\UI\AComponent;
 use App\UI\FormBuilder2\FormState\FormStateList;

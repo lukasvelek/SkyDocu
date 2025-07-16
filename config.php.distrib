@@ -37,7 +37,6 @@ define('LOG_STOPWATCH', 0);
 
 define('LOG_DIR', 'logs\\');
 define('CACHE_DIR', 'cache\\');
-define('CONTAINERS_DIR', 'containers\\');
 define('UPLOAD_DIR', 'upload\\');
 
 define('APP_ABSOLUTE_DIR', '');

@@ -19,9 +19,9 @@ class FileStoragePresenter extends AUserPresenter {
             throw new GeneralException('No hash is given.');
         }
 
-        $file = $this->fileStorageManager->getFileByHash($hash);
+        $file = $this->app->fileStorageManager->getFileByHash($hash, $this->containerId);
 
-        $this->app->forceDownloadFile($file->filepath);
+        $this->app->forceDownloadFile($file->filepath, $file->filename);
     }
 }
 

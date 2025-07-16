@@ -162,7 +162,7 @@ function checkDefines() {
         'SQL_LOG_LEVEL',
         'LOG_STOPWATCH',
         'LOG_DIR',
-        'CONTAINERS_DIR',
+        'UPLOAD_DIR',
         'APP_ABSOLUTE_DIR',
         'PHP_ABSOLUTE_DIR',
         'APP_HOSTNAME',

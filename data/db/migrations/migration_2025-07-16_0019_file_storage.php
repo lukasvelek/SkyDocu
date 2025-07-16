@@ -17,7 +17,9 @@ class migration_2025_07_16_0019_file_storage extends ABaseMigration {
             ->integer('filesize')
             ->varchar('userId')
             ->varchar('hash')
-            ->datetimeAuto('dateCreated');
+            ->varchar('containerId', 256, true)
+            ->datetimeAuto('dateCreated')
+            ->index(['fileId', 'containerId']);
 
         $schema->update('users')
             ->varchar('profilePictureFileId', 256, true);

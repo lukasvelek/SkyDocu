@@ -5,7 +5,6 @@ namespace App\Managers\Container;
 use App\Core\Caching\CacheNames;
 use App\Core\Datetypes\DateTime;
 use App\Core\DB\DatabaseRow;
-use App\Core\Router;
 use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
 use App\Exceptions\NonExistingEntityException;
@@ -80,62 +79,6 @@ class FileStorageManager extends AManager {
     }
 
     /**
-     * Creates a new file
-     * 
-     * @param string $documentId Document ID
-     * @param string $userId User ID
-     * @param string $filename Filename
-     * @param string $filepath Filepath
-     * @param int $filesize Filesize
-     * @return string File ID
-     */
-    public function createNewFile(?string $documentId, string $userId, string $filename, string $filepath, int $filesize): string {
-        $filepath = str_replace('\\', '\\\\', $filepath);
-
-        $fileId = $this->createId(EntityManager::C_FILE_STORAGE);
-
-        $hash = $this->createUniqueHashForDb(256, EntityManager::C_FILE_STORAGE, 'hash');
-
-        if(!$this->fileStorageRepository->createNewStoredFile($fileId, $filename, $filepath, $filesize, $userId, $hash)) {
-            throw new GeneralException('Database error.');
-        }
-
-        if($documentId !== null) {
-            $this->createNewFileDocumentRelation($documentId, $fileId);
-        }
-
-        return $fileId;
-    }
-
-    /**
-     * Creates a new file for process instance
-     * 
-     * @param string $instanceId Instance ID
-     * @param string $userId User ID
-     * @param string $filename Filename
-     * @param string $filepath Filepath
-     * @param int $filesize Filesize
-     * @return string File ID
-     */
-    public function createNewProcessInstanceFile(string $instanceId, string $userId, string $filename, string $filepath, int $filesize): string {
-        $filepath = str_replace('\\', '\\\\', $filepath);
-
-        $fileId = $this->createId(EntityManager::C_FILE_STORAGE);
-
-        $hash = $this->createUniqueHashForDb(256, EntityManager::C_FILE_STORAGE, 'hash');
-
-        if(!$this->fileStorageRepository->createNewStoredFile($fileId, $filename, $filepath, $filesize, $userId, $hash)) {
-            throw new GeneralException('Database error.');
-        }
-
-        if($instanceId !== null) {
-            $this->createNewFileProcessInstanceRelation($instanceId, $fileId);
-        }
-
-        return $fileId;
-    }
-
-    /**
      * Creates a new file-process instance relation
      * 
      * @param string $instanceId Process instance ID
@@ -162,71 +105,6 @@ class FileStorageManager extends AManager {
         if(!$this->fileStorageRepository->createNewFileDocumentRelation($relationId, $documentId, $fileId)) {
             throw new GeneralException('Database error.');
         }
-    }
-
-    /**
-     * Returns a file
-     * 
-     * @param string $fileId File ID
-     * @param bool $force Force
-     */
-    public function getFileById(string $fileId, bool $force = false): DatabaseRow {
-        $exp = new DateTime();
-        $exp->modify('+1h');
-        $cache = $this->cacheFactory->getCache(CacheNames::FILES);
-
-        $file = $cache->load($fileId, function() use ($fileId) {
-            return $this->fileStorageRepository->getFileById($fileId);
-        }, [], $force);
-
-        if($file === null) {
-            throw new NonExistingEntityException('File does not exist.');
-        }
-
-        return DatabaseRow::createFromDbRow($file);
-    }
-
-    /**
-     * Returns a file
-     * 
-     * @param string $hash File hash
-     */
-    public function getFileByHash(string $hash): DatabaseRow {
-        $exp = new DateTime();
-        $exp->modify('+1h');
-        $cache = $this->cacheFactory->getCache(CacheNames::FILE_HASH_TO_ID_MAPPING);
-
-        $fileId = $cache->load($hash, function() use ($hash) {
-            $file = $this->fileStorageRepository->getFileByHash($hash);
-
-            if($file !== null) {
-                return $file['fileId'];
-            }
-
-            return null;
-        });
-
-        if($fileId === null) {
-            throw new NonExistingEntityException('File does not exist.');
-        }
-
-        return $this->getFileById($fileId);
-    }
-
-    /**
-     * Generates download link for file in document by given document ID
-     * 
-     * @param string $documentId Document ID
-     */
-    public function generateDownloadLinkForFileInDocumentByDocumentId(string $documentId): string {
-        $fileRelation = $this->getFileRelationForDocumentId($documentId);
-        $file = $this->getFileById($fileRelation->fileId);
-
-        return Router::generateUrl([
-            'page' => 'User:FileStorage',
-            'action' => 'download',
-            'hash' => $file->hash
-        ]);
     }
 }
 

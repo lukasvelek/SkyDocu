@@ -7,6 +7,7 @@ use App\Constants\Container\SystemGroups;
 use App\Constants\ContainerStatus;
 use App\Core\Caching\CacheFactory;
 use App\Core\Caching\CacheNames;
+use App\Core\FileManager;
 use App\Core\Http\HttpRequest;
 use App\Entities\UserEntity;
 use App\Managers\Container\GroupManager;
@@ -178,7 +179,7 @@ class Navbar extends AComponent {
         if($this->user->getProfilePictureFileId() !== null) {
             $file = $this->app->fileStorageManager->getFileById($this->user->getProfilePictureFileId());
 
-            $imageSource = $file->filepath;
+            $imageSource = FileManager::getRelativeFilePathFromAbsoluteFilePath($file->filepath);
         } else {
             $imageSource = 'resources/images/user-profile-picture.png';
         }

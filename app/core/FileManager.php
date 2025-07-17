@@ -236,6 +236,18 @@ class FileManager {
             return explode('.', $filenameWithExtension)[0];
         }
     }
+
+    /**
+     * Returns file's relative path from absolute path
+     * 
+     * @param string $absolutePath Absolute path
+     */
+    public static function getRelativeFilePathFromAbsoluteFilePath(string $absolutePath): string {
+        $path = substr($absolutePath, strlen(APP_ABSOLUTE_DIR));
+        $path = str_replace('\\', '/', $path);
+
+        return $path;
+    }
 }
 
 ?>

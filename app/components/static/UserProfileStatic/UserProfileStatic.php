@@ -2,6 +2,7 @@
 
 namespace App\Components\Static\UserProfileStatic;
 
+use App\Core\FileManager;
 use App\Core\Http\HttpRequest;
 use App\Entities\UserEntity;
 use App\Exceptions\GeneralException;
@@ -143,12 +144,16 @@ class UserProfileStatic extends AComponent {
      */
     private function getProfilePicture(): string {
         if($this->user->getProfilePictureFileId() !== null) {
-            $imageSource = $this->user->getProfilePictureFileId();
+            $fileId = $this->user->getProfilePictureFileId();
+
+            $file = $this->app->fileStorageManager->getFileById($fileId);
+
+            $imageSource = FileManager::getRelativeFilePathFromAbsoluteFilePath($file->filepath);
         } else {
             $imageSource = 'resources/images/user-profile-picture.png';
         }
 
-        return '<img src="' . $imageSource . '" width="128px" height="128px">';
+        return '<img src="' . $imageSource . '" width="128px" height="128px" style="border-radius: 100px">';
     }
 
     /**

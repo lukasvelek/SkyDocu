@@ -4,6 +4,8 @@ namespace App\Modules\UserModule;
 
 use App\Components\Static\UserProfileStatic\UserProfileStatic;
 use App\Constants\Container\SystemGroups;
+use App\Core\Caching\CacheNames;
+use App\Core\FileManager;
 use App\Core\FileUploadManager;
 use App\Core\Http\FormRequest;
 use App\Exceptions\AException;
@@ -121,12 +123,33 @@ class UserPresenter extends AUserPresenter {
 
     public function handleChangeProfilePictureFormSubmit(FormRequest $fr) {
         try {
+            // delete old picture
+            if($this->getUser()->getProfilePictureFileId() !== null) {
+                $file = $this->app->fileStorageManager->getFileById($this->getUser()->getProfilePictureFileId());
+
+                try {
+                    $this->app->fileStorageRepository->beginTransaction(__METHOD__);
+
+                    $this->app->fileStorageManager->deleteFile($this->getUser()->getProfilePictureFileId());
+
+                    FileManager::deleteFile($file->filepath);
+
+                    $this->app->fileStorageRepository->commit($this->getUserId(), __METHOD__);
+                } catch(AException $e) {
+                    $this->app->fileStorageRepository->rollback(__METHOD__);
+
+                    $this->logger->error('Could not delete profile picture for user #' . $this->getUserId() . '. File ID: #' . $this->getUser()->getProfilePictureFileId() . '. Reason: ' . $e->getMessage(), __METHOD__);
+                }
+            }
+
+            // upload new picture
             $fum = new FileUploadManager();
 
             $fileData = $fum->uploadFile($_FILES['profilePictureFile'], $this->getUserId(), $this->containerId);
 
             $this->app->fileStorageRepository->beginTransaction(__METHOD__);
 
+            // create a new database entry for the file
             $fileId = $this->app->fileStorageManager->createNewFile(
                 $this->getUserId(),
                 $fileData[FileUploadManager::FILE_FILENAME],
@@ -135,6 +158,7 @@ class UserPresenter extends AUserPresenter {
                 $this->containerId
             );
             
+            // update the user with the new profile picture
             $this->app->userManager->updateUser(
                 $this->getUserId(),
                 [

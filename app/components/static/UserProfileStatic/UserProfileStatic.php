@@ -10,6 +10,7 @@ use App\Managers\UserAbsenceManager;
 use App\Managers\UserManager;
 use App\Managers\UserSubstituteManager;
 use App\UI\AComponent;
+use App\UI\LinkBuilder;
 
 /**
  * UserProfileStatic component is used to display user's profile
@@ -60,6 +61,7 @@ class UserProfileStatic extends AComponent {
 
         $template->user_profile = $this->build();
         $template->user_profile_picture = $this->getProfilePicture();
+        $template->user_profile_picture_change_link = $this->getProfilePictureChangeLink();
 
         return $template->render()->getRenderedContent();
     }
@@ -139,20 +141,41 @@ class UserProfileStatic extends AComponent {
     /**
      * Returns user's profile picture
      */
-    private function getProfilePicture() {
-        $content = $this->user->getFullnameInitials();
-
+    private function getProfilePicture(): string {
         if($this->user->getProfilePictureFileId() !== null) {
-            $file = $this->app->fileStorageManager->getFileById($this->user->getProfilePictureFileId());
-
-            $content = '<img src="' . $file->filepath . '">';
+            $imageSource = $this->user->getProfilePictureFileId();
+        } else {
+            $imageSource = 'resources/images/user-profile-picture.png';
         }
 
-        return '
-            <div id="center" style="border-radius: 100px; background-color: lightgrey; height: 64px; width: 64px; padding-top: 20px">
-                ' . $content . '
-            </div>
-        ';
+        return '<img src="' . $imageSource . '" width="128px" height="128px">';
+    }
+
+    /**
+     * Returns profile picture change link
+     */
+    private function getProfilePictureChangeLink(): string {
+        return LinkBuilder::createSimpleLink(
+            'Change profile picture',
+            $this->createFullURL(
+                sprintf(
+                    '%s:%s',
+                    $this->presenter->moduleName,
+                    substr(
+                        $this->presenter->name,
+                        0,
+                        (
+                            strlen($this->presenter->name) - strlen('Presenter')
+                        )
+                    )
+                ),
+                'changeProfilePictureForm',
+                [
+                    'userId' => $this->user->getId()
+                ]
+            ),
+            'link'
+        );
     }
 
     public static function createFromComponent(AComponent $component) {}

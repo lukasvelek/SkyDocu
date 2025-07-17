@@ -155,6 +155,10 @@ class UserProfileStatic extends AComponent {
      * Returns profile picture change link
      */
     private function getProfilePictureChangeLink(): string {
+        if($this->app->currentUser->getId() != $this->user->getId()) {
+            return '';
+        }
+
         return LinkBuilder::createSimpleLink(
             'Change profile picture',
             $this->createFullURL(
@@ -169,10 +173,7 @@ class UserProfileStatic extends AComponent {
                         )
                     )
                 ),
-                'changeProfilePictureForm',
-                [
-                    'userId' => $this->user->getId()
-                ]
+                'changeProfilePictureForm'
             ),
             'link'
         );

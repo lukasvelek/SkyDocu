@@ -4,6 +4,8 @@ namespace App\Modules\UserModule;
 
 use App\Components\Static\UserProfileStatic\UserProfileStatic;
 use App\Constants\Container\SystemGroups;
+use App\Core\FileUploadManager;
+use App\Core\Http\FormRequest;
 use App\Exceptions\AException;
 use App\Helpers\DateTimeFormatHelper;
 use App\Helpers\LinkHelper;
@@ -100,6 +102,56 @@ class UserPresenter extends AUserPresenter {
         $grid->disableRefresh();
 
         return $grid;
+    }
+
+    public function renderChangeProfilePictureForm() {}
+
+    protected function createComponentChangeProfilePictureForm() {
+        $form = $this->componentFactory->getFormBuilder();
+
+        $form->setAction($this->createURL('changeProfilePictureFormSubmit'));
+
+        $form->addFileInput('profilePictureFile', 'File:')
+            ->setRequired();
+
+        $form->addSubmit('Change');
+
+        return $form;
+    }
+
+    public function handleChangeProfilePictureFormSubmit(FormRequest $fr) {
+        try {
+            $fum = new FileUploadManager();
+
+            $fileData = $fum->uploadFile($_FILES['profilePictureFile'], $this->getUserId(), $this->containerId);
+
+            $this->app->fileStorageRepository->beginTransaction(__METHOD__);
+
+            $fileId = $this->app->fileStorageManager->createNewFile(
+                $this->getUserId(),
+                $fileData[FileUploadManager::FILE_FILENAME],
+                $fileData[FileUploadManager::FILE_FILEPATH],
+                $fileData[FileUploadManager::FILE_FILESIZE],
+                $this->containerId
+            );
+            
+            $this->app->userManager->updateUser(
+                $this->getUserId(),
+                [
+                    'profilePictureFileId' => $fileId
+                ]
+            );
+
+            $this->app->fileStorageRepository->commit($this->getUserId(), __METHOD__);
+
+            $this->flashMessage('Successfully changed profile picture. The change can take few minutes before being visible.', 'success');
+        } catch(AException $e) {
+            $this->app->fileStorageRepository->rollback(__METHOD__);
+
+            $this->flashMessage('Could not change profile picture. Reason: ' . $e->getMessage(), 'error', 10);
+        }
+
+        $this->redirect($this->createURL('profile', ['userId' => $this->getUserId()]));
     }
 }
 

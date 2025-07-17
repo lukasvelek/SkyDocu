@@ -20,6 +20,7 @@ Previously changelog for versions `1.0`-`1.4` has been located in README.md. How
 - Added support for user editing
 - Added support for password changing
 - Added global file storage
+- Added support for user profile pictures
 - Reworked user administration UI in containers
 - Fixed a bug where custom container processes are visible in container settings in superadministration
 - Removed support for container environments

@@ -133,12 +133,12 @@ class Navbar extends AComponent {
             'Logout' => $this->getUserLogoutLink()
         ];
 
-        $containerSwitch = '<div class="col-md-4">' . $this->getContainerSwitch() . '</div>';
+        $containerSwitch = $this->getContainerSwitch();
         if($containerSwitch !== null && $this->mode !== null) {
             $userInfoLinks = array_merge(['Containers' => $containerSwitch], $userInfoLinks);
         }
 
-        $userInfo = '<div class="row">';
+        $userInfo = '';
         if($this->mode !== null) {
             foreach($userInfoLinks as $title => $link) {
                 if(!in_array($title, $this->hideLinks)) {
@@ -146,7 +146,6 @@ class Navbar extends AComponent {
                 }
             }
         }
-        $userInfo .= '</div>';
 
         $this->template->user_info = $userInfo;
     }
@@ -168,34 +167,29 @@ class Navbar extends AComponent {
                 break;
         }
 
-        $profileImage = $this->user->getFullnameInitials();
+        if($link === null) {
+            return '
+                <span class="navbar-link" style="cursor: pointer" title="' . $this->user->getFullname() . '">
+                    ' . $this->user->getFullname() . '
+                </span>
+            ';
+        }
         
         if($this->user->getProfilePictureFileId() !== null) {
             $file = $this->app->fileStorageManager->getFileById($this->user->getProfilePictureFileId());
 
-            $profileImage = '
-                <img src="' . $file->filepath . '">
-            ';
+            $imageSource = $file->filepath;
+        } else {
+            $imageSource = 'resources/images/user-profile-picture.png';
         }
 
-        $content = '
-            <div class="row">
-                <div class="col-md-1" id="center" style="border-radius: 100px; background-color: lightgrey; height: 32px; width: 32px; color: black">' . $profileImage . '</div>
-                <div class="col-md" id="left">' . $this->user->getFullname() . '</div>
-            </div>
+        $profileImage = '
+            <img src="' . $imageSource . '" width="24px" height="24px" style="border-radius: 100px">
         ';
 
-        if($link === null) {
-            return '
-                <div class="col-md">
-                    <span class="navbar-link" style="cursor: pointer" title="' . $this->user->getFullname() . '">
-                        ' . $content . '
-                    </span>
-                </div>
-            ';
-        }
+        $content = $profileImage . '&nbsp;&nbsp;' . $this->user->getFullname();
 
-        return '<div class="col-md">' . $this->createLink($link, $this->user->getFullname(), $content) . '</div>';
+        return $this->createLink($link, $this->user->getFullname(), $content);
     }
 
     /**
@@ -224,7 +218,7 @@ class Navbar extends AComponent {
             return '';
         }
 
-        return '<div class="col-md-3">' . $this->createLink($link, 'Logout') . '</div>';
+        return $this->createLink($link, 'Logout');
     }
 
     /**

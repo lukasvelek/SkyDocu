@@ -14,6 +14,12 @@ class FileUploadManager {
     public const FILE_FILESIZE = 'filesize';
     public const FILE_FILEPATH = 'filepath';
 
+    public const FILE_TYPE_IMAGE = 1;
+    public const FILE_TYPE_DOCUMENT = 2;
+
+    /**
+     * Allowed document file extensions
+     */
     public static array $ALLOWED_EXTENSIONS = [
         'docx',
         'pdf',
@@ -24,20 +30,29 @@ class FileUploadManager {
     ];
 
     /**
+     * Allowed image file extensions
+     */
+    public static array $ALLOWED_IMAGE_EXTENSIONS = [
+        'png',
+        'jpg',
+        'jpeg'
+    ];
+
+    /**
      * Uploads a file for process instance
      * 
      * @param array $fileData Result of $_FILES[FILE_INPUT_NAME]
-     * @param string $processId Process ID
-     * @param string $processInstanceId Process instance ID
      * @param string $userId User ID
+     * @param ?string $containerId Container ID
+     * @param array $additionalValues Additional values
      */
-    public function uploadFileForProcessInstance(array $fileData, string $processId, string $processInstanceId, string $userId): array {
-        $dirpath = $this->generateFolderPath("$processId\\$processInstanceId", $userId);
-        $filepath = $dirpath . $this->generateFilename($fileData['name'], "$processId\\$processInstanceId", $userId);
+    public function uploadFileForProcessInstance(array $fileData, string $userId, ?string $containerId, array $additionalValues = []): array {
+        $dirpath = $this->generateFolderPath($userId, $containerId);
+        $filepath = $dirpath . $this->generateFilename($fileData['name'], $userId, $containerId, $additionalValues);
 
         // CHECKS
-        if(!$this->checkType($filepath)) {
-            throw new GeneralException('File extension for file \'' . $filepath . '\' is not supported. Supported file extensions are: ' . implode(', ', self::$ALLOWED_EXTENSIONS));
+        if(!$this->checkType($filepath, self::FILE_TYPE_DOCUMENT)) {
+            throw new GeneralException('File extension for file \'' . $fileData['name'] . '\' is not supported. Supported file extensions are: ' . implode(', ', array_merge(self::$ALLOWED_EXTENSIONS, self::$ALLOWED_IMAGE_EXTENSIONS)));
         }
         if(!$this->checkFileSize($fileData)) {
             throw new GeneralException('File is too big. Only files with size up to 500 MB are supported.');
@@ -63,16 +78,45 @@ class FileUploadManager {
      * Uploads a file
      * 
      * @param array $fileData Result of $_FILES[FILE_INPUT_NAME]
-     * @param string $documentId Document ID
      * @param string $userId User ID
+     * @param ?string $containerId Container ID
+     * @param array $additionalValues Additional values
      */
-    public function uploadFile(array $fileData, ?string $documentId, string $userId): array {
-        $dirpath = $this->generateFolderPath($documentId, $userId);
-        $filepath = $dirpath . $this->generateFilename($fileData['name'], $documentId, $userId);
+    public function uploadFile(array $fileData, string $userId, ?string $containerId, array $additionalValues = []): array {
+        $dirpath = $this->generateFolderPath($userId, $containerId);
+        $filepath = $dirpath . $this->generateFilename($fileData['name'], $userId, $containerId, $additionalValues);
 
         // CHECKS
-        if(!$this->checkType($filepath)) {
-            throw new GeneralException('File extension for file \'' . $filepath . '\' is not supported. Supported file extensions are: ' . implode(', ', self::$ALLOWED_EXTENSIONS));
+        if(!$this->checkType($filepath, self::FILE_TYPE_DOCUMENT)) {
+            throw new GeneralException('File extension for file \'' . $fileData['name'] . '\' is not supported. Supported file extensions are: ' . implode(', ', array_merge(self::$ALLOWED_EXTENSIONS, self::$ALLOWED_IMAGE_EXTENSIONS)));
+        }
+        if(!$this->checkFileSize($fileData)) {
+            throw new GeneralException('File is too big. Only files with size up to 500 MB are supported.');
+        }
+        // END OF CHECKS
+
+        if(!$this->createFolderPath($dirpath)) {
+            throw new GeneralException('Could not create end file path.');
+        }
+
+        if(move_uploaded_file($fileData['tmp_name'], $filepath)) {
+            return [
+                self::FILE_FILENAME => $fileData['name'],
+                self::FILE_FILEPATH => $filepath,
+                self::FILE_FILESIZE => $this->getFileSize($fileData)
+            ];
+        } else {
+            throw new GeneralException('File upload error.');
+        }
+    }
+
+    public function uploadImage(array $fileData, string $userId, ?string $containerId, array $additionalValues = []): array {
+        $dirpath = $this->generateFolderPath($userId, $containerId);
+        $filepath = $dirpath . $this->generateFilename($fileData['name'], $userId, $containerId, $additionalValues);
+
+        // CHECKS
+        if(!$this->checkType($filepath, self::FILE_TYPE_IMAGE)) {
+            throw new GeneralException('File extension for file \'' . $fileData['name'] . '\' is not supported. Supported file extensions are: ' . implode(', ', self::$ALLOWED_IMAGE_EXTENSIONS));
         }
         if(!$this->checkFileSize($fileData)) {
             throw new GeneralException('File is too big. Only files with size up to 500 MB are supported.');
@@ -99,16 +143,17 @@ class FileUploadManager {
      * 
      * @param string $name File name
      * @param string $content File content
-     * @param ?string $documentId Document ID
      * @param string $userId User ID
+     * @param ?string $containerId Container ID
+     * @param array $additionalValues Additional values
      */
-    public function createFile(string $name, string $content, ?string $documentId, string $userId): array {
-        $dirpath = $this->generateFolderPath($documentId, $userId);
-        $filename = $this->generateFilename($name, $documentId, $userId);
+    public function createFile(string $name, string $content, string $userId, ?string $containerId, array $additionalValues = []): array {
+        $dirpath = $this->generateFolderPath($userId, $containerId);
+        $filename = $this->generateFilename($name, $userId, $containerId, $additionalValues);
         $filepath = $dirpath . $filename;
 
         // CHECKS
-        if(!$this->checkType($filepath)) {
+        if(!$this->checkType($filepath, self::FILE_TYPE_DOCUMENT)) {
             throw new GeneralException('File extension for file \'' . $filepath . '\' is not supported. Supported file extensions are: ' . implode(', ', self::$ALLOWED_EXTENSIONS));
         }
         // END OF CHECKS
@@ -134,11 +179,26 @@ class FileUploadManager {
      * Checks file extension
      * 
      * @param string $filepath Filepath
+     * @param int $fileType File type
      */
-    private function checkType(string $filepath): bool {
+    private function checkType(string $filepath, int $fileType): bool {
         $type = strtolower(pathinfo($filepath, PATHINFO_EXTENSION));
 
-        return in_array($type, self::$ALLOWED_EXTENSIONS);
+        if($fileType == self::FILE_TYPE_IMAGE) {
+            if(in_array($type, self::$ALLOWED_IMAGE_EXTENSIONS)) {
+                return true;
+            }
+        } else {
+            if(in_array($type, self::$ALLOWED_EXTENSIONS)) {
+                return true;
+            }
+
+            if(in_array($type, self::$ALLOWED_IMAGE_EXTENSIONS)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -164,15 +224,11 @@ class FileUploadManager {
     /**
      * Generates end directory path
      * 
-     * @param string $entityId Entity ID
      * @param string $userId User ID
+     * @param ?string $containerId Container ID
      */
-    private function generateFolderPath(?string $entityId, string $userId): string {
-        $path = APP_ABSOLUTE_DIR . CONTAINERS_DIR . 'uploads\\' . $userId . '\\';
-
-        if($entityId !== null) {
-            $path .= $entityId . '\\';
-        }
+    private function generateFolderPath(string $userId, ?string $containerId): string {
+        $path = APP_ABSOLUTE_DIR . UPLOAD_DIR . $userId . '\\' . ($containerId !== null ? ($containerId . '\\') : '');
 
         return $path;
     }
@@ -190,15 +246,17 @@ class FileUploadManager {
      * Generates filename
      * 
      * @param string $filename Filename
-     * @param string $entityId Entity ID
      * @param string $userId User ID
+     * @param string $containerId Container ID
+     * @param array $additionalValues Additional values for file name generation
      */
-    private function generateFilename(string $filename, ?string $entityId, string $userId) {
+    private function generateFilename(string $filename, string $userId, ?string $containerId, array $additionalValues = []) {
         $hash = HashManager::createHash(8, false);
-        $text = $hash . $filename . $userId;
-        if($entityId !== null) {
-            $text .= $entityId;
+        $text = $hash . $filename . $userId . time() . rand(0, 100);
+        if($containerId !== null) {
+            $text .= $containerId;
         }
+        $text .= implode('', $additionalValues);
         return md5($text) . '.' . strtolower(pathinfo($filename, PATHINFO_EXTENSION));
     }
 }

@@ -6,13 +6,17 @@ use App\Constants\AppDesignThemes;
 use App\Constants\DateFormats;
 use App\Constants\TimeFormats;
 use App\Core\DB\DatabaseRow;
+use App\Core\FileManager;
+use App\Core\FileUploadManager;
 use App\Core\HashManager;
 use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
 use App\Exceptions\RequiredAttributeIsNotSetException;
+use App\Helpers\DateTimeFormatHelper;
 use App\Helpers\GridHelper;
+use App\Helpers\UserHelper;
 use App\UI\GridBuilder2\Row;
 use App\UI\HTML\HTML;
 use App\UI\LinkBuilder;
@@ -32,7 +36,6 @@ class UsersPresenter extends ASuperAdminSettingsPresenter {
         $grid = $this->componentFactory->getGridBuilder();
 
         $qb = $this->app->userRepository->composeQueryForUsers();
-        //$qb->andWhere($qb->getColumnNotInValues('userId', $this->app->groupManager->getAllContainersOnlyUsers()));
 
         $grid->createDataSourceFromQueryBuilder($qb, 'userId');
         $grid->setGridName(GridHelper::GRID_USERS);
@@ -172,25 +175,54 @@ class UsersPresenter extends ASuperAdminSettingsPresenter {
             throw new RequiredAttributeIsNotSetException('userId');
         }
 
+        $force = false;
+        if($this->httpRequest->get('force') == 1) {
+            $force = true;
+        }
+
         try {
-            $user = $this->app->userManager->getUserById($userId);
+            $user = $this->app->userManager->getUserById($userId, $force);
         } catch(AException $e) {
             $this->flashMessage('This user does not exist.', 'error', 10);
             $this->redirect($this->createURL('list'));
         }
 
-        $userProfile = '';
+        $userProfile = [];
 
         $addInfo = function(string $title, string $data) use (&$userProfile) {
-            $userProfile .= '<p><b>' . $title . ':</b> ' . $data . '</p>';
+            $userProfile[] = '<span id="row-' . count($userProfile) . '"><p><b>' . $title . ':</b> ' . $data . '</p></span>';
         };
 
-        $addInfo('Full name', $user->getFullname());
-        $addInfo('Email', ($user->getEmail() ?? '-'));
+        $memberSince = DateTimeFormatHelper::formatDateToUserFriendly($user->getDateCreated(), $this->getUser()->getDatetimeFormat());
 
-        $this->template->user_profile = $userProfile;
+        $addInfo('ID', $user->getId());
+        $addInfo('Full name', $user->getFullname());
+        $addInfo('Email', $user->getEmail() ?? '-');
+        $addInfo('Member since', $memberSince);
+
+        $this->template->user_profile = implode('', $userProfile);
         $this->template->username = $user->getUsername();
         $this->template->links = LinkBuilder::createSimpleLink('&larr; Back', $this->createURL('list'), 'link');
+
+        $profilePictureImageSource = UserHelper::getUserProfilePictureUri(
+            $user,
+            $this->app->fileStorageManager
+        );
+
+        $this->template->user_profile_picture = '
+            <img src="' . $profilePictureImageSource . '" width="128px" height="128px" style="border-radius: 100px">
+        ';
+
+        $this->template->user_profile_picture_change_link = LinkBuilder::createSimpleLink(
+            'Change profile picture',
+            $this->createURL(
+                'changeProfilePictureForm',
+                [
+                    'userId' => $userId
+                ]
+            ),
+            'link'
+        );
     }
 
     public function handleEditUserForm(?FormRequest $fr = null) {
@@ -371,6 +403,81 @@ class UsersPresenter extends ASuperAdminSettingsPresenter {
         $form->addSubmit('Delete');
 
         return $form;
+    }
+
+    public function renderChangeProfilePictureForm() {}
+
+    protected function createComponentChangeProfilePictureForm() {
+        $form = $this->componentFactory->getFormBuilder();
+
+        $form->setAction($this->createURL('changeProfilePictureFormSubmit', ['userId' => $this->httpRequest->get('userId')]));
+
+        $form->addFileInput('profilePictureFile', 'File:')
+            ->setRequired();
+
+        $form->addSubmit('Change');
+
+        return $form;
+    }
+
+    public function handleChangeProfilePictureFormSubmit(FormRequest $fr) {
+        $userId = $this->httpRequest->get('userId');
+
+        try {
+            $user = $this->app->userManager->getUserById($userId);
+
+            // upload new picture
+            $fum = new FileUploadManager();
+
+            $fileData = $fum->uploadImage($_FILES['profilePictureFile'], $userId, null);
+
+            $this->app->fileStorageRepository->beginTransaction(__METHOD__);
+
+            // delete old picture
+            if($user->getProfilePictureFileId() !== null) {
+                $file = $this->app->fileStorageManager->getFileById($user->getProfilePictureFileId());
+
+                try {
+                    $this->app->fileStorageRepository->beginTransaction(__METHOD__);
+
+                    $this->app->fileStorageManager->deleteFile($user->getProfilePictureFileId());
+
+                    FileManager::deleteFile($file->filepath);
+
+                    $this->app->fileStorageRepository->commit($this->getUserId(), __METHOD__);
+                } catch(AException $e) {
+                    $this->app->fileStorageRepository->rollback(__METHOD__);
+
+                    $this->logger->error('Could not delete profile picture for user #' . $userId . '. File ID: #' . $user->getProfilePictureFileId() . '. Reason: ' . $e->getMessage(), __METHOD__);
+                }
+            }
+
+            // create a new database entry for the file
+            $fileId = $this->app->fileStorageManager->createNewFile(
+                $userId,
+                $fileData[FileUploadManager::FILE_FILENAME],
+                $fileData[FileUploadManager::FILE_FILEPATH],
+                $fileData[FileUploadManager::FILE_FILESIZE]
+            );
+            
+            // update the user with the new profile picture
+            $this->app->userManager->updateUser(
+                $userId,
+                [
+                    'profilePictureFileId' => $fileId
+                ]
+            );
+
+            $this->app->fileStorageRepository->commit($this->getUserId(), __METHOD__);
+
+            $this->flashMessage('Successfully changed profile picture. The change can take few minutes before being visible.', 'success');
+        } catch(AException $e) {
+            $this->app->fileStorageRepository->rollback(__METHOD__);
+
+            $this->flashMessage('Could not change profile picture. Reason: ' . $e->getMessage(), 'error', 10);
+        }
+
+        $this->redirect($this->createURL('profile', ['userId' => $userId, 'force' => 1]));
     }
 }
 

@@ -621,19 +621,10 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
 
     protected function createComponentFileStorageStatsWidget(HttpRequest $request) {
         $containerId = $request->get('containerId');
-        $container = $this->app->containerManager->getContainerById($containerId);
-        $containerConnection = $this->app->dbManager->getConnectionToDatabase($container->getDefaultDatabase()->getName());
 
-        $contentRepository = new ContentRepository($containerConnection, $this->logger, $this->app->transactionLogRepository);
-        $fileStorageRepository = new FileStorageRepository($containerConnection, $this->logger, $this->app->transactionLogRepository);
-
-        $contentRepository->setContainerId($containerId);
-        $fileStorageRepository->setContainerId($containerId);
-
-        $entityManager = new EntityManager($this->logger, $contentRepository);
-        $fileStorageManager = new FileStorageManager($this->logger, $entityManager, $fileStorageRepository);
-
-        $widget = new FileStorageStatsForContainerWidget($request, $fileStorageManager);
+        $widget = new FileStorageStatsForContainerWidget($request, $containerId);
+        $widget->setApplication($this->app);
+        $widget->setPresenter($this->presenter);
         $widget->addQueryDependency('containerId', $containerId);
 
         return $widget;

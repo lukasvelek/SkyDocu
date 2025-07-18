@@ -7,8 +7,10 @@ use App\Constants\Container\SystemGroups;
 use App\Constants\ContainerStatus;
 use App\Core\Caching\CacheFactory;
 use App\Core\Caching\CacheNames;
+use App\Core\FileManager;
 use App\Core\Http\HttpRequest;
 use App\Entities\UserEntity;
+use App\Helpers\UserHelper;
 use App\Managers\Container\GroupManager;
 use App\Managers\Container\StandaloneProcessManager;
 use App\Modules\TemplateObject;
@@ -166,12 +168,27 @@ class Navbar extends AComponent {
             default:
                 break;
         }
+        
+        $imageSource = UserHelper::getUserProfilePictureUri(
+            $this->user,
+            $this->app->fileStorageManager
+        );
+
+        $profileImage = '
+            <img src="' . $imageSource . '" width="24px" height="24px" style="border-radius: 100px">
+        ';
+
+        $content = $profileImage . '&nbsp;&nbsp;' . $this->user->getFullname();
 
         if($link === null) {
-            return '<span class="navbar-link" style="cursor: pointer" title="' . $this->user->getFullname() . '">' . $this->user->getFullname() . '</span>';
+            return '
+                <span class="navbar-link" style="cursor: pointer" title="' . $this->user->getFullname() . '">
+                    ' . $content . '
+                </span>
+            ';
+        } else {
+            return $this->createLink($link, $this->user->getFullname(), $content);
         }
-
-        return $this->createLink($link, $this->user->getFullname());
     }
 
     /**
@@ -208,10 +225,14 @@ class Navbar extends AComponent {
      * 
      * @param array $url Link URL
      * @param string $title Link title
+     * @param ?string $content Link content
      * @return string HTML code
      */
-    private function createLink(array $url, string $title) {
-        return '<a class="navbar-link" href="' . LinkBuilder::convertUrlArrayToString($url) . '" title="' . $title . '">' . $title . '</a>';
+    private function createLink(array $url, string $title, ?string $content = null) {
+        if($content === null) {
+            $content = $title;
+        }
+        return '<a class="navbar-link" href="' . LinkBuilder::convertUrlArrayToString($url) . '" title="' . $title . '">' . $content . '</a>';
     }
 
     public function render() {

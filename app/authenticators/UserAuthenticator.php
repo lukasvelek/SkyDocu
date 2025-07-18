@@ -99,6 +99,37 @@ class UserAuthenticator {
     }
 
     /**
+     * Authenticates user by with given user ID and password
+     * 
+     * @param string $userId User's ID
+     * @param string $password User's password
+     * @throws BadCredentialsException
+     */
+    public function authUser2(string $userId, string $password): bool {
+        $row = $this->userRepository->getUserById($userId, true);
+
+        if($row === null) {
+            throw new BadCredentialsException($userId, null);
+        }
+
+        $rows = $this->userRepository->getUserForAuthentication($row->getUsername());
+
+        $result = false;
+        while($_row = $rows->fetchAssoc()) {
+            if(password_verify($password, $_row['password'])) {
+                $this->logger->warning('Authenticated user with username \'' . $row->getUsername() . '\'.', __METHOD__);
+                $result = true;
+            }
+        }
+
+        if($result === false) {
+            throw new BadCredentialsException($userId, null);
+        }
+
+        return $result;
+    }
+
+    /**
      * Authenticates current user - checks if the password entered matches the one user has saved in the database.
      * 
      * @param string $password User's password

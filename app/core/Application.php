@@ -17,6 +17,7 @@ use App\Managers\ContainerDatabaseManager;
 use App\Managers\ContainerInviteManager;
 use App\Managers\ContainerManager;
 use App\Managers\EntityManager;
+use App\Managers\FileStorageManager;
 use App\Managers\GroupManager;
 use App\Managers\JobQueueManager;
 use App\Managers\ProcessManager;
@@ -28,6 +29,7 @@ use App\Repositories\ContainerDatabaseRepository;
 use App\Repositories\ContainerInviteRepository;
 use App\Repositories\ContainerRepository;
 use App\Repositories\ContentRepository;
+use App\Repositories\FileStorageRepository;
 use App\Repositories\GridExportRepository;
 use App\Repositories\GroupMembershipRepository;
 use App\Repositories\GroupRepository;
@@ -85,6 +87,7 @@ class Application {
     public ProcessRepository $processRepository;
     public JobQueueRepository $jobQueueRepository;
     public JobQueueProcessingHistoryRepository $jobQueueProcessingHistoryRepository;
+    public FileStorageRepository $fileStorageRepository;
 
     public ServiceManager $serviceManager;
     public UserManager $userManager;
@@ -97,6 +100,7 @@ class Application {
     public ContainerDatabaseManager $containerDatabaseManager;
     public ProcessManager $processManager;
     public JobQueueManager $jobQueueManager;
+    public FileStorageManager $fileStorageManager;
 
     public array $repositories;
 
@@ -147,6 +151,7 @@ class Application {
         $this->userSubstituteManager = new UserSubstituteManager($this->logger, $this->entityManager, $this->userSubstituteRepository);
         $this->processManager = new ProcessManager($this->logger, $this->entityManager, $this->processRepository);
         $this->jobQueueManager = new JobQueueManager($this->logger, $this->entityManager, $this->jobQueueRepository, $this->jobQueueProcessingHistoryRepository);
+        $this->fileStorageManager = new FileStorageManager($this->logger, $this->entityManager, $this->fileStorageRepository);
 
         $this->initManagers();
 
@@ -276,11 +281,12 @@ class Application {
      * Forces file download
      * 
      * @param string $filepath File path
+     * @param string $filename File name
      */
-    public function forceDownloadFile(string $filepath) {
+    public function forceDownloadFile(string $filepath, string $filename) {
         header('Content-Type: application/octet-stream');
         header('Content-Transfer-Encoding: Binary');
-        header('Content-disposition: attachment; filename="' . basename($filepath . '"'));
+        header('Content-disposition: attachment; filename="' . $filename . '"');
         readfile($filepath);
         exit;
     }

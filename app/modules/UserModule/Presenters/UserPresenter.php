@@ -2,17 +2,15 @@
 
 namespace App\Modules\UserModule;
 
-use App\Components\UserSubstituteForm\UserSubstituteForm;
-use App\Constants\AppDesignThemes;
+use App\Components\Static\UserProfileStatic\UserProfileStatic;
 use App\Constants\Container\SystemGroups;
-use App\Constants\DateFormats;
-use App\Constants\TimeFormats;
+use App\Core\Caching\CacheNames;
+use App\Core\FileManager;
+use App\Core\FileUploadManager;
 use App\Core\Http\FormRequest;
-use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
 use App\Helpers\DateTimeFormatHelper;
 use App\Helpers\LinkHelper;
-use App\Lib\Forms\Reducers\UserOutOfOfficeFormReducer;
 use App\UI\LinkBuilder;
 
 class UserPresenter extends AUserPresenter {
@@ -21,22 +19,30 @@ class UserPresenter extends AUserPresenter {
     }
 
     public function handleProfile() {
+        $this->setTitle('User profile');
+        
         $userId = $this->httpRequest->get('userId');
 
         if($userId === null) {
             $this->redirect($this->createURL('profile', ['userId' => $this->getUserId()]));
         }
+    }
+
+    public function renderProfile() {
+        $userId = $this->httpRequest->get('userId');
+
+        $force = false;
+        if($this->httpRequest->get('force') == 1) {
+            $force = true;
+        }
 
         try {
-            $user = $this->app->userManager->getUserById($userId);
+            $user = $this->app->userManager->getUserById($userId, $force);
         } catch(AException $e) {
             $this->flashMessage($e->getMessage(), 'error', 10);
             $this->redirect($this->createFullURL('User:Home', 'dashboard'));
         }
 
-        $this->saveToPresenterCache('username', $user->getUsername());
-
-        // USER PROFILE
         $userProfile = '';
         $addInfo = function(string $title, string $data) use (&$userProfile) {
             $userProfile .= '<p><b>' . $title . ':</b> ' . $data . '</p>';
@@ -47,293 +53,134 @@ class UserPresenter extends AUserPresenter {
         $addInfo('Member since', DateTimeFormatHelper::formatDateToUserFriendly($user->getDateCreated(), $this->app->currentUser->getDatetimeFormat()));
         $addInfo('ID', $user->getId());
 
-        $this->saveToPresenterCache('userProfile', $userProfile);
-        // END OF USER PROFILE
-
-        $this->setTitle('User profile');
+        $this->template->user_profile = $userProfile;
 
         $links = [];
-        if($this->getUserId() == $userId) {
-            // current user
+        if($userId == $this->getUserId() || $this->groupManager->isUserMemberOfGroupTitle($userId, SystemGroups::ADMINISTRATORS)) {
+            $links[] = LinkBuilder::createSimpleLink('Configuration', $this->createFullURL('User:UserConfiguration', 'home', ['userId' => $userId]), 'link');
+        }
+        $links[] = LinkBuilder::createSimpleLink('Group memberships', $this->createURL('groupMembershipsGrid', ['userId' => $userId]), 'link');
 
-            if(!$this->app->userAbsenceManager->isUserAbsent($this->getUserId())) {
-                $links[] = LinkBuilder::createSimpleLink('Set out-of-office', $this->createURL('outOfOfficeForm'), 'link');
-            } else {
-                $absence = $this->app->userAbsenceManager->getUserCurrentAbsence($this->getUserId());
-                $links[] = '<span>You are currently out-of-office until: ' . DateTimeFormatHelper::formatDateToUserFriendly($absence->dateTo, $this->app->currentUser->getDateFormat()) . '.</span>';
-                $links[] = LinkBuilder::createSimpleLink('Clear out-of-office', $this->createURL('clearOutOfOffice', ['absenceId' => $absence->absenceId]), 'link');
-            }
+        $this->template->links = LinkHelper::createLinksFromArray($links);
+    }
 
-            $links[] = '<span>|</span>';
+    protected function createComponentUserProfile() {
+        $userProfile = new UserProfileStatic(
+            $this->httpRequest,
+            $this->app->userAbsenceManager,
+            $this->app->userSubstituteManager,
+            $this->app->userManager
+        );
 
-            if(!$this->app->userSubstituteManager->hasUserSubstitute($this->getUserId())) {
-                $links[] = LinkBuilder::createSimpleLink('Set substitute', $this->createURL('substituteForm'), 'link');
-            } else {
-                $substitute = $this->app->userSubstituteManager->getUserSubstitute($this->getUserId());
-                $substituteUser = $this->app->userManager->getUserById($substitute->substituteUserId);
-                $links[] = '<span>Your substitute: ' . $substituteUser->getFullname() . '.</span>';
-                $links[] = LinkBuilder::createSimpleLink('Set substitute', $this->createURL('substituteForm'), 'link');
-            }
+        $userProfile->setApplication($this->app);
+        $userProfile->setPresenter($this);
 
-            $links[] = '<span>|</span>';
-            $links[] = LinkBuilder::createSimpleLink('Change theme', $this->createURL('changeThemeForm', ['userId' => $userId]), 'link');
-            $links[] = '<span>|</span>';
-            $links[] = LinkBuilder::createSimpleLink('Change date & time formats', $this->createURL('changeDatetimeForm', ['userId' => $userId]), 'link');
+        $userId = $this->httpRequest->get('userId');
+
+        try {
+            $user = $this->app->userManager->getUserById($userId);
+        } catch(AException $e) {
+            $this->flashMessage($e->getMessage(), 'error', 10);
+            $this->redirect($this->createFullURL('User:Home', 'dashboard'));
         }
 
-        $this->saveToPresenterCache('links', LinkHelper::createLinksFromArray($links));
+        $userProfile->setUser($user);
+
+        return $userProfile;
     }
 
-    public function renderProfile() {
-        $this->template->username = $this->loadFromPresenterCache('username');
-        $this->template->user_profile = $this->loadFromPresenterCache('userProfile');
-        $this->template->links = $this->loadFromPresenterCache('links');
+    public function renderGroupMembershipsGrid() {
+        $this->setTitle('Group memberships - User');
+        $this->template->links = $this->createBackUrl('profile', ['userId' => $this->httpRequest->get('userId')]);
     }
 
-    protected function createComponentUserGroupMembershipsGrid(HttpRequest $request) {
+    protected function createComponentGroupMembershipsGrid() {
         $grid = $this->componentFactory->getGridBuilder($this->containerId);
 
-        $qb = $this->groupManager->composeQueryForGroupsWhereUserIsMember($request->get('userId'));
+        $qb = $this->groupManager->composeQueryForGroupsWhereUserIsMember($this->httpRequest->get('userId'));
 
         $grid->createDataSourceFromQueryBuilder($qb, 'groupId');
-        $grid->addQueryDependency('userId', $request->get('userId'));
+        $grid->addQueryDependency('userId', $this->httpRequest->get('userId'));
 
         $grid->addColumnConst('title', 'Title', SystemGroups::class);
+
+        $grid->disablePagination();
+        $grid->disableActions();
+        $grid->disableRefresh();
 
         return $grid;
     }
 
-    public function handleOutOfOfficeForm(?FormRequest $fr = null) {
-        if($fr !== null) {
-            $data = $fr->getData();
+    public function renderChangeProfilePictureForm() {}
 
-            try {
-                $this->app->userAbsenceRepository->beginTransaction(__METHOD__);
-
-                $this->app->userAbsenceManager->createUserAbsence($this->getUserId(), $data['dateFrom'], $data['dateTo']);
-
-                $this->app->userAbsenceRepository->commit($this->getUserId(), __METHOD__);
-
-                $this->flashMessage('Out-of-office successfully saved.', 'success');
-            } catch(AException $e) {
-                $this->app->userAbsenceRepository->rollback(__METHOD__);
-
-                $this->flashMessage('Could not save out-of-office. Reason: ' . $e->getMessage(), 'error', 10);
-            }
-
-            $this->redirect($this->createURL('profile', ['userId' => $this->getUserId()]));
-        }
-    }
-
-    public function renderOutOfOfficeForm() {
-        $this->template->links = [
-            $this->createBackUrl('profile', ['userId' => $this->getUserId()])
-        ];
-    }
-
-    protected function createComponentOutOfOfficeForm(HttpRequest $request) {
+    protected function createComponentChangeProfilePictureForm() {
         $form = $this->componentFactory->getFormBuilder();
 
-        $form->setAction($this->createURL('outOfOfficeForm'));
+        $form->setAction($this->createURL('changeProfilePictureFormSubmit'));
 
-        $form->addDateInput('dateFrom', 'Date from:')
-            ->setMinimum(date('Y-m-d'))
+        $form->addFileInput('profilePictureFile', 'File:')
             ->setRequired();
 
-        $form->addDateInput('dateTo', 'Date to:')
-            ->setMinimum(date('Y-m-d'))
-            ->setRequired();
-
-        $form->addSubmit();
-
-        $form->setCallReducerOnChange();
-        $form->reducer = new UserOutOfOfficeFormReducer($this->app, $request);
+        $form->addSubmit('Change');
 
         return $form;
     }
 
-    public function handleClearOutOfOffice() {
-        $absenceId = $this->httpRequest->get('absenceId');
-
+    public function handleChangeProfilePictureFormSubmit(FormRequest $fr) {
         try {
-            $this->app->userAbsenceRepository->beginTransaction(__METHOD__);
+            // upload new picture
+            $fum = new FileUploadManager();
 
-            $this->app->userAbsenceManager->updateUserAbsence($absenceId, ['active' => '0']);
+            $fileData = $fum->uploadImage($_FILES['profilePictureFile'], $this->getUserId(), $this->containerId);
 
-            $this->app->userAbsenceRepository->commit($this->getUserId(), __METHOD__);
+            $this->app->fileStorageRepository->beginTransaction(__METHOD__);
 
-            $this->flashMessage('Sucessfully cleared out-of-office.', 'success');
+            // delete old picture
+            if($this->getUser()->getProfilePictureFileId() !== null) {
+                $file = $this->app->fileStorageManager->getFileById($this->getUser()->getProfilePictureFileId());
+
+                try {
+                    $this->app->fileStorageRepository->beginTransaction(__METHOD__);
+
+                    $this->app->fileStorageManager->deleteFile($this->getUser()->getProfilePictureFileId());
+
+                    FileManager::deleteFile($file->filepath);
+
+                    $this->app->fileStorageRepository->commit($this->getUserId(), __METHOD__);
+                } catch(AException $e) {
+                    $this->app->fileStorageRepository->rollback(__METHOD__);
+
+                    $this->logger->error('Could not delete profile picture for user #' . $this->getUserId() . '. File ID: #' . $this->getUser()->getProfilePictureFileId() . '. Reason: ' . $e->getMessage(), __METHOD__);
+                }
+            }
+
+            // create a new database entry for the file
+            $fileId = $this->app->fileStorageManager->createNewFile(
+                $this->getUserId(),
+                $fileData[FileUploadManager::FILE_FILENAME],
+                $fileData[FileUploadManager::FILE_FILEPATH],
+                $fileData[FileUploadManager::FILE_FILESIZE],
+                $this->containerId
+            );
+            
+            // update the user with the new profile picture
+            $this->app->userManager->updateUser(
+                $this->getUserId(),
+                [
+                    'profilePictureFileId' => $fileId
+                ]
+            );
+
+            $this->app->fileStorageRepository->commit($this->getUserId(), __METHOD__);
+
+            $this->flashMessage('Successfully changed profile picture. The change can take few minutes before being visible.', 'success');
         } catch(AException $e) {
-            $this->app->userAbsenceRepository->rollback(__METHOD__);
+            $this->app->fileStorageRepository->rollback(__METHOD__);
 
-            $this->flashMessage('Could not clear out-of-office. Reason: ' . $e->getMessage(), 'error', 10);
+            $this->flashMessage('Could not change profile picture. Reason: ' . $e->getMessage(), 'error', 10);
         }
 
-        $this->redirect($this->createURL('profile', ['userId' => $this->getUserId()]));
-    }
-
-    public function handleSubstituteForm(?FormRequest $fr = null) {
-        if($fr !== null) {
-            $data = $fr->getData();
-
-            try {
-                $this->app->userSubstituteRepository->beginTransaction(__METHOD__);
-
-                $this->app->userSubstituteManager->setUserAbstitute($this->getUserId(), $data['user']);
-
-                $this->app->userSubstituteRepository->commit($this->getUserId(), __METHOD__);
-
-                $this->flashMessage('Successfully changed substitute.', 'success');
-            } catch(AException $e) {
-                $this->app->userSubstituteRepository->rollback(__METHOD__);
-
-                $this->flashMessage('Could not change substitute. Reason: ' . $e->getMessage(), 'error', 10);
-            }
-
-            $this->redirect($this->createURL('profile', ['userId' => $this->getUserId()]));
-        }
-    }
-
-    public function renderSubstituteForm() {
-        $this->template->links = $this->createBackUrl('profile', ['userId' => $this->getUserId()]);
-    }
-
-    protected function createComponentSubstituteForm(HttpRequest $request) {
-        $form = new UserSubstituteForm($request, $this->app->userRepository);
-
-        $form->setCurrentUserId($this->getUserId());
-        $form->setAction($this->createURL('substituteForm'));
-
-        return $form;
-    }
-
-    public function handleChangeThemeForm(?FormRequest $fr = null) {
-        if($fr !== null) {
-            try {
-                $this->app->userRepository->beginTransaction(__METHOD__);
-
-                $this->app->userManager->updateUser($this->httpRequest->get('userId'), [
-                    'appDesignTheme' => $fr->appDesignTheme
-                ]);
-
-                $this->app->userRepository->commit($this->getUserId(), __METHOD__);
-
-                $this->flashMessage('Theme changed successfully.', 'success');
-            } catch(AException $e) {
-                $this->app->userRepository->rollback(__METHOD__);
-
-                $this->flashMessage('Could not change theme. Reason: ' . $e->getMessage(), 'error', 10);
-            }
-
-            $this->redirect($this->createURL('profile', ['userId' => $this->httpRequest->get('userId')]));
-        }
-    }
-
-    public function renderChangeThemeForm() {
-        $this->template->links = $this->createBackUrl('profile', ['userId' => $this->httpRequest->get('userId')]);
-    }
-
-    protected function createComponentChangeThemeForm(HttpRequest $request) {
-        $themes = [];
-        foreach(AppDesignThemes::getAll() as $key => $value) {
-            $theme = [
-                'value' => $key,
-                'text' => $value
-            ];
-
-            if($this->app->currentUser->getAppDesignTheme() == $key) {
-                $theme['selected'] = 'selected';
-            }
-
-            $themes[] = $theme;
-        }
-
-        $form = $this->componentFactory->getFormBuilder();
-
-        $form->setAction($this->createURL('changeThemeForm', ['userId' => $request->get('userId')]));
-
-        $form->addSelect('appDesignTheme', 'Theme:')
-            ->setRequired()
-            ->addRawOptions($themes);
-
-        $form->addSubmit('Save');
-
-        return $form;
-    }
-
-    public function handleChangeDatetimeForm(?FormRequest $fr = null) {
-        $userId = $this->httpRequest->get('userId');
-
-        if($fr !== null) {
-            try {
-                $this->app->userRepository->beginTransaction(__METHOD__);
-
-                $this->app->userManager->updateUser($userId, [
-                    'dateFormat' => $fr->dateFormat,
-                    'timeFormat' => $fr->timeFormat
-                ]);
-
-                $this->app->userRepository->commit($this->getUserId(), __METHOD__);
-                
-                $this->flashMessage('Successfully saved.', 'success');
-            } catch(AException $e) {
-                $this->app->userRepository->rollback(__METHOD__);
-
-                $this->flashMessage('Could not save. Reason: ' . $e->getMessage(), 'error', 10);
-            }
-
-            $this->redirect($this->createURL('profile', ['userId' => $userId]));
-        }
-    }
-
-    public function renderChangeDatetimeForm() {
-        $this->template->links = $this->createBackUrl('profile', ['userId' => $this->httpRequest->get('userId')]);
-    }
-
-    protected function createComponentChangeDatetimeForm(HttpRequest $request) {
-        $form = $this->componentFactory->getFormBuilder();
-
-        $dateFormats = [];
-        foreach(DateFormats::FORMATS as $date) {
-            $format = [
-                'value' => $date,
-                'text' => $date
-            ];
-
-            if($date == $this->app->currentUser->getDateFormat()) {
-                $format['selected'] = 'selected';
-            }
-
-            $dateFormats[] = $format;
-        }
-
-        $timeFormats = [];
-        foreach(TimeFormats::FORMATS as $time) {
-            $format = [
-                'value' => $time,
-                'text' => $time
-            ];
-
-            if($time == $this->app->currentUser->getTimeFormat()) {
-                $format['selected'] = 'selected';
-            }
-
-            $timeFormats[] = $format;
-        }
-
-        $form->setAction($this->createURL('changeDatetimeForm', ['userId' => $request->get('userId')]));
-
-        $form->addSelect('dateFormat', 'Date format:')
-            ->setRequired()
-            ->addRawOptions($dateFormats);
-
-        $form->addSelect('timeFormat', 'Time format:')
-            ->setRequired()
-            ->addRawOptions($timeFormats);
-
-        $form->addSubmit('Save');
-
-        return $form;
+        $this->redirect($this->createURL('profile', ['userId' => $this->getUserId(), 'force' => 1]));
     }
 }
 

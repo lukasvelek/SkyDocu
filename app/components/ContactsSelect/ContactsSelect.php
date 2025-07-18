@@ -131,7 +131,7 @@ class ContactsSelect extends AComponent {
             );
             $tileTemplate->user_organization_chart_link = $this->createFullURLString(
                 'User:Contacts',
-                'organizationChart',
+                'userInOrganization',
                 [
                     'userId' => $user->getId()
                 ]

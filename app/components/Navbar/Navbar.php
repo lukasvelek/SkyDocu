@@ -167,14 +167,6 @@ class Navbar extends AComponent {
             default:
                 break;
         }
-
-        if($link === null) {
-            return '
-                <span class="navbar-link" style="cursor: pointer" title="' . $this->user->getFullname() . '">
-                    ' . $this->user->getFullname() . '
-                </span>
-            ';
-        }
         
         if($this->user->getProfilePictureFileId() !== null) {
             $file = $this->app->fileStorageManager->getFileById($this->user->getProfilePictureFileId());
@@ -190,7 +182,15 @@ class Navbar extends AComponent {
 
         $content = $profileImage . '&nbsp;&nbsp;' . $this->user->getFullname();
 
-        return $this->createLink($link, $this->user->getFullname(), $content);
+        if($link === null) {
+            return '
+                <span class="navbar-link" style="cursor: pointer" title="' . $this->user->getFullname() . '">
+                    ' . $content . '
+                </span>
+            ';
+        } else {
+            return $this->createLink($link, $this->user->getFullname(), $content);
+        }
     }
 
     /**

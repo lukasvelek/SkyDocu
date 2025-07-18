@@ -31,8 +31,13 @@ class UserPresenter extends AUserPresenter {
     public function renderProfile() {
         $userId = $this->httpRequest->get('userId');
 
+        $force = false;
+        if($this->httpRequest->get('force') == 1) {
+            $force = true;
+        }
+
         try {
-            $user = $this->app->userManager->getUserById($userId);
+            $user = $this->app->userManager->getUserById($userId, $force);
         } catch(AException $e) {
             $this->flashMessage($e->getMessage(), 'error', 10);
             $this->redirect($this->createFullURL('User:Home', 'dashboard'));
@@ -123,6 +128,13 @@ class UserPresenter extends AUserPresenter {
 
     public function handleChangeProfilePictureFormSubmit(FormRequest $fr) {
         try {
+            // upload new picture
+            $fum = new FileUploadManager();
+
+            $fileData = $fum->uploadImage($_FILES['profilePictureFile'], $this->getUserId(), $this->containerId);
+
+            $this->app->fileStorageRepository->beginTransaction(__METHOD__);
+
             // delete old picture
             if($this->getUser()->getProfilePictureFileId() !== null) {
                 $file = $this->app->fileStorageManager->getFileById($this->getUser()->getProfilePictureFileId());
@@ -141,13 +153,6 @@ class UserPresenter extends AUserPresenter {
                     $this->logger->error('Could not delete profile picture for user #' . $this->getUserId() . '. File ID: #' . $this->getUser()->getProfilePictureFileId() . '. Reason: ' . $e->getMessage(), __METHOD__);
                 }
             }
-
-            // upload new picture
-            $fum = new FileUploadManager();
-
-            $fileData = $fum->uploadImage($_FILES['profilePictureFile'], $this->getUserId(), $this->containerId);
-
-            $this->app->fileStorageRepository->beginTransaction(__METHOD__);
 
             // create a new database entry for the file
             $fileId = $this->app->fileStorageManager->createNewFile(
@@ -175,7 +180,7 @@ class UserPresenter extends AUserPresenter {
             $this->flashMessage('Could not change profile picture. Reason: ' . $e->getMessage(), 'error', 10);
         }
 
-        $this->redirect($this->createURL('profile', ['userId' => $this->getUserId()]));
+        $this->redirect($this->createURL('profile', ['userId' => $this->getUserId(), 'force' => 1]));
     }
 }
 

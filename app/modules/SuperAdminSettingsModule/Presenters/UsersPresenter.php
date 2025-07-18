@@ -477,7 +477,7 @@ class UsersPresenter extends ASuperAdminSettingsPresenter {
             $this->flashMessage('Could not change profile picture. Reason: ' . $e->getMessage(), 'error', 10);
         }
 
-        $this->redirect($this->createURL('profile', ['userId' => $userId, 'force' => '1']));
+        $this->redirect($this->createURL('profile', ['userId' => $userId, 'force' => 1]));
     }
 }
 

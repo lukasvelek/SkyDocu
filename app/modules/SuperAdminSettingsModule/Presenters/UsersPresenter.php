@@ -36,7 +36,6 @@ class UsersPresenter extends ASuperAdminSettingsPresenter {
         $grid = $this->componentFactory->getGridBuilder();
 
         $qb = $this->app->userRepository->composeQueryForUsers();
-        //$qb->andWhere($qb->getColumnNotInValues('userId', $this->app->groupManager->getAllContainersOnlyUsers()));
 
         $grid->createDataSourceFromQueryBuilder($qb, 'userId');
         $grid->setGridName(GridHelper::GRID_USERS);
@@ -176,8 +175,13 @@ class UsersPresenter extends ASuperAdminSettingsPresenter {
             throw new RequiredAttributeIsNotSetException('userId');
         }
 
+        $force = false;
+        if($this->httpRequest->get('force') == 1) {
+            $force = true;
+        }
+
         try {
-            $user = $this->app->userManager->getUserById($userId);
+            $user = $this->app->userManager->getUserById($userId, $force);
         } catch(AException $e) {
             $this->flashMessage('This user does not exist.', 'error', 10);
             $this->redirect($this->createURL('list'));
@@ -209,17 +213,16 @@ class UsersPresenter extends ASuperAdminSettingsPresenter {
             <img src="' . $profilePictureImageSource . '" width="128px" height="128px" style="border-radius: 100px">
         ';
 
-        if($userId != $this->getUserId()) {
-            $this->template->user_profile_picture_change_link = '';
-        } else {
-            $this->template->user_profile_picture_change_link = LinkBuilder::createSimpleLink(
-                'Change profile picture',
-                $this->createURL(
-                    'changeProfilePictureForm'
-                ),
-                'link'
-            );
-        }
+        $this->template->user_profile_picture_change_link = LinkBuilder::createSimpleLink(
+            'Change profile picture',
+            $this->createURL(
+                'changeProfilePictureForm',
+                [
+                    'userId' => $userId
+                ]
+            ),
+            'link'
+        );
     }
 
     public function handleEditUserForm(?FormRequest $fr = null) {
@@ -407,7 +410,7 @@ class UsersPresenter extends ASuperAdminSettingsPresenter {
     protected function createComponentChangeProfilePictureForm() {
         $form = $this->componentFactory->getFormBuilder();
 
-        $form->setAction($this->createURL('changeProfilePictureFormSubmit'));
+        $form->setAction($this->createURL('changeProfilePictureFormSubmit', ['userId' => $this->httpRequest->get('userId')]));
 
         $form->addFileInput('profilePictureFile', 'File:')
             ->setRequired();
@@ -418,22 +421,26 @@ class UsersPresenter extends ASuperAdminSettingsPresenter {
     }
 
     public function handleChangeProfilePictureFormSubmit(FormRequest $fr) {
+        $userId = $this->httpRequest->get('userId');
+
         try {
+            $user = $this->app->userManager->getUserById($userId);
+
             // upload new picture
             $fum = new FileUploadManager();
 
-            $fileData = $fum->uploadImage($_FILES['profilePictureFile'], $this->getUserId(), null);
+            $fileData = $fum->uploadImage($_FILES['profilePictureFile'], $userId, null);
 
             $this->app->fileStorageRepository->beginTransaction(__METHOD__);
 
             // delete old picture
-            if($this->getUser()->getProfilePictureFileId() !== null) {
-                $file = $this->app->fileStorageManager->getFileById($this->getUser()->getProfilePictureFileId());
+            if($user->getProfilePictureFileId() !== null) {
+                $file = $this->app->fileStorageManager->getFileById($user->getProfilePictureFileId());
 
                 try {
                     $this->app->fileStorageRepository->beginTransaction(__METHOD__);
 
-                    $this->app->fileStorageManager->deleteFile($this->getUser()->getProfilePictureFileId());
+                    $this->app->fileStorageManager->deleteFile($user->getProfilePictureFileId());
 
                     FileManager::deleteFile($file->filepath);
 
@@ -441,13 +448,13 @@ class UsersPresenter extends ASuperAdminSettingsPresenter {
                 } catch(AException $e) {
                     $this->app->fileStorageRepository->rollback(__METHOD__);
 
-                    $this->logger->error('Could not delete profile picture for user #' . $this->getUserId() . '. File ID: #' . $this->getUser()->getProfilePictureFileId() . '. Reason: ' . $e->getMessage(), __METHOD__);
+                    $this->logger->error('Could not delete profile picture for user #' . $userId . '. File ID: #' . $user->getProfilePictureFileId() . '. Reason: ' . $e->getMessage(), __METHOD__);
                 }
             }
 
             // create a new database entry for the file
             $fileId = $this->app->fileStorageManager->createNewFile(
-                $this->getUserId(),
+                $userId,
                 $fileData[FileUploadManager::FILE_FILENAME],
                 $fileData[FileUploadManager::FILE_FILEPATH],
                 $fileData[FileUploadManager::FILE_FILESIZE]
@@ -455,7 +462,7 @@ class UsersPresenter extends ASuperAdminSettingsPresenter {
             
             // update the user with the new profile picture
             $this->app->userManager->updateUser(
-                $this->getUserId(),
+                $userId,
                 [
                     'profilePictureFileId' => $fileId
                 ]
@@ -470,7 +477,7 @@ class UsersPresenter extends ASuperAdminSettingsPresenter {
             $this->flashMessage('Could not change profile picture. Reason: ' . $e->getMessage(), 'error', 10);
         }
 
-        $this->redirect($this->createURL('profile', ['userId' => $this->getUserId()]));
+        $this->redirect($this->createURL('profile', ['userId' => $userId, 'force' => '1']));
     }
 }
 

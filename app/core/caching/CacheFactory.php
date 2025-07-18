@@ -291,10 +291,6 @@ class CacheFactory {
         }
 
         $path = APP_ABSOLUTE_DIR . CACHE_DIR . $namespace . '\\';
-
-        /*if($this->customNamespace !== null) {
-            $path .= $this->customNamespace . '\\';
-        }*/
         
         $messages[] = 'Deleting \'' . $path . '\'. ';
 

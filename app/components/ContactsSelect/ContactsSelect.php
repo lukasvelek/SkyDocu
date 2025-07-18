@@ -52,7 +52,7 @@ class ContactsSelect extends AComponent {
      * Builds the grid
      */
     private function build(): string {
-        $users = $this->getUsers();
+        $this->getUsers();
 
         $code = '<div class="row">';
 
@@ -153,6 +153,8 @@ class ContactsSelect extends AComponent {
         $script = '
             <div id="center">
                 <img src="resources/loading.gif" width="64px" height="64px">
+                <br>
+                Loading...
             </div>
             <script type="text/javascript">
                 ' . $par->build() . '

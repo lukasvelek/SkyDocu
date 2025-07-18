@@ -4,7 +4,10 @@ namespace App\Modules\UserModule;
 
 use App\Components\Static\UserProfileStatic\UserProfileStatic;
 use App\Constants\Container\SystemGroups;
-use App\Core\Http\HttpRequest;
+use App\Core\Caching\CacheNames;
+use App\Core\FileManager;
+use App\Core\FileUploadManager;
+use App\Core\Http\FormRequest;
 use App\Exceptions\AException;
 use App\Helpers\DateTimeFormatHelper;
 use App\Helpers\LinkHelper;
@@ -51,21 +54,9 @@ class UserPresenter extends AUserPresenter {
         if($userId == $this->getUserId() || $this->groupManager->isUserMemberOfGroupTitle($userId, SystemGroups::ADMINISTRATORS)) {
             $links[] = LinkBuilder::createSimpleLink('Configuration', $this->createFullURL('User:UserConfiguration', 'home', ['userId' => $userId]), 'link');
         }
+        $links[] = LinkBuilder::createSimpleLink('Group memberships', $this->createURL('groupMembershipsGrid', ['userId' => $userId]), 'link');
 
         $this->template->links = LinkHelper::createLinksFromArray($links);
-    }
-
-    protected function createComponentUserGroupMembershipsGrid(HttpRequest $request) {
-        $grid = $this->componentFactory->getGridBuilder($this->containerId);
-
-        $qb = $this->groupManager->composeQueryForGroupsWhereUserIsMember($request->get('userId'));
-
-        $grid->createDataSourceFromQueryBuilder($qb, 'groupId');
-        $grid->addQueryDependency('userId', $request->get('userId'));
-
-        $grid->addColumnConst('title', 'Title', SystemGroups::class);
-
-        return $grid;
     }
 
     protected function createComponentUserProfile() {
@@ -91,6 +82,100 @@ class UserPresenter extends AUserPresenter {
         $userProfile->setUser($user);
 
         return $userProfile;
+    }
+
+    public function renderGroupMembershipsGrid() {
+        $this->setTitle('Group memberships - User');
+        $this->template->links = $this->createBackUrl('profile', ['userId' => $this->httpRequest->get('userId')]);
+    }
+
+    protected function createComponentGroupMembershipsGrid() {
+        $grid = $this->componentFactory->getGridBuilder($this->containerId);
+
+        $qb = $this->groupManager->composeQueryForGroupsWhereUserIsMember($this->httpRequest->get('userId'));
+
+        $grid->createDataSourceFromQueryBuilder($qb, 'groupId');
+        $grid->addQueryDependency('userId', $this->httpRequest->get('userId'));
+
+        $grid->addColumnConst('title', 'Title', SystemGroups::class);
+
+        $grid->disablePagination();
+        $grid->disableActions();
+        $grid->disableRefresh();
+
+        return $grid;
+    }
+
+    public function renderChangeProfilePictureForm() {}
+
+    protected function createComponentChangeProfilePictureForm() {
+        $form = $this->componentFactory->getFormBuilder();
+
+        $form->setAction($this->createURL('changeProfilePictureFormSubmit'));
+
+        $form->addFileInput('profilePictureFile', 'File:')
+            ->setRequired();
+
+        $form->addSubmit('Change');
+
+        return $form;
+    }
+
+    public function handleChangeProfilePictureFormSubmit(FormRequest $fr) {
+        try {
+            // delete old picture
+            if($this->getUser()->getProfilePictureFileId() !== null) {
+                $file = $this->app->fileStorageManager->getFileById($this->getUser()->getProfilePictureFileId());
+
+                try {
+                    $this->app->fileStorageRepository->beginTransaction(__METHOD__);
+
+                    $this->app->fileStorageManager->deleteFile($this->getUser()->getProfilePictureFileId());
+
+                    FileManager::deleteFile($file->filepath);
+
+                    $this->app->fileStorageRepository->commit($this->getUserId(), __METHOD__);
+                } catch(AException $e) {
+                    $this->app->fileStorageRepository->rollback(__METHOD__);
+
+                    $this->logger->error('Could not delete profile picture for user #' . $this->getUserId() . '. File ID: #' . $this->getUser()->getProfilePictureFileId() . '. Reason: ' . $e->getMessage(), __METHOD__);
+                }
+            }
+
+            // upload new picture
+            $fum = new FileUploadManager();
+
+            $fileData = $fum->uploadFile($_FILES['profilePictureFile'], $this->getUserId(), $this->containerId);
+
+            $this->app->fileStorageRepository->beginTransaction(__METHOD__);
+
+            // create a new database entry for the file
+            $fileId = $this->app->fileStorageManager->createNewFile(
+                $this->getUserId(),
+                $fileData[FileUploadManager::FILE_FILENAME],
+                $fileData[FileUploadManager::FILE_FILEPATH],
+                $fileData[FileUploadManager::FILE_FILESIZE],
+                $this->containerId
+            );
+            
+            // update the user with the new profile picture
+            $this->app->userManager->updateUser(
+                $this->getUserId(),
+                [
+                    'profilePictureFileId' => $fileId
+                ]
+            );
+
+            $this->app->fileStorageRepository->commit($this->getUserId(), __METHOD__);
+
+            $this->flashMessage('Successfully changed profile picture. The change can take few minutes before being visible.', 'success');
+        } catch(AException $e) {
+            $this->app->fileStorageRepository->rollback(__METHOD__);
+
+            $this->flashMessage('Could not change profile picture. Reason: ' . $e->getMessage(), 'error', 10);
+        }
+
+        $this->redirect($this->createURL('profile', ['userId' => $this->getUserId()]));
     }
 }
 

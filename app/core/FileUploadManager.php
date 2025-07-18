@@ -20,20 +20,23 @@ class FileUploadManager {
         'txt',
         'doc',
         'ppt',
-        'pptx'
+        'pptx',
+        'png',
+        'jpg',
+        'jpeg'
     ];
 
     /**
      * Uploads a file for process instance
      * 
      * @param array $fileData Result of $_FILES[FILE_INPUT_NAME]
-     * @param string $processId Process ID
-     * @param string $processInstanceId Process instance ID
      * @param string $userId User ID
+     * @param ?string $containerId Container ID
+     * @param array $additionalValues Additional values
      */
-    public function uploadFileForProcessInstance(array $fileData, string $processId, string $processInstanceId, string $userId): array {
-        $dirpath = $this->generateFolderPath("$processId\\$processInstanceId", $userId);
-        $filepath = $dirpath . $this->generateFilename($fileData['name'], "$processId\\$processInstanceId", $userId);
+    public function uploadFileForProcessInstance(array $fileData, string $userId, ?string $containerId, array $additionalValues = []): array {
+        $dirpath = $this->generateFolderPath($userId, $containerId);
+        $filepath = $dirpath . $this->generateFilename($fileData['name'], $userId, $containerId, $additionalValues);
 
         // CHECKS
         if(!$this->checkType($filepath)) {
@@ -63,12 +66,13 @@ class FileUploadManager {
      * Uploads a file
      * 
      * @param array $fileData Result of $_FILES[FILE_INPUT_NAME]
-     * @param string $documentId Document ID
      * @param string $userId User ID
+     * @param ?string $containerId Container ID
+     * @param array $additionalValues Additional values
      */
-    public function uploadFile(array $fileData, ?string $documentId, string $userId): array {
-        $dirpath = $this->generateFolderPath($documentId, $userId);
-        $filepath = $dirpath . $this->generateFilename($fileData['name'], $documentId, $userId);
+    public function uploadFile(array $fileData, string $userId, ?string $containerId, array $additionalValues = []): array {
+        $dirpath = $this->generateFolderPath($userId, $containerId);
+        $filepath = $dirpath . $this->generateFilename($fileData['name'], $userId, $containerId, $additionalValues);
 
         // CHECKS
         if(!$this->checkType($filepath)) {
@@ -99,12 +103,13 @@ class FileUploadManager {
      * 
      * @param string $name File name
      * @param string $content File content
-     * @param ?string $documentId Document ID
      * @param string $userId User ID
+     * @param ?string $containerId Container ID
+     * @param array $additionalValues Additional values
      */
-    public function createFile(string $name, string $content, ?string $documentId, string $userId): array {
-        $dirpath = $this->generateFolderPath($documentId, $userId);
-        $filename = $this->generateFilename($name, $documentId, $userId);
+    public function createFile(string $name, string $content, string $userId, ?string $containerId, array $additionalValues = []): array {
+        $dirpath = $this->generateFolderPath($userId, $containerId);
+        $filename = $this->generateFilename($name, $userId, $containerId, $additionalValues);
         $filepath = $dirpath . $filename;
 
         // CHECKS
@@ -164,15 +169,11 @@ class FileUploadManager {
     /**
      * Generates end directory path
      * 
-     * @param string $entityId Entity ID
      * @param string $userId User ID
+     * @param ?string $containerId Container ID
      */
-    private function generateFolderPath(?string $entityId, string $userId): string {
-        $path = APP_ABSOLUTE_DIR . CONTAINERS_DIR . 'uploads\\' . $userId . '\\';
-
-        if($entityId !== null) {
-            $path .= $entityId . '\\';
-        }
+    private function generateFolderPath(string $userId, ?string $containerId): string {
+        $path = APP_ABSOLUTE_DIR . UPLOAD_DIR . $userId . '\\' . ($containerId !== null ? ($containerId . '\\') : '');
 
         return $path;
     }
@@ -190,15 +191,17 @@ class FileUploadManager {
      * Generates filename
      * 
      * @param string $filename Filename
-     * @param string $entityId Entity ID
      * @param string $userId User ID
+     * @param string $containerId Container ID
+     * @param array $additionalValues Additional values for file name generation
      */
-    private function generateFilename(string $filename, ?string $entityId, string $userId) {
+    private function generateFilename(string $filename, string $userId, ?string $containerId, array $additionalValues = []) {
         $hash = HashManager::createHash(8, false);
-        $text = $hash . $filename . $userId;
-        if($entityId !== null) {
-            $text .= $entityId;
+        $text = $hash . $filename . $userId . time() . rand(0, 100);
+        if($containerId !== null) {
+            $text .= $containerId;
         }
+        $text .= implode('', $additionalValues);
         return md5($text) . '.' . strtolower(pathinfo($filename, PATHINFO_EXTENSION));
     }
 }

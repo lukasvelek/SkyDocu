@@ -658,7 +658,7 @@ class JSON2FB {
                 } else if($elem instanceof FileLink) {
                     $hash = $this->formData[$name]['hash'];
 
-                    $file = $this->container->fileStorageManager->getFileByHash($hash);
+                    $file = $this->form->app->fileStorageManager->getFileByHash($hash, $this->containerId);
 
                     $fileUrl = Router::generateUrl([
                         'page' => 'User:FileStorage',

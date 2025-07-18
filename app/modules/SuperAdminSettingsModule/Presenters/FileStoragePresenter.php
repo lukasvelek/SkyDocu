@@ -14,11 +14,11 @@ class FileStoragePresenter extends ASuperAdminSettingsPresenter {
 
     protected function createComponentFileStorageStatsWidget(HttpRequest $request) {
         $widget = new FileStorageStatsWidget(
-            $request,
-            $this->app->containerManager,
-            $this->app->dbManager,
-            $this->logger
+            $request
         );
+
+        $widget->setApplication($this->app);
+        $widget->setPresenter($this->presenter);
 
         return $widget;
     }

@@ -248,6 +248,10 @@ abstract class AModule extends AGUICore {
         
         $navbar->setComponentName('navbar');
         $navbar->setCacheFactory($this->cacheFactory);
+        $navbar->setApplication($this->app);
+        if($this->presenter !== null) {
+            $navbar->setPresenter($this->presenter);
+        }
 
         return $navbar;
     }

@@ -36,14 +36,14 @@ class UploadFilesController extends ACreateAPIOperation {
 
         $fup = new FileUploadManager();
 
-        $data = $fup->createFile($this->params['name'], $this->params['content'], $documentId, $userId);
+        $data = $fup->createFile($this->params['name'], $this->params['content'], $userId, $this->containerId, [$documentId]);
 
-        $fileId = $this->container->fileStorageManager->createNewFile(
-            $documentId,
+        $fileId = $this->app->fileStorageManager->createNewFile(
             $userId,
             $data[FileUploadManager::FILE_FILENAME],
             $data[FileUploadManager::FILE_FILEPATH],
-            $data[FileUploadManager::FILE_FILESIZE]
+            $data[FileUploadManager::FILE_FILESIZE],
+            $this->containerId
         );
 
         return $fileId;

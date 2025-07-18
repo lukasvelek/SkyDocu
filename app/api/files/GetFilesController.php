@@ -32,7 +32,7 @@ class GetFilesController extends AReadAPIOperation {
     }
 
     protected function getFiles(int $limit, int $offset): array {
-        $qb = $this->container->fileStorageRepository->composeQueryForStoredFiles();
+        $qb = $this->app->fileStorageRepository->composeQueryForFilesInStorage($this->containerId);
 
         $this->appendWhereConditions($qb);
 

@@ -35,6 +35,7 @@ class EntityManager extends AManager {
     public const PROCESSES_UNIQUE = 'processes';
     public const JOB_QUEUE = 'job_queue';
     public const JOB_QUEUE_PROCESSING_HISTORY = 'job_queue_processing_history';
+    public const FILE_STORAGE = 'file_storage';
 
     public const C_GROUPS = 'groups';
     public const C_DOCUMENT_CLASSES = 'document_classes';
@@ -199,7 +200,8 @@ class EntityManager extends AManager {
                 self::PROCESSES => 'processId',
                 self::PROCESSES_UNIQUE => 'uniqueProcessId',
                 self::JOB_QUEUE => 'jobId',
-                self::JOB_QUEUE_PROCESSING_HISTORY => 'entryId'
+                self::JOB_QUEUE_PROCESSING_HISTORY => 'entryId',
+                self::FILE_STORAGE => 'fileId'
             };
         } else {
             return match($category) {
@@ -224,7 +226,8 @@ class EntityManager extends AManager {
                 self::PROCESSES => 'processId',
                 self::PROCESSES_UNIQUE => 'uniqueProcessId',
                 self::JOB_QUEUE => 'jobId',
-                self::JOB_QUEUE_PROCESSING_HISTORY => 'entryId'
+                self::JOB_QUEUE_PROCESSING_HISTORY => 'entryId',
+                self::FILE_STORAGE => 'fileId'
             };
         }
     }

@@ -14,13 +14,25 @@ class FileUploadManager {
     public const FILE_FILESIZE = 'filesize';
     public const FILE_FILEPATH = 'filepath';
 
+    public const FILE_TYPE_IMAGE = 1;
+    public const FILE_TYPE_DOCUMENT = 2;
+
+    /**
+     * Allowed document file extensions
+     */
     public static array $ALLOWED_EXTENSIONS = [
         'docx',
         'pdf',
         'txt',
         'doc',
         'ppt',
-        'pptx',
+        'pptx'
+    ];
+
+    /**
+     * Allowed image file extensions
+     */
+    public static array $ALLOWED_IMAGE_EXTENSIONS = [
         'png',
         'jpg',
         'jpeg'
@@ -39,8 +51,8 @@ class FileUploadManager {
         $filepath = $dirpath . $this->generateFilename($fileData['name'], $userId, $containerId, $additionalValues);
 
         // CHECKS
-        if(!$this->checkType($filepath)) {
-            throw new GeneralException('File extension for file \'' . $filepath . '\' is not supported. Supported file extensions are: ' . implode(', ', self::$ALLOWED_EXTENSIONS));
+        if(!$this->checkType($filepath, self::FILE_TYPE_DOCUMENT)) {
+            throw new GeneralException('File extension for file \'' . $fileData['name'] . '\' is not supported. Supported file extensions are: ' . implode(', ', array_merge(self::$ALLOWED_EXTENSIONS, self::$ALLOWED_IMAGE_EXTENSIONS)));
         }
         if(!$this->checkFileSize($fileData)) {
             throw new GeneralException('File is too big. Only files with size up to 500 MB are supported.');
@@ -75,8 +87,36 @@ class FileUploadManager {
         $filepath = $dirpath . $this->generateFilename($fileData['name'], $userId, $containerId, $additionalValues);
 
         // CHECKS
-        if(!$this->checkType($filepath)) {
-            throw new GeneralException('File extension for file \'' . $filepath . '\' is not supported. Supported file extensions are: ' . implode(', ', self::$ALLOWED_EXTENSIONS));
+        if(!$this->checkType($filepath, self::FILE_TYPE_DOCUMENT)) {
+            throw new GeneralException('File extension for file \'' . $fileData['name'] . '\' is not supported. Supported file extensions are: ' . implode(', ', array_merge(self::$ALLOWED_EXTENSIONS, self::$ALLOWED_IMAGE_EXTENSIONS)));
+        }
+        if(!$this->checkFileSize($fileData)) {
+            throw new GeneralException('File is too big. Only files with size up to 500 MB are supported.');
+        }
+        // END OF CHECKS
+
+        if(!$this->createFolderPath($dirpath)) {
+            throw new GeneralException('Could not create end file path.');
+        }
+
+        if(move_uploaded_file($fileData['tmp_name'], $filepath)) {
+            return [
+                self::FILE_FILENAME => $fileData['name'],
+                self::FILE_FILEPATH => $filepath,
+                self::FILE_FILESIZE => $this->getFileSize($fileData)
+            ];
+        } else {
+            throw new GeneralException('File upload error.');
+        }
+    }
+
+    public function uploadImage(array $fileData, string $userId, ?string $containerId, array $additionalValues = []): array {
+        $dirpath = $this->generateFolderPath($userId, $containerId);
+        $filepath = $dirpath . $this->generateFilename($fileData['name'], $userId, $containerId, $additionalValues);
+
+        // CHECKS
+        if(!$this->checkType($filepath, self::FILE_TYPE_IMAGE)) {
+            throw new GeneralException('File extension for file \'' . $fileData['name'] . '\' is not supported. Supported file extensions are: ' . implode(', ', self::$ALLOWED_IMAGE_EXTENSIONS));
         }
         if(!$this->checkFileSize($fileData)) {
             throw new GeneralException('File is too big. Only files with size up to 500 MB are supported.');
@@ -113,7 +153,7 @@ class FileUploadManager {
         $filepath = $dirpath . $filename;
 
         // CHECKS
-        if(!$this->checkType($filepath)) {
+        if(!$this->checkType($filepath, self::FILE_TYPE_DOCUMENT)) {
             throw new GeneralException('File extension for file \'' . $filepath . '\' is not supported. Supported file extensions are: ' . implode(', ', self::$ALLOWED_EXTENSIONS));
         }
         // END OF CHECKS
@@ -139,11 +179,26 @@ class FileUploadManager {
      * Checks file extension
      * 
      * @param string $filepath Filepath
+     * @param int $fileType File type
      */
-    private function checkType(string $filepath): bool {
+    private function checkType(string $filepath, int $fileType): bool {
         $type = strtolower(pathinfo($filepath, PATHINFO_EXTENSION));
 
-        return in_array($type, self::$ALLOWED_EXTENSIONS);
+        if($fileType == self::FILE_TYPE_IMAGE) {
+            if(in_array($type, self::$ALLOWED_IMAGE_EXTENSIONS)) {
+                return true;
+            }
+        } else {
+            if(in_array($type, self::$ALLOWED_EXTENSIONS)) {
+                return true;
+            }
+
+            if(in_array($type, self::$ALLOWED_IMAGE_EXTENSIONS)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

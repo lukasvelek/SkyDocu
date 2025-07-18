@@ -145,7 +145,7 @@ class UserPresenter extends AUserPresenter {
             // upload new picture
             $fum = new FileUploadManager();
 
-            $fileData = $fum->uploadFile($_FILES['profilePictureFile'], $this->getUserId(), $this->containerId);
+            $fileData = $fum->uploadImage($_FILES['profilePictureFile'], $this->getUserId(), $this->containerId);
 
             $this->app->fileStorageRepository->beginTransaction(__METHOD__);
 

@@ -10,6 +10,7 @@ use App\Core\Caching\CacheNames;
 use App\Core\FileManager;
 use App\Core\Http\HttpRequest;
 use App\Entities\UserEntity;
+use App\Helpers\UserHelper;
 use App\Managers\Container\GroupManager;
 use App\Managers\Container\StandaloneProcessManager;
 use App\Modules\TemplateObject;
@@ -168,13 +169,10 @@ class Navbar extends AComponent {
                 break;
         }
         
-        if($this->user->getProfilePictureFileId() !== null) {
-            $file = $this->app->fileStorageManager->getFileById($this->user->getProfilePictureFileId());
-
-            $imageSource = FileManager::getRelativeFilePathFromAbsoluteFilePath($file->filepath);
-        } else {
-            $imageSource = 'resources/images/user-profile-picture.png';
-        }
+        $imageSource = UserHelper::getUserProfilePictureUri(
+            $this->user,
+            $this->app->fileStorageManager
+        );
 
         $profileImage = '
             <img src="' . $imageSource . '" width="24px" height="24px" style="border-radius: 100px">

@@ -50,7 +50,20 @@ class ContactsPresenter extends AUserPresenter {
     }
 
     public function renderOrganizationChart() {
+        $links = [];
 
+        if($this->httpRequest->get('userId') !== null) {
+            $selectedUser = $this->app->userManager->getUserById($this->httpRequest->get('userId'));
+
+            $params = [];
+            if($selectedUser->getSuperiorUserId() !== null) {
+                $params['userId'] = $selectedUser->getSuperiorUserId();
+            }
+
+            $links[] = LinkBuilder::createSimpleLink('&uarr; Up', $this->createURL('organizationChart', $params), 'link');
+        }
+
+        $this->template->links = LinkHelper::createLinksFromArray($links);
     }
 
     protected function createComponentOrganizationChart() {

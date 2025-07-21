@@ -45,7 +45,7 @@ class ProcessSelect extends AComponent {
         
         $row = 0;
         foreach($tiles as $tile) {
-            if(($row + 1) < $maxTilesInRow) {
+            if(($row + 1) <= $maxTilesInRow) {
                 $code .= '<div class="col-md-2">' . $tile . '</div>';
                 $row++;
             } else {

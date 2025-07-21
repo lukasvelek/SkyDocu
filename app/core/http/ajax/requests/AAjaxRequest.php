@@ -34,6 +34,7 @@ abstract class AAjaxRequest implements IAjaxRequest {
     protected array $arguments;
     protected array $data;
     protected string $resultType;
+    private array $urlParameters;
 
     /**
      * Abstract class constructor
@@ -48,8 +49,19 @@ abstract class AAjaxRequest implements IAjaxRequest {
         $this->buildCheck = false;
         $this->data = [];
         $this->resultType = self::RESULT_TYPE_JSON;
+        $this->urlParameters = [];
 
         $this->functionName = $this->generateFunctionName();
+    }
+
+    /**
+     * Adds a URL parameter
+     * 
+     * @param string $key Key
+     * @param mixed $value Value
+     */
+    public function addUrlParameter(string $key, mixed $value) {
+        $this->urlParameters[$key] = $value;
     }
 
     /**
@@ -119,7 +131,9 @@ abstract class AAjaxRequest implements IAjaxRequest {
      * Converts URL array to string
      */
     protected function processUrl(): string {
-        return Router::generateUrl($this->url);
+        $url = array_merge($this->url, $this->urlParameters);
+
+        return Router::generateUrl($url);
     }
 
     /**

@@ -21,6 +21,10 @@ Previously changelog for versions `1.0`-`1.4` has been located in README.md. How
 - Added support for password changing
 - Added global file storage
 - Added support for user profile pictures
+- Added container contacts overview
+- Added contacts page
+- Added support for showing user in organization chart
+- Added organization chart
 - Reworked user administration UI in containers
 - Reworked user profile in superadministration
 - Fixed a bug where custom container processes are visible in container settings in superadministration

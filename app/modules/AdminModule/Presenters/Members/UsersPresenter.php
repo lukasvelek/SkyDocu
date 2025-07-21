@@ -187,6 +187,14 @@ class UsersPresenter extends AAdminPresenter {
         $form->addSelect('superiorUser', 'Superior user:')
             ->addRawOption('null', 'Not selected', true);
 
+        $form->addHorizontalLine();
+
+        $form->addTextInput('orgPosition', 'Position:');
+
+        $form->addTextInput('orgSection', 'Section:');
+
+        $form->addTextInput('orgDepartment', 'Department:');
+
         $form->addSubmit('Create');
 
         $arb = new AjaxRequestBuilder();

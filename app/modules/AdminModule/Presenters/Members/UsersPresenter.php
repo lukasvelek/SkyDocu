@@ -105,6 +105,8 @@ class UsersPresenter extends AAdminPresenter {
     }
 
     public function handleNewUserForm(?FormRequest $fr = null) {
+        // todo 21.7.2025 rewrite
+
         if($fr !== null) {
             // Add user to master users
             // Add user to container All users group

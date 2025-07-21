@@ -15,10 +15,12 @@ class SystemPresenter extends AAdminPresenter {
     public function renderDashboard() {}
 
     protected function createComponentAboutApplicationWidget(HttpRequest $request) {
-        $widget = new AboutApplicationWidget($request);
+        /**
+         * @var AboutApplicationWidget $widget
+         */
+        $widget = $this->componentFactory->createComponentInstanceByClassName(AboutApplicationWidget::class);
 
-        $widget->disableGithubLink();
-        $widget->disablePHPVersion();
+        $widget->setContainerView($this->containerId);
 
         return $widget;
     }

@@ -17,6 +17,7 @@ use App\UI\HTML\HTML;
 class AboutApplicationWidget extends Widget {
     private bool $disableGithubLink;
     private bool $disablePHPVersion;
+    private ?string $containerId;
 
     public function __construct(HttpRequest $request) {
         parent::__construct($request);
@@ -25,6 +26,7 @@ class AboutApplicationWidget extends Widget {
 
         $this->disableGithubLink = false;
         $this->disablePHPVersion = false;
+        $this->containerId = null;
     }
 
     public function startup() {
@@ -66,11 +68,33 @@ class AboutApplicationWidget extends Widget {
     }
 
     /**
+     * Sets container view
+     * 
+     * @param string $containerId Container ID
+     */
+    public function setContainerView(string $containerId) {
+        $this->containerId = $containerId;
+    }
+
+    /**
      * Processes widget data
      * 
      * @return array Widget rows
      */
     private function processData() {
+        if($this->containerId === null) {
+            return $this->processDataForGeneralView();
+        } else {
+            return $this->processDataForContainerView();
+        }
+    }
+
+    /**
+     * Processes widget data for general view
+     * 
+     * @return array Widget rows
+     */
+    private function processDataForGeneralView(): array {
         $data = [
             'Application version' => Configuration::getCurrentVersion(),
             'Version release date' => $this->getAppVersionReleaseDate(),
@@ -85,6 +109,46 @@ class AboutApplicationWidget extends Widget {
         }
 
         return $data;
+    }
+
+    /**
+     * Processes widget data for container view
+     * 
+     * @return array Widget rows
+     */
+    private function processDataForContainerView(): array {
+        $data = [
+            'Application version' => Configuration::getCurrentVersion(),
+            'Version release date' => $this->getAppVersionReleaseDate(),
+            'Container database schema' => $this->getContainerDbSchema()
+        ];
+
+        return $data;
+    }
+
+    /**
+     * Returns container database schema
+     * 
+     * @return string Container database schema
+     */
+    private function getContainerDbSchema(): string {
+        $container = $this->app->containerManager->getContainerById($this->containerId, true);
+
+        $version = $container->getDefaultDatabase()->getDbSchema();
+
+        $files = FileManager::getFilesInFolder(APP_ABSOLUTE_DIR . 'data\\db\\migrations\\containers');
+
+        $date = '';
+        foreach($files as $fileR => $fileA) {
+            $d = explode('_', $fileR)[1];
+            $v = explode('_', $fileR)[2];
+
+            if($v == $version) {
+                $date = $d;
+            }
+        }
+
+        return sprintf('%d (<span title="%s">%s</span>)', $version, $date, DateTimeFormatHelper::formatDateToUserFriendly($d, $this->app->currentUser->getDateFormat()));
     }
 
     /**

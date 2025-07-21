@@ -53,8 +53,6 @@ class ContactsPresenter extends AUserPresenter {
         $links = [];
 
         if($this->httpRequest->get('userId') !== null) {
-            $selectedUser = $this->app->userManager->getUserById($this->httpRequest->get('userId'));
-
             $links[] = LinkBuilder::createSimpleLink('Root view', $this->createURL('organizationChart'), 'link');
         }
 

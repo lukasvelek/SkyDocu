@@ -3,14 +3,23 @@
 namespace App\Modules\UserModule;
 
 use App\Components\ContactsSelect\ContactsSelect;
+use App\Components\OrganizationChart\OrganizationChart;
 use App\Components\UserInOrganizationChart\UserInOrganizationChart;
+use App\Helpers\LinkHelper;
+use App\UI\LinkBuilder;
 
 class ContactsPresenter extends AUserPresenter {
     public function __construct() {
         parent::__construct('ContactsPresenter', 'Contacts');
     }
 
-    public function renderContactsGrid() {}
+    public function renderContactsGrid() {
+        $links = [
+            LinkBuilder::createSimpleLink('Organization chart', $this->createURL('organizationChart'), 'link')
+        ];
+
+        $this->template->links = LinkHelper::createLinksFromArray($links);
+    }
 
     protected function createComponentContactSelect() {
         /**
@@ -36,6 +45,22 @@ class ContactsPresenter extends AUserPresenter {
         $component = $this->componentFactory->createComponentInstanceByClassName(UserInOrganizationChart::class);
 
         $component->setUserId($userId);
+
+        return $component;
+    }
+
+    public function renderOrganizationChart() {
+
+    }
+
+    protected function createComponentOrganizationChart() {
+        /**
+         * @var OrganizationChart $component
+         */
+        $component = $this->componentFactory->createComponentInstanceByClassName(OrganizationChart::class);
+
+        $component->setUserId($this->httpRequest->get('userId'));
+        $component->setContainerId($this->containerId);
 
         return $component;
     }

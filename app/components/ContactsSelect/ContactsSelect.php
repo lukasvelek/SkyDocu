@@ -56,12 +56,12 @@ class ContactsSelect extends AComponent {
 
         $code = '<div class="row">';
 
-        $maxTilesInRow = 4;
+        $maxTilesInRow = 6;
 
         $row = 0;
         foreach($this->getUserTiles() as $tile) {
             if(($row + 1) <= $maxTilesInRow) {
-                $code .= '<div class="col-md-3">' . $tile . '</div>';
+                $code .= '<div class="col-md-2">' . $tile . '</div>';
                 $row++;
             } else {
                 $row = 0;

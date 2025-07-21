@@ -1,15 +1,17 @@
 <?php
 
-namespace App\Components\UserInOrganizationChart;
+namespace App\Components\OrganizationChart;
 
 use App\Core\Http\Ajax\Operations\HTMLPageOperation;
 use App\Core\Http\Ajax\Requests\PostAjaxRequest;
 use App\Core\Http\HttpRequest;
 use App\Core\Http\JsonResponse;
+use App\Exceptions\GeneralException;
 use App\UI\AComponent;
 
-class UserInOrganizationChart extends AComponent {
-    private string $userId;
+class OrganizationChart extends AComponent {
+    private ?string $userId;
+    private string $containerId;
 
     public function __construct(
         HttpRequest $request
@@ -17,16 +19,19 @@ class UserInOrganizationChart extends AComponent {
         parent::__construct($request);
     }
 
-    /**
-     * Sets user ID
-     * 
-     * @param string $userId User ID
-     */
-    public function setUserId(string $userId) {
+    public function setContainerId(string $containerId) {
+        $this->containerId = $containerId;
+    }
+
+    public function setUserId(?string $userId) {
         $this->userId = $userId;
     }
 
     public function render() {
+        if(!isset($this->containerId)) {
+            throw new GeneralException('No container ID is set.');
+        }
+
         $template = $this->getTemplate(__DIR__ . '\\template.html');
 
         $template->chart_steps = $this->getLoadingAnimationScript();
@@ -40,23 +45,22 @@ class UserInOrganizationChart extends AComponent {
         ]);
     }
 
-    /**
-     * Processes the organization chart
-     */
     private function build(): string {
-        $tiles = $this->getUserWithSuperiors();
+        $tiles = $this->getUserWithSubordinates();
 
-        $code = implode('<div id="center" style="font-size: 24px">&darr;</div>', $tiles);
+        $code = implode('', $tiles);
 
         return $code;
     }
 
-    /**
-     * Returns the user with their superiors
-     */
-    private function getUserWithSuperiors(): array {
-        $users = [];
-        $this->getUsersSuperiorRecursively($this->userId, $users);
+    private function getUserWithSubordinates() {
+        $users = $this->getUserSubordinates();
+
+        if($this->userId !== null) {
+            $selectedUser = $this->app->userManager->getUserById($this->userId);
+
+            array_unshift($users, $selectedUser);
+        }
 
         $tiles = [];
 
@@ -68,9 +72,11 @@ class UserInOrganizationChart extends AComponent {
 
             $tileTemplate = $this->getTemplate(__DIR__ . '\\chart-step-template.html');
 
-            $info = '
-                <b class="page-text">' . $fullname . '</b>
-            ';
+            if($user->getId() == $this->app->currentUser->getId()) {
+                $info = '<b class="page-text">' . $fullname . '</b>';
+            } else {
+                $info = '<p class="page-text">' . $fullname . '</p>';
+            }
 
             $tileTemplate->step_info = $info;
 
@@ -80,20 +86,29 @@ class UserInOrganizationChart extends AComponent {
         return $tiles;
     }
 
-    /**
-     * Returns users superior recursively
-     * 
-     * @param string $userId User ID
-     * @param array &$users Users array
-     */
-    private function getUsersSuperiorRecursively(string $userId, array &$users) {
-        $user = $this->app->userManager->getUserById($userId);
+    private function getUserSubordinates() {
+        $container = $this->app->containerManager->getContainerById($this->containerId);
 
-        array_unshift($users, $user);
+        $groupUsers = $this->app->groupManager->getGroupUsersForGroupTitle($container->getTitle() . ' - users');
 
-        if($user->getSuperiorUserId() !== null) {
-            $this->getUsersSuperiorRecursively($user->getSuperiorUserId(), $users);
+        $qb = $this->app->userRepository->composeQueryForUsers();
+
+        if($this->userId === null) {
+            $qb->andWhere('superiorUserId IS NULL');
+        } else {
+            $qb->andWhere('superiorUserId = ?', [$this->userId]);
         }
+
+        $qb->andWhere($qb->getColumnInValues('userId', $groupUsers))
+            ->orderBy('fullname')
+            ->execute();
+
+        $users = [];
+        while($row = $qb->fetchAssoc()) {
+            $users[] = $this->app->userManager->getUserById($row['userId']);
+        }
+
+        return $users;
     }
 
     /**
@@ -102,8 +117,11 @@ class UserInOrganizationChart extends AComponent {
     private function getLoadingAnimationScript(): string {
         $par = new PostAjaxRequest($this->httpRequest);
 
-        $par->setComponentUrl($this, 'getData')
-            ->addUrlParameter('userId', $this->userId);
+        $par->setComponentUrl($this, 'getData');
+
+        if($this->userId !== null) {
+            $par->addUrlParameter('userId', $this->userId);
+        }
         
         $updateOperation = new HTMLPageOperation();
         $updateOperation->setHtmlEntityId('chart-steps')

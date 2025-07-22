@@ -143,10 +143,10 @@ class ServiceManager {
      * @return string|null Service user ID or null
      */
     public function getServiceUserId() {
-        $user = $this->userRepository->getUserByUsername('service_user');
+        $user = $this->userRepository->getUserByEmail(Application::SERVICE_USER_EMAIL);
 
         if($user !== null) {
-            return $user->getId();
+            return $user['userId'];
         } else {
             return null;
         }

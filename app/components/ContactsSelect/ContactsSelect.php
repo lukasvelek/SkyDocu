@@ -109,12 +109,13 @@ class ContactsSelect extends AComponent {
          */
         foreach($this->users as $user) {
             $fullname = $user->getFullname();
-            $email = $user->getEmail() ?? '-';
+            $email = $user->getEmail();
 
             $tileTemplate = $this->getTemplate(__DIR__ . '\\contact-tile.html');
 
             $info = '
                 <span id="user-' . $user->getId() . '-email"><b>Email: </b> ' . $email . '</span>
+                <span id="user-' . $user->getId() . '-personalNumber"><b>Personal number: </b> ' . ($user->getPersonalNumber() ?? '-') . '</span>
             ';
 
             $tileTemplate->user_fullname = $fullname;

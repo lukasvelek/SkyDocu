@@ -53,8 +53,8 @@ use ReflectionClass;
  * @author Lukas Velek
  */
 class Application {
-    public const APP_VERSION = '1.3-dev';
-    public const APP_VERSION_RELEASE_DATE = '-';
+    public const SERVICE_USER_EMAIL = 'service_user@skydocu.com';
+    public const ADMIN_USER_EMAIL = 'admin@skydocu.com';
 
     private array $modules;
     public ?UserEntity $currentUser;

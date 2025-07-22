@@ -4,7 +4,7 @@ namespace App\Components\Widgets\UsersWidget;
 
 use App\Components\Widgets\Widget;
 use App\Core\Http\HttpRequest;
-use App\Repositories\UserRepository;
+use App\Repositories\Container\GroupRepository;
 
 /**
  * Widget with user statistics
@@ -12,18 +12,21 @@ use App\Repositories\UserRepository;
  * @author Lukas Velek
  */
 class UsersWidget extends Widget {
-    private UserRepository $userRepository;
+    private GroupRepository $groupRepository;
+    private string $containerId;
 
     /**
      * Class constructor
      * 
      * @param HttpRequest $request HttpRequest instance
-     * @param UserRepository $userRepository UserRepository instance
+     * @param GroupRepository $userRepository UserRepository instance
+     * @param string $containerId Container ID
      */
-    public function __construct(HttpRequest $request, UserRepository $userRepository) {
+    public function __construct(HttpRequest $request, GroupRepository $groupRepository, string $containerId) {
         parent::__construct($request);
 
-        $this->userRepository = $userRepository;
+        $this->groupRepository = $groupRepository;
+        $this->containerId = $containerId;
     }
 
     public function startup() {
@@ -68,8 +71,14 @@ class UsersWidget extends Widget {
      * @return mixed Data from the database
      */
     private function fetchTotalUserCountFromDb() {
-        $qb = $this->userRepository->composeQueryForUsers();
-        $qb->select(['COUNT(*) AS cnt']);
+        $container = $this->app->containerManager->getContainerById($this->containerId);
+
+        $groupUsers = $this->app->groupManager->getGroupUsersForGroupTitle($container->getTitle() . ' - users');
+
+        $qb = $this->app->userRepository->composeQueryForUsers();
+        $qb->select(['COUNT(*) AS cnt'])
+            ->where($qb->getColumnInValues('userId', $groupUsers))
+            ->regenerateSQL();
 
         return $qb->execute()->fetch('cnt');
     }

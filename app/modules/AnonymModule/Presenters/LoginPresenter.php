@@ -18,7 +18,7 @@ class LoginPresenter extends AAnonymPresenter {
     public function handleLoginForm(?FormRequest $fr = null) {
         if($fr !== null) {
             try {
-                $this->app->userAuth->loginUser($fr->username, $fr->password);
+                $this->app->userAuth->loginUser($fr->email, $fr->password);
                 
                 $this->app->logger->info('Logged in user #' . $this->httpSessionGet(SessionNames::USER_ID) . '.', __METHOD__);
                 $this->redirect($this->createURL('checkContainers'));
@@ -29,16 +29,14 @@ class LoginPresenter extends AAnonymPresenter {
         }
     }
 
-    public function renderLoginForm() {
-        $this->template->title = 'Login';
-    }
+    public function renderLoginForm() {}
 
     protected function createComponentLoginForm(HttpRequest $request) {
         $form = $this->componentFactory->getFormBuilder();
 
         $form->setAction($this->createURL('loginForm'));
 
-        $form->addTextInput('username', 'Username:')
+        $form->addEmailInput('email', 'Email:')
             ->setRequired();
 
         $form->addPasswordInput('password', 'Password:')

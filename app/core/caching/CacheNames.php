@@ -11,7 +11,6 @@ use ReflectionClass;
  */
 class CacheNames {
     public const USERS = 'users';
-    public const USERS_USERNAME_TO_ID_MAPPING = 'usersUsernameToIdMapping';
     public const GROUPS = 'groups';
     public const GROUP_MEMBERSHIPS = 'groupMemberships';
     public const GROUP_TITLE_TO_ID_MAPPING = 'groupsTitleToIdMapping';

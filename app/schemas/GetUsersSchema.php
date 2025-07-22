@@ -23,7 +23,14 @@ class GetUsersSchema extends AQuerySchema {
             'email',
             'isTechnical',
             'appDesignTheme',
-            'isDeleted'
+            'isDeleted',
+            'dateFormat',
+            'timeFormat',
+            'superiorUserId',
+            'orgPosition',
+            'orgDepartment',
+            'orgSection',
+            'personalNumber'
         ]);
     }
 }

@@ -7,6 +7,8 @@ use App\Core\AjaxRequestBuilder;
 use App\Core\Caching\CacheNames;
 use App\Core\DB\DatabaseRow;
 use App\Core\HashManager;
+use App\Core\Http\Ajax\Operations\CustomOperation;
+use App\Core\Http\Ajax\Requests\PostAjaxRequest;
 use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
 use App\Core\Http\JsonResponse;
@@ -112,7 +114,6 @@ class UsersPresenter extends AAdminPresenter {
                 // USER CREATION
                 $this->app->userRepository->beginTransaction(__METHOD__);
 
-
                 $userId = $this->app->userManager->createNewUser($fr->email, $fr->fullname, HashManager::hashPassword($fr->password));
 
                 $this->app->userRepository->commit($this->getUserId(), __METHOD__);
@@ -184,13 +185,13 @@ class UsersPresenter extends AAdminPresenter {
 
         $form->setAction($this->createURL('newUserForm'));
 
+        $form->addEmailInput('email', 'Email:')
+            ->setRequired();
+
         $form->addTextInput('fullname', 'Fullname:')
             ->setRequired();
 
         $form->addPasswordInput('password', 'Password:')
-            ->setRequired();
-
-        $form->addEmailInput('email', 'Email:')
             ->setRequired();
 
         $form->addHorizontalLine();
@@ -236,7 +237,51 @@ class UsersPresenter extends AAdminPresenter {
             }
         ');
 
+        $par = new PostAjaxRequest($this->httpRequest);
+        $par->setUrl($this->createURL('checkEmailForNewUserForm'))
+            ->addArgument('_query')
+            ->setData(['query' => '_query']);
+
+        $operation = new CustomOperation();
+
+        $operation->addCode('
+            if(obj.result == 0) {
+                alert("This email is taken.");
+                $("#formSubmit").attr("disabled", true);
+                $("#email").css("border", "1px solid red");
+            } else {
+                $("#formSubmit").removeAttr("disabled");
+                $("#email").css("border", "1px solid black");
+            }
+        ');
+
+        $par->addOnFinishOperation($operation);
+
+        $form->addScript($par);
+
+        $form->addScript('
+            async function checkEmailExists() {
+                const query = $("#email").val();
+
+                await ' . $par->getFunctionName() . '(query);
+            }
+
+            $("form").on("focusout", "#email", async function() {
+                await checkEmailExists();
+            });
+        ');
+
         return $form;
+    }
+
+    public function actionCheckEmailForNewUserForm() {
+        $query = $this->httpRequest->get('query');
+
+        $users = $this->app->userRepository->searchUsers($query, ['email']);
+
+        return new JsonResponse([
+            'result' => empty($users) ? 1 : 0
+        ]);
     }
 
     public function renderEditUserForm() {
@@ -405,12 +450,14 @@ class UsersPresenter extends AAdminPresenter {
 
         $userIds = $this->app->groupManager->getGroupUsersForGroupTitle($container->getTitle() . ' - users');
 
-        foreach($userIds as $userId) {
-            $user = $this->app->userManager->getUserById($userId);
+        $qb = $this->app->userRepository->composeQueryForUsers();
 
-            if(str_contains($user->getFullname(), $query) || str_contains($user->getEmail(), $query)) {
-                $users[] = '<option value="' . $user->getId() . '">' . $user->getFullname() . '</option>';
-            }
+        $qb->andWhere($qb->getColumnInValues('userId', $userIds))
+            ->andWhere('(fullname LIKE ? OR email LIKE ?)', ['%' . $query . '%', '%' . $query . '%'])
+            ->execute();
+
+        while($row = $qb->fetchAssoc()) {
+            $users[] = '<option value="' . $row['userId'] . '">' . $row['fullname'] . '</option>';
         }
 
         return new JsonResponse(['users' => $users]);

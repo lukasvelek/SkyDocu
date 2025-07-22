@@ -103,7 +103,7 @@ class UserRepository extends ARepository {
 
         $sql = [];
         foreach($columns as $col) {
-            $sql[] = sprintf('%s = %s', $col, $value);
+            $sql[] = sprintf('%s = \'%s\'', $col, $value);
         }
 
         $qb->andWhere('(' . implode(' OR ', $sql) . ')');

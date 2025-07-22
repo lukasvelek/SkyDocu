@@ -227,7 +227,7 @@ class NewProcessPresenter extends AUserPresenter {
         $instance = $this->processInstanceManager->getProcessInstanceById($instanceId);
 
         // evaluate new officer
-        [$officer, $type] = $this->processInstanceManager->evaluateNextProcessInstanceOfficer($instance, $workflow, $this->getUserId(), 0);
+        [$officer, $type] = $this->processInstanceManager->evaluateNextProcessInstanceOfficer($instance, $workflow, $this->getUserId(), 1); // workflow index 0 is the process author
 
         $runService = false;
         if($officer == $this->app->userManager->getServiceUserId() && $type == ProcessInstanceOfficerTypes::USER) {

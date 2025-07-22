@@ -402,9 +402,11 @@ class UsersPresenter extends AAdminPresenter {
     public function actionSearchUsers() {
         $query = $this->httpRequest->get('query');
 
-        $users = [
-            '<option value="null">Not selected</option>'
-        ];
+        $users = [];
+
+        if(!$this->isSuperiorUserMandatory()) {
+            $users[] = '<option value="null">Not selected</option>';
+        }
 
         $container = $this->app->containerManager->getContainerById($this->containerId);
 
@@ -419,6 +421,17 @@ class UsersPresenter extends AAdminPresenter {
         }
 
         return new JsonResponse(['users' => $users]);
+    }
+
+    /**
+     * Returns true if superior user must be selected during new user creation
+     */
+    private function isSuperiorUserMandatory(): bool {
+        $container = $this->app->containerManager->getContainerById($this->containerId);
+
+        $userIds = $this->app->groupManager->getGroupUsersForGroupTitle($container->getTitle() . ' - users');
+
+        return count($userIds) > 1;
     }
 }
 

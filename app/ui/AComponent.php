@@ -3,6 +3,8 @@
 namespace App\UI;
 
 use App\Core\FileManager;
+use App\Core\Http\Ajax\Operations\HTMLPageOperation;
+use App\Core\Http\Ajax\Requests\PostAjaxRequest;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
 use App\Exceptions\CallbackExecutionException;
@@ -125,6 +127,50 @@ abstract class AComponent extends AGUICore implements IRenderable {
         } else {
             throw new GeneralException('Application instance is not set.');
         }
+    }
+
+    /**
+     * Returns loading animation script for asynchronous component
+     * 
+     * @param string $componentActionName Component action name
+     * @param string $htmlEntityId HTML entity ID
+     * @param string $jsonResponseObjectName JSON response object name
+     * @param array $urlParams URL parameters
+     */
+    protected function getLoadingAnimationScript(
+        string $componentActionName,
+        string $htmlEntityId,
+        string $jsonResponseObjectName,
+        array $urlParams = []
+    ): string {
+        $par = new PostAjaxRequest($this->httpRequest);
+
+        $par->setComponentUrl($this, $componentActionName);
+
+        foreach($urlParams as $key => $value) {
+            $par->addUrlParameter($key, $value);
+        }
+        
+        $updateOperation = new HTMLPageOperation();
+        $updateOperation->setHtmlEntityId($htmlEntityId)
+            ->setJsonResponseObjectName($jsonResponseObjectName);
+
+        $par->addOnFinishOperation($updateOperation);
+
+        $script = '
+            <div id="center">
+                <img src="resources/loading.gif" width="64px" height="64px">
+                <br>
+                Loading...
+            </div>
+            <script type="text/javascript">
+                ' . $par->build() . '
+
+                ' . $par->getFunctionName() . '();
+            </script>
+        ';
+
+        return $script;
     }
 }
 

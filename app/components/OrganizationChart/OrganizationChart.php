@@ -2,8 +2,6 @@
 
 namespace App\Components\OrganizationChart;
 
-use App\Core\Http\Ajax\Operations\HTMLPageOperation;
-use App\Core\Http\Ajax\Requests\PostAjaxRequest;
 use App\Core\Http\HttpRequest;
 use App\Core\Http\JsonResponse;
 use App\Entities\UserEntity;
@@ -48,7 +46,17 @@ class OrganizationChart extends AComponent {
 
         $template = $this->getTemplate(__DIR__ . '\\template.html');
 
-        $template->chart_steps = $this->getLoadingAnimationScript();
+        $params = [];
+        if($this->userId !== null) {
+            $params['userId'] = $this->userId;
+        }
+
+        $template->chart_steps = $this->getLoadingAnimationScript(
+            'getData',
+            'chart-steps',
+            'grid',
+            $params
+        );
 
         return $template->render()->getRenderedContent();
     }
@@ -264,40 +272,6 @@ class OrganizationChart extends AComponent {
         }
 
         return $this->mUserCache[$userId];
-    }
-
-    /**
-     * Returns loading animation script
-     */
-    private function getLoadingAnimationScript(): string {
-        $par = new PostAjaxRequest($this->httpRequest);
-
-        $par->setComponentUrl($this, 'getData');
-
-        if($this->userId !== null) {
-            $par->addUrlParameter('userId', $this->userId);
-        }
-        
-        $updateOperation = new HTMLPageOperation();
-        $updateOperation->setHtmlEntityId('chart-steps')
-            ->setJsonResponseObjectName('grid');
-
-        $par->addOnFinishOperation($updateOperation);
-
-        $script = '
-            <div id="center">
-                <img src="resources/loading.gif" width="64px" height="64px">
-                <br>
-                Loading...
-            </div>
-            <script type="text/javascript">
-                ' . $par->build() . '
-
-                ' . $par->getFunctionName() . '();
-            </script>
-        ';
-
-        return $script;
     }
 
     public static function createFromComponent(AComponent $component) {}

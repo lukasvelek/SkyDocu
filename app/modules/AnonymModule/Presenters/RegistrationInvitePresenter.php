@@ -23,14 +23,10 @@ class RegistrationInvitePresenter extends AAnonymPresenter {
 
             try {
                 $data = [
-                    'username' => $fr->username,
+                    'email' => $fr->email,
                     'fullname' => $fr->fullname,
                     'password' => HashManager::hashPassword($fr->password)
                 ];
-
-                if($fr->isset('email') && ($fr->email !== null)) {
-                    $data['email'] = $fr->email;
-                }
 
                 $this->app->containerInviteRepository->beginTransaction(__METHOD__);
                 
@@ -118,11 +114,10 @@ class RegistrationInvitePresenter extends AAnonymPresenter {
 
         $form->setAction($this->createURL('form', ['inviteId' => $request->get('inviteId'), 'containerId' => $this->containerId]));
 
-        $form->addTextInput('username', 'Username:')
-            ->setRequired();
         $form->addTextInput('fullname', 'Fullname:')
             ->setRequired();
-        $form->addEmailInput('email', 'Email:');
+        $form->addEmailInput('email', 'Email:')
+            ->setRequired();
 
         $form->addPasswordInput('password', 'Password:')
             ->setRequired();

@@ -81,9 +81,9 @@ class HomePresenter extends AAdminPresenter {
             'action' => $this->createURL('jsontofb'),
             'elements' => [
                 [
-                    'name' => 'username',
+                    'name' => 'email',
                     'type' => 'text',
-                    'label' => 'Username:',
+                    'label' => 'Email:',
                     'attributes' => [
                         'required' => true
                     ]

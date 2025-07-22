@@ -126,7 +126,7 @@ class DocumentsPresenter extends AUserPresenter {
 
         $author = '-';
         try {
-            $author = $this->app->userManager->getUserById($document->authorUserId)->getUsername();
+            $author = $this->app->userManager->getUserById($document->authorUserId)->getFullname();
         } catch(AException) {}
 
         $createRow('Author', $author);

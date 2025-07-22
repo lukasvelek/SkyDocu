@@ -2,8 +2,6 @@
 
 namespace App\Components\ContactsSelect;
 
-use App\Core\Http\Ajax\Operations\HTMLPageOperation;
-use App\Core\Http\Ajax\Requests\PostAjaxRequest;
 use App\Core\Http\HttpRequest;
 use App\Core\Http\JsonResponse;
 use App\Entities\UserEntity;
@@ -37,7 +35,11 @@ class ContactsSelect extends AComponent {
     public function render() {
         $template = $this->getTemplate(__DIR__ . '\\template.html');
 
-        $template->contact_tiles = $this->getLoadingAnimationScript();
+        $template->contact_tiles = $this->getLoadingAnimationScript(
+            'getData',
+            'contact-tiles',
+            'grid'
+        );
 
         return $template->render()->getRenderedContent();
     }
@@ -107,12 +109,13 @@ class ContactsSelect extends AComponent {
          */
         foreach($this->users as $user) {
             $fullname = $user->getFullname();
-            $email = $user->getEmail() ?? '-';
+            $email = $user->getEmail();
 
             $tileTemplate = $this->getTemplate(__DIR__ . '\\contact-tile.html');
 
             $info = '
                 <span id="user-' . $user->getId() . '-email"><b>Email: </b> ' . $email . '</span>
+                <span id="user-' . $user->getId() . '-personalNumber"><b>Personal number: </b> ' . ($user->getPersonalNumber() ?? '-') . '</span>
             ';
 
             $tileTemplate->user_fullname = $fullname;
@@ -141,36 +144,6 @@ class ContactsSelect extends AComponent {
         }
 
         return $tiles;
-    }
-
-    /**
-     * Returns loading animation script
-     */
-    private function getLoadingAnimationScript() {
-        $par = new PostAjaxRequest($this->httpRequest);
-
-        $par->setComponentUrl($this, 'getData');
-        
-        $updateOperation = new HTMLPageOperation();
-        $updateOperation->setHtmlEntityId('contact-tiles')
-            ->setJsonResponseObjectName('grid');
-
-        $par->addOnFinishOperation($updateOperation);
-
-        $script = '
-            <div id="center">
-                <img src="resources/loading.gif" width="64px" height="64px">
-                <br>
-                Loading...
-            </div>
-            <script type="text/javascript">
-                ' . $par->build() . '
-
-                ' . $par->getFunctionName() . '();
-            </script>
-        ';
-
-        return $script;
     }
 
     public static function createFromComponent(AComponent $component) {}

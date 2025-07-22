@@ -111,11 +111,9 @@ class UserSubstituteForm extends FormBuilder2 {
     }
 
     public function actionSearchUsers() {
-        $query = $this->httpRequest->post('query');
+        $query = $this->httpRequest->get('query');
 
-        $usersDb = $this->userRepository->searchUsersByUsername($query, [
-            $this->currentUserId
-        ]);
+        $usersDb = $this->userRepository->searchUsers($query, ['email', 'fullname'], [$this->currentUserId]);
 
         $users = [];
         foreach($usersDb as $user) {

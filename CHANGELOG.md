@@ -25,12 +25,21 @@ Previously changelog for versions `1.0`-`1.4` has been located in README.md. How
 - Added contacts page
 - Added support for showing user in organization chart
 - Added organization chart
+- Added new user metadata
+    - Organization
+        - Position
+        - Department
+        - Section
+    - Personal number
 - Reworked user administration UI in containers
 - Reworked user profile in superadministration
 - Fixed a bug where custom container processes are visible in container settings in superadministration
+- Fixed a bug where all users were added to any just created container
 - Removed support for container environments
     - Because SkyDocu itself is split to environments (PROD, TEST, DEV)
 - Removed per-container file storage
+- Removed support for user usernames
+    - Emails are now used instead
 
 ## SkyDocu `1.6` (06/21/2025)
 - Global transaction log

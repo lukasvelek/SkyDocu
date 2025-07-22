@@ -194,7 +194,11 @@ class DatabaseMigrationManager {
             $object = new $fullClassName($fileName, $migrationName, $migrationNumber);
             
             if($this->containerId !== null) {
+                /**
+                 * @var AContainerBaseMigration $object
+                 */
                 $object->inject($this->conn, $this->masterConn, $this->logger);
+                $object->setContainerId($this->containerId);
             } else {
                 $object->inject($this->masterConn, $this->masterConn, $this->logger);
             }

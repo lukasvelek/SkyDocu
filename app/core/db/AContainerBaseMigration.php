@@ -11,6 +11,17 @@ use App\Managers\EntityManager;
  * @author Lukas Velek
  */
 abstract class AContainerBaseMigration extends ABaseMigration {
+    protected string $containerId;
+
+    /**
+     * Sets container ID
+     * 
+     * @param string $containerId Container ID
+     */
+    public function setContainerId(string $containerId) {
+        $this->containerId = $containerId;
+    }
+
     protected function getId(string $tableName, ?string $primaryKeyName = null): ?string {
         if($primaryKeyName === null) {
             $primaryKeyName = EntityManager::getPrimaryKeyNameByCategory($tableName, true);

@@ -13,7 +13,8 @@ class migration_2025_07_21_0020_new_user_metadata extends ABaseMigration {
         $schema->update('users')
             ->varchar('orgPosition', 256, true)
             ->varchar('orgSection', 256, true)
-            ->varchar('orgDepartment', 256, true);
+            ->varchar('orgDepartment', 256, true)
+            ->varchar('personalNumber', 256, true);
 
         return $schema;
     }

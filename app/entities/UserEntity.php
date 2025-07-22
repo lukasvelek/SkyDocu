@@ -19,6 +19,10 @@ class UserEntity extends AEntity {
     private string $timeFormat;
     private ?string $superiorUserId;
     private ?string $profilePictureFileId;
+    private ?string $orgPosition;
+    private ?string $orgDepartment;
+    private ?string $orgSection;
+    private ?string $personalNumber;
 
     /**
      * Class constructor
@@ -32,6 +36,10 @@ class UserEntity extends AEntity {
      * @param int $appDesignTheme App design theme
      * @param ?string $superiorUserId Superior user ID
      * @param ?string $profilePictureFileId Profile picture file ID
+     * @param ?string $orgPosition Organization position
+     * @param ?string $orgDepartment Organization department
+     * @param ?string $orgSection Organization section
+     * @param ?string $personalNumber Personal number
      */
     public function __construct(
         string $id,
@@ -44,7 +52,11 @@ class UserEntity extends AEntity {
         string $dateFormat,
         string $timeFormat,
         ?string $superiorUserId,
-        ?string $profilePictureFileId
+        ?string $profilePictureFileId,
+        ?string $orgPosition,
+        ?string $orgDepartment,
+        ?string $orgSection,
+        ?string $personalNumber
     ) {
         $this->id = $id;
         $this->username = $username;
@@ -57,6 +69,10 @@ class UserEntity extends AEntity {
         $this->timeFormat = $timeFormat;
         $this->superiorUserId = $superiorUserId;
         $this->profilePictureFileId = $profilePictureFileId;
+        $this->orgPosition = $orgPosition;
+        $this->orgDepartment = $orgDepartment;
+        $this->orgSection = $orgSection;
+        $this->personalNumber = $personalNumber;
     }
 
     /**
@@ -162,6 +178,34 @@ class UserEntity extends AEntity {
         return $initials;
     }
 
+    /**
+     * Returns user's position in organization
+     */
+    public function getOrgPosition(): ?string {
+        return $this->orgPosition;
+    }
+
+    /**
+     * Returns user's section in organization
+     */
+    public function getOrgSection(): ?string {
+        return $this->orgSection;
+    }
+
+    /**
+     * Returns user's department in organization
+     */
+    public function getOrgDepartment(): ?string {
+        return $this->orgDepartment;
+    }
+
+    /**
+     * Returns user's personal number
+     */
+    public function getPersonalNumber(): ?string {
+        return $this->personalNumber;
+    }
+
     public static function createEntityFromDbRow(mixed $row): ?static {
         if($row === null) {
             return null;
@@ -169,7 +213,8 @@ class UserEntity extends AEntity {
 
         $row = self::createRow($row);
         self::checkTypes($row, ['userId' => 'string', 'username' => 'string', 'fullname' => 'string', 'email' => '?string', 'dateCreated' => 'string', 'isTechnical' => 'bool', 'appDesignTheme' => 'int',
-                                'dateFormat' => 'string', 'timeFormat' => 'string', 'superiorUserId' => '?string', 'profilePictureFileId' => '?string']);
+                                'dateFormat' => 'string', 'timeFormat' => 'string', 'superiorUserId' => '?string', 'profilePictureFileId' => '?string', 'orgPosition' => '?string',
+                                'orgSection' => '?string', 'orgDepartment' => '?string', 'personalNumber' => '?string']);
 
         return new self(
             $row->userId,
@@ -182,7 +227,11 @@ class UserEntity extends AEntity {
             $row->dateFormat,
             $row->timeFormat,
             $row->superiorUserId,
-            $row->profilePictureFileId
+            $row->profilePictureFileId,
+            $row->orgPosition,
+            $row->orgDepartment,
+            $row->orgSection,
+            $row->personalNumber
         );
     }
 }

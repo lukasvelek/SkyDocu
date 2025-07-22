@@ -50,9 +50,7 @@ class migration_2025_03_25_0002_external_system_creation extends AContainerBaseM
     }
 
     public function seeding(): TableSeeding {
-        $seed = $this->getTableSeeding();
-
-        return $seed;
+        return $this->getTableSeeding();
     }
 }
 

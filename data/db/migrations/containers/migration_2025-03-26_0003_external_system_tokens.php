@@ -28,15 +28,11 @@ class migration_2025_03_26_0003_external_system_tokens extends AContainerBaseMig
     }
 
     public function down(): TableSchema {
-        $table = $this->getTableSchema();
-
-        return $table;
+        return $this->getTableSchema();
     }
 
     public function seeding(): TableSeeding {
-        $seed = $this->getTableSeeding();
-
-        return $seed;
+        return $this->getTableSeeding();
     }
 }
 

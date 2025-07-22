@@ -396,7 +396,7 @@ class migration_2025_03_15_0001_initial extends AContainerBaseMigration {
     }
 
     private function getContainerGroupUsers(): array {
-        $sql = 'SELECT * FROM groups WHERE containerId IS NOT NULL';
+        $sql = 'SELECT * FROM groups WHERE containerId = \'' . $this->containerId . '\'';
 
         $result = $this->masterConn->query($sql);
 

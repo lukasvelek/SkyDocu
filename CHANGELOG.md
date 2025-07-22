@@ -38,6 +38,8 @@ Previously changelog for versions `1.0`-`1.4` has been located in README.md. How
 - Removed support for container environments
     - Because SkyDocu itself is split to environments (PROD, TEST, DEV)
 - Removed per-container file storage
+- Removed support for user usernames
+    - Emails are now used instead
 
 ## SkyDocu `1.6` (06/21/2025)
 - Global transaction log

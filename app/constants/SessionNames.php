@@ -9,10 +9,6 @@ namespace App\Constants;
  */
 class SessionNames {
     public const USER_ID = 'user_id';
-    /**
-     * @deprecated
-     */
-    public const USERNAME = 'username';
     public const FULLNAME = 'fullname';
     public const LOGIN_HASH = 'login_hash';
     public const IS_LOGGING_IN = 'is_logging_in';

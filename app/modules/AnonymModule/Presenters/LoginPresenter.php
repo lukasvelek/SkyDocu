@@ -18,7 +18,7 @@ class LoginPresenter extends AAnonymPresenter {
     public function handleLoginForm(?FormRequest $fr = null) {
         if($fr !== null) {
             try {
-                $this->app->userAuth->loginUser($fr->username, $fr->password);
+                $this->app->userAuth->loginUser($fr->email, $fr->password);
                 
                 $this->app->logger->info('Logged in user #' . $this->httpSessionGet(SessionNames::USER_ID) . '.', __METHOD__);
                 $this->redirect($this->createURL('checkContainers'));

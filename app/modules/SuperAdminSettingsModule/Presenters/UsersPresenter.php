@@ -42,16 +42,12 @@ class UsersPresenter extends ASuperAdminSettingsPresenter {
         $grid->setGridName(GridHelper::GRID_USERS);
 
         $grid->addColumnText('fullname', 'Full name');
-        $grid->addColumnText('username', 'Username');
+        $grid->addColumnText('email', 'Email');
 
         $profile = $grid->addAction('profile');
         $profile->setTitle('Profile');
         $profile->onCanRender[] = function(DatabaseRow $row, Row $_row) {
-            if($row->username == 'service_user') {
-                return false;
-            } else {
-                return true;
-            }
+            return $row->email != Application::SERVICE_USER_EMAIL;
         };
         $profile->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
             $el = HTML::el('a')
@@ -65,11 +61,7 @@ class UsersPresenter extends ASuperAdminSettingsPresenter {
         $edit = $grid->addAction('edit');
         $edit->setTitle('Edit');
         $edit->onCanRender[] = function(DatabaseRow $row, Row $_row) {
-            if($row->username == 'service_user') {
-                return false;
-            } else {
-                return true;
-            }
+            return $row->email != Application::SERVICE_USER_EMAIL;
         };
         $edit->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
             $el = HTML::el('a')
@@ -118,12 +110,7 @@ class UsersPresenter extends ASuperAdminSettingsPresenter {
 
                 $this->app->userRepository->beginTransaction(__METHOD__);
 
-                $email = null;
-                if($fr->isset('email') && $fr->email !== null) {
-                    $email = $fr->email;
-                }
-
-                $this->app->userManager->createNewUser($fr->username, $fr->fullname, HashManager::hashPassword($fr->password), $email);
+                $this->app->userManager->createNewUser($fr->email, $fr->fullname, HashManager::hashPassword($fr->password));
 
                 $this->app->userRepository->commit($this->getUserId(), __METHOD__);
 
@@ -230,7 +217,6 @@ class UsersPresenter extends ASuperAdminSettingsPresenter {
                 $this->app->userRepository->beginTransaction(__METHOD__);
 
                 $data = [
-                    'username' => $fr->username,
                     'fullname' => $fr->fullname,
                     'appDesignTheme' => $fr->appDesignTheme,
                     'dateFormat' => $fr->dateFormat,
@@ -312,10 +298,6 @@ class UsersPresenter extends ASuperAdminSettingsPresenter {
         $form->addTextInput('fullname', 'Fullname:')
             ->setRequired()
             ->setValue($user->getFullname());
-
-        $form->addEmailInput('email', 'Email:')
-            ->setRequired()
-            ->setValue($user->getEmail());
 
         $form->addSelect('appDesignTheme', 'App theme:')
             ->setRequired()

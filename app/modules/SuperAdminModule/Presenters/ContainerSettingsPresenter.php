@@ -100,11 +100,11 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
         $grid->addQueryDependency('containerId', $container->getId());
         $grid->setLimit(5);
 
-        $col = $grid->addColumnText('userUsername', 'Username');
+        $col = $grid->addColumnText('userEmail', 'Email');
         $col->onRenderColumn[] = function(DatabaseRow $row, Row $_row, Cell $cell, HTML $html, mixed $value) {
             $data = unserialize($row->data);
 
-            return $data['username'];
+            return $data['email'];
         };
 
         $col = $grid->addColumnText('userFullname', 'Fullname');
@@ -378,13 +378,11 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
 
         $form->setAction($this->createURL('newTechnicalAccountFormSubmit', ['containerId' => $this->httpRequest->get('containerId')]));
 
-        $form->addTextInput('username', 'Username:')
+        $form->addEmailInput('email', 'Email:')
             ->setRequired();
 
         $form->addPasswordInput('password', 'Password:')
             ->setRequired();
-
-        $form->addEmailInput('email', 'Email:');
 
         $form->addSubmit('Create');
 
@@ -401,7 +399,7 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
             try {
                 $this->app->userRepository->beginTransaction(__METHOD__);
 
-                $userId = $this->app->userManager->createNewTechnicalUser($fr->username, HashManager::hashPassword($fr->password), $fr->email, $container->getTitle());
+                $userId = $this->app->userManager->createNewTechnicalUser($fr->email, HashManager::hashPassword($fr->password), $container->getTitle());
                 
                 $this->app->userRepository->commit($this->getUserId(), __METHOD__);
             } catch(AException $e) {
@@ -455,7 +453,7 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
                 throw new GeneralException('Could not add user to the All users group in the container. Reason: ' . $e->getMessage(), $e);
             }
 
-            $this->flashMessage('Successfully created a new technical account \'' . $fr->username . '\'.', 'success');
+            $this->flashMessage('Successfully created a new technical account \'' . $fr->email . '\'.', 'success');
         } catch(AException $e) {
             $this->flashMessage($e->getMessage(), 'error', 10);
         }
@@ -744,11 +742,11 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
 
         $grid->addColumnConst('status', 'Status', ContainerInviteUsageStatus::class);
 
-        $col = $grid->addColumnText('username', 'Username');
+        $col = $grid->addColumnText('email', 'Email');
         $col->onRenderColumn[] = function(DatabaseRow $row, Row $_row, Cell $cell, HTML $html, mixed $value) {
             $data = unserialize($row->data);
 
-            return $data['username'];
+            return $data['email'];
         };
 
         $col = $grid->addColumnText('fullname', 'Full name');
@@ -883,7 +881,7 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
 
             $tmp = unserialize($entry->data);
 
-            $this->app->userManager->createNewUser($tmp['username'], $tmp['fullname'], $tmp['password'], (array_key_exists('email', $tmp) ? $tmp['email'] : null));
+            $this->app->userManager->createNewUser($tmp['email'], $tmp['fullname'], $tmp['password']);
 
             $this->app->containerInviteRepository->commit($this->getUserId(), __METHOD__);
 
@@ -1099,7 +1097,7 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
         $grid->createDataSourceFromQueryBuilder($qb, 'userId');
 
         $grid->addColumnText('fullname', 'Fullname');
-        $grid->addColumnText('username', 'Username');
+        $grid->addColumnText('email', 'Email');
         $grid->addColumnBoolean('isTechnical', 'Is technical');
 
         return $grid;

@@ -9,9 +9,8 @@ namespace App\Entities;
  */
 class UserEntity extends AEntity {
     private string $id;
-    private string $username;
     private string $fullname;
-    private ?string $email;
+    private string $email;
     private string $dateCreated;
     private bool $isTechnical;
     private int $appDesignTheme;
@@ -28,9 +27,8 @@ class UserEntity extends AEntity {
      * Class constructor
      * 
      * @param string $id User ID
-     * @param string $username Username
      * @param string $fullname Fullname
-     * @param ?string $email Email
+     * @param string $email Email
      * @param string $dateCreated Date created
      * @param bool $isTechnical Is user technical
      * @param int $appDesignTheme App design theme
@@ -43,9 +41,8 @@ class UserEntity extends AEntity {
      */
     public function __construct(
         string $id,
-        string $username,
         string $fullname,
-        ?string $email,
+        string $email,
         string $dateCreated,
         bool $isTechnical,
         int $appDesignTheme,
@@ -59,7 +56,6 @@ class UserEntity extends AEntity {
         ?string $personalNumber
     ) {
         $this->id = $id;
-        $this->username = $username;
         $this->fullname = $fullname;
         $this->email = $email;
         $this->dateCreated = $dateCreated;
@@ -83,13 +79,6 @@ class UserEntity extends AEntity {
     }
 
     /**
-     * Returns username
-     */
-    public function getUsername(): string {
-        return $this->username;
-    }
-
-    /**
      * Returns fullname
      */
     public function getFullname(): string {
@@ -99,7 +88,7 @@ class UserEntity extends AEntity {
     /**
      * Returns email
      */
-    public function getEmail(): ?string {
+    public function getEmail(): string {
         return $this->email;
     }
 
@@ -212,13 +201,12 @@ class UserEntity extends AEntity {
         }
 
         $row = self::createRow($row);
-        self::checkTypes($row, ['userId' => 'string', 'username' => 'string', 'fullname' => 'string', 'email' => '?string', 'dateCreated' => 'string', 'isTechnical' => 'bool', 'appDesignTheme' => 'int',
+        self::checkTypes($row, ['userId' => 'string', 'fullname' => 'string', 'email' => 'string', 'dateCreated' => 'string', 'isTechnical' => 'bool', 'appDesignTheme' => 'int',
                                 'dateFormat' => 'string', 'timeFormat' => 'string', 'superiorUserId' => '?string', 'profilePictureFileId' => '?string', 'orgPosition' => '?string',
                                 'orgSection' => '?string', 'orgDepartment' => '?string', 'personalNumber' => '?string']);
 
         return new self(
             $row->userId,
-            $row->username,
             $row->fullname,
             $row->email,
             $row->dateCreated,

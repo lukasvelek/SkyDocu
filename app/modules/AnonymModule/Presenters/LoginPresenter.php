@@ -29,16 +29,14 @@ class LoginPresenter extends AAnonymPresenter {
         }
     }
 
-    public function renderLoginForm() {
-        $this->template->title = 'Login';
-    }
+    public function renderLoginForm() {}
 
     protected function createComponentLoginForm(HttpRequest $request) {
         $form = $this->componentFactory->getFormBuilder();
 
         $form->setAction($this->createURL('loginForm'));
 
-        $form->addTextInput('username', 'Username:')
+        $form->addEmailInput('email', 'Email:')
             ->setRequired();
 
         $form->addPasswordInput('password', 'Password:')

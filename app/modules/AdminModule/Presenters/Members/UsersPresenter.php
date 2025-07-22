@@ -113,12 +113,8 @@ class UsersPresenter extends AAdminPresenter {
                 // USER CREATION
                 $this->app->userRepository->beginTransaction(__METHOD__);
 
-                $email = $fr->email;
-                if($email == '') {
-                    $email = null;
-                }
 
-                $userId = $this->app->userManager->createNewUser($fr->username, $fr->fullname, HashManager::hashPassword($fr->password), $email);
+                $userId = $this->app->userManager->createNewUser($fr->email, $fr->fullname, HashManager::hashPassword($fr->password));
 
                 $this->app->userRepository->commit($this->getUserId(), __METHOD__);
 
@@ -189,16 +185,14 @@ class UsersPresenter extends AAdminPresenter {
 
         $form->setAction($this->createURL('newUserForm'));
 
-        $form->addTextInput('username', 'Username:')
-            ->setRequired();
-
         $form->addTextInput('fullname', 'Fullname:')
             ->setRequired();
 
         $form->addPasswordInput('password', 'Password:')
             ->setRequired();
 
-        $form->addEmailInput('email', 'Email:');
+        $form->addEmailInput('email', 'Email:')
+            ->setRequired();
 
         $form->addHorizontalLine();
 
@@ -415,7 +409,7 @@ class UsersPresenter extends AAdminPresenter {
         foreach($userIds as $userId) {
             $user = $this->app->userManager->getUserById($userId);
 
-            if(str_contains($user->getFullname(), $query) || str_contains($user->getUsername(), $query) || str_contains($user->getEmail(), $query)) {
+            if(str_contains($user->getFullname(), $query) || str_contains($user->getEmail(), $query)) {
                 $users[] = '<option value="' . $user->getId() . '">' . $user->getFullname() . '</option>';
             }
         }

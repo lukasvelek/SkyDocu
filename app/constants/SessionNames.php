@@ -9,6 +9,9 @@ namespace App\Constants;
  */
 class SessionNames {
     public const USER_ID = 'user_id';
+    /**
+     * @deprecated
+     */
     public const USERNAME = 'username';
     public const FULLNAME = 'fullname';
     public const LOGIN_HASH = 'login_hash';
@@ -19,6 +22,7 @@ class SessionNames {
     public const CURRENT_ARCHIVE_FOLDER_ID = 'current_archive_folder_id';
     public const CURRENT_DOCUMENT_FOLDER_ID = 'current_document_folder_id';
     public const FLASH_MESSAGES = 'flash_messages';
+    public const USER_EMAIL = 'email';
 }
 
 ?>

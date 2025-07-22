@@ -5,6 +5,7 @@ namespace App\Modules\SuperAdminSettingsModule;
 use App\Constants\AppDesignThemes;
 use App\Constants\DateFormats;
 use App\Constants\TimeFormats;
+use App\Core\Application;
 use App\Core\DB\DatabaseRow;
 use App\Core\FileManager;
 use App\Core\FileUploadManager;
@@ -82,11 +83,7 @@ class UsersPresenter extends ASuperAdminSettingsPresenter {
         $delete = $grid->addAction('delete');
         $delete->setTitle('Delete');
         $delete->onCanRender[] = function(DatabaseRow $row, Row $_row) {
-            if(!in_array($row->username, ['admin', 'service_user', $this->getUser()->getUsername()])) {
-                return true;
-            } else {
-                return false;
-            }
+            return !in_array($row->email, [Application::ADMIN_USER_EMAIL, Application::SERVICE_USER_EMAIL, $this->getUser()->getEmail()]);
         };
         $delete->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
             $el = HTML::el('a')
@@ -109,7 +106,7 @@ class UsersPresenter extends ASuperAdminSettingsPresenter {
 
                 $ok = true;
                 try {
-                    $user = $this->app->userManager->getUserByUsername($fr->username, false);
+                    $user = $this->app->userManager->getUserByEmail($fr->email);
                     $ok = false;
                 } catch(AException $e) {
                     $ok = true;
@@ -150,13 +147,11 @@ class UsersPresenter extends ASuperAdminSettingsPresenter {
 
         $form->setAction($this->createURL('newUserForm'));
 
-        $form->addTextInput('username', 'Username:')
-            ->setRequired();
-
         $form->addTextInput('fullname', 'Fullname:')
             ->setRequired();
 
-        $form->addEmailInput('email', 'Email:');
+        $form->addEmailInput('email', 'Email:')
+            ->setRequired();
 
         $form->addPasswordInput('password', 'Password:')
             ->setRequired();
@@ -197,11 +192,10 @@ class UsersPresenter extends ASuperAdminSettingsPresenter {
 
         $addInfo('ID', $user->getId());
         $addInfo('Full name', $user->getFullname());
-        $addInfo('Email', $user->getEmail() ?? '-');
+        $addInfo('Email', $user->getEmail());
         $addInfo('Member since', $memberSince);
 
         $this->template->user_profile = implode('', $userProfile);
-        $this->template->username = $user->getUsername();
         $this->template->links = LinkBuilder::createSimpleLink('&larr; Back', $this->createURL('list'), 'link');
 
         $profilePictureImageSource = UserHelper::getUserProfilePictureUri(
@@ -315,15 +309,12 @@ class UsersPresenter extends ASuperAdminSettingsPresenter {
 
         $form->setAction($this->createURL('editUserForm', ['userId' => $request->get('userId')]));
 
-        $form->addTextInput('username', 'Username:')
-            ->setRequired()
-            ->setValue($user->getUsername());
-
         $form->addTextInput('fullname', 'Fullname:')
             ->setRequired()
             ->setValue($user->getFullname());
 
         $form->addEmailInput('email', 'Email:')
+            ->setRequired()
             ->setValue($user->getEmail());
 
         $form->addSelect('appDesignTheme', 'App theme:')
@@ -348,8 +339,8 @@ class UsersPresenter extends ASuperAdminSettingsPresenter {
             try {
                 $user = $this->app->userManager->getUserById($this->httpRequest->get('userId'));
 
-                if($user->getUsername() != $fr->username) {
-                    throw new GeneralException('Username entered does not match with the username of the user to be deleted.');
+                if($user->getEmail() != $fr->email) {
+                    throw new GeneralException('Email entered does not match with the email of the user to be deleted.');
                 }
 
                 if(!$this->app->userAuth->authUser($fr->password)) {
@@ -392,9 +383,9 @@ class UsersPresenter extends ASuperAdminSettingsPresenter {
 
         $form->setAction($this->createURL('deleteUserForm', ['userId' => $request->get('userId')]));
 
-        $form->addLabel('main', 'Do you want to delete user \'' . $user->getUsername() . '\'?');
+        $form->addLabel('main', 'Do you want to delete user \'' . $user->getEmail() . '\'?');
 
-        $form->addTextInput('username', 'User\'s username:')
+        $form->addTextInput('email', 'User\'s email:')
             ->setRequired();
 
         $form->addPasswordInput('password', 'Your password:')

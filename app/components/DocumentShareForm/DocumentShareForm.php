@@ -133,11 +133,11 @@ class DocumentShareForm extends FormBuilder2 {
     /**
      * Returns found users
      * 
-     * @param string $query Username
+     * @param string $query Fullname or email
      * @return array Found users
      */
     private function getUsers(string $query) {
-        $usersDb = $this->userRepository->searchUsersByUsername($query, [$this->app->currentUser->getId()]);
+        $usersDb = $this->userRepository->searchUsers($query, ['email', 'fullname'], [$this->app->currentUser->getId()]);
 
         $shares = $this->documentManager->getSharesForDocumentIdsByUserId($this->documentIds, $this->app->currentUser->getId());
 

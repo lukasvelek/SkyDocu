@@ -2,7 +2,6 @@
 
 namespace App\Components\Static\UserProfileStatic;
 
-use App\Core\FileManager;
 use App\Core\Http\HttpRequest;
 use App\Entities\UserEntity;
 use App\Exceptions\GeneralException;
@@ -62,6 +61,7 @@ class UserProfileStatic extends AComponent {
         $template = $this->getTemplate(__DIR__ . '\\template.html');
 
         $template->user_profile = $this->build();
+        $template->user_organization_profile = $this->buildOrganization();
         $template->user_profile_picture = $this->getProfilePicture();
         $template->user_profile_picture_change_link = $this->getProfilePictureChangeLink();
 
@@ -90,6 +90,32 @@ class UserProfileStatic extends AComponent {
         $addCode('Is absent', $this->getIsUserAbsent());
         $addCode('Substitute', $this->getUserSubstitute());
         $addCode('Superior', $this->getUserSuperior());
+
+        return implode('', $code);
+    }
+
+    /**
+     * Builds the user organization profile
+     */
+    private function buildOrganization(): string {
+        if($this->user === null) {
+            throw new GeneralException('No user is set.');
+        }
+
+        $code = [];
+        $addCode = function(string $title, ?string $value) use (&$code) {
+            if($value === null) {
+                $value = '-';
+            }
+            $tmp = '<span id="row-' . count($code) . '"><p><b>' . $title . ':</b> ' . $value . '</p></span>';
+
+            $code[] = $tmp;
+        };
+
+        $addCode('Position', $this->user->getOrgPosition());
+        $addCode('Department', $this->user->getOrgDepartment());
+        $addCode('Section', $this->user->getOrgSection());
+        $addCode('Personal number', $this->user->getPersonalNumber());
 
         return implode('', $code);
     }

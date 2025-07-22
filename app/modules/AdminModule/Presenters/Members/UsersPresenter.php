@@ -110,6 +110,7 @@ class UsersPresenter extends AAdminPresenter {
             // Add user to container All users group
 
             try {
+                // USER CREATION
                 $this->app->userRepository->beginTransaction(__METHOD__);
 
                 $email = $fr->email;
@@ -121,12 +122,32 @@ class UsersPresenter extends AAdminPresenter {
 
                 $this->app->userRepository->commit($this->getUserId(), __METHOD__);
 
+                // USER UPDATE
                 $this->app->userRepository->beginTransaction(__METHOD__);
 
+                $updateData = [];
+
                 if($fr->superiorUser != 'null') {
-                    $this->app->userManager->updateUser($userId, ['superiorUserId' => $fr->superiorUser]);
+                    $updateData['superiorUserid'] = $fr->superiorUser;
+                }
+                if($fr->orgPosition !== null) {
+                    $updateData['orgPosition'] = $fr->orgPosition;
+                }
+                if($fr->orgDepartment !== null) {
+                    $updateData['orgDepartment'] = $fr->orgDepartment;
+                }
+                if($fr->orgSection !== null) {
+                    $updateData['orgSection'] = $fr->orgSection;
+                }
+                if($fr->personalNumber !== null) {
+                    $updateData['personalNumber'] = $fr->personalNumber;
                 }
 
+                if(!empty($updateData)) {
+                    $this->app->userManager->updateUser($userId, $updateData);
+                }
+
+                // ADD USER TO CONTAINER GROUP
                 $containerId = $this->httpSessionGet('container');
                 $container = $this->app->containerManager->getContainerById($containerId);
 
@@ -135,6 +156,7 @@ class UsersPresenter extends AAdminPresenter {
 
                 $this->app->groupManager->addUserToGroup($userId, $group->groupId);
 
+                // ADD USER TO ALL USERS IN CONTAINER
                 $this->groupRepository->beginTransaction(__METHOD__);
                 
                 $this->groupManager->addUserToGroupTitle(SystemGroups::ALL_USERS, $userId);
@@ -186,6 +208,13 @@ class UsersPresenter extends AAdminPresenter {
 
         $form->addSelect('superiorUser', 'Superior user:')
             ->addRawOption('null', 'Not selected', true);
+
+        $form->addHorizontalLine();
+
+        $form->addTextInput('orgPosition', 'Position:');
+        $form->addTextInput('orgSection', 'Section:');
+        $form->addTextInput('orgDepartment', 'Department:');
+        $form->addTextInput('personalNumber', 'Personal number:');
 
         $form->addSubmit('Create');
 
@@ -260,6 +289,17 @@ class UsersPresenter extends AAdminPresenter {
             } catch(AException $e) {}
         }
 
+        $form->addHorizontalLine();
+
+        $form->addTextInput('orgPosition', 'Position:')
+            ->setValue($user->getOrgPosition());
+        $form->addTextInput('orgSection', 'Section:')
+            ->setValue($user->getOrgSection());
+        $form->addTextInput('orgDepartment', 'Department:')
+            ->setValue($user->getOrgDepartment());
+        $form->addTextInput('personalNumber', 'Personal number:')
+            ->setValue($user->getPersonalNumber());
+
         $form->addSubmit('Create');
 
         $arb = new AjaxRequestBuilder();
@@ -300,7 +340,11 @@ class UsersPresenter extends AAdminPresenter {
 
             $this->app->userManager->updateUser($userId, [
                 'fullname' => $fr->fullname,
-                'superiorUserId' => $fr->superiorUser
+                'superiorUserId' => $fr->superiorUser,
+                'orgPosition' => $fr->orgPosition,
+                'orgSection' => $fr->orgSection,
+                'orgDepartment' => $fr->orgDepartment,
+                'personalNumber' => $fr->personalNumber
             ]);
 
             $this->app->userRepository->commit($this->getUserId(), __METHOD__);

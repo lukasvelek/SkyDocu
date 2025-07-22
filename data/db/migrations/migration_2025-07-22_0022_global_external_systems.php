@@ -12,7 +12,7 @@ class migration_2025_07_22_0022_global_external_systems extends ABaseMigration {
 
         $schema->create('external_systems')
             ->primaryKey('systemId')
-            ->varchar('containerId')
+            ->varchar('containerId', 256, true)
             ->varchar('title')
             ->text('description')
             ->varchar('login')
@@ -24,7 +24,7 @@ class migration_2025_07_22_0022_global_external_systems extends ABaseMigration {
 
         $schema->create('external_system_tokens')
             ->primaryKey('tokenId')
-            ->varchar('containerId')
+            ->varchar('containerId', 256, true)
             ->varchar('systemId')
             ->text('token')
             ->datetime('dateValidUntil')
@@ -36,6 +36,7 @@ class migration_2025_07_22_0022_global_external_systems extends ABaseMigration {
         $schema->create('external_system_log')
             ->primaryKey('entryId')
             ->varchar('systemId')
+            ->varchar('containerId', 256, true)
             ->text('message')
             ->enum('actionType')
             ->enum('objectType')
@@ -44,7 +45,9 @@ class migration_2025_07_22_0022_global_external_systems extends ABaseMigration {
             ->index(['actionType', 'objectType']);
 
         $schema->create('external_system_rights')
+            ->primaryKey('rightId')
             ->varchar('systemId')
+            ->varchar('containerId', 256, true)
             ->varchar('operationName')
             ->bool('isEnabled')
             ->index(['systemId']);

@@ -35,7 +35,9 @@ class ExternalSystemsPresenter extends AAdminPresenter {
     protected function createComponentContainerExternalSystemsGrid(HttpRequest $request) {
         $grid = $this->componentFactory->getGridBuilder($this->containerId);
 
-        $grid->createDataSourceFromQueryBuilder($this->externalSystemsRepository->composeQueryForExternalSystems(), 'systemId');
+        $qb = $this->app->externalSystemsRepository->composeQueryForExternalSystemsForContainer($this->containerId);
+
+        $grid->createDataSourceFromQueryBuilder($qb, 'systemId');
 
         $grid->addColumnText('title', 'Title');
         $grid->addColumnBoolean('isEnabled', 'Enabled');
@@ -181,11 +183,11 @@ class ExternalSystemsPresenter extends AAdminPresenter {
     public function handleNewForm(?FormRequest $fr = null) {
         if($fr !== null) {
             try {
-                $this->externalSystemsRepository->beginTransaction(__METHOD__);
+                /*$this->externalSystemsRepository->beginTransaction(__METHOD__);
 
                 $this->externalSystemsManager->createNewExternalSystem($fr->title, $fr->description, $fr->password);
 
-                $this->externalSystemsRepository->commit($this->getUserId(), __METHOD__);
+                $this->externalSystemsRepository->commit($this->getUserId(), __METHOD__);*/
 
                 $this->flashMessage('Successfully created new external system.', 'success');
             } catch(AException $e) {

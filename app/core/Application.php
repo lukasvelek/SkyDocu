@@ -29,6 +29,7 @@ use App\Repositories\ContainerDatabaseRepository;
 use App\Repositories\ContainerInviteRepository;
 use App\Repositories\ContainerRepository;
 use App\Repositories\ContentRepository;
+use App\Repositories\ExternalSystemsRepository;
 use App\Repositories\FileStorageRepository;
 use App\Repositories\GridExportRepository;
 use App\Repositories\GroupMembershipRepository;
@@ -88,6 +89,7 @@ class Application {
     public JobQueueRepository $jobQueueRepository;
     public JobQueueProcessingHistoryRepository $jobQueueProcessingHistoryRepository;
     public FileStorageRepository $fileStorageRepository;
+    public ExternalSystemsRepository $externalSystemsRepository;
 
     public ServiceManager $serviceManager;
     public UserManager $userManager;

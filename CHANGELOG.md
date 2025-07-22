@@ -35,6 +35,7 @@ Previously changelog for versions `1.0`-`1.4` has been located in README.md. How
 - Reworked user profile in superadministration
 - Fixed a bug where custom container processes are visible in container settings in superadministration
 - Fixed a bug where all users were added to any just created container
+- Fixed a bug where a new process instance was passed to the author instead of next user
 - Removed support for container environments
     - Because SkyDocu itself is split to environments (PROD, TEST, DEV)
 - Removed per-container file storage

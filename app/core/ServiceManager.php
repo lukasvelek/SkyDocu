@@ -146,7 +146,7 @@ class ServiceManager {
         $user = $this->userRepository->getUserByEmail(Application::SERVICE_USER_EMAIL);
 
         if($user !== null) {
-            return $user->getId();
+            return $user['userId'];
         } else {
             return null;
         }

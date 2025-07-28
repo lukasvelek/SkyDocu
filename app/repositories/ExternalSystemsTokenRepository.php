@@ -48,13 +48,15 @@ class ExternalSystemsTokenRepository extends ARepository {
      * Returns available token row for given system
      * 
      * @param string $systemId System ID
+     * @param ?string $containerId Container ID
      */
-    public function getAvailableTokenForExternalSystem(string $systemId): mixed {
+    public function getAvailableTokenForExternalSystem(string $systemId, ?string $containerId = null): mixed {
         $qb = $this->qb(__METHOD__);
 
         $qb->select(['*'])
             ->from('external_system_tokens')
             ->andWhere('systemId = ?', [$systemId])
+            ->andWhere('containerId = ?', [$containerId])
             ->andWhere('dateValidUntil > current_timestamp()')
             ->orderBy('dateValidUntil', 'DESC')
             ->limit(1)

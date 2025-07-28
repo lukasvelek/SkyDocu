@@ -112,4 +112,18 @@ class ExternalSystemsRepository extends ARepository {
 
         return $qb->fetchBool();
     }
+
+    /**
+     * Returns external system by login
+     * 
+     * @param string $login Login
+     */
+    public function getExternalSystemByLogin(string $login) {
+        $qb = $this->composeQueryForExternalSystems();
+
+        $qb->andWhere('login = ?', [$login])
+            ->execute();
+
+        return $qb->fetch();
+    }
 }

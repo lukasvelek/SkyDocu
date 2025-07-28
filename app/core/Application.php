@@ -17,6 +17,7 @@ use App\Managers\ContainerDatabaseManager;
 use App\Managers\ContainerInviteManager;
 use App\Managers\ContainerManager;
 use App\Managers\EntityManager;
+use App\Managers\ExternalSystemsManager;
 use App\Managers\FileStorageManager;
 use App\Managers\GroupManager;
 use App\Managers\JobQueueManager;
@@ -29,7 +30,10 @@ use App\Repositories\ContainerDatabaseRepository;
 use App\Repositories\ContainerInviteRepository;
 use App\Repositories\ContainerRepository;
 use App\Repositories\ContentRepository;
+use App\Repositories\ExternalSystemsLogRepository;
 use App\Repositories\ExternalSystemsRepository;
+use App\Repositories\ExternalSystemsRightsRepository;
+use App\Repositories\ExternalSystemsTokenRepository;
 use App\Repositories\FileStorageRepository;
 use App\Repositories\GridExportRepository;
 use App\Repositories\GroupMembershipRepository;
@@ -90,6 +94,9 @@ class Application {
     public JobQueueProcessingHistoryRepository $jobQueueProcessingHistoryRepository;
     public FileStorageRepository $fileStorageRepository;
     public ExternalSystemsRepository $externalSystemsRepository;
+    public ExternalSystemsTokenRepository $externalSystemsTokenRepository;
+    public ExternalSystemsLogRepository $externalSystemsLogRepository;
+    public ExternalSystemsRightsRepository $externalSystemsRightsRepository;
 
     public ServiceManager $serviceManager;
     public UserManager $userManager;
@@ -103,6 +110,7 @@ class Application {
     public ProcessManager $processManager;
     public JobQueueManager $jobQueueManager;
     public FileStorageManager $fileStorageManager;
+    public ExternalSystemsManager $externalSystemsManager;
 
     public array $repositories;
 
@@ -154,6 +162,7 @@ class Application {
         $this->processManager = new ProcessManager($this->logger, $this->entityManager, $this->processRepository);
         $this->jobQueueManager = new JobQueueManager($this->logger, $this->entityManager, $this->jobQueueRepository, $this->jobQueueProcessingHistoryRepository);
         $this->fileStorageManager = new FileStorageManager($this->logger, $this->entityManager, $this->fileStorageRepository);
+        $this->externalSystemsManager = new ExternalSystemsManager($this->logger, $this->entityManager, $this->externalSystemsRepository, $this->externalSystemsLogRepository, $this->externalSystemsTokenRepository, $this->externalSystemsRightsRepository);
 
         $this->initManagers();
 
@@ -188,7 +197,8 @@ class Application {
             $this->userAbsenceManager,
             $this->userSubstituteManager,
             $this->processManager,
-            $this->jobQueueManager
+            $this->jobQueueManager,
+            $this->externalSystemsManager
         ] as $manager) {
             $manager->injectCacheFactory($this->cacheFactory);
         }

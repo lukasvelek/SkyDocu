@@ -36,6 +36,20 @@ class ExternalSystemsRepository extends ARepository {
     }
 
     /**
+     * Returns external system by ID
+     * 
+     * @param string $systemId System ID
+     */
+    public function getExternalSystemById(string $systemId): mixed {
+        $qb = $this->composeQueryForExternalSystems();
+
+        $qb->andWhere('systemId = ?', [$systemId])
+            ->execute();
+
+        return $qb->fetch();
+    }
+
+    /**
      * Creates a new external system
      * 
      * @param array $data Data array

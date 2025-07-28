@@ -6,7 +6,7 @@ use App\Core\DB\AContainerBaseMigration;
 use App\Core\DB\Helpers\TableSchema;
 use App\Core\DB\Helpers\TableSeeding;
 
-class migration_2025_07_2_0022_global_external_systems extends AContainerBaseMigration {
+class migration_2025_07_22_0022_global_external_systems extends AContainerBaseMigration {
     public function up(): TableSchema {
         $table = $this->getTableSchema();
 

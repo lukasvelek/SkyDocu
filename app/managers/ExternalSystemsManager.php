@@ -5,6 +5,7 @@ namespace App\Managers;
 use App\Constants\ExternalSystemLogActionTypes;
 use App\Constants\ExternalSystemLogMessages;
 use App\Constants\ExternalSystemLogObjectTypes;
+use App\Constants\ExternalSystemRightsOperations;
 use App\Core\Datetypes\DateTime;
 use App\Core\DB\DatabaseRow;
 use App\Core\HashManager;
@@ -89,6 +90,8 @@ class ExternalSystemsManager extends AManager {
         if(!$this->externalSystemsRepository->createNewExternalSystem($data)) {
             throw new GeneralException('Database error.');
         }
+
+        $this->createExternalSystemRights($systemId, $containerId);
     }
 
     /**
@@ -355,11 +358,11 @@ class ExternalSystemsManager extends AManager {
     }
 
     /**
-     * Returns an array of allowed operations for given system
+     * Returns an array of operations for given system
      * 
      * @param string $systemId System ID
      */
-    public function getAllowedOperationsForSystem(string $systemId): array {
+    public function getOperationsForSystem(string $systemId): array {
         $qb = $this->externalSystemsRightsRepository->composeQueryForExternalSystemRights();
         $qb->andWhere('systemId = ?', [$systemId])
             ->execute();
@@ -415,38 +418,32 @@ class ExternalSystemsManager extends AManager {
      * @throws GeneralException
      */
     private function updateExternalSystemOperationForSystem(string $systemId, ?string $containerId, string $operationName, bool $allowed = true) {
-        // check if system has the right
-        // a) create it
-        // b) update it
-
-        $operations = $this->getAllowedOperationsForSystem($systemId);
-
-        $exists = false;
-        foreach($operations as $operation) {
-            if($operation->operationName == $operationName) {
-                $exists = true;
-            }
+        if(!$this->externalSystemsRightsRepository->updateOperationRight($systemId, $operationName, [
+            'isEnabled' => ($allowed ? 1 : 0)
+        ])) {
+            throw new GeneralException('Database error.');
         }
+    }
 
-        if($exists) {
-            if(!$this->externalSystemsRightsRepository->updateOperationRight($systemId, [
-                'isEnabled' => ($allowed ? 1 : 0)
-            ])) {
-                throw new GeneralException('Database error.');
-            }
-        } else if(!$exists && !$allowed) {
-            // if it doesnt exist and should be denied, then no creating is needed
-            $data = [
-                'rightId' => $this->entityManager->createId(EntityManager::EXTERNAL_SYSTEM_RIGHTS),
+    /**
+     * Creates external system rights
+     * 
+     * @param string $systemId System ID
+     * @param ?string $containerId Container ID
+     */
+    private function createExternalSystemRights(string $systemId, ?string $containerId) {
+        $operations = array_keys(ExternalSystemRightsOperations::getAll());
+
+        foreach($operations as $operation) {
+            $rightId = $this->createId(EntityManager::EXTERNAL_SYSTEM_RIGHTS);
+            
+            if(!$this->externalSystemsRightsRepository->insertOperationRight([
                 'systemId' => $systemId,
-                'isEnabled' => ($allowed ? 1 : 0)
-            ];
-
-            if($containerId !== null) {
-                $data['containerId'] = $containerId;
-            }
-
-            if(!$this->externalSystemsRightsRepository->insertOperationRight($data)) {
+                'rightId' => $rightId,
+                'operationName' => $operation,
+                'isEnabled' => 0,
+                'containerId' => $containerId
+            ])) {
                 throw new GeneralException('Database error.');
             }
         }

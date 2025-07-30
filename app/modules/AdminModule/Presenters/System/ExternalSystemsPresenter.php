@@ -41,6 +41,7 @@ class ExternalSystemsPresenter extends AAdminPresenter {
 
         $grid->addColumnText('title', 'Title');
         $grid->addColumnBoolean('isEnabled', 'Enabled');
+        $grid->addColumnText('login', 'Login');
 
         $info = $grid->addAction('info');
         $info->setTitle('Information');
@@ -72,7 +73,11 @@ class ExternalSystemsPresenter extends AAdminPresenter {
 
         $rights = $grid->addAction('rights');
         $rights->setTitle('Rights');
-        $rights->onCanRender[] = function() {
+        $rights->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) {
+            if($row->isEnabled == false) {
+                return false;
+            }
+
             return true;
         };
         $rights->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
@@ -115,6 +120,10 @@ class ExternalSystemsPresenter extends AAdminPresenter {
         $delete = $grid->addAction('delete');
         $delete->setTitle('Delete');
         $delete->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) {
+            if($row->isEnabled == true) {
+                return false;
+            }
+
             return true;
         };
         $delete->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {

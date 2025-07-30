@@ -31,6 +31,9 @@ Previously changelog for versions `1.0`-`1.4` has been located in README.md. How
         - Department
         - Section
     - Personal number
+- Added global external systems
+- Reworked API login mechanism
+- Reworked API token 
 - Reworked user administration UI in containers
 - Reworked user profile in superadministration
 - Fixed a bug where custom container processes are visible in container settings in superadministration

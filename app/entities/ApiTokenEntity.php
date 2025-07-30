@@ -15,7 +15,7 @@ class ApiTokenEntity {
     private const _ENTITY_ID = 'entityId';
     private const _USER_ID = 'userId';
 
-    private string $token;
+    private ExternalSystemTokenEntity $token;
     private string $containerId;
     private string $entityId;
     private ?string $userId = null;
@@ -28,7 +28,7 @@ class ApiTokenEntity {
     public function __construct(array $token) {
         $this->checkArrayKeys($token);
 
-        $this->token = $token[self::_TOKEN];
+        $this->token = ExternalSystemTokenEntity::getFromGeneratedToken($token[self::_TOKEN]);
         $this->containerId = $token[self::_CONTAINER_ID];
         $this->entityId = $token[self::_ENTITY_ID];
 
@@ -68,7 +68,7 @@ class ApiTokenEntity {
     /**
      * Returns access token
      */
-    public function getToken(): string {
+    public function getToken(): ExternalSystemTokenEntity {
         return $this->token;
     }
 
@@ -77,7 +77,7 @@ class ApiTokenEntity {
      */
     public function convertToToken(): string {
         $result = [
-            self::_TOKEN => $this->token,
+            self::_TOKEN => $this->token->generateToken(),
             self::_CONTAINER_ID => $this->containerId,
             self::_ENTITY_ID => $this->entityId
         ];
@@ -86,7 +86,7 @@ class ApiTokenEntity {
             $result[self::_USER_ID] = $this->userId;
         }
 
-        return base64_encode(serialize($result));
+        return base64_encode(json_encode($result));
     }
 
     /**
@@ -95,7 +95,7 @@ class ApiTokenEntity {
      * @param string $token Transmitted token
      */
     public static function convertFromToken(string $token): ApiTokenEntity {
-        $decodedToken = unserialize(base64_decode($token));
+        $decodedToken = json_decode(base64_decode($token), true);
 
         $entity = new ApiTokenEntity($decodedToken);
 
@@ -105,14 +105,14 @@ class ApiTokenEntity {
     /**
      * Creates a new entity
      * 
-     * @param string $token Generated token
+     * @param ExternalSystemTokenEntity $token Generated token
      * @param string $containerId Container ID
      * @param string $entityId Entity ID
      * @param int $entityType Entity type
      */
-    public static function createNewEntity(string $token, string $containerId, string $entityId): ApiTokenEntity {
+    public static function createNewEntity(ExternalSystemTokenEntity $token, string $containerId, string $entityId): ApiTokenEntity {
         $array = [
-            self::_TOKEN => $token,
+            self::_TOKEN => $token->generateToken(),
             self::_CONTAINER_ID => $containerId,
             self::_ENTITY_ID => $entityId
         ];

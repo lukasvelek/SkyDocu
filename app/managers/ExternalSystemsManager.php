@@ -9,6 +9,7 @@ use App\Constants\ExternalSystemRightsOperations;
 use App\Core\Datetypes\DateTime;
 use App\Core\DB\DatabaseRow;
 use App\Core\HashManager;
+use App\Entities\ExternalSystemTokenEntity;
 use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
 use App\Exceptions\NonExistingEntityException;
@@ -153,14 +154,14 @@ class ExternalSystemsManager extends AManager {
     public function getAvailableTokenForExternalSystem(
         string $systemId,
         ?string $containerId
-    ): string {
+    ): ExternalSystemTokenEntity {
         $row = $this->externalSystemsTokenRepository->getAvailableTokenForExternalSystem($systemId, $containerId);
 
         if($row === null) {
             throw new GeneralException('System has no available token.');
         }
 
-        return $row['token'];
+        return ExternalSystemTokenEntity::getFromGeneratedToken($row['token']);
     }
 
     /**
@@ -202,18 +203,24 @@ class ExternalSystemsManager extends AManager {
     public function createNewToken(
         string $systemId,
         ?string $containerId = null
-    ): string {
+    ): ExternalSystemTokenEntity {
         $tokenId = $this->createId(EntityManager::EXTERNAL_SYSTEM_TOKENS);
 
-        $token = HashManager::createHash(256, true);
+        $hash = HashManager::createHash(256, true);
 
         $dateValidUntil = new DateTime();
         $dateValidUntil->modify('+1h');
         $dateValidUntil = $dateValidUntil->getResult();
 
+        $token = new ExternalSystemTokenEntity(
+            $tokenId,
+            $hash,
+            $dateValidUntil
+        );
+
         $data = [
             'systemId' => $systemId,
-            'token' => $token,
+            'token' => $token->generateToken(),
             'dateValidUntil' => $dateValidUntil,
             'tokenId' => $tokenId
         ];
@@ -240,7 +247,7 @@ class ExternalSystemsManager extends AManager {
         string $systemId,
         ?string $containerId = null,
         bool $createLogEntry = true
-    ) {
+    ): ExternalSystemTokenEntity {
         $token = null;
 
         try {

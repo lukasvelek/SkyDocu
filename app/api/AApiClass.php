@@ -25,6 +25,8 @@ abstract class AApiClass {
 
     protected PeeQL $peeql;
 
+    private bool $authOnly = false;
+
     /**
      * Class constructor
      * 
@@ -44,7 +46,7 @@ abstract class AApiClass {
             throw new GeneralException('No data entered.');
         }
 
-        $this->data = json_decode($data, true)['data'];
+        $this->data = json_decode($data, true);
     }
 
     /**
@@ -55,13 +57,22 @@ abstract class AApiClass {
             $this->loadData();
         }
 
-        $container = $this->app->containerManager->getContainerById($this->containerId, true);
+        if(!$this->authOnly) {
+            $container = $this->app->containerManager->getContainerById($this->containerId, true);
         
-        $this->conn = $this->app->dbManager->getConnectionToDatabase($container->getDefaultDatabase()->getName());
+            $this->conn = $this->app->dbManager->getConnectionToDatabase($container->getDefaultDatabase()->getName());
 
-        $this->container = new Container($this->app, $this->containerId);
+            $this->container = new Container($this->app, $this->containerId);
 
-        $this->peeql = new PeeQL($this->conn, $this->app->logger, $this->app->transactionLogRepository, true);
+            $this->peeql = new PeeQL($this->conn, $this->app->logger, $this->app->transactionLogRepository, true);
+        }
+    }
+
+    /**
+     * Sets that this request is for authentication only
+     */
+    protected function setAuthOnly() {
+        $this->authOnly = true;
     }
 
     /**

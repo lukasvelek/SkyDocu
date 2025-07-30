@@ -151,7 +151,7 @@ class ExternalSystemsManager extends AManager {
         string $systemId,
         ?string $containerId
     ): string {
-        $row = $this->externalSystemsTokenRepository->getAvailableTokenForExternalSystem($systemId);
+        $row = $this->externalSystemsTokenRepository->getAvailableTokenForExternalSystem($systemId, $containerId);
 
         if($row === null) {
             throw new GeneralException('System has no available token.');
@@ -307,6 +307,148 @@ class ExternalSystemsManager extends AManager {
 
         if(!$this->externalSystemsLogRepository->insertNewLogEntry($data)) {
             throw new GeneralException('Database error.');
+        }
+    }
+
+    /**
+     * Deletes external system
+     * 
+     * @param string $systemId System ID
+     * @throws GeneralException
+     */
+    public function deleteExternalSystem(string $systemId) {
+        // delete tokens
+        if(!$this->externalSystemsTokenRepository->deleteTokensForSystem($systemId)) {
+            throw new GeneralException('Database error.');
+        }
+
+        // delete rights
+        if(!$this->externalSystemsRightsRepository->deleteOperationRightsForSystem($systemId)) {
+            throw new GeneralException('Database error.');
+        }
+
+        // delete system
+        if(!$this->externalSystemsRepository->deleteExternalSystem($systemId)) {
+            throw new GeneralException('Database error.');
+        }
+    }
+
+    /**
+     * Deletes all external systems for container
+     * 
+     * @param string $containerId Container ID
+     * @throws GeneralException
+     */
+    public function deleteExternalSystemsForCotnainer(string $containerId) {
+        $qb = $this->externalSystemsRepository->composeQueryForExternalSystemsForContainer($containerId);
+
+        $qb->execute();
+
+        $systemIds = [];
+        while($row = $qb->fetchAssoc()) {
+            $systemIds[] = $row['systemId'];
+        }
+
+        foreach($systemIds as $systemId) {
+            $this->deleteExternalSystem($systemId);
+        }
+    }
+
+    /**
+     * Returns an array of allowed operations for given system
+     * 
+     * @param string $systemId System ID
+     */
+    public function getAllowedOperationsForSystem(string $systemId): array {
+        $qb = $this->externalSystemsRightsRepository->composeQueryForExternalSystemRights();
+        $qb->andWhere('systemId = ?', [$systemId])
+            ->execute();
+
+        $operations = [];
+        while($row = $qb->fetchAssoc()) {
+            $operations[] = DatabaseRow::createFromDbRow($row);
+        }
+
+        return $operations;
+    }
+
+    /**
+     * Allows external system operation
+     * 
+     * @param string $systemId System ID
+     * @param ?string $containerId Container ID
+     * @param string $operationName Operation name
+     * @throws GeneralException
+     */
+    public function allowExternalSystemOperation(string $systemId, ?string $containerId, string $operationName) {
+        $this->updateExternalSystemOperationForSystem(
+            $systemId,
+            $containerId,
+            $operationName
+        );
+    }
+
+    /**
+     * Denies external system operation
+     * 
+     * @param string $systemId System ID
+     * @param ?string $containerId Container ID
+     * @param string $operationName Operation name
+     * @throws GeneralException
+     */
+    public function denyExternalSystemOperation(string $systemId, ?string $containerId, string $operationName) {
+        $this->updateExternalSystemOperationForSystem(
+            $systemId,
+            $containerId,
+            $operationName,
+            false
+        );
+    }
+
+    /**
+     * Updates external system operation for system
+     * 
+     * @param string $systemId System ID
+     * @param ?string $containerId Container ID
+     * @param string $operationName Operation name
+     * @param bool $allowed Allower or not
+     * @throws GeneralException
+     */
+    private function updateExternalSystemOperationForSystem(string $systemId, ?string $containerId, string $operationName, bool $allowed = true) {
+        // check if system has the right
+        // a) create it
+        // b) update it
+
+        $operations = $this->getAllowedOperationsForSystem($systemId);
+
+        $exists = false;
+        foreach($operations as $operation) {
+            if($operation->operationName == $operationName) {
+                $exists = true;
+            }
+        }
+
+        if($exists) {
+            if(!$this->externalSystemsRightsRepository->updateOperationRight($systemId, [
+                'isEnabled' => ($allowed ? 1 : 0)
+            ])) {
+                throw new GeneralException('Database error.');
+            }
+        } else if(!$exists && !$allowed) {
+            // if it doesnt exist and should be denied, then no creating is needed
+            $data = [
+                'rightId' => $this->entityManager->createId(EntityManager::EXTERNAL_SYSTEM_RIGHTS),
+                'systemId' => $systemId,
+                'isEnabled' => ($allowed ? 1 : 0)
+            ];
+
+            if($containerId !== null) {
+                $data['containerId'] = $containerId;
+            }
+
+            if(!$this->externalSystemsRightsRepository->insertOperationRight($data)) {
+                throw new GeneralException('Database error.');
+            }
         }
     }
 }

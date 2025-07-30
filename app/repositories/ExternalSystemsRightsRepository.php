@@ -40,15 +40,15 @@ class ExternalSystemsRightsRepository extends ARepository {
     /**
      * Updates operation right
      * 
-     * @param string $rightId Right ID
+     * @param string $systemId System ID
      * @param array $data Data array
      */
-    public function updateOperationRight(string $rightId, array $data): bool {
+    public function updateOperationRight(string $systemId, array $data): bool {
         $qb = $this->qb(__METHOD__);
 
         $qb->update('external_system_rights')
             ->set($data)
-            ->where('rightId = ?', [$rightId])
+            ->where('systemId = ?', [$systemId])
             ->execute();
 
         return $qb->fetchBool();

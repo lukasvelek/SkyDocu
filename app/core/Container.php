@@ -11,7 +11,6 @@ use App\Logger\Logger;
 use App\Managers\Container\ArchiveManager;
 use App\Managers\Container\DocumentManager;
 use App\Managers\Container\EnumManager;
-use App\Managers\Container\ExternalSystemsManager;
 use App\Managers\Container\FileStorageManager;
 use App\Managers\Container\FolderManager;
 use App\Managers\Container\GridManager;
@@ -24,10 +23,6 @@ use App\Managers\EntityManager;
 use App\Repositories\Container\ArchiveRepository;
 use App\Repositories\Container\DocumentClassRepository;
 use App\Repositories\Container\DocumentRepository;
-use App\Repositories\Container\ExternalSystemLogRepository;
-use App\Repositories\Container\ExternalSystemRightsRepository;
-use App\Repositories\Container\ExternalSystemsRepository;
-use App\Repositories\Container\ExternalSystemTokenRepository;
 use App\Repositories\Container\FileStorageRepository;
 use App\Repositories\Container\FolderRepository;
 use App\Repositories\Container\GridRepository;
@@ -61,10 +56,6 @@ class Container {
     public ProcessRepository $processRepository;
     public ArchiveRepository $archiveRepository;
     public FileStorageRepository $fileStorageRepository;
-    public ExternalSystemsRepository $externalSystemsRepository;
-    public ExternalSystemLogRepository $externalSystemLogRepository;
-    public ExternalSystemTokenRepository $externalSystemTokenRepository;
-    public ExternalSystemRightsRepository $externalSystemRightsRepository;
     public ProcessInstanceRepository $processInstanceRepository;
     public ProcessMetadataRepository $processMetadataRepository;
     
@@ -77,7 +68,6 @@ class Container {
     public GridManager $gridManager;
     public ArchiveManager $archiveManager;
     public FileStorageManager $fileStorageManager;
-    public ExternalSystemsManager $externalSystemsManager;
     public ProcessManager $processManager;
     public ProcessInstanceManager $processInstanceManager;
     public ProcessMetadataManager $processMetadataManager;
@@ -177,12 +167,6 @@ class Container {
             ],
             'fileStorageManager' => [
                 'fileStorageRepository'
-            ],
-            'externalSystemsManager' => [
-                'externalSystemsRepository',
-                'externalSystemLogRepository',
-                'externalSystemTokenRepository',
-                'externalSystemRightsRepository'
             ],
             'processManager' => [
                 'processRepository'

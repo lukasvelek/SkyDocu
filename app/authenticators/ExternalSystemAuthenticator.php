@@ -6,7 +6,7 @@ use App\Exceptions\AException;
 use App\Exceptions\ApiException;
 use App\Exceptions\GeneralException;
 use App\Logger\Logger;
-use App\Managers\Container\ExternalSystemsManager;
+use App\Managers\ExternalSystemsManager;
 
 /**
  * ExternalSystemAuthenticator allows to authenticate an external system

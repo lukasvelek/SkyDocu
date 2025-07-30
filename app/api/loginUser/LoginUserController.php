@@ -37,11 +37,11 @@ class LoginUserController extends AApiClass implements IAPITokenProcessing {
      * @param string $password Password
      */
     private function loginUser(string $login, string $password) {
-        $externalSystemAuthenticator = new ExternalSystemAuthenticator($this->externalSystemsManager, $this->app->logger);
+        $externalSystemAuthenticator = new ExternalSystemAuthenticator($this->app->externalSystemsManager, $this->app->logger);
 
         $this->systemId = $externalSystemAuthenticator->auth($login, $password);
 
-        return $this->externalSystemsManager->createOrGetToken($this->systemId);
+        return $this->app->externalSystemsManager->createOrGetToken($this->systemId);
     }
 
     public function processToken(string $token): string {

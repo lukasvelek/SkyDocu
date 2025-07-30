@@ -9,13 +9,6 @@ use App\Core\DB\PeeQL;
 use App\Core\Http\JsonResponse;
 use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
-use App\Managers\Container\ExternalSystemsManager;
-use App\Managers\EntityManager;
-use App\Repositories\Container\ExternalSystemLogRepository;
-use App\Repositories\Container\ExternalSystemRightsRepository;
-use App\Repositories\Container\ExternalSystemsRepository;
-use App\Repositories\Container\ExternalSystemTokenRepository;
-use App\Repositories\ContentRepository;
 
 /**
  * Common class for all API controllers
@@ -24,7 +17,6 @@ use App\Repositories\ContentRepository;
  */
 abstract class AApiClass {
     protected Application $app;
-    protected ExternalSystemsManager $externalSystemsManager;
     protected DatabaseConnection $conn;
     protected Container $container;
 
@@ -66,23 +58,6 @@ abstract class AApiClass {
         $container = $this->app->containerManager->getContainerById($this->containerId, true);
         
         $this->conn = $this->app->dbManager->getConnectionToDatabase($container->getDefaultDatabase()->getName());
-
-        $contentRepository = new ContentRepository($this->conn, $this->app->logger, $this->app->transactionLogRepository);
-        $entityManager = new EntityManager($this->app->logger, $contentRepository);
-
-        $externalSystemsRepository = new ExternalSystemsRepository($this->conn, $this->app->logger, $this->app->transactionLogRepository);
-        $externalSystemLogRepository = new ExternalSystemLogRepository($this->conn, $this->app->logger, $this->app->transactionLogRepository);
-        $externalSystemTokenRepository = new ExternalSystemTokenRepository($this->conn, $this->app->logger, $this->app->transactionLogRepository);
-        $externalSystemRightsRepository = new ExternalSystemRightsRepository($this->conn, $this->app->logger, $this->app->transactionLogRepository);
-
-        $this->externalSystemsManager = new ExternalSystemsManager(
-            $this->app->logger,
-            $entityManager,
-            $externalSystemsRepository,
-            $externalSystemLogRepository,
-            $externalSystemTokenRepository,
-            $externalSystemRightsRepository
-        );
 
         $this->container = new Container($this->app, $this->containerId);
 

@@ -48,7 +48,7 @@ abstract class AAuthenticatedApiController extends AApiClass {
      */
     private function auth() {
         $externalSystemAuthenticator = new ExternalSystemAuthenticator($this->app->externalSystemsManager, $this->app->logger);
-        $externalSystemAuthenticator->authByToken($this->token->getToken());
+        $externalSystemAuthenticator->authByToken($this->token->getToken()->generateToken());
 
         $container = $this->app->containerManager->getContainerById($this->containerId, true);
 

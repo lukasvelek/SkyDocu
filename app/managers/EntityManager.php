@@ -36,6 +36,10 @@ class EntityManager extends AManager {
     public const JOB_QUEUE = 'job_queue';
     public const JOB_QUEUE_PROCESSING_HISTORY = 'job_queue_processing_history';
     public const FILE_STORAGE = 'file_storage';
+    public const EXTERNAL_SYSTEMS = 'external_systems';
+    public const EXTERNAL_SYSTEM_LOG = 'external_system_log';
+    public const EXTERNAL_SYSTEM_TOKENS = 'external_system_tokens';
+    public const EXTERNAL_SYSTEM_RIGHTS = 'external_system_rights';
 
     public const C_GROUPS = 'groups';
     public const C_DOCUMENT_CLASSES = 'document_classes';
@@ -201,7 +205,11 @@ class EntityManager extends AManager {
                 self::PROCESSES_UNIQUE => 'uniqueProcessId',
                 self::JOB_QUEUE => 'jobId',
                 self::JOB_QUEUE_PROCESSING_HISTORY => 'entryId',
-                self::FILE_STORAGE => 'fileId'
+                self::FILE_STORAGE => 'fileId',
+                self::EXTERNAL_SYSTEMS => 'systemId',
+                self::EXTERNAL_SYSTEM_TOKENS => 'tokenId',
+                self::EXTERNAL_SYSTEM_RIGHTS => 'rightId',
+                self::EXTERNAL_SYSTEM_LOG => 'entryId'
             };
         } else {
             return match($category) {
@@ -227,7 +235,11 @@ class EntityManager extends AManager {
                 self::PROCESSES_UNIQUE => 'uniqueProcessId',
                 self::JOB_QUEUE => 'jobId',
                 self::JOB_QUEUE_PROCESSING_HISTORY => 'entryId',
-                self::FILE_STORAGE => 'fileId'
+                self::FILE_STORAGE => 'fileId',
+                self::EXTERNAL_SYSTEMS => 'systemId',
+                self::EXTERNAL_SYSTEM_TOKENS => 'tokenId',
+                self::EXTERNAL_SYSTEM_RIGHTS => 'rightId',
+                self::EXTERNAL_SYSTEM_LOG => 'entryId'
             };
         }
     }

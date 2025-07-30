@@ -7,13 +7,14 @@ use App\Api\IAPITokenProcessing;
 use App\Authenticators\ExternalSystemAuthenticator;
 use App\Core\Http\JsonResponse;
 use App\Entities\ApiTokenEntity;
+use App\Entities\ExternalSystemTokenEntity;
 
 class LoginUserController extends AApiClass implements IAPITokenProcessing {
     private string $userId;
     private string $systemId;
 
     protected function startup() {
-        $this->containerId = $this->get('containerId');
+        $this->setAuthOnly();
 
         parent::startup();
     }
@@ -37,14 +38,14 @@ class LoginUserController extends AApiClass implements IAPITokenProcessing {
      * @param string $password Password
      */
     private function loginUser(string $login, string $password) {
-        $externalSystemAuthenticator = new ExternalSystemAuthenticator($this->externalSystemsManager, $this->app->logger);
+        $externalSystemAuthenticator = new ExternalSystemAuthenticator($this->app->externalSystemsManager, $this->app->logger);
 
         $this->systemId = $externalSystemAuthenticator->auth($login, $password);
 
-        return $this->externalSystemsManager->createOrGetToken($this->systemId);
+        return $this->app->externalSystemsManager->createOrGetToken($this->systemId);
     }
 
-    public function processToken(string $token): string {
+    public function processToken(ExternalSystemTokenEntity $token): string {
         $entity = ApiTokenEntity::createNewEntity($token, $this->containerId, $this->systemId);
         $entity->setUserId($this->userId);
         return $entity->convertToToken();

@@ -14,6 +14,7 @@ class NavbarSuperAdminSettingsLinks {
     public const GROUPS = ['page' => 'SuperAdminSettings:Groups', 'action' => 'list'];
     public const BG_SERVICES = ['page' => 'SuperAdminSettings:BackgroundServices', 'action' => 'list'];
     public const FILE_STORAGE = ['page' => 'SuperAdminSettings:FileStorage', 'action' => 'dashboard'];
+    public const EXTERNAL_SYSTEMS = ['page' => 'SuperAdminSettings:ExternalSystems', 'action' => 'list'];
     public const DATABASE = ['page' => 'SuperAdminSettings:Database', 'action' => 'home'];
     public const ABOUT_APP = ['page' => 'SuperAdminSettings:AboutApplication', 'action' => 'default'];
 
@@ -25,7 +26,7 @@ class NavbarSuperAdminSettingsLinks {
      * 
      * @return array<string, array> Links array
      */
-    public static function toArray() {
+    public static function toArray(): array {
         return [
             'Leave settings' => self::LEAVE_SETTINGS,
             'Dashboard' => self::DASHBOARD,
@@ -33,6 +34,7 @@ class NavbarSuperAdminSettingsLinks {
             'Groups' => self::GROUPS,
             'Background services' => self::BG_SERVICES,
             'File storage' => self::FILE_STORAGE,
+            'External systems' => self::EXTERNAL_SYSTEMS,
             'Database' => self::DATABASE,
             'About application' => self::ABOUT_APP
         ];

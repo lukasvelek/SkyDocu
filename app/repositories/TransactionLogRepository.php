@@ -3,13 +3,14 @@
 namespace App\Repositories;
 
 use App\Core\DatabaseConnection;
+use App\Core\HashManager;
 use App\Logger\Logger;
 use PeeQL\Operations\QueryOperation;
 use PeeQL\Result\QueryResult;
 use QueryBuilder\QueryBuilder;
 
 class TransactionLogRepository {
-    private DatabaseConnection $db;
+    public DatabaseConnection $db;
     private Logger $logger;
 
     public function __construct(DatabaseConnection $db, Logger $logger) {
@@ -21,10 +22,12 @@ class TransactionLogRepository {
         return new QueryBuilder($this->db, $this->logger, $method);
     }
 
-    public function createNewEntry(string $id, ?string $userId, string $methodName, string &$sql = '', ?string $containerId = null, ?string $dateCreated = null) {
+    public function createNewEntry(?string $userId, string $methodName, string &$sql = '', ?string $containerId = null, ?string $dateCreated = null) {
         $qb = $this->qb(__METHOD__);
 
         $methodName = str_replace('\\', '\\\\', $methodName);
+
+        $id = $this->getUniqueId();
 
         $keys = ['transactionId', 'callingMethod', 'userId'];
         $values = [$id, $methodName, $userId];
@@ -41,10 +44,37 @@ class TransactionLogRepository {
         $qb ->insert('transaction_log', $keys)
             ->values($values)
             ->execute();
-
-        //$sql = $qb->getSQL();
         
         return $qb->fetchBool();
+    }
+
+    private function getUniqueId(): string {
+        $unique = true;
+        $run = true;
+        $id = null;
+        $x = 0;
+        while($run) {
+            $id = HashManager::createEntityId();
+
+            $qb = $this->qb(__METHOD__);
+            $qb->select(['COUNT(*) AS cnt'])
+                ->from('transaction_log')
+                ->where('transactionId = ?', [$id])
+                ->execute();
+
+            if($qb->fetch('cnt') == 0) {
+                $unique = true;
+            }
+
+            if($unique || $x >= 100) {
+                $run = false;
+                break;
+            }
+
+            $x++;
+        }
+
+        return $id;
     }
 
     public function get(QueryOperation $operation): QueryResult {

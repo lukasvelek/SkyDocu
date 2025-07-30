@@ -74,17 +74,20 @@ class EntityManager extends AManager {
     private const __MAX__ = 100;
 
     private ContentRepository $contentRepository;
+    private ContentRepository $masterContentRepository;
 
     /**
      * Class constructor
      * 
      * @param Logger $logger Logger instance
      * @param ContentRepository $contentRepository ContentRepository instance
+     * @param ContentRepository $masterContentRepository ContentRepository master instance
      */
-    public function __construct(Logger $logger, ContentRepository $contentRepository) {
+    public function __construct(Logger $logger, ContentRepository $contentRepository, ContentRepository $masterContentRepository) {
         parent::__construct($logger, null);
 
         $this->contentRepository = $contentRepository;
+        $this->masterContentRepository = $masterContentRepository;
     }
 
     public function generateEntityIdCustomDb(string $category, DatabaseConnection $customConn) {
@@ -127,9 +130,15 @@ class EntityManager extends AManager {
         while($run) {
             $entityId = HashManager::createEntityId();
 
-            $primaryKeyName = $this->getPrimaryKeyNameByCategory($category, ($this->contentRepository->conn->getName() != DB_MASTER_NAME));
+            $isContainer = ($this->contentRepository->conn->getName() != DB_MASTER_NAME);
 
-            $unique = $this->contentRepository->checkIdIsUnique($category, $primaryKeyName, $entityId);
+            $primaryKeyName = $this->getPrimaryKeyNameByCategory($category, $isContainer);
+
+            if($isContainer) {
+                $unique = $this->contentRepository->checkIdIsUnique($category, $primaryKeyName, $entityId);
+            } else {
+                $unique = $this->masterContentRepository->checkIdIsUnique($category, $primaryKeyName, $entityId);
+            }
 
             if($unique || $x >= self::__MAX__) {
                 $run = false;

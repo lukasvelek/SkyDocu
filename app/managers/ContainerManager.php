@@ -297,7 +297,11 @@ class ContainerManager extends AManager {
         $userRepository = new UserRepository($this->containerRepository->conn, $this->logger, $this->containerRepository->transactionLogRepository);
         $groupRepository = new GroupRepository($conn, $this->logger, $this->containerRepository->transactionLogRepository);
         $contentRepository = new ContentRepository($conn, $this->logger, $this->containerRepository->transactionLogRepository);
-        $entityManager = new EntityManager($this->logger, $contentRepository);
+        $entityManager = new EntityManager($this->logger, $contentRepository, new ContentRepository(
+            $this->containerRepository->transactionLogRepository->db,
+            $this->logger,
+            $this->containerRepository->transactionLogRepository
+        ));
 
         $groupManager = new Container\GroupManager($this->logger, $entityManager, $groupRepository, $userRepository);
 

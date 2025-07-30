@@ -8,7 +8,6 @@ use App\Authorizators\SupervisorAuthorizator;
 use App\Constants\SessionNames;
 use App\Core\Caching\CacheFactory;
 use App\Core\DatabaseConnection;
-use App\Entities\ApiTokenEntity;
 use App\Managers\Container\ArchiveManager;
 use App\Managers\Container\DocumentManager;
 use App\Managers\Container\EnumManager;
@@ -99,7 +98,7 @@ abstract class AContainerPresenter extends APresenter {
 
         $this->initRepositories($containerConnection);
 
-        $this->entityManager = new EntityManager($this->logger, $this->contentRepository);
+        $this->entityManager = new EntityManager($this->logger, $this->contentRepository, $this->app->contentRepository);
         $this->folderManager = new FolderManager($this->logger, $this->entityManager, $this->folderRepository, $this->groupRepository);
         $this->documentManager = new DocumentManager($this->logger, $this->entityManager, $this->documentRepository, $this->documentClassRepository, $this->groupRepository, $this->folderRepository);
         $this->groupManager = new GroupManager($this->logger, $this->entityManager, $this->groupRepository, $this->app->userRepository);

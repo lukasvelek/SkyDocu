@@ -33,7 +33,7 @@ $containers = $app->containerManager->getAllContainers(true, true);
 
 say(sprintf('Found %d containers to process.', count($containers)));
 
-$entityManager = new EntityManager($app->logger, new ContentRepository($app->userRepository->conn, $app->logger, $app->transactionLogRepository));
+$entityManager = new EntityManager($app->logger, new ContentRepository($app->userRepository->conn, $app->logger, $app->transactionLogRepository), $app->contentRepository);
 
 $i = 1;
 foreach($containers as  $container) {

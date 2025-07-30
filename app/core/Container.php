@@ -104,7 +104,7 @@ class Container {
 
         $this->initRepositories();
 
-        $this->entityManager = new EntityManager($this->logger, $this->contentRepository);
+        $this->entityManager = new EntityManager($this->logger, $this->contentRepository, $this->app->contentRepository);
         $this->folderManager = new FolderManager($this->logger, $this->entityManager, $this->folderRepository, $this->groupRepository);
         $this->documentManager = new DocumentManager($this->logger, $this->entityManager, $this->documentRepository, $this->documentClassRepository, $this->groupRepository, $this->folderRepository);
         $this->groupManager = new GroupManager($this->logger, $this->entityManager, $this->groupRepository, $this->app->userRepository);

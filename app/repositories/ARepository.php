@@ -191,9 +191,7 @@ abstract class ARepository extends AMultipleDatabaseConnectionHandler {
      * @return bool True if successful or false if not
      */
     private function logTransaction(?string $userId, string $method, string &$sql, ?string $containerId = null) {
-        $transactionId = $this->createEntityId(EntityManager::TRANSACTIONS);
-
-        return $this->transactionLogRepository->createNewEntry($transactionId, $userId, $method, $sql, $containerId);
+        return $this->transactionLogRepository->createNewEntry($userId, $method, $sql, $containerId);
     }
 
     /**
@@ -203,7 +201,7 @@ abstract class ARepository extends AMultipleDatabaseConnectionHandler {
      * @return ?string Entity ID or null
      */
     public function createEntityId(string $category) {
-        $em = new EntityManager($this->logger, new ContentRepository($this->conn, $this->logger, $this->transactionLogRepository));
+        $em = new EntityManager($this->logger, new ContentRepository($this->conn, $this->logger, $this->transactionLogRepository), new ContentRepository($this->transactionLogRepository->db, $this->logger, $this->transactionLogRepository));
 
         return $em->generateEntityId($category);
     }

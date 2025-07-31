@@ -246,11 +246,16 @@ class ExternalSystemsManager extends AManager {
     public function createOrGetToken(
         string $systemId,
         ?string $containerId = null,
-        bool $createLogEntry = true
+        bool $createLogEntry = true,
+        bool $force = false
     ): ExternalSystemTokenEntity {
         $token = null;
 
         try {
+            if($force) {
+                throw new GeneralException('Force create new token.');
+            }
+
             $token = $this->getAvailableTokenForExternalSystem(
                 $systemId,
                 $containerId

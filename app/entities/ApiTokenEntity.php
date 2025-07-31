@@ -82,6 +82,8 @@ class ApiTokenEntity {
             self::_ENTITY_ID => $this->entityId
         ];
 
+        $result[self::_USER_ID] = $this->userId;
+
         if($this->userId !== null) {
             $result[self::_USER_ID] = $this->userId;
         }

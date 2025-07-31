@@ -24,13 +24,17 @@ abstract class AAuthenticatedApiController extends AApiClass {
     protected function startup() {
         $this->getToken();
         
-        $this->app->currentUser = $this->app->userManager->getUserById($this->userId, true);
+        if($this->userId !== null) {
+            $this->app->currentUser = $this->app->userManager->getUserById($this->userId, true);
+        }
         
         parent::startup();
         
         $this->auth();
 
-        $this->peeql->setUserId($this->userId);
+        if($this->userId !== null) {
+            $this->peeql->setUserId($this->userId);
+        }
     }
 
     /**

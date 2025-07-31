@@ -205,6 +205,9 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
             }
         }
 
+        // Implicitly order from newest to oldest
+        $qb->orderBy('dateCreated', 'DESC');
+
         $this->createDataSourceFromQueryBuilder($qb, 'documentId');
     }
 

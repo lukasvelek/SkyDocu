@@ -3,6 +3,7 @@
 namespace App\Components\DocumentsGrid;
 
 use App\Authorizators\GroupStandardOperationsAuthorizator;
+use App\Constants\AppDesignThemes;
 use App\Constants\Container\CustomMetadataTypes;
 use App\Constants\Container\DocumentsGridSystemMetadata;
 use App\Constants\Container\DocumentStatus;
@@ -10,9 +11,11 @@ use App\Constants\Container\GridNames;
 use App\Core\Application;
 use App\Core\DB\DatabaseRow;
 use App\Core\Http\JsonResponse;
+use App\Core\Http\TemplateResponse;
 use App\Enums\AEnumForMetadata;
 use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
+use App\Helpers\AppThemeHelper;
 use App\Managers\Container\ArchiveManager;
 use App\Managers\Container\DocumentManager;
 use App\Managers\Container\EnumManager;
@@ -205,6 +208,9 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
             }
         }
 
+        // Implicitly order from newest to oldest
+        $qb->orderBy('dateCreated', 'DESC');
+
         $this->createDataSourceFromQueryBuilder($qb, 'documentId');
     }
 
@@ -260,13 +266,17 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
                     $this->addColumnConst(DocumentsGridSystemMetadata::STATUS, DocumentsGridSystemMetadata::toString(DocumentsGridSystemMetadata::STATUS), DocumentStatus::class);
                     break;
 
-                case DocumentsGridSystemMetadata::HAS_FILE:
+                /*case DocumentsGridSystemMetadata::HAS_FILE:
                     $documentsWithFile = $this->fileStorageManager->doDocumentsHaveFile($documentIds);
 
                     $col = $this->addColumnBoolean(DocumentsGridSystemMetadata::HAS_FILE, DocumentsGridSystemMetadata::toString(DocumentsGridSystemMetadata::HAS_FILE));
                     array_unshift($col->onRenderColumn, function(DatabaseRow $row, Row $_row, Cell $cell, HTML $html, mixed $value) use ($documentsWithFile) {
                         return in_array($row->documentId, $documentsWithFile);
                     });
+                    break;*/
+
+                case DocumentsGridSystemMetadata::DATE_CREATED:
+                    $this->addColumnDatetime(DocumentsGridSystemMetadata::DATE_CREATED, DocumentsGridSystemMetadata::toString(DocumentsGridSystemMetadata::DATE_CREATED));
                     break;
             }
         }
@@ -617,6 +627,22 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
         $this->prerender();
         
         return parent::actionGetSkeleton();
+    }
+
+    public function actionBulkAction(): JsonResponse {
+        $template = $this->getTemplate(__DIR__ . '\\test.html');
+
+        if(AppThemeHelper::getAppThemeForUser($this->app) == AppDesignThemes::DARK) {
+            $modalStyle = 'visibility: hidden; height: 0px; position: absolute; top: 5%; left: 5%; background-color: rgba(70, 70, 70, 1); z-index: 9999; border-radius: 5px;';
+        } else {
+            $modalStyle = 'visibility: hidden; height: 0px; position: absolute; top: 5%; left: 5%; background-color: rgba(225, 225, 225, 1); z-index: 9999; border-radius: 5px;';
+        }
+        
+        $template->modal_style = $modalStyle;
+
+        return new JsonResponse([
+            'modal' => $template->render()->getRenderedContent()
+        ]);
     }
 }
 

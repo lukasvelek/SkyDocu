@@ -432,6 +432,8 @@ class Application {
                 'action'
             ])) continue;
 
+            if(is_array($k) || is_array($v)) continue;
+
             $params[] = sprintf('%s => %s', $k, $v);
         }
 

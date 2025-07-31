@@ -85,6 +85,7 @@ class ProcessMetadataManager extends AManager {
 
         $qb = $this->processMetadataRepository->composeQueryForProcessMetadataValues($metadata->metadataId);
         $qb->andWhere('title LIKE ?', ["%$query%"])
+            ->andWhere('isDeleted = 0')
             ->execute();
 
         $values = [];

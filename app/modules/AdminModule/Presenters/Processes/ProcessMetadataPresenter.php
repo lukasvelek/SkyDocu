@@ -86,7 +86,8 @@ class ProcessMetadataPresenter extends AAdminPresenter {
         $grid = $this->componentFactory->getGridBuilder($this->containerId);
 
         $qb = $this->processMetadataRepository->composeQueryForProcessMetadataValues($request->get('metadataId'));
-        $qb->orderBy('sortingKey');
+        $qb->andWhere('isDeleted = 0')
+            ->orderBy('sortingKey');
 
         $grid->createDataSourceFromQueryBuilder($qb, 'valueId');
         $grid->addQueryDependency('metadataId', $request->get('metadataId'));

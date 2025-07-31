@@ -35,8 +35,10 @@ Previously changelog for versions `1.0`-`1.4` has been located in README.md. How
 - Added support for editing and removing process metadata values
 - Reworked API login mechanism
 - Reworked API token 
+- Reworked API response data format
 - Reworked user administration UI in containers
 - Reworked user profile in superadministration
+- Fixed API implementations
 - Fixed a bug where custom container processes are visible in container settings in superadministration
 - Fixed a bug where all users were added to any just created container
 - Fixed a bug where a new process instance was passed to the author instead of next user

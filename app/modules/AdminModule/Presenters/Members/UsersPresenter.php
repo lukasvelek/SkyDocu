@@ -42,6 +42,7 @@ class UsersPresenter extends AAdminPresenter {
 
         $grid->addColumnText('fullname', 'Fullname');
         $grid->addColumnText('email', 'Email');
+        $grid->addColumnText('userId', 'ID');
         $grid->addColumnBoolean('isTechnical', 'Technical user');
         $grid->addColumnBoolean('isDeleted', 'Is deleted');
 

@@ -8,6 +8,7 @@ use App\Authenticators\ExternalSystemAuthenticator;
 use App\Core\Http\JsonResponse;
 use App\Entities\ApiTokenEntity;
 use App\Entities\ExternalSystemTokenEntity;
+use App\Exceptions\AException;
 
 class LoginUserController extends AApiClass implements IAPITokenProcessing {
     private string $userId;
@@ -21,6 +22,12 @@ class LoginUserController extends AApiClass implements IAPITokenProcessing {
 
     protected function run(): JsonResponse {
         $this->userId = $this->get('userId');
+
+        try {
+            $this->app->userManager->getUserById($this->userId, true);
+        } catch(AException $e) {
+            return new JsonResponse(['error' => 'User with this ID does not exist.']);
+        }
 
         $login = $this->get('login');
         $password = $this->get('password');
@@ -42,7 +49,11 @@ class LoginUserController extends AApiClass implements IAPITokenProcessing {
 
         $this->systemId = $externalSystemAuthenticator->auth($login, $password);
 
-        return $this->app->externalSystemsManager->createOrGetToken($this->systemId);
+        $system = $this->app->externalSystemsManager->getExternalSystemById($this->systemId);
+
+        $this->containerId = $system->containerId;
+
+        return $this->app->externalSystemsManager->createOrGetToken($this->systemId, $system->containerId, true, true);
     }
 
     public function processToken(ExternalSystemTokenEntity $token): string {

@@ -91,6 +91,25 @@ class ProcessMetadataRepository extends ARepository {
     }
 
     /**
+     * Updates metadata value
+     * 
+     * @param string $metadataId Metadata ID
+     * @param string $valueId Value ID
+     * @param array $data Data array
+     */
+    public function updateMetadataValue(string $metadataId, string $valueId, array $data): bool {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->update('process_metadata_values')
+            ->set($data)
+            ->where('metadataId = ?', [$metadataId])
+            ->andWhere('valueId = ?', [$valueId])
+            ->execute();
+
+        return $qb->fetchBool();
+    }
+
+    /**
      * Removes metadata values for metadata ID
      * 
      * @param string $metadataId Metadata ID

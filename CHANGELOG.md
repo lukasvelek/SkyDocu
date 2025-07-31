@@ -44,6 +44,7 @@ Previously changelog for versions `1.0`-`1.4` has been located in README.md. How
 - Removed per-container file storage
 - Removed support for user usernames
     - Emails are now used instead
+- Removed support for creating documents without binary files
 
 ## SkyDocu `1.6` (06/21/2025)
 - Global transaction log

@@ -31,6 +31,7 @@ class FileStorageManager extends AManager {
      * Checks if given document has a file
      * 
      * @param string $documentId Document ID
+     * @deprecated
      */
     public function doesDocumentHaveFile(string $documentId): bool {
         try {
@@ -45,6 +46,7 @@ class FileStorageManager extends AManager {
      * Checks if documents in given document ID array have files and returns a document ID array of those with a file
      * 
      * @param array $documentIds Document ID array
+     * @deprecated
      */
     public function doDocumentsHaveFile(array $documentIds): array {
         $documentsWithFile = [];

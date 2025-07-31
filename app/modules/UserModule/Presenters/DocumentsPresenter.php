@@ -87,7 +87,7 @@ class DocumentsPresenter extends AUserPresenter {
             $documentsGrid->setCurrentFolder($this->currentFolderId);
         }
         $documentsGrid->showCustomMetadata();
-        //$documentsGrid->useCheckboxes($this);
+        //$documentsGrid->useCheckboxes($this); // WILL BE ADDED IN 1.8
         $documentsGrid->setGridName(GridNames::DOCUMENTS_GRID);
 
         return $documentsGrid;

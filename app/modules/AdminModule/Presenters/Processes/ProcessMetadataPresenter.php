@@ -8,6 +8,7 @@ use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
 use App\Helpers\LinkHelper;
+use App\UI\GridBuilder2\Action;
 use App\UI\GridBuilder2\Row;
 use App\UI\HTML\HTML;
 use App\UI\LinkBuilder;
@@ -94,6 +95,38 @@ class ProcessMetadataPresenter extends AAdminPresenter {
         $grid->addColumnText('title', 'Title');
         $grid->addColumnText('metadataKey', 'Key');
         $grid->addColumnText('sortingKey', 'Sorting key');
+
+        $edit = $grid->addAction('edit');
+        $edit->setTitle('Edit');
+        $edit->onCanRender[] = function() {
+            return true;
+        };
+        $edit->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
+            $el = HTML::el('a');
+
+            $el->class('grid-link')
+                ->href($this->createURLString('editValueForm', ['metadataId' => $this->httpRequest->get('metadataId'), 'valueId' => $primaryKey]))
+                ->text('Edit')
+            ;
+
+            return $el;
+        };
+
+        $delete = $grid->addAction('delete');
+        $delete->setTitle('Delete');
+        $delete->onCanRender[] = function() {
+            return true;
+        };
+        $delete->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
+            $el = HTML::el('a');
+
+            $el->class('grid-link')
+                ->href($this->createURLString('deleteValue', ['metadataId' => $this->httpRequest->get('metadataId'), 'valueId' => $primaryKey]))
+                ->text('Delete')
+            ;
+
+            return $el;
+        };
 
         return $grid;
     }

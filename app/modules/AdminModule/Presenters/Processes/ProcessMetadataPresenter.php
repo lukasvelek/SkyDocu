@@ -106,7 +106,7 @@ class ProcessMetadataPresenter extends AAdminPresenter {
             $el = HTML::el('a');
 
             $el->class('grid-link')
-                ->href($this->createURLString('editValueForm', ['metadataId' => $this->httpRequest->get('metadataId'), 'valueId' => $primaryKey]))
+                ->href($this->createURLString('editValueForm', ['metadataId' => $this->httpRequest->get('metadataId'), 'valueId' => $primaryKey, 'uniqueProcessId' => $this->httpRequest->get('uniqueProcessId')]))
                 ->text('Edit')
             ;
 
@@ -122,7 +122,7 @@ class ProcessMetadataPresenter extends AAdminPresenter {
             $el = HTML::el('a');
 
             $el->class('grid-link')
-                ->href($this->createURLString('deleteValue', ['metadataId' => $this->httpRequest->get('metadataId'), 'valueId' => $primaryKey]))
+                ->href($this->createURLString('deleteValue', ['metadataId' => $this->httpRequest->get('metadataId'), 'valueId' => $primaryKey, 'uniqueProcessId' => $this->httpRequest->get('uniqueProcessId')]))
                 ->text('Delete')
             ;
 
@@ -130,6 +130,102 @@ class ProcessMetadataPresenter extends AAdminPresenter {
         };
 
         return $grid;
+    }
+
+    public function handleDeleteValue() {
+        $metadataId = $this->httpRequest->get('metadataId');
+        $valueId = $this->httpRequest->get('metadataId');
+        $uniqueProcessId = $this->httpRequest->get('uniqueProcessId');
+
+        try {
+            $this->processMetadataRepository->beginTransaction(__METHOD__);
+
+            $this->processMetadataManager->updateMetadataValue(
+                $metadataId,
+                $valueId,
+                [
+                    'isDeleted' => 1
+                ]
+            );
+
+            $this->processMetadataRepository->commit($this->getUserId(), __METHOD__);
+
+            $this->flashMessage('Successfully deleted metadata value.', 'success');
+        } catch(AException $e) {
+            $this->processMetadataRepository->rollback(__METHOD__);
+
+            $this->flashMessage('Could not delete metadata value. Reason: ' . $e->getMessage(), 'error', 10);
+        }
+
+        $this->redirect($this->createURL('valueList', ['uniqueProcessId' => $uniqueProcessId, 'metadataId' => $metadataId]));
+    }
+
+    public function renderEditValueForm() {
+        $process = $this->processManager->getLastProcessForUniqueProcessId($this->httpRequest->get('uniqueProcessId'));
+        $this->template->process_title = $process->title;
+        
+        $metadata = $this->processMetadataManager->getProcessMetadataById($this->httpRequest->get('metadataId'));
+        $this->template->metadata_title = $metadata->guiTitle;
+    }
+
+    protected function createComponentMetadataEditValueForm() {
+        $metadataValue = $this->processMetadataManager->getMetadataValueById(
+            $this->httpRequest->get('metadataId'),
+            $this->httpRequest->get('valueId')
+        );
+
+        $form = $this->componentFactory->getFormBuilder();
+
+        $form->setAction($this->createURL('editValueFormSubmit', [
+            'uniqueProcessId' => $this->httpRequest->get('uniqueProcessId'),
+            'metadataId' => $this->httpRequest->get('metadataId'),
+            'valueId' => $this->httpRequest->get('valueId')
+        ]));
+
+        $form->addTextInput('title', 'Title:')
+            ->setRequired()
+            ->setValue($metadataValue->title);
+
+        $form->addTextInput('key', 'Key:')
+            ->setReadonly()
+            ->setValue($metadataValue->metadataKey);
+
+        $form->addTextInput('sortingKey', 'Sorting key:')
+            ->setRequired()
+            ->setValue($metadataValue->sortingKey);
+
+        $form->addSubmit('Save');
+
+        return $form;
+    }
+
+    public function handleEditValueFormSubmit(FormRequest $fr) {
+        $metadataId = $this->httpRequest->get('metadataId');
+        $valueId = $this->httpRequest->get('valueId');
+        $uniqueProcessId = $this->httpRequest->get('uniqueProcessId');
+
+        try {
+            $this->processMetadataRepository->beginTransaction(__METHOD__);
+
+            $this->processMetadataManager->updateMetadataValue(
+                $metadataId,
+                $valueId,
+                [
+                    'title' => $fr->title,
+                    'sortingKey' => $fr->sortingKey
+                ]
+            );
+
+            $this->processMetadataRepository->commit($this->getUserId(), __METHOD__);
+
+            $this->flashMessage('Successfully edited metadata value.', 'success');
+        } catch(AException $e) {
+            $this->processMetadataRepository->rollback(__METHOD__);
+
+            $this->flashMessage('Could not edit metadata value. Reason: ' . $e->getMessage(), 'error', 10);
+        }
+
+        $this->redirect($this->createURL('valueList', ['uniqueProcessId' => $uniqueProcessId, 'metadataId' => $metadataId]));
     }
 
     public function handleValueForm(?FormRequest $fr = null) {

@@ -4,6 +4,7 @@ namespace App\Managers\Container;
 
 use App\Core\DB\DatabaseRow;
 use App\Exceptions\GeneralException;
+use App\Exceptions\NonExistingEntityException;
 use App\Logger\Logger;
 use App\Managers\AManager;
 use App\Managers\EntityManager;
@@ -54,6 +55,42 @@ class ProcessMetadataManager extends AManager {
         if(!$this->processMetadataRepository->insertNewMetadataValue($data)) {
             throw new GeneralException('Database error.');
         }
+    }
+
+    /**
+     * Updates metadata value
+     * 
+     * @param string $metadataId Metadata ID
+     * @param string $valueId Value ID
+     * @param array $data Data array
+     * @throws GeneralException
+     */
+    public function updateMetadataValue(string $metadataId, string $valueId, array $data) {
+        if(!$this->processMetadataRepository->updateMetadataValue($metadataId, $valueId, $data)) {
+            throw new GeneralException('Database error.');
+        }
+    }
+
+    /**
+     * Returns metadata value by ID
+     * 
+     * @param string $metadataId Metadata ID
+     * @param string $valueId Value ID
+     * @throws NonExistingEntityException
+     */
+    public function getMetadataValueById(string $metadataId, string $valueId): DatabaseRow {
+        $qb = $this->processMetadataRepository->composeQueryForProcessMetadataValues($metadataId);
+        $qb->andWhere('valueId = ?', [$valueId])
+            ->andWhere('isDeleted = 0')
+            ->execute();
+
+        $row = $qb->fetch();
+
+        if($row === null) {
+            throw new NonExistingEntityException('Metadata value \'' . $valueId . '\' does not exist.');
+        }
+
+        return DatabaseRow::createFromDbRow($row);
     }
 
     /**

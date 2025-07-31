@@ -32,6 +32,7 @@ Previously changelog for versions `1.0`-`1.4` has been located in README.md. How
         - Section
     - Personal number
 - Added global external systems
+- Added support for editing and removing process metadata values
 - Reworked API login mechanism
 - Reworked API token 
 - Reworked user administration UI in containers

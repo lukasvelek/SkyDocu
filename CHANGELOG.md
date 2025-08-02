@@ -2,6 +2,7 @@
 Here is the list of changes in versions.
 
 ## Index
+[SkyDocu `1.7` (__WIP__)](#skydocu-18-wip)
 [SkyDocu `1.7` (08/02/2025)](#skydocu-17-08022025)  
 [SkyDocu `1.6` (06/21/2025)](#skydocu-16-06212025)  
 [SkyDocu `1.5` (04/08/2025)](#skydocu-15-04082025)  
@@ -11,6 +12,8 @@ Here is the list of changes in versions.
 [SkyDocu `1.2` (01/27/2025)](#skydocu-12-01272025)  
 [SkyDocu `1.1` (01/07/2025)](#skydocu-11-01072025)  
 [SkyDocu `1.0` (11/29/2024)](#skydocu-10-11292024)
+
+## SkyDocu `1.8` (__WIP__)
 
 ## SkyDocu `1.7` (08/02/2025)
 - Added support for custom processes in containers

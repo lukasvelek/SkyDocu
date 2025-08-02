@@ -30,8 +30,10 @@ class Configuration {
         $releaseDate = (APP_VERSION_RELEASE_DATE != '-' ? ('_' . APP_VERSION_RELEASE_DATE) : '');
         $fullVersion = APP_VERSION . '+Build_' . APP_VERSION_BUILD . $releaseDate . '+Commit_' . $commit;
 
-        if(APP_BRANCH == 'PROD') {
+        if(APP_BRANCH == 'TEST') {
             $fullVersion = APP_VERSION . ' (' . $fullVersion . ')';
+        } else {
+            $fullVersion = APP_VERSION;
         }
 
         return $fullVersion;

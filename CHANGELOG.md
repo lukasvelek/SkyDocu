@@ -14,6 +14,7 @@ Here is the list of changes in versions.
 [SkyDocu `1.0` (11/29/2024)](#skydocu-10-11292024)
 
 ## SkyDocu `1.8` (__WIP__)
+- Fixed the application version format
 
 ## SkyDocu `1.7` (08/02/2025)
 - Added support for custom processes in containers

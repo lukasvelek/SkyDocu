@@ -17,13 +17,19 @@ class GetUsersSchema extends AQuerySchema {
     protected function define() {
         $this->addMultipleColumns([
             'userId',
-            'username',
             'fullname',
             'dateCreated',
             'email',
             'isTechnical',
             'appDesignTheme',
-            'isDeleted'
+            'isDeleted',
+            'dateFormat',
+            'timeFormat',
+            'superiorUserId',
+            'orgPosition',
+            'orgDepartment',
+            'orgSection',
+            'personalNumber'
         ]);
     }
 }

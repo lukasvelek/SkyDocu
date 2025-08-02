@@ -124,51 +124,65 @@ class NewProcessPresenter extends AUserPresenter {
             // has a file
 
             try {
-                $this->fileStorageRepository->beginTransaction(__METHOD__);
-
                 $fum = new FileUploadManager();
-
-                $data = $fum->uploadFileForProcessInstance($_FILES['file'], $processId, $instanceId, $this->getUserId());
-                
-                if(empty($data)) {
-                    throw new GeneralException('Could not upload file.');
-                }
-
-                $fileId = $this->fileStorageManager->createNewProcessInstanceFile(
-                    $instanceId,
+                $data = $fum->uploadFileForProcessInstance(
+                    $_FILES['file'],
                     $this->getUserId(),
-                    $data[FileUploadManager::FILE_FILENAME],
-                    $data[FileUploadManager::FILE_FILEPATH],
-                    $data[FileUploadManager::FILE_FILESIZE]
+                    $this->containerId,
+                    [
+                        $processId,
+                        $instanceId
+                    ]
                 );
 
-                $file = $this->fileStorageManager->getFileById($fileId, true);
+                if(empty($data)) {
+                    throw new GeneralException('Could not upload file');
+                }
+
+                try {
+                    $this->app->fileStorageRepository->beginTransaction(__METHOD__);
+
+                    $fileId = $this->app->fileStorageManager->createNewFile(
+                        $this->getUserId(),
+                        $data[FileUploadManager::FILE_FILENAME],
+                        $data[FileUploadManager::FILE_FILEPATH],
+                        $data[FileUploadManager::FILE_FILESIZE],
+                        $this->containerId
+                    );
+
+                    $this->app->fileStorageRepository->commit($this->getUserId(), __METHOD__);
+                } catch(AException $e) {
+                    $this->app->fileStorageRepository->rollback(__METHOD__);
+
+                    throw $e;
+                }
+
+                $file = $this->app->fileStorageManager->getFileById($fileId, $this->containerId);
 
                 $rawFormData['file'] = [
                     'hash' => $file->hash
                 ];
 
-                $this->fileStorageRepository->commit($this->getUserId(), __METHOD__);
+                try {
+                    $this->fileStorageRepository->beginTransaction(__METHOD__);
+
+                    $this->fileStorageManager->createNewFileProcessInstanceRelation(
+                        $instanceId,
+                        $fileId
+                    );
+
+                    $this->fileStorageRepository->commit($this->getUserId(), __METHOD__);
+                } catch(AException $e) {
+                    $this->fileStorageRepository->rollback(__METHOD__);
+
+                    throw $e;
+                }
             } catch(AException $e) {
-                $this->fileStorageRepository->rollback(__METHOD__);
-                
                 $this->flashMessage('Could not start a new process instance. Reason: ' . $e->getMessage(), 'error', 10);
                 $this->redirect($this->createURL('select'));
             }
         }
         // END OF FILE UPLOAD HANDLING
-
-        /*if(($index + 1) <= count($workflow)) {
-            foreach($forms as $form) {
-                $_form = json_decode($form['form'], true);
-
-                if($form['actor'] == $workflow[$index]) {
-                    if(array_key_exists('instanceDescription', $_form)) {
-                        //$description = $_form['instanceDescription'];
-                    }
-                }
-            }
-        }*/
 
         $formData = [
             'forms' => [
@@ -213,7 +227,7 @@ class NewProcessPresenter extends AUserPresenter {
         $instance = $this->processInstanceManager->getProcessInstanceById($instanceId);
 
         // evaluate new officer
-        [$officer, $type] = $this->processInstanceManager->evaluateNextProcessInstanceOfficer($instance, $workflow, $this->getUserId(), 0);
+        [$officer, $type] = $this->processInstanceManager->evaluateNextProcessInstanceOfficer($instance, $workflow, $this->getUserId(), 1); // workflow index 0 is the process author
 
         $runService = false;
         if($officer == $this->app->userManager->getServiceUserId() && $type == ProcessInstanceOfficerTypes::USER) {

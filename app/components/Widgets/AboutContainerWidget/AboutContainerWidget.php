@@ -3,7 +3,6 @@
 namespace App\Components\Widgets\AboutContainerWidget;
 
 use App\Components\Widgets\Widget;
-use App\Constants\ContainerEnvironments;
 use App\Core\Http\HttpRequest;
 use App\Helpers\DateTimeFormatHelper;
 use App\Managers\ContainerManager;
@@ -56,8 +55,7 @@ class AboutContainerWidget extends Widget {
             'Container ID' => $this->containerId,
             'Container title' => $container->getTitle(),
             'Container users / technical users' => (count($groupGeneralUsers) . ' / ' . count($groupTechnicalUsers)),
-            'Date created' => DateTimeFormatHelper::formatDateToUserFriendly($container->getDateCreated(), $this->app->currentUser->getDatetimeFormat()),
-            'Container environment' => ContainerEnvironments::toString($container->getEnvironment())
+            'Date created' => DateTimeFormatHelper::formatDateToUserFriendly($container->getDateCreated(), $this->app->currentUser->getDatetimeFormat())
         ];
 
         if($container->canShowContainerReferent()) {

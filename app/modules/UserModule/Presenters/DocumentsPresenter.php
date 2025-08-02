@@ -87,7 +87,7 @@ class DocumentsPresenter extends AUserPresenter {
             $documentsGrid->setCurrentFolder($this->currentFolderId);
         }
         $documentsGrid->showCustomMetadata();
-        //$documentsGrid->useCheckboxes($this);
+        //$documentsGrid->useCheckboxes($this); // WILL BE ADDED IN 1.8
         $documentsGrid->setGridName(GridNames::DOCUMENTS_GRID);
 
         return $documentsGrid;
@@ -126,7 +126,7 @@ class DocumentsPresenter extends AUserPresenter {
 
         $author = '-';
         try {
-            $author = $this->app->userManager->getUserById($document->authorUserId)->getUsername();
+            $author = $this->app->userManager->getUserById($document->authorUserId)->getFullname();
         } catch(AException) {}
 
         $createRow('Author', $author);
@@ -152,10 +152,9 @@ class DocumentsPresenter extends AUserPresenter {
 
         // FILE ATTACHMENT
         if($this->fileStorageManager->doesDocumentHaveFile($document->documentId)) {
-            $url = $this->fileStorageManager->generateDownloadLinkForFileInDocumentByDocumentId($document->documentId);
-
             $relation = $this->fileStorageManager->getFileRelationForDocumentId($document->documentId);
-            $file = $this->fileStorageManager->getFileById($relation->fileId);
+            $url = $this->app->fileStorageManager->generateDownloadLinkForFileInDocument($relation->fileId, $this->containerId);
+            $file =  $this->app->fileStorageManager->getFileById($relation->fileId);
             $fileSize = UnitConversionHelper::convertBytesToUserFriendly($file->filesize);
 
             $el = HTML::el('a')
@@ -327,34 +326,51 @@ class DocumentsPresenter extends AUserPresenter {
     public function handleFileUploadForm(?FormRequest $fr = null) {
         if($fr !== null) {
             try {
-                $this->fileStorageRepository->beginTransaction(__METHOD__);
-
                 $fum = new FileUploadManager();
-                $data = $fum->uploadFile($_FILES['file'], $this->httpRequest->get('documentId'), $this->getUserId());
+
+                $data = $fum->uploadFile($_FILES['file'], $this->getUserId(), $this->containerId, [$this->httpRequest->get('documentId')]);
 
                 if(empty($data)) {
-                    throw new GeneralException('Could not upload file.');
+                    throw new GeneralException('Could not upload file');
                 }
 
-                $this->fileStorageManager->createNewFile(
-                    $this->httpRequest->get('documentId'),
-                    $this->getUserId(),
-                    $data[FileUploadManager::FILE_FILENAME],
-                    $data[FileUploadManager::FILE_FILEPATH],
-                    $data[FileUploadManager::FILE_FILESIZE]
-                );
+                try {
+                    $this->app->fileStorageRepository->beginTransaction(__METHOD__);
+
+                    $fileId = $this->app->fileStorageManager->createNewFile(
+                        $this->getUserId(),
+                        $data[FileUploadManager::FILE_FILENAME],
+                        $data[FileUploadManager::FILE_FILEPATH],
+                        $data[FileUploadManager::FILE_FILESIZE],
+                        $this->containerId
+                    );
+
+                    $this->app->fileStorageRepository->commit($this->getUserId(), __METHOD__);
+                } catch(AException $e) {
+                    $this->app->fileStorageRepository->rollback(__METHOD__);
+
+                    throw $e;
+                }
+
+                try {
+                    $this->fileStorageRepository->beginTransaction(__METHOD__);
+
+                    $this->fileStorageManager->createNewFileDocumentRelation($this->httpRequest->get('documentId'), $fileId);
+
+                    $this->fileStorageRepository->commit($this->getUserId(), __METHOD__);
+                } catch(AException $e) {
+                    $this->fileStorageRepository->rollback(__METHOD__);
+
+                    throw $e;
+                }
 
                 if(!$this->cacheFactory->invalidateCacheByNamespace(CacheNames::DOCUMENT_FILE_MAPPING)) {
                     throw new GeneralException('Could not invalidate cache.');
                 }
 
-                $this->fileStorageRepository->commit($this->getUserId(), __METHOD__);
-
-                $this->flashMessage('File uploaded successfully.', 'success');
+                $this->flashMessage('Successfully uploaded file.', 'success');
             } catch(AException $e) {
-                $this->fileStorageRepository->rollback(__METHOD__);
-
-                $this->flashMessage('Could not upload file.', 'error', 10);
+                $this->flashMessage('Could not upload file. Reason: ' . $e->getMessage(), 'error', 10);
             }
 
             $this->redirect($this->createURL('info', ['documentId' => $this->httpRequest->get('documentId')]));

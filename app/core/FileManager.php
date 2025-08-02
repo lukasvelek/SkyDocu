@@ -38,6 +38,31 @@ class FileManager {
     }
 
     /**
+     * Loads file content line by line and returns an array of file lines
+     * 
+     * @param string $filePath Path to the file
+     * @throws FileDoesNotExistException
+     */
+    public static function loadFileLineByLine(string $filePath): array {
+        $lines = [];
+
+        if(!self::fileExists($filePath)) {
+            throw new FileDoesNotExistException($filePath);
+        }
+
+        $handle = fopen($filePath, 'r');
+        if($handle) {
+            while(($line = fgets($handle)) !== false) {
+                $lines[] = $line;
+            }
+
+            fclose($handle);
+        }
+
+        return $lines;
+    }
+
+    /**
      * Checks if folder exists
      * 
      * @param string $dirPath Path to the directory
@@ -210,6 +235,18 @@ class FileManager {
         } else {
             return explode('.', $filenameWithExtension)[0];
         }
+    }
+
+    /**
+     * Returns file's relative path from absolute path
+     * 
+     * @param string $absolutePath Absolute path
+     */
+    public static function getRelativeFilePathFromAbsoluteFilePath(string $absolutePath): string {
+        $path = substr($absolutePath, strlen(APP_ABSOLUTE_DIR));
+        $path = str_replace('\\', '/', $path);
+
+        return $path;
     }
 }
 

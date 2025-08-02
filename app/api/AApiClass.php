@@ -9,13 +9,6 @@ use App\Core\DB\PeeQL;
 use App\Core\Http\JsonResponse;
 use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
-use App\Managers\Container\ExternalSystemsManager;
-use App\Managers\EntityManager;
-use App\Repositories\Container\ExternalSystemLogRepository;
-use App\Repositories\Container\ExternalSystemRightsRepository;
-use App\Repositories\Container\ExternalSystemsRepository;
-use App\Repositories\Container\ExternalSystemTokenRepository;
-use App\Repositories\ContentRepository;
 
 /**
  * Common class for all API controllers
@@ -24,7 +17,6 @@ use App\Repositories\ContentRepository;
  */
 abstract class AApiClass {
     protected Application $app;
-    protected ExternalSystemsManager $externalSystemsManager;
     protected DatabaseConnection $conn;
     protected Container $container;
 
@@ -32,6 +24,8 @@ abstract class AApiClass {
     protected string $containerId;
 
     protected PeeQL $peeql;
+
+    private bool $authOnly = false;
 
     /**
      * Class constructor
@@ -52,7 +46,7 @@ abstract class AApiClass {
             throw new GeneralException('No data entered.');
         }
 
-        $this->data = json_decode($data, true)['data'];
+        $this->data = json_decode($data, true);
     }
 
     /**
@@ -63,30 +57,22 @@ abstract class AApiClass {
             $this->loadData();
         }
 
-        $container = $this->app->containerManager->getContainerById($this->containerId, true);
+        if(!$this->authOnly) {
+            $container = $this->app->containerManager->getContainerById($this->containerId, true);
         
-        $this->conn = $this->app->dbManager->getConnectionToDatabase($container->getDefaultDatabase()->getName());
+            $this->conn = $this->app->dbManager->getConnectionToDatabase($container->getDefaultDatabase()->getName());
 
-        $contentRepository = new ContentRepository($this->conn, $this->app->logger, $this->app->transactionLogRepository);
-        $entityManager = new EntityManager($this->app->logger, $contentRepository);
+            $this->container = new Container($this->app, $this->containerId);
 
-        $externalSystemsRepository = new ExternalSystemsRepository($this->conn, $this->app->logger, $this->app->transactionLogRepository);
-        $externalSystemLogRepository = new ExternalSystemLogRepository($this->conn, $this->app->logger, $this->app->transactionLogRepository);
-        $externalSystemTokenRepository = new ExternalSystemTokenRepository($this->conn, $this->app->logger, $this->app->transactionLogRepository);
-        $externalSystemRightsRepository = new ExternalSystemRightsRepository($this->conn, $this->app->logger, $this->app->transactionLogRepository);
+            $this->peeql = new PeeQL($this->conn, $this->app->logger, $this->app->transactionLogRepository, true);
+        }
+    }
 
-        $this->externalSystemsManager = new ExternalSystemsManager(
-            $this->app->logger,
-            $entityManager,
-            $externalSystemsRepository,
-            $externalSystemLogRepository,
-            $externalSystemTokenRepository,
-            $externalSystemRightsRepository
-        );
-
-        $this->container = new Container($this->app, $this->containerId);
-
-        $this->peeql = new PeeQL($this->conn, $this->app->logger, $this->app->transactionLogRepository, true);
+    /**
+     * Sets that this request is for authentication only
+     */
+    protected function setAuthOnly() {
+        $this->authOnly = true;
     }
 
     /**

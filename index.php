@@ -14,7 +14,7 @@ try {
     $app = new Application();
 
     if($app === null) {
-        throw new ApplicationInitializationException('Could not instantialize application.');
+        throw new ApplicationInitializationException('Could not create an application instance.');
     }
 
     if(!isset($_GET['page'])) {

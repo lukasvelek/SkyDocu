@@ -17,6 +17,8 @@ use App\Managers\ContainerDatabaseManager;
 use App\Managers\ContainerInviteManager;
 use App\Managers\ContainerManager;
 use App\Managers\EntityManager;
+use App\Managers\ExternalSystemsManager;
+use App\Managers\FileStorageManager;
 use App\Managers\GroupManager;
 use App\Managers\JobQueueManager;
 use App\Managers\ProcessManager;
@@ -28,6 +30,11 @@ use App\Repositories\ContainerDatabaseRepository;
 use App\Repositories\ContainerInviteRepository;
 use App\Repositories\ContainerRepository;
 use App\Repositories\ContentRepository;
+use App\Repositories\ExternalSystemsLogRepository;
+use App\Repositories\ExternalSystemsRepository;
+use App\Repositories\ExternalSystemsRightsRepository;
+use App\Repositories\ExternalSystemsTokenRepository;
+use App\Repositories\FileStorageRepository;
 use App\Repositories\GridExportRepository;
 use App\Repositories\GroupMembershipRepository;
 use App\Repositories\GroupRepository;
@@ -51,8 +58,8 @@ use ReflectionClass;
  * @author Lukas Velek
  */
 class Application {
-    public const APP_VERSION = '1.3-dev';
-    public const APP_VERSION_RELEASE_DATE = '-';
+    public const SERVICE_USER_EMAIL = 'service_user@skydocu.com';
+    public const ADMIN_USER_EMAIL = 'admin@skydocu.com';
 
     private array $modules;
     public ?UserEntity $currentUser;
@@ -85,6 +92,11 @@ class Application {
     public ProcessRepository $processRepository;
     public JobQueueRepository $jobQueueRepository;
     public JobQueueProcessingHistoryRepository $jobQueueProcessingHistoryRepository;
+    public FileStorageRepository $fileStorageRepository;
+    public ExternalSystemsRepository $externalSystemsRepository;
+    public ExternalSystemsTokenRepository $externalSystemsTokenRepository;
+    public ExternalSystemsLogRepository $externalSystemsLogRepository;
+    public ExternalSystemsRightsRepository $externalSystemsRightsRepository;
 
     public ServiceManager $serviceManager;
     public UserManager $userManager;
@@ -97,6 +109,8 @@ class Application {
     public ContainerDatabaseManager $containerDatabaseManager;
     public ProcessManager $processManager;
     public JobQueueManager $jobQueueManager;
+    public FileStorageManager $fileStorageManager;
+    public ExternalSystemsManager $externalSystemsManager;
 
     public array $repositories;
 
@@ -136,7 +150,7 @@ class Application {
 
         $this->dbManager = new DatabaseManager($this->db, $this->logger);
 
-        $this->entityManager = new EntityManager($this->logger, $this->contentRepository);
+        $this->entityManager = new EntityManager($this->logger, $this->contentRepository, $this->contentRepository);
         $this->serviceManager = new ServiceManager($this->systemServicesRepository, $this->userRepository, $this->entityManager);
         $this->userManager = new UserManager($this->logger, $this->userRepository, $this->entityManager);
         $this->groupManager = new GroupManager($this->logger, $this->entityManager, $this->groupRepository, $this->groupMembershipRepository);
@@ -147,6 +161,8 @@ class Application {
         $this->userSubstituteManager = new UserSubstituteManager($this->logger, $this->entityManager, $this->userSubstituteRepository);
         $this->processManager = new ProcessManager($this->logger, $this->entityManager, $this->processRepository);
         $this->jobQueueManager = new JobQueueManager($this->logger, $this->entityManager, $this->jobQueueRepository, $this->jobQueueProcessingHistoryRepository);
+        $this->fileStorageManager = new FileStorageManager($this->logger, $this->entityManager, $this->fileStorageRepository);
+        $this->externalSystemsManager = new ExternalSystemsManager($this->logger, $this->entityManager, $this->externalSystemsRepository, $this->externalSystemsLogRepository, $this->externalSystemsTokenRepository, $this->externalSystemsRightsRepository);
 
         $this->initManagers();
 
@@ -181,7 +197,8 @@ class Application {
             $this->userAbsenceManager,
             $this->userSubstituteManager,
             $this->processManager,
-            $this->jobQueueManager
+            $this->jobQueueManager,
+            $this->externalSystemsManager
         ] as $manager) {
             $manager->injectCacheFactory($this->cacheFactory);
         }
@@ -276,11 +293,12 @@ class Application {
      * Forces file download
      * 
      * @param string $filepath File path
+     * @param string $filename File name
      */
-    public function forceDownloadFile(string $filepath) {
+    public function forceDownloadFile(string $filepath, string $filename) {
         header('Content-Type: application/octet-stream');
         header('Content-Transfer-Encoding: Binary');
-        header('Content-disposition: attachment; filename="' . basename($filepath . '"'));
+        header('Content-disposition: attachment; filename="' . $filename . '"');
         readfile($filepath);
         exit;
     }
@@ -413,6 +431,8 @@ class Application {
                 'page',
                 'action'
             ])) continue;
+
+            if(is_array($k) || is_array($v)) continue;
 
             $params[] = sprintf('%s => %s', $k, $v);
         }

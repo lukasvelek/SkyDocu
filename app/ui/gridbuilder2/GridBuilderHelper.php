@@ -477,7 +477,7 @@ class GridBuilderHelper {
                 if($user === null) {
                     return $value;
                 } else {
-                    return $user->getUsername();
+                    return $user->getFullname();
                 }
             };
         } else if($type == GridColumnTypes::COL_TYPE_BOOLEAN) {

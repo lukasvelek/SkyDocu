@@ -230,7 +230,7 @@ class GroupsPresenter extends ASuperAdminSettingsPresenter {
 
         $form->setAction($this->createURL('addUserForm', ['groupId' => $request->get('groupId')]));
 
-        $form->addTextInput('username', 'Search user:');
+        $form->addTextInput('email', 'Search user:');
         $form->addButton('Search')
             ->setOnClick('searchUsers(\'' . $request->get('groupId') . '\');');
 
@@ -255,14 +255,11 @@ class GroupsPresenter extends ASuperAdminSettingsPresenter {
 
         $groupUsers = $this->app->groupManager->getGroupUsersForGroupId($groupId);
 
-        $qb = $this->app->userRepository->composeQueryForUsers();
-        $qb->andWhere('username LIKE ?', ['%' . $query . '%'])
-            ->andWhere($qb->getColumnNotInValues('userId', $groupUsers))
-            ->execute();
+        $usersDb = $this->app->userRepository->searchUsers($query, ['fullname', 'email'], $groupUsers);
 
         $users = [];
-        while($row = $qb->fetchAssoc()) {
-            $users[] = '<option value="' . $row['userId'] . '">' . $row['fullname'] . '</option>';
+        foreach($usersDb as $user) {
+            $users[] = '<option value="' . $user->getId() . '">' . $user->getFullname() . '</option>';
         }
 
         return new JsonResponse(['users' => $users]);

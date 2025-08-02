@@ -4,6 +4,7 @@ namespace App\Modules\UserModule;
 
 use App\Constants\Container\CustomMetadataTypes;
 use App\Constants\Container\DocumentStatus;
+use App\Core\FileUploadManager;
 use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
@@ -114,7 +115,34 @@ class CreateDocumentPresenter extends AUserPresenter {
             try {
                 $this->documentClassRepository->beginTransaction(__METHOD__);
 
-                $this->documentManager->createNewDocument($metadataValues, $customMetadataValues);
+                // create document
+                $documentId = $this->documentManager->createNewDocument($metadataValues, $customMetadataValues);
+
+                // upload file
+                $fum = new FileUploadManager();
+                $fileData = $fum->uploadFile($_FILES['file'], $this->getUserId(), $this->containerId, ['documentId' => $documentId]);
+
+                // insert file to storage
+                try {
+                    $this->app->fileStorageRepository->beginTransaction(__METHOD__);
+
+                    $fileId = $this->app->fileStorageManager->createNewFile(
+                        $this->getUserId(),
+                        $fileData[FileUploadManager::FILE_FILENAME],
+                        $fileData[FileUploadManager::FILE_FILEPATH],
+                        $fileData[FileUploadManager::FILE_FILESIZE],
+                        $this->containerId
+                    );
+                    
+                    $this->app->fileStorageRepository->commit($this->getUserId(), __METHOD__);
+                } catch(AException $e) {
+                    $this->app->fileStorageRepository->rollback(__METHOD__);
+
+                    throw $e;
+                }
+
+                // create file-document relation
+                $this->fileStorageManager->createNewFileDocumentRelation($documentId, $fileId);
 
                 $this->documentClassRepository->commit($this->getUserId(), __METHOD__);
 
@@ -158,6 +186,9 @@ class CreateDocumentPresenter extends AUserPresenter {
 
         $form->addSelect('class', 'Class:')
             ->addRawOptions($classes)
+            ->setRequired();
+
+        $form->addFileInput('file', 'File:')
             ->setRequired();
 
         $this->addCustomMetadataFormControls($form, $folderId);

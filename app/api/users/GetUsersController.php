@@ -16,7 +16,6 @@ class GetUsersController extends AReadAPIOperation {
 
         $this->setAllowedProperties([
             'userId',
-            'username',
             'fullname',
             'dateCreated',
             'email',

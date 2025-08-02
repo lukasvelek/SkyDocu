@@ -3,7 +3,6 @@
 namespace App\Modules\AdminModule;
 
 use App\Components\Widgets\AboutContainerWidget\AboutContainerWidget;
-use App\Constants\ContainerEnvironments;
 use App\Constants\SessionNames;
 use App\Core\Datetypes\DateTime;
 use App\Core\Http\HttpRequest;
@@ -61,10 +60,6 @@ class HomePresenter extends AAdminPresenter {
             ->setDisabled()
             ->setValue($dateCreated);
 
-        $form->addTextInput('containerEnvironment', 'Container environment:')
-            ->setDisabled()
-            ->setValue(ContainerEnvironments::toString($container->getEnvironment()));
-
         return $form;
     }
 
@@ -86,9 +81,9 @@ class HomePresenter extends AAdminPresenter {
             'action' => $this->createURL('jsontofb'),
             'elements' => [
                 [
-                    'name' => 'username',
+                    'name' => 'email',
                     'type' => 'text',
-                    'label' => 'Username:',
+                    'label' => 'Email:',
                     'attributes' => [
                         'required' => true
                     ]

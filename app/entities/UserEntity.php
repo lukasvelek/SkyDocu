@@ -9,31 +9,53 @@ namespace App\Entities;
  */
 class UserEntity extends AEntity {
     private string $id;
-    private string $username;
     private string $fullname;
-    private ?string $email;
+    private string $email;
     private string $dateCreated;
     private bool $isTechnical;
     private int $appDesignTheme;
     private string $dateFormat;
     private string $timeFormat;
     private ?string $superiorUserId;
+    private ?string $profilePictureFileId;
+    private ?string $orgPosition;
+    private ?string $orgDepartment;
+    private ?string $orgSection;
+    private ?string $personalNumber;
 
     /**
      * Class constructor
      * 
      * @param string $id User ID
-     * @param string $username Username
      * @param string $fullname Fullname
-     * @param ?string $email Email
+     * @param string $email Email
      * @param string $dateCreated Date created
      * @param bool $isTechnical Is user technical
      * @param int $appDesignTheme App design theme
      * @param ?string $superiorUserId Superior user ID
+     * @param ?string $profilePictureFileId Profile picture file ID
+     * @param ?string $orgPosition Organization position
+     * @param ?string $orgDepartment Organization department
+     * @param ?string $orgSection Organization section
+     * @param ?string $personalNumber Personal number
      */
-    public function __construct(string $id, string $username, string $fullname, ?string $email, string $dateCreated, bool $isTechnical, int $appDesignTheme, string $dateFormat, string $timeFormat, ?string $superiorUserId) {
+    public function __construct(
+        string $id,
+        string $fullname,
+        string $email,
+        string $dateCreated,
+        bool $isTechnical,
+        int $appDesignTheme,
+        string $dateFormat,
+        string $timeFormat,
+        ?string $superiorUserId,
+        ?string $profilePictureFileId,
+        ?string $orgPosition,
+        ?string $orgDepartment,
+        ?string $orgSection,
+        ?string $personalNumber
+    ) {
         $this->id = $id;
-        $this->username = $username;
         $this->fullname = $fullname;
         $this->email = $email;
         $this->dateCreated = $dateCreated;
@@ -42,6 +64,11 @@ class UserEntity extends AEntity {
         $this->dateFormat = $dateFormat;
         $this->timeFormat = $timeFormat;
         $this->superiorUserId = $superiorUserId;
+        $this->profilePictureFileId = $profilePictureFileId;
+        $this->orgPosition = $orgPosition;
+        $this->orgDepartment = $orgDepartment;
+        $this->orgSection = $orgSection;
+        $this->personalNumber = $personalNumber;
     }
 
     /**
@@ -49,13 +76,6 @@ class UserEntity extends AEntity {
      */
     public function getId(): string {
         return $this->id;
-    }
-
-    /**
-     * Returns username
-     */
-    public function getUsername(): string {
-        return $this->username;
     }
 
     /**
@@ -68,7 +88,7 @@ class UserEntity extends AEntity {
     /**
      * Returns email
      */
-    public function getEmail(): ?string {
+    public function getEmail(): string {
         return $this->email;
     }
 
@@ -121,16 +141,86 @@ class UserEntity extends AEntity {
         return $this->superiorUserId;
     }
 
+    /**
+     * Returns user's profile picture file ID
+     */
+    public function getProfilePictureFileId(): ?string {
+        return $this->profilePictureFileId;
+    }
+
+    /**
+     * Returns user's fullname initials
+     * 
+     * @param bool $limit True if initials should be shortened to 3 characters
+     */
+    public function getFullnameInitials(bool $limit = true): string {
+        $parts = explode(' ', $this->fullname);
+
+        $initials = '';
+
+        foreach($parts as $part) {
+            $initials .= substr($part, 0, 1);
+        }
+
+        if($limit) $initials = substr($initials, 0, 3);
+
+        return $initials;
+    }
+
+    /**
+     * Returns user's position in organization
+     */
+    public function getOrgPosition(): ?string {
+        return $this->orgPosition;
+    }
+
+    /**
+     * Returns user's section in organization
+     */
+    public function getOrgSection(): ?string {
+        return $this->orgSection;
+    }
+
+    /**
+     * Returns user's department in organization
+     */
+    public function getOrgDepartment(): ?string {
+        return $this->orgDepartment;
+    }
+
+    /**
+     * Returns user's personal number
+     */
+    public function getPersonalNumber(): ?string {
+        return $this->personalNumber;
+    }
+
     public static function createEntityFromDbRow(mixed $row): ?static {
         if($row === null) {
             return null;
         }
 
         $row = self::createRow($row);
-        self::checkTypes($row, ['userId' => 'string', 'username' => 'string', 'fullname' => 'string', 'email' => '?string', 'dateCreated' => 'string', 'isTechnical' => 'bool', 'appDesignTheme' => 'int',
-                                'dateFormat' => 'string', 'timeFormat' => 'string', 'superiorUserId' => '?string']);
+        self::checkTypes($row, ['userId' => 'string', 'fullname' => 'string', 'email' => 'string', 'dateCreated' => 'string', 'isTechnical' => 'bool', 'appDesignTheme' => 'int',
+                                'dateFormat' => 'string', 'timeFormat' => 'string', 'superiorUserId' => '?string', 'profilePictureFileId' => '?string', 'orgPosition' => '?string',
+                                'orgSection' => '?string', 'orgDepartment' => '?string', 'personalNumber' => '?string']);
 
-        return new self($row->userId, $row->username, $row->fullname, $row->email, $row->dateCreated, $row->isTechnical, $row->appDesignTheme, $row->dateFormat, $row->timeFormat, $row->superiorUserId);
+        return new self(
+            $row->userId,
+            $row->fullname,
+            $row->email,
+            $row->dateCreated,
+            $row->isTechnical,
+            $row->appDesignTheme,
+            $row->dateFormat,
+            $row->timeFormat,
+            $row->superiorUserId,
+            $row->profilePictureFileId,
+            $row->orgPosition,
+            $row->orgDepartment,
+            $row->orgSection,
+            $row->personalNumber
+        );
     }
 }
 

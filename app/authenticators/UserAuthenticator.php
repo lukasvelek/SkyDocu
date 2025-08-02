@@ -56,13 +56,13 @@ class UserAuthenticator {
     /**
      * Tries to login user with information provided. It checks for bad credentials, disabled account and banned account.
      * 
-     * @param string $username Username of the user, who's trying to log in
+     * @param string $email Email of the user, who's trying to log in
      * @param string $password Password of the user, who's trying to log in
      * @return true
      * @throws GeneralException
      */
-    public function loginUser(string $username, string $password) {
-        $rows = $this->userRepository->getUserForAuthentication($username);
+    public function loginUser(string $email, string $password) {
+        $rows = $this->userRepository->getUserForAuthentication($email);
 
         $user = null;
 
@@ -79,8 +79,8 @@ class UserAuthenticator {
         }
 
         $_SESSION[SessionNames::USER_ID] = $user->getId();
-        $_SESSION[SessionNames::USERNAME] = $user->getUsername();
         $_SESSION[SessionNames::FULLNAME] = $user->getFullname();
+        $_SESSION[SessionNames::USER_EMAIL] = $user->getEmail();
 
         $hash = HashManager::createHash(64);
 
@@ -99,6 +99,37 @@ class UserAuthenticator {
     }
 
     /**
+     * Authenticates user by with given user ID and password
+     * 
+     * @param string $userId User's ID
+     * @param string $password User's password
+     * @throws BadCredentialsException
+     */
+    public function authUser2(string $userId, string $password): bool {
+        $row = $this->userRepository->getUserById($userId, true);
+
+        if($row === null) {
+            throw new BadCredentialsException($userId, null);
+        }
+
+        $rows = $this->userRepository->getUserForAuthentication($row->getEmail());
+
+        $result = false;
+        while($_row = $rows->fetchAssoc()) {
+            if(password_verify($password, $_row['password'])) {
+                $this->logger->warning('Authenticated user with email \'' . $row->getEmail() . '\'.', __METHOD__);
+                $result = true;
+            }
+        }
+
+        if($result === false) {
+            throw new BadCredentialsException($userId, null);
+        }
+
+        return $result;
+    }
+
+    /**
      * Authenticates current user - checks if the password entered matches the one user has saved in the database.
      * 
      * @param string $password User's password
@@ -106,18 +137,18 @@ class UserAuthenticator {
      * @throws BadCredentialsException
      */
     public function authUser(string $password) {
-        $rows = $this->userRepository->getUserForAuthentication($_SESSION[SessionNames::USERNAME]);
+        $rows = $this->userRepository->getUserForAuthentication($_SESSION[SessionNames::USER_EMAIL]);
 
         $result = false;
         while($row = $rows->fetchAssoc()) {
             if(password_verify($password, $row['password'])) {
-                $this->logger->warning('Authenticated user with username \'' . $_SESSION[SessionNames::USERNAME] . '\'.', __METHOD__);
+                $this->logger->warning('Authenticated user with email \'' . $_SESSION[SessionNames::USER_EMAIL] . '\'.', __METHOD__);
                 $result = true;
             }
         }
 
         if($result === false) {
-            throw new BadCredentialsException(null, $_SESSION[SessionNames::USERNAME]);
+            throw new BadCredentialsException(null, $_SESSION[SessionNames::USER_EMAIL]);
         }
 
         return $result;
@@ -132,7 +163,7 @@ class UserAuthenticator {
      * @return bool True if successful or false if not
      */
     public function fastAuthUser(string &$message) {
-        if(isset($_SESSION[SessionNames::USER_ID]) && isset($_SESSION[SessionNames::USERNAME]) && isset($_SESSION[SessionNames::LOGIN_HASH])) {
+        if(isset($_SESSION[SessionNames::USER_ID]) && isset($_SESSION[SessionNames::USER_EMAIL]) && isset($_SESSION[SessionNames::LOGIN_HASH])) {
             $dbLoginHash = $this->userRepository->getLoginHashForUserId($_SESSION[SessionNames::USER_ID]);
 
             if($dbLoginHash != $_SESSION[SessionNames::LOGIN_HASH]) {
@@ -149,13 +180,13 @@ class UserAuthenticator {
     }
 
     /**
-     * Checks if user with passed username exists or not
+     * Checks if user with passed email exists or not
      * 
-     * @param string $username Username to be checked
+     * @param string $email Email to be checked
      * @return bool True if successful or false if not
      */
-    public function checkUser(string $username) {
-        if($this->userRepository->getUserForAuthentication($username)->fetch() !== null) {
+    public function checkUserExists(string $email) {
+        if($this->userRepository->getUserForAuthentication($email)->fetch() !== null) {
             return false;
         }
 

@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Core\Application;
 use App\Core\Caching\CacheNames;
 use App\Entities\UserEntity;
 use PeeQL\Operations\QueryOperation;
@@ -40,24 +41,7 @@ class UserRepository extends ARepository {
         return $qb->fetch();
     }
 
-    public function getUserForAuthentication(string $username) {
-        $qb = $this->qb(__METHOD__);
-
-        $qb ->select(['*'])
-            ->from('users')
-            ->where('username = ?', [$username])
-            ->execute();
-
-        return $qb;
-    }
-
-    public function getUserByEmail(string $email) {
-        $qb = $this->getUserByEmailForAuthentication($email);
-
-        return UserEntity::createEntityFromDbRow($qb->fetch());
-    }
-
-    public function getUserByEmailForAuthentication(string $email) {
+    public function getUserForAuthentication(string $email) {
         $qb = $this->qb(__METHOD__);
 
         $qb ->select(['*'])
@@ -88,26 +72,15 @@ class UserRepository extends ARepository {
         return $loginHash;
     }
 
-    public function getUserByUsername(string $username): UserEntity|null {
+    public function getUserByEmail(string $email): mixed {
         $qb = $this->qb(__METHOD__);
 
-        $qb ->select(['userId'])
+        $qb->select(['*'])
             ->from('users')
-            ->where('username = ?', [$username]);
+            ->where('email = ?', [$email])
+            ->execute();
 
-        $userUsername2IdCache = $this->cacheFactory->getCache(CacheNames::USERS_USERNAME_TO_ID_MAPPING);
-
-        $userId = $userUsername2IdCache->load($username, function() use ($qb) {
-            $qb->execute();
-
-            return $qb->fetch('userId');
-        });
-
-        if($userId === null) {
-            return $userId;
-        }
-
-        return $this->getUserById($userId);
+        return $qb->fetch();
     }
 
     public function updateUser(string $id, array $data) {
@@ -121,35 +94,19 @@ class UserRepository extends ARepository {
         return $qb->fetchBool();
     }
 
-    public function getUsersByIdBulk(array $ids, bool $idAsKey = false, bool $returnUsernameAsValue = false) {
-        $users = [];
-
-        foreach($ids as $id) {
-            $result = $this->getUserById($id);
-
-            if($result !== null) {
-                if($returnUsernameAsValue) {
-                    $result = $result->getUsername();
-                }
-                
-                if($idAsKey) {
-                    $users[$id] = $result;
-                } else {
-                    $users[] = $result;
-                }
-            }
-        }
-
-        return $users;
-    }
-
-    public function searchUsersByUsername(string $username, array $exceptUsers = []) {
+    public function searchUsers(string $value, array $columns, array $exceptUsers = []) {
         $qb = $this->qb(__METHOD__);
 
         $qb ->select(['*'])
             ->from('users')
-            ->where('username LIKE ?', ['%' . $username . '%'])
-            ->andWhere('username <> ?', ['service_user']);
+            ->andWhere('email <> ?', [Application::SERVICE_USER_EMAIL]);
+
+        $sql = [];
+        foreach($columns as $col) {
+            $sql[] = sprintf('%s = \'%s\'', $col, $value);
+        }
+
+        $qb->andWhere('(' . implode(' OR ', $sql) . ')');
         
         if(!empty($exceptUsers)) {
             $qb->andWhere($qb->getColumnNotInValues('userId', $exceptUsers));
@@ -160,33 +117,21 @@ class UserRepository extends ARepository {
         return $this->createUsersArrayFromQb($qb);
     }
 
-    public function searchUsersByFullname(string $fullname, array $exceptUsers = []) {
+    public function createNewUser2(array $data): bool {
         $qb = $this->qb(__METHOD__);
 
-        $qb ->select(['*'])
-            ->from('users')
-            ->where('fullname LIKE ?', ['%' . $fullname . '%'])
-            ->andWhere('username <> ?', ['service_user']);
-        
-        if(!empty($exceptUsers)) {
-            $qb->andWhere($qb->getColumnNotInValues('userId', $exceptUsers));
-        }
+        $qb->insert('users', array_keys($data))
+            ->values(array_values($data))
+            ->execute();
 
-        $qb->execute();
-
-        return $this->createUsersArrayFromQb($qb);
+        return $qb->fetchBool();
     }
 
-    public function createNewUser(string $id, string $username, string $password, string $fullname, ?string $email) {
+    public function createNewUser(string $id, string $email, string $password, string $fullname) {
         $qb = $this->qb(__METHOD__);
 
-        $keys = ['userId', 'username', 'password', 'fullname'];
-        $values = [$id, $username, $password, $fullname];
-
-        if($email !== null) {
-            $keys[] = 'email';
-            $values[] = $email;
-        }
+        $keys = ['userId', 'email', 'password', 'fullname'];
+        $values = [$id, $email, $password, $fullname];
 
         $qb ->insert('users', $keys)
             ->values($values)

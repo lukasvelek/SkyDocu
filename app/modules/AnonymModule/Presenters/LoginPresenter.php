@@ -3,7 +3,6 @@
 namespace App\Modules\AnonymModule;
 
 use App\Components\ContainerSelectionForm\ContainerSelectionForm;
-use App\Constants\ContainerEnvironments;
 use App\Constants\ContainerStatus;
 use App\Constants\SessionNames;
 use App\Constants\SystemGroups;
@@ -19,7 +18,7 @@ class LoginPresenter extends AAnonymPresenter {
     public function handleLoginForm(?FormRequest $fr = null) {
         if($fr !== null) {
             try {
-                $this->app->userAuth->loginUser($fr->username, $fr->password);
+                $this->app->userAuth->loginUser($fr->email, $fr->password);
                 
                 $this->app->logger->info('Logged in user #' . $this->httpSessionGet(SessionNames::USER_ID) . '.', __METHOD__);
                 $this->redirect($this->createURL('checkContainers'));
@@ -30,16 +29,14 @@ class LoginPresenter extends AAnonymPresenter {
         }
     }
 
-    public function renderLoginForm() {
-        $this->template->title = 'Login';
-    }
+    public function renderLoginForm() {}
 
     protected function createComponentLoginForm(HttpRequest $request) {
         $form = $this->componentFactory->getFormBuilder();
 
         $form->setAction($this->createURL('loginForm'));
 
-        $form->addTextInput('username', 'Username:')
+        $form->addEmailInput('email', 'Email:')
             ->setRequired();
 
         $form->addPasswordInput('password', 'Password:')
@@ -140,8 +137,7 @@ class LoginPresenter extends AAnonymPresenter {
 
                 array_unshift($containers, $c);
             } else if(str_ends_with($group->title, ' - users')) {
-                $environment = ContainerEnvironments::toString($container->getEnvironment()) ?? '-';
-                $title = substr($group->title, 0, (strlen($group->title) - 8)) . ' (' . $environment . ')';
+                $title = substr($group->title, 0, (strlen($group->title) - 8));
 
                 $c = [
                     'value' => $group->containerId,

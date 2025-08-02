@@ -3,6 +3,7 @@
 namespace App\Authorizators;
 
 use App\Constants\Container\ProcessInstanceOfficerTypes;
+use App\Constants\Container\ProcessInstanceStatus;
 use App\Constants\Container\SystemGroups;
 use App\Constants\JobQueueTypes;
 use App\Core\DatabaseConnection;
@@ -197,6 +198,13 @@ class ContainerProcessAuthorizator extends AAuthorizator {
         $isAuthor = ($instance->userId == $userId);
 
         if(!empty($items)) {
+            return false;
+        }
+
+        if(!in_array($instance->status, [
+            ProcessInstanceStatus::NEW,
+            ProcessInstanceStatus::IN_PROGRESS
+        ])) {
             return false;
         }
 

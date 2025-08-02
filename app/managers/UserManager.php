@@ -2,8 +2,10 @@
 
 namespace App\Managers;
 
+use App\Core\Application;
 use App\Core\Caching\CacheNames;
 use App\Core\DB\DatabaseRow;
+use App\Entities\UserEntity;
 use App\Exceptions\GeneralException;
 use App\Exceptions\NonExistingEntityException;
 use App\Logger\Logger;
@@ -22,16 +24,6 @@ class UserManager extends AManager {
         $this->userRepository = $userRepository;
     }
 
-    public function getUserByUsername(string $username, bool $saveFile = true) {
-        $user = $this->userRepository->getUserByUsername($username);
-
-        if($user === null) {
-            throw new NonExistingEntityException('User with username \'' . $username . '\' does not exist.', null, $saveFile);
-        }
-
-        return $user;
-    }
-
     public function getUserById(string $userId, bool $force = false) {
         $user = $this->userRepository->getUserById($userId, $force);
 
@@ -42,24 +34,79 @@ class UserManager extends AManager {
         return $user;
     }
 
-    public function createNewUser(string $username, string $fullname, string $password, ?string $email) {
+    /**
+     * Creates a new technical user
+     * 
+     * @param string $email Email
+     * @param string $password Password
+     * @param string $containerName Container name
+     * @throws GeneralException
+     */
+    public function createNewTechnicalUser(string $email, string $password, string $containerName): string {
         $userId = $this->createId(EntityManager::USERS);
+        
+        $containerName = strtolower($containerName);
+        $containerName = preg_replace('/[^A-Za-z0-9]/', '_', $containerName);
+        $containerName = substr($containerName, 0, 10);
 
-        if(!$this->userRepository->createNewUser($userId, $username, $password, $fullname, $email)) {
-            throw new GeneralException('Could not create user.');
+        $emailForFullname = explode('@', $email)[0];
+
+        $fullname = sprintf('%s_TechnicalUser_%s', $emailForFullname, $containerName);
+
+        $data = [
+            'userId' => $userId,
+            'email' => $email,
+            'password' => $password,
+            'fullname' => $fullname,
+            'isTechnical' => 1
+        ];
+
+        if(!$this->userRepository->createNewUser2($data)) {
+            throw new GeneralException('Database error.');
         }
 
-        if(!$this->cacheFactory->invalidateCacheByNamespace(CacheNames::USERS) || !$this->cacheFactory->invalidateCacheByNamespace(CacheNames::USERS_USERNAME_TO_ID_MAPPING)) {
+        if(!$this->cacheFactory->invalidateCacheByNamespace(CacheNames::USERS)) {
             throw new GeneralException('Could not invalidate cache.');
         }
 
         return $userId;
     }
 
-    public function getServiceUserId() {
-        $user = $this->userRepository->getUserByUsername('service_user');
+    /**
+     * Creates a new user
+     * 
+     * @param string $email Email
+     * @param string $fullname Fullname
+     * @param string $password Password
+     * @throws GeneralException
+     */
+    public function createNewUser(string $email, string $fullname, string $password): string {
+        $userId = $this->createId(EntityManager::USERS);
 
-        return $user->getId();
+        if(!$this->userRepository->createNewUser($userId, $email, $password, $fullname)) {
+            throw new GeneralException('Could not create user.');
+        }
+
+        if(!$this->cacheFactory->invalidateCacheByNamespace(CacheNames::USERS)) {
+            throw new GeneralException('Could not invalidate cache.');
+        }
+
+        return $userId;
+    }
+
+    /**
+     * Returns service user ID
+     * 
+     * @throws NonExistingEntityException
+     */
+    public function getServiceUserId(): string {
+        $user = $this->userRepository->getUserByEmail(Application::SERVICE_USER_EMAIL);
+
+        if($user === null) {
+            throw new NonExistingEntityException('No service user exists.');
+        }
+
+        return $user['userId'];
     }
 
     public function updateUser(string $userId, array $data) {
@@ -69,8 +116,7 @@ class UserManager extends AManager {
             throw new GeneralException('Database error.');
         }
 
-        if(!$this->cacheFactory->invalidateCacheByNamespace(CacheNames::USERS)
-           || !$this->cacheFactory->invalidateCacheByNamespace(CacheNames::USERS_USERNAME_TO_ID_MAPPING)) {
+        if(!$this->cacheFactory->invalidateCacheByNamespace(CacheNames::USERS)) {
             throw new GeneralException('Could not invalidate cache.');
         }
     }
@@ -80,8 +126,7 @@ class UserManager extends AManager {
             throw new GeneralException('Database error.');
         }
 
-        if(!$this->cacheFactory->invalidateCacheByNamespace(CacheNames::USERS) ||
-           !$this->cacheFactory->invalidateCacheByNamespace(CacheNames::USERS_USERNAME_TO_ID_MAPPING)) {
+        if(!$this->cacheFactory->invalidateCacheByNamespace(CacheNames::USERS)) {
             throw new GeneralException('Could not invalidate cache.');
         }
     }
@@ -96,19 +141,19 @@ class UserManager extends AManager {
         return DatabaseRow::createFromDbRow($user);
     }
 
-    public function searchUsersByUsernameAndFullname(string $query, array $exceptUsers = []): array {
-        $users = [];
-        $usernameEntities = $this->userRepository->searchUsersByUsername($query, $exceptUsers);
-        $fullnameEntities = $this->userRepository->searchUsersByFullname($query, $exceptUsers);
+    /**
+     * Returns user for given email
+     * 
+     * @param string $email Email
+     */
+    public function getUserByEmail(string $email): UserEntity {
+        $row = $this->userRepository->getUserByEmail($email);
 
-        foreach($usernameEntities as $user) {
-            $users[$user->getId()] = $user->getFullname();
-        }
-        foreach($fullnameEntities as $user) {
-            $users[$user->getId()] = $user->getFullname();
+        if($row === null) {
+            throw new NonExistingEntityException('No user found.');
         }
 
-        return $users;
+        return UserEntity::createEntityFromDbRow($row);
     }
 }
 

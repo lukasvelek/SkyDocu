@@ -6,6 +6,7 @@ use App\Constants\Container\ExternalSystemLogActionTypes;
 use App\Constants\Container\ExternalSystemLogObjectTypes;
 use App\Constants\Container\ExternalSystemRightsOperations;
 use App\Core\DB\DatabaseRow;
+use App\Core\HashManager;
 use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
@@ -34,10 +35,13 @@ class ExternalSystemsPresenter extends AAdminPresenter {
     protected function createComponentContainerExternalSystemsGrid(HttpRequest $request) {
         $grid = $this->componentFactory->getGridBuilder($this->containerId);
 
-        $grid->createDataSourceFromQueryBuilder($this->externalSystemsRepository->composeQueryForExternalSystems(), 'systemId');
+        $qb = $this->app->externalSystemsRepository->composeQueryForExternalSystemsForContainer($this->containerId);
+
+        $grid->createDataSourceFromQueryBuilder($qb, 'systemId');
 
         $grid->addColumnText('title', 'Title');
         $grid->addColumnBoolean('isEnabled', 'Enabled');
+        $grid->addColumnText('login', 'Login');
 
         $info = $grid->addAction('info');
         $info->setTitle('Information');
@@ -69,7 +73,11 @@ class ExternalSystemsPresenter extends AAdminPresenter {
 
         $rights = $grid->addAction('rights');
         $rights->setTitle('Rights');
-        $rights->onCanRender[] = function() {
+        $rights->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) {
+            if($row->isEnabled == false) {
+                return false;
+            }
+
             return true;
         };
         $rights->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
@@ -112,6 +120,10 @@ class ExternalSystemsPresenter extends AAdminPresenter {
         $delete = $grid->addAction('delete');
         $delete->setTitle('Delete');
         $delete->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) {
+            if($row->isEnabled == true) {
+                return false;
+            }
+
             return true;
         };
         $delete->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
@@ -134,15 +146,15 @@ class ExternalSystemsPresenter extends AAdminPresenter {
 
         if($fr !== null) {
             try {
-                $this->externalSystemsRepository->beginTransaction(__METHOD__);
+                $this->app->externalSystemsRepository->beginTransaction(__METHOD__);
 
-                $this->externalSystemsManager->deleteExternalSystem($systemId);
+                $this->app->externalSystemsManager->deleteExternalSystem($systemId);
 
-                $this->externalSystemsRepository->commit($this->getUserId(), __METHOD__);
+                $this->app->externalSystemsRepository->commit($this->getUserId(), __METHOD__);
 
                 $this->flashMessage('Successfully deleted the external system.', 'success');
             } catch(AException $e) {
-                $this->externalSystemsRepository->rollback(__METHOD__);
+                $this->app->externalSystemsRepository->rollback(__METHOD__);
 
                 $this->flashMessage('Could not delete the external system. Reason: ' . $e->getMessage(), 'error', 10);
             }
@@ -157,7 +169,7 @@ class ExternalSystemsPresenter extends AAdminPresenter {
 
     protected function createComponentDeleteExternalSystemForm(HttpRequest $request) {
         $systemId = $request->get('systemId');
-        $system = $this->externalSystemsManager->getExternalSystemById($systemId);
+        $system = $this->app->externalSystemsManager->getExternalSystemById($systemId);
 
         $form = $this->componentFactory->getFormBuilder();
         
@@ -180,15 +192,20 @@ class ExternalSystemsPresenter extends AAdminPresenter {
     public function handleNewForm(?FormRequest $fr = null) {
         if($fr !== null) {
             try {
-                $this->externalSystemsRepository->beginTransaction(__METHOD__);
+                $this->app->externalSystemsRepository->beginTransaction(__METHOD__);
 
-                $this->externalSystemsManager->createNewExternalSystem($fr->title, $fr->description, $fr->password);
+                $this->app->externalSystemsManager->createNewExternalSystem(
+                    $fr->title,
+                    $fr->description,
+                    $fr->password,
+                    $this->containerId
+                );
 
-                $this->externalSystemsRepository->commit($this->getUserId(), __METHOD__);
+                $this->app->externalSystemsRepository->commit($this->getUserId(), __METHOD__);
 
                 $this->flashMessage('Successfully created new external system.', 'success');
             } catch(AException $e) {
-                $this->externalSystemsRepository->rollback(__METHOD__);
+                $this->app->externalSystemsRepository->rollback(__METHOD__);
 
                 $this->flashMessage('Could not create a new external system. Reason: ' . $e->getMessage(), 'error', 10);
             }
@@ -234,9 +251,8 @@ class ExternalSystemsPresenter extends AAdminPresenter {
 
         $grid = $this->componentFactory->getGridBuilder($this->containerId);
 
-        $qb = $this->externalSystemLogRepository->composeQueryForExternalSystemLog();
-        $qb->andWhere('systemId = ?', [$systemId])
-            ->orderBy('dateCreated', 'DESC');
+        $qb = $this->app->externalSystemsLogRepository->composeQueryForLogEntriesForSystem($systemId);
+        $qb->orderBy('dateCreated', 'DESC');
 
         $grid->createDataSourceFromQueryBuilder($qb, 'entryId');
         $grid->addQueryDependency('systemId', $systemId);
@@ -261,11 +277,25 @@ class ExternalSystemsPresenter extends AAdminPresenter {
             $texts[] = "<p><b>$title:</b> $text</p>";
         };
 
-        $system = $this->externalSystemsManager->getExternalSystemById($systemId);
+        $system = $this->app->externalSystemsManager->getExternalSystemById($systemId);
+
+        $isEnabledText = HTML::el('span');
+        if($system->isEnabled == true) {
+            $isEnabledText->text('Yes')
+                ->style('color', 'green')
+                ->style('background-color', 'lightgreen');
+        } else {
+            $isEnabledText->text('No')
+                ->style('color', 'red')
+                ->style('background-color', 'pink');
+        }
+
+        $isEnabledText->style('border-radius', '12px')
+            ->style('padding', '5px');
 
         $add('Title', $system->title);
         $add('Description', $system->description);
-        $add('Is enabled', ($system->isEnabled == true ? 'Yes' : 'No'));
+        $add('Is enabled', $isEnabledText->toString());
         $add('Login', $system->login);
         $add('Password', LinkBuilder::createSimpleLink('Change password', $this->createURL('changePasswordForm', ['systemId' => $systemId]), 'link'));
 
@@ -282,19 +312,19 @@ class ExternalSystemsPresenter extends AAdminPresenter {
         $operation = $this->httpRequest->get('operation');
 
         try {
-            $this->externalSystemsRepository->beginTransaction(__METHOD__);
+            $this->app->externalSystemsRepository->beginTransaction(__METHOD__);
 
             if($operation == 'enable') {
-                $this->externalSystemsManager->enableExternalSystem($systemId);
+                $this->app->externalSystemsManager->enableExternalSystem($systemId);
             } else {
-                $this->externalSystemsManager->disableExternalSystem($systemId);
+                $this->app->externalSystemsManager->disableExternalSystem($systemId);
             }
 
-            $this->externalSystemsRepository->commit($this->getUserId(), __METHOD__);
+            $this->app->externalSystemsRepository->commit($this->getUserId(), __METHOD__);
 
             $this->flashMessage(sprintf('Successfully %s external system.', ($operation == 'enable' ? 'enabled' : 'disabled')), 'success');
         } catch(AException $e) {
-            $this->externalSystemsRepository->rollback(__METHOD__);
+            $this->app->externalSystemsRepository->rollback(__METHOD__);
 
             $this->flashMessage(sprintf('Could not %s external system. Reason: %s', ($operation == 'enable' ? 'enable' : 'disable'), $e->getMessage()), 'error', '10');
         }
@@ -310,17 +340,17 @@ class ExternalSystemsPresenter extends AAdminPresenter {
             }
 
             try {
-                $this->externalSystemsRepository->beginTransaction(__METHOD__);
+                $this->app->externalSystemsRepository->beginTransaction(__METHOD__);
 
-                $password = password_hash($fr->password, PASSWORD_BCRYPT);
+                $password = HashManager::hashPassword($fr->password);
 
-                $this->externalSystemsManager->updateExternalSystem($systemId, ['password' => $password]);
+                $this->app->externalSystemsManager->updateExternalSystem($systemId, ['password' => $password]);
 
-                $this->externalSystemsRepository->commit($this->getUserId(), __METHOD__);
+                $this->app->externalSystemsRepository->commit($this->getUserId(), __METHOD__);
 
                 $this->flashMessage('Successfully changed external system\'s password.', 'success');
             } catch(AException $e) {
-                $this->externalSystemsRepository->rollback(__METHOD__);
+                $this->app->externalSystemsRepository->rollback(__METHOD__);
 
                 $this->flashMessage('Could not change external system\'s password.', 'error', 10);
             }
@@ -364,7 +394,7 @@ class ExternalSystemsPresenter extends AAdminPresenter {
     protected function createComponentContainerExternalSystemRightsGrid(HttpRequest $request) {
         $grid = $this->componentFactory->getGridBuilder($this->containerId);
 
-        $qb = $this->externalSystemRightsRepository->composeQueryForExternalSystemRights();
+        $qb = $this->app->externalSystemsRightsRepository->composeQueryForExternalSystemRights();
         $qb->andWhere('systemId = ?', [$request->get('systemId')]);
 
         $grid->createDataSourceFromQueryBuilder($qb, 'rightId');
@@ -387,16 +417,16 @@ class ExternalSystemsPresenter extends AAdminPresenter {
             return $el;
         };
 
-        $disallow = $grid->addAction('disallow');
-        $disallow->setTitle('Disallow');
-        $disallow->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) {
+        $deny = $grid->addAction('deny');
+        $deny->setTitle('Deny');
+        $deny->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) {
             return $row->isEnabled == true;
         };
-        $disallow->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
+        $deny->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
             $el = HTML::el('a');
-            $el->href($this->createURLString('disallowRight', ['systemId' => $row->systemId, 'operation' => $row->operationName]))
+            $el->href($this->createURLString('denyRight', ['systemId' => $row->systemId, 'operation' => $row->operationName]))
                 ->class('grid-link')
-                ->text('Disallow');
+                ->text('Deny');
 
             return $el;
         };
@@ -415,15 +445,15 @@ class ExternalSystemsPresenter extends AAdminPresenter {
         }
 
         try {
-            $this->externalSystemRightsRepository->beginTransaction(__METHOD__);
+            $this->app->externalSystemsRightsRepository->beginTransaction(__METHOD__);
 
-            $this->externalSystemsManager->allowExternalSystemOperation($systemId, $operation);
+            $this->app->externalSystemsManager->allowExternalSystemOperation($systemId, $this->containerId, $operation);
 
-            $this->externalSystemRightsRepository->commit($this->getUserId(), __METHOD__);
+            $this->app->externalSystemsRightsRepository->commit($this->getUserId(), __METHOD__);
 
             $this->flashMessage('Successfully allowed external system operation.', 'success');
         } catch(AException $e) {
-            $this->externalSystemRightsRepository->rollback(__METHOD__);
+            $this->app->externalSystemsRightsRepository->rollback(__METHOD__);
 
             $this->flashMessage('Could not allow external system operation.', 'error', 10);
         }
@@ -431,7 +461,7 @@ class ExternalSystemsPresenter extends AAdminPresenter {
         $this->redirect($this->createURL('rightsList', ['systemId' => $systemId]));
     }
 
-    public function handleDisallowRight() {
+    public function handleDenyRight() {
         $systemId = $this->httpRequest->get('systemId');
         if($systemId === null) {
             throw new RequiredAttributeIsNotSetException('systemId');
@@ -442,17 +472,17 @@ class ExternalSystemsPresenter extends AAdminPresenter {
         }
 
         try {
-            $this->externalSystemRightsRepository->beginTransaction(__METHOD__);
+            $this->app->externalSystemsRightsRepository->beginTransaction(__METHOD__);
 
-            $this->externalSystemsManager->disallowExternalSystemOperation($systemId, $operation);
+            $this->app->externalSystemsManager->denyExternalSystemOperation($systemId, $this->containerId, $operation);
 
-            $this->externalSystemRightsRepository->commit($this->getUserId(), __METHOD__);
+            $this->app->externalSystemsRightsRepository->commit($this->getUserId(), __METHOD__);
 
-            $this->flashMessage('Successfully disallowed external system operation.', 'success');
+            $this->flashMessage('Successfully denied external system operation.', 'success');
         } catch(AException $e) {
-            $this->externalSystemRightsRepository->rollback(__METHOD__);
+            $this->app->externalSystemsRightsRepository->rollback(__METHOD__);
 
-            $this->flashMessage('Could not disallow external system operation.', 'error', 10);
+            $this->flashMessage('Could not deny external system operation.', 'error', 10);
         }
 
         $this->redirect($this->createURL('rightsList', ['systemId' => $systemId]));

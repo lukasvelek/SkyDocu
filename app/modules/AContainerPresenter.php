@@ -8,11 +8,9 @@ use App\Authorizators\SupervisorAuthorizator;
 use App\Constants\SessionNames;
 use App\Core\Caching\CacheFactory;
 use App\Core\DatabaseConnection;
-use App\Entities\ApiTokenEntity;
 use App\Managers\Container\ArchiveManager;
 use App\Managers\Container\DocumentManager;
 use App\Managers\Container\EnumManager;
-use App\Managers\Container\ExternalSystemsManager;
 use App\Managers\Container\FileStorageManager;
 use App\Managers\Container\FolderManager;
 use App\Managers\Container\GridManager;
@@ -25,10 +23,6 @@ use App\Managers\EntityManager;
 use App\Repositories\Container\ArchiveRepository;
 use App\Repositories\Container\DocumentClassRepository;
 use App\Repositories\Container\DocumentRepository;
-use App\Repositories\Container\ExternalSystemLogRepository;
-use App\Repositories\Container\ExternalSystemRightsRepository;
-use App\Repositories\Container\ExternalSystemsRepository;
-use App\Repositories\Container\ExternalSystemTokenRepository;
 use App\Repositories\Container\FileStorageRepository;
 use App\Repositories\Container\FolderRepository;
 use App\Repositories\Container\GridRepository;
@@ -56,10 +50,6 @@ abstract class AContainerPresenter extends APresenter {
     protected ProcessRepository $processRepository;
     protected ArchiveRepository $archiveRepository;
     protected FileStorageRepository $fileStorageRepository;
-    protected ExternalSystemsRepository $externalSystemsRepository;
-    protected ExternalSystemLogRepository $externalSystemLogRepository;
-    protected ExternalSystemTokenRepository $externalSystemTokenRepository;
-    protected ExternalSystemRightsRepository $externalSystemRightsRepository;
     protected ProcessInstanceRepository $processInstanceRepository;
     protected ProcessMetadataRepository $processMetadataRepository;
     
@@ -72,7 +62,6 @@ abstract class AContainerPresenter extends APresenter {
     protected GridManager $gridManager;
     protected ArchiveManager $archiveManager;
     protected FileStorageManager $fileStorageManager;
-    protected ExternalSystemsManager $externalSystemsManager;
     protected ProcessManager $processManager;
     protected ProcessInstanceManager $processInstanceManager;
     protected ProcessMetadataManager $processMetadataManager;
@@ -109,7 +98,7 @@ abstract class AContainerPresenter extends APresenter {
 
         $this->initRepositories($containerConnection);
 
-        $this->entityManager = new EntityManager($this->logger, $this->contentRepository);
+        $this->entityManager = new EntityManager($this->logger, $this->contentRepository, $this->app->contentRepository);
         $this->folderManager = new FolderManager($this->logger, $this->entityManager, $this->folderRepository, $this->groupRepository);
         $this->documentManager = new DocumentManager($this->logger, $this->entityManager, $this->documentRepository, $this->documentClassRepository, $this->groupRepository, $this->folderRepository);
         $this->groupManager = new GroupManager($this->logger, $this->entityManager, $this->groupRepository, $this->app->userRepository);
@@ -141,12 +130,6 @@ abstract class AContainerPresenter extends APresenter {
             ],
             'fileStorageManager' => [
                 'fileStorageRepository'
-            ],
-            'externalSystemsManager' => [
-                'externalSystemsRepository',
-                'externalSystemLogRepository',
-                'externalSystemTokenRepository',
-                'externalSystemRightsRepository'
             ],
             'processManager' => [
                 'processRepository'
@@ -297,19 +280,6 @@ abstract class AContainerPresenter extends APresenter {
 
         $tmp = &$this->containerCacheFactory;
         return $tmp;
-    }
-
-    /**
-     * Returns system API token
-     */
-    protected function getSystemApiToken(): string {
-        $system = $this->externalSystemsManager->getSystemExternalSystem();
-
-        $token = $this->externalSystemsManager->createOrGetToken($system->systemId);
-
-        $entity = ApiTokenEntity::createNewEntity($token, $this->containerId, $system->systemId);
-        $entity->setUserId($this->getUserId());
-        return $entity->convertToToken();
     }
 }
 

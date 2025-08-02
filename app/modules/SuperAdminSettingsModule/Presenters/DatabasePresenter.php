@@ -3,6 +3,7 @@
 namespace App\Modules\SuperAdminSettingsModule;
 
 use App\Constants\ContainerStatus;
+use App\Core\Caching\CacheNames;
 use App\Core\DB\DatabaseMigrationManager;
 use App\Core\FileManager;
 use App\Core\HashManager;
@@ -216,6 +217,10 @@ class DatabasePresenter extends ASuperAdminSettingsPresenter {
                 $this->app->containerManager->changeContainerStatus($containerId, ContainerStatus::RUNNING, $this->app->serviceManager->getServiceUserId(), 'Status change due to migrations. Container was enabled by ' . $this->getUser()->getFullname() . ' (ID: ' . $this->getUserId() . ').');
             }
             $this->app->containerRepository->commit($this->getUserId(), __METHOD__);
+
+            // invalidate cache
+            $this->cacheFactory->invalidateCacheByNamespace(CacheNames::CONTAINERS);
+            $this->cacheFactory->invalidateCacheByNamespace(CacheNames::CONTAINER_DATABASES);
 
             // return
             $this->flashMessage('Migrations ran successfully.', 'success');

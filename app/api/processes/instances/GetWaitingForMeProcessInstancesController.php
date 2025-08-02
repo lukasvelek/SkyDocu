@@ -12,6 +12,10 @@ use App\Core\Http\JsonResponse;
 
 class GetWaitingForMeProcessInstancesController extends AReadAPIOperation {
     protected function run(): JsonResponse {
+        if($this->userId === null) {
+            return new JsonResponse(['error' => 'You have to impersonate a user in order to see process instances waiting for them.']);
+        }
+
         if(!$this->checkRight(ExternalSystemRightsOperations::READ_PROCESSES)) {
             return new JsonResponse(['error' => 'Operation is not allowed.']);
         }
@@ -26,7 +30,8 @@ class GetWaitingForMeProcessInstancesController extends AReadAPIOperation {
             'status',
             'dateCreated',
             'dateModified',
-            'description'
+            'description',
+            'systemStatus'
         ]);
 
         $results = $this->getResults([$this, 'getProcessInstances'], 'instanceId', $this->get('limit'), $this->get('offset'));
@@ -58,6 +63,8 @@ class GetWaitingForMeProcessInstancesController extends AReadAPIOperation {
         ";
 
         $qb->andWhere($sqlForOfficer)
+            ->limit($limit)
+            ->offset($offset)
             ->orderBy('dateCreated', 'DESC')
             ->execute();
 

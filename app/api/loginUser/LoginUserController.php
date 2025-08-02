@@ -7,19 +7,27 @@ use App\Api\IAPITokenProcessing;
 use App\Authenticators\ExternalSystemAuthenticator;
 use App\Core\Http\JsonResponse;
 use App\Entities\ApiTokenEntity;
+use App\Entities\ExternalSystemTokenEntity;
+use App\Exceptions\AException;
 
 class LoginUserController extends AApiClass implements IAPITokenProcessing {
     private string $userId;
     private string $systemId;
 
     protected function startup() {
-        $this->containerId = $this->get('containerId');
+        $this->setAuthOnly();
 
         parent::startup();
     }
 
     protected function run(): JsonResponse {
         $this->userId = $this->get('userId');
+
+        try {
+            $this->app->userManager->getUserById($this->userId, true);
+        } catch(AException $e) {
+            return new JsonResponse(['error' => 'User with this ID does not exist.']);
+        }
 
         $login = $this->get('login');
         $password = $this->get('password');
@@ -37,14 +45,18 @@ class LoginUserController extends AApiClass implements IAPITokenProcessing {
      * @param string $password Password
      */
     private function loginUser(string $login, string $password) {
-        $externalSystemAuthenticator = new ExternalSystemAuthenticator($this->externalSystemsManager, $this->app->logger);
+        $externalSystemAuthenticator = new ExternalSystemAuthenticator($this->app->externalSystemsManager, $this->app->logger);
 
         $this->systemId = $externalSystemAuthenticator->auth($login, $password);
 
-        return $this->externalSystemsManager->createOrGetToken($this->systemId);
+        $system = $this->app->externalSystemsManager->getExternalSystemById($this->systemId);
+
+        $this->containerId = $system->containerId;
+
+        return $this->app->externalSystemsManager->createOrGetToken($this->systemId, $system->containerId, true, true);
     }
 
-    public function processToken(string $token): string {
+    public function processToken(ExternalSystemTokenEntity $token): string {
         $entity = ApiTokenEntity::createNewEntity($token, $this->containerId, $this->systemId);
         $entity->setUserId($this->userId);
         return $entity->convertToToken();

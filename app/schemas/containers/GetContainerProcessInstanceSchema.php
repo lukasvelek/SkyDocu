@@ -25,7 +25,8 @@ class GetContainerProcessInstanceSchema extends AQuerySchema {
             'status',
             'dateCreated',
             'dateModified',
-            'description'
+            'description',
+            'systemStatus'
         ]);
     }
 }

@@ -35,6 +35,11 @@ class EntityManager extends AManager {
     public const PROCESSES_UNIQUE = 'processes';
     public const JOB_QUEUE = 'job_queue';
     public const JOB_QUEUE_PROCESSING_HISTORY = 'job_queue_processing_history';
+    public const FILE_STORAGE = 'file_storage';
+    public const EXTERNAL_SYSTEMS = 'external_systems';
+    public const EXTERNAL_SYSTEM_LOG = 'external_system_log';
+    public const EXTERNAL_SYSTEM_TOKENS = 'external_system_tokens';
+    public const EXTERNAL_SYSTEM_RIGHTS = 'external_system_rights';
 
     public const C_GROUPS = 'groups';
     public const C_DOCUMENT_CLASSES = 'document_classes';
@@ -51,6 +56,7 @@ class EntityManager extends AManager {
     public const C_CUSTOM_METADATA_LIST_VALUES = 'custom_metadata_list_values';
     public const C_GRID_CONFIGURATION = 'grid_configuration';
     public const C_PROCESSES = 'processes';
+    public const C_PROCESSES_UNIQUE = 'processes';
     public const C_PROCESS_INSTANCES = 'process_instances';
     public const C_DOCUMENT_SHARING = 'document_sharing';
     public const C_ARCHIVE_FOLDERS = 'archive_folders';
@@ -68,17 +74,20 @@ class EntityManager extends AManager {
     private const __MAX__ = 100;
 
     private ContentRepository $contentRepository;
+    private ContentRepository $masterContentRepository;
 
     /**
      * Class constructor
      * 
      * @param Logger $logger Logger instance
      * @param ContentRepository $contentRepository ContentRepository instance
+     * @param ContentRepository $masterContentRepository ContentRepository master instance
      */
-    public function __construct(Logger $logger, ContentRepository $contentRepository) {
+    public function __construct(Logger $logger, ContentRepository $contentRepository, ContentRepository $masterContentRepository) {
         parent::__construct($logger, null);
 
         $this->contentRepository = $contentRepository;
+        $this->masterContentRepository = $masterContentRepository;
     }
 
     public function generateEntityIdCustomDb(string $category, DatabaseConnection $customConn) {
@@ -121,9 +130,15 @@ class EntityManager extends AManager {
         while($run) {
             $entityId = HashManager::createEntityId();
 
-            $primaryKeyName = $this->getPrimaryKeyNameByCategory($category, ($this->contentRepository->conn->getName() != DB_MASTER_NAME));
+            $isContainer = ($this->contentRepository->conn->getName() != DB_MASTER_NAME);
 
-            $unique = $this->contentRepository->checkIdIsUnique($category, $primaryKeyName, $entityId);
+            $primaryKeyName = $this->getPrimaryKeyNameByCategory($category, $isContainer);
+
+            if($isContainer) {
+                $unique = $this->contentRepository->checkIdIsUnique($category, $primaryKeyName, $entityId);
+            } else {
+                $unique = $this->masterContentRepository->checkIdIsUnique($category, $primaryKeyName, $entityId);
+            }
 
             if($unique || $x >= self::__MAX__) {
                 $run = false;
@@ -175,6 +190,7 @@ class EntityManager extends AManager {
                 self::C_EXTERNAL_SYSTEM_TOKENS => 'tokenId',
                 self::C_EXTERNAL_SYSTEM_RIGHTS => 'rightId',
                 self::C_PROCESS_FILE_RELATION => 'relationId',
+                self::C_PROCESSES_UNIQUE => 'uniqueProcessId',
 
                 self::USERS => 'userId',
                 self::TRANSACTIONS => 'transactionId',
@@ -197,7 +213,12 @@ class EntityManager extends AManager {
                 self::PROCESSES => 'processId',
                 self::PROCESSES_UNIQUE => 'uniqueProcessId',
                 self::JOB_QUEUE => 'jobId',
-                self::JOB_QUEUE_PROCESSING_HISTORY => 'entryId'
+                self::JOB_QUEUE_PROCESSING_HISTORY => 'entryId',
+                self::FILE_STORAGE => 'fileId',
+                self::EXTERNAL_SYSTEMS => 'systemId',
+                self::EXTERNAL_SYSTEM_TOKENS => 'tokenId',
+                self::EXTERNAL_SYSTEM_RIGHTS => 'rightId',
+                self::EXTERNAL_SYSTEM_LOG => 'entryId'
             };
         } else {
             return match($category) {
@@ -222,7 +243,12 @@ class EntityManager extends AManager {
                 self::PROCESSES => 'processId',
                 self::PROCESSES_UNIQUE => 'uniqueProcessId',
                 self::JOB_QUEUE => 'jobId',
-                self::JOB_QUEUE_PROCESSING_HISTORY => 'entryId'
+                self::JOB_QUEUE_PROCESSING_HISTORY => 'entryId',
+                self::FILE_STORAGE => 'fileId',
+                self::EXTERNAL_SYSTEMS => 'systemId',
+                self::EXTERNAL_SYSTEM_TOKENS => 'tokenId',
+                self::EXTERNAL_SYSTEM_RIGHTS => 'rightId',
+                self::EXTERNAL_SYSTEM_LOG => 'entryId'
             };
         }
     }

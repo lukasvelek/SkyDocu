@@ -24,13 +24,17 @@ abstract class AAuthenticatedApiController extends AApiClass {
     protected function startup() {
         $this->getToken();
         
-        $this->app->currentUser = $this->app->userManager->getUserById($this->userId, true);
+        if($this->userId !== null) {
+            $this->app->currentUser = $this->app->userManager->getUserById($this->userId, true);
+        }
         
         parent::startup();
         
         $this->auth();
 
-        $this->peeql->setUserId($this->userId);
+        if($this->userId !== null) {
+            $this->peeql->setUserId($this->userId);
+        }
     }
 
     /**
@@ -47,8 +51,8 @@ abstract class AAuthenticatedApiController extends AApiClass {
      * Authenticates the external system
      */
     private function auth() {
-        $externalSystemAuthenticator = new ExternalSystemAuthenticator($this->externalSystemsManager, $this->app->logger);
-        $externalSystemAuthenticator->authByToken($this->token->getToken());
+        $externalSystemAuthenticator = new ExternalSystemAuthenticator($this->app->externalSystemsManager, $this->app->logger);
+        $externalSystemAuthenticator->authByToken($this->token->getToken()->generateToken());
 
         $container = $this->app->containerManager->getContainerById($this->containerId, true);
 
@@ -66,7 +70,7 @@ abstract class AAuthenticatedApiController extends AApiClass {
      */
     private function createLog(string $message, int $actionType, int $objectType) {
         try {
-            $this->externalSystemsManager->createLogEntry($this->systemId, $message, $actionType, $objectType);
+            $this->app->externalSystemsManager->createLogEntry($this->systemId, $message, $actionType, $objectType);
         } catch(AException $e) {
             throw new GeneralException('Could not save a log entry. Reason: ' . $e->getMessage(), $e);
         }
@@ -143,7 +147,7 @@ abstract class AAuthenticatedApiController extends AApiClass {
      * @param string $operationName Operation name
      */
     protected function checkRight(string $operationName): bool {
-        $operations = $this->container->externalSystemsManager->getAllowedOperationsForSystem($this->systemId);
+        $operations = $this->app->externalSystemsManager->getOperationsForSystem($this->systemId);
 
         $allowed = false;
         foreach($operations as $operation) {

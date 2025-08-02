@@ -110,9 +110,12 @@ abstract class AReadAPIOperation extends AAuthenticatedApiController {
         $entries = $obj->$method(...$params);
 
         foreach($entries as $entry) {
+            $tmp = [];
             foreach($properties as $property) {
-                $results[$entry->$primaryKey][$property] = $entry->$property;
+                $tmp[$property] = $entry->$property;
             }
+
+            $results[]['row'] = $tmp;
         }
 
         return $results;

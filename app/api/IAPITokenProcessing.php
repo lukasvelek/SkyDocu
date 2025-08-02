@@ -2,6 +2,8 @@
 
 namespace App\Api;
 
+use App\Entities\ExternalSystemTokenEntity;
+
 /**
  * Common inteface for all auth/login API endpoints that compose an access token
  * 
@@ -11,9 +13,9 @@ interface IAPITokenProcessing {
     /**
      * Composes a token with more information from raw token and returns Base-64 encoded string
      * 
-     * @param string $token Raw token
+     * @param ExternalSystemTokenEntity $token Token entity
      */
-    function processToken(string $token): string;
+    function processToken(ExternalSystemTokenEntity $token): string;
 }
 
 ?>

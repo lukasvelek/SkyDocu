@@ -3,14 +3,21 @@
 namespace App\Modules\AdminModule;
 
 use App\Constants\Container\ProcessStatus;
+use App\Constants\Container\SystemGroups;
 use App\Constants\ProcessColorCombos;
 use App\Core\DB\DatabaseRow;
 use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
+use App\Helpers\GridHelper;
+use App\Helpers\LinkHelper;
 use App\UI\GridBuilder2\Action;
+use App\UI\GridBuilder2\Cell;
+use App\UI\GridBuilder2\Filter;
 use App\UI\GridBuilder2\Row;
 use App\UI\HTML\HTML;
+use App\UI\LinkBuilder;
+use QueryBuilder\QueryBuilder;
 
 class ProcessesPresenter extends AAdminPresenter {
     public function __construct() {
@@ -22,7 +29,13 @@ class ProcessesPresenter extends AAdminPresenter {
     public function renderDashboard() {}
 
     public function renderList() {
-        $this->template->links = '';
+        $links = [];
+
+        if($this->groupManager->isUserMemberOfGroupTitle($this->getUserId(), SystemGroups::PROCESS_DESIGNERS)) {
+            $links[] = LinkBuilder::createSimpleLink('New process', $this->createFullURL('Admin:ProcessEditor', 'form'), 'link');
+        }
+
+        $this->template->links = LinkHelper::createLinksFromArray($links);
     }
 
     protected function createComponentProcessListGrid(HttpRequest $request) {
@@ -37,6 +50,13 @@ class ProcessesPresenter extends AAdminPresenter {
         $grid->addColumnUser('userId', 'Author');
         $grid->addColumnConst('status', 'Status', ProcessStatus::class);
         $grid->addColumnBoolean('isEnabled', 'Enabled');
+        $grid->addColumnText('version', 'Version');
+        $grid->addColumnBoolean('isCustom', 'Is custom')
+            ->onRenderColumn[] = function(DatabaseRow $row, Row $_row, Cell $cell, HTML $html, mixed $value) {
+                $result = $this->processManager->isProcessCustom($row->processId);
+
+                return GridHelper::createBooleanColumn($result);
+            };
 
         $metadata = $grid->addAction('metadata');
         $metadata->setTitle('Metadata');
@@ -56,16 +76,64 @@ class ProcessesPresenter extends AAdminPresenter {
             return $el;
         };
 
+        $copy = $grid->addAction('copy');
+        $copy->setTitle('Copy');
+        $copy->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) {
+            if($row->status != ProcessStatus::CURRENT) {
+                return false;
+            }
+
+            try {
+                $nextVersion = $this->processManager->getNextVersionForProcessId($row->processId, true);
+
+                if($nextVersion !== null && $nextVersion->getStatus() == ProcessStatus::NEW) {
+                    return false;
+                }
+            } catch(AException $e) {}
+
+            return true;
+        };
+        $copy->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
+            $params = [
+                'processId' => $primaryKey,
+                'uniqueProcessId' => $row->uniqueProcessId
+            ];
+
+            $el = HTML::el('a');
+            $el->text('Copy')
+                ->class('grid-link')
+                ->href($this->createURLString('copyProcess', $params));
+
+            return $el;
+        };
+
         $edit = $grid->addAction('edit');
         $edit->setTitle('Edit');
         $edit->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) {
-            return $row->status == ProcessStatus::CUSTOM;
+            if($row->status != ProcessStatus::NEW) {
+                return false;
+            }
+
+            return true;
         };
         $edit->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
+            $params = [
+                'processId' => $primaryKey,
+                'uniqueProcessId' => $row->uniqueProcessId
+            ];
+
+            try {
+                $previousProcess = $this->processManager->getPreviousVersionForProcessId($primaryKey);
+
+                if($previousProcess !== null) {
+                    $params['oldProcessId'] = $previousProcess->processId;
+                }
+            } catch(AException $e) {}
+
             $el = HTML::el('a');
             $el->text('Edit')
                 ->class('grid-link')
-                ->href($this->createFullURLString('Admin:Processes', 'editForm', ['uniqueProcessId' => $row->uniqueProcessId]));
+                ->href($this->createFullURLString('Admin:ProcessEditor', 'form', $params));
 
             return $el;
         };
@@ -98,6 +166,18 @@ class ProcessesPresenter extends AAdminPresenter {
             return $el;
         };
 
+        $grid->addFilter('isCustom', '0', [
+                'No',
+                'Yes'
+            ])
+            ->onSqlExecute[] = function(QueryBuilder &$qb, Filter $filter, mixed $value) {
+                if($value == '0') {
+                    $qb->andWhere($qb->getColumnNotInValues('status', [ProcessStatus::CURRENT, ProcessStatus::NEW, ProcessStatus::OLD]));
+                } else {
+                    $qb->andWhere($qb->getColumnInValues('status', [ProcessStatus::CURRENT, ProcessStatus::NEW, ProcessStatus::OLD]));
+                }
+            };
+
         return $grid;
     }
 
@@ -126,60 +206,25 @@ class ProcessesPresenter extends AAdminPresenter {
         $this->redirect($this->createURL('list'));
     }
 
-    public function handleEditForm(?FormRequest $fr = null) {
-        if($fr !== null) {
-            try {
-                $this->processRepository->beginTransaction(__METHOD__);
+    public function handleCopyProcess() {
+        $processId = $this->httpRequest->get('processId');
+        $uniqueProcessId = $this->httpRequest->get('uniqueProcessId');
 
-                $process = $this->processManager->getLastProcessForUniqueProcessId($this->httpRequest->get('uniqueProcessId'));
+        try {
+            $this->processRepository->beginTransaction(__METHOD__);
 
-                $this->processRepository->updateProcess($process->processId, ['colorCombo' => $fr->colorCombo]);
+            [$newProcessId, $uniqueProcessId] = $this->processManager->createNewProcessFromExisting($processId);
 
-                $this->processRepository->commit($this->getUserId(), __METHOD__);
+            $this->processRepository->commit($this->getUserId(), __METHOD__);
 
-                $this->flashMessage('Successfully saved process.', 'success');
-            } catch(AException $e) {
-                $this->processRepository->rollback(__METHOD__);
+            $this->flashMessage('Successfully created a new copy of process.', 'success');
+        } catch(AException $e) {
+            $this->processRepository->rollback(__METHOD__);
 
-                $this->flashMessage('Could not save process. Reason: ' . $e->getMessage(), 'error', 10);
-            }
-
-            $this->redirect($this->createURL('list'));
-        }
-    }
-
-    public function renderEditForm() {
-        $this->template->links = $this->createBackUrl('list');
-    }
-
-    protected function createComponentEditProcessForm(HttpRequest $request) {
-        $form = $this->componentFactory->getFormBuilder();
-
-        $form->setAction($this->createURL('editForm', ['uniqueProcessId' => $request->get('uniqueProcessId')]));
-
-        $process = $this->processManager->getLastProcessForUniqueProcessId($request->get('uniqueProcessId'));
-
-        $colors = [];
-        foreach(ProcessColorCombos::getAll() as $key => $value) {
-            $color = [
-                'value' => $key,
-                'text' => $value
-            ];
-
-            if($process->colorCombo == $key) {
-                $color['selected'] = 'selected';
-            }
-
-            $colors[] = $color;
+            $this->flashMessage('Could not create a new copy of process. Reason: ' . $e->getMessage(), 'error', 10);
         }
 
-        $form->addSelect('colorCombo', 'Color:')
-            ->setRequired()
-            ->addRawOptions($colors);
-
-        $form->addSubmit('Save');
-
-        return $form;
+        $this->redirect($this->createURL('list'));
     }
 }
 

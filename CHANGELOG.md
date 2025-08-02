@@ -1,8 +1,9 @@
 # SkyDocu Changelog
-Previously changelog for versions `1.0`-`1.4` has been located in README.md. However that location wasn't a very good option and therefore it has been moved here.
+Here is the list of changes in versions.
 
 ## Index
-[SkyDocu `1.6` (06/21/2025)](#skydocu-16-06212025)
+[SkyDocu `1.7` (08/02/2025)](#skydocu-17-08022025)  
+[SkyDocu `1.6` (06/21/2025)](#skydocu-16-06212025)  
 [SkyDocu `1.5` (04/08/2025)](#skydocu-15-04082025)  
 [SkyDocu `1.4` (03/22/2025)](#skydocu-14-03222025)  
 [SkyDocu `1.3.1` (02/26/2025)](#skydocu-131-02262025)  
@@ -10,6 +11,43 @@ Previously changelog for versions `1.0`-`1.4` has been located in README.md. How
 [SkyDocu `1.2` (01/27/2025)](#skydocu-12-01272025)  
 [SkyDocu `1.1` (01/07/2025)](#skydocu-11-01072025)  
 [SkyDocu `1.0` (11/29/2024)](#skydocu-10-11292024)
+
+## SkyDocu `1.7` (08/02/2025)
+- Added support for custom processes in containers
+- Added process editor to containers
+- Added $CURRENT_USER$ as the actor of the first process step
+- Added container technical account creation from Superadministration
+- Added support for user editing
+- Added support for password changing
+- Added global file storage
+- Added support for user profile pictures
+- Added container contacts overview
+- Added contacts page
+- Added support for showing user in organization chart
+- Added organization chart
+- Added new user metadata
+    - Organization
+        - Position
+        - Department
+        - Section
+    - Personal number
+- Added global external systems
+- Added support for editing and removing process metadata values
+- Reworked API login mechanism
+- Reworked API token 
+- Reworked API response data format
+- Reworked user administration UI in containers
+- Reworked user profile in superadministration
+- Fixed API implementations
+- Fixed a bug where custom container processes are visible in container settings in superadministration
+- Fixed a bug where all users were added to any just created container
+- Fixed a bug where a new process instance was passed to the author instead of next user
+- Removed support for container environments
+    - Because SkyDocu itself is split to environments (PROD, TEST, DEV)
+- Removed per-container file storage
+- Removed support for user usernames
+    - Emails are now used instead
+- Removed support for creating documents without binary files
 
 ## SkyDocu `1.6` (06/21/2025)
 - Global transaction log
@@ -32,12 +70,12 @@ Previously changelog for versions `1.0`-`1.4` has been located in README.md. How
     - Certain jobs should be performed in background
     - Process version adding to distribution
     - Process instance data removal
-    - Changing process visibility from superadministration
+    - Changing process visibility from Superadministration
     - Added background service
 - Removed property management
 
 ## SkyDocu `1.5` (04/08/2025)
-- Added _Requested containers_ metric to superadministration Container statistics widget
+- Added _Requested containers_ metric to Superadministration Container statistics widget
 - Code cleanup
 - API endpoints
 - External systems

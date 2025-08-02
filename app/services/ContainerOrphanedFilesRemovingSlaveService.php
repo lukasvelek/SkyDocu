@@ -66,7 +66,7 @@ class ContainerOrphanedFilesRemovingSlaveService extends AService {
         $fileIdsToDelete = [];
 
         // get all files
-        $qb = $container->fileStorageManager->fileStorageRepository->composeQueryForStoredFiles();
+        $qb = $this->app->fileStorageRepository->composeQueryForFilesInStorage($container->containerId);
         $qb->execute();
 
         $fileIds = [];
@@ -120,11 +120,11 @@ class ContainerOrphanedFilesRemovingSlaveService extends AService {
                 continue;
             }
 
-            $file = $container->fileStorageManager->fileStorageRepository->getFileById($fileId);
+            $file = $this->app->fileStorageManager->getFileById($fileId, $this->containerId);
             
-            $fileToFilePathMapping[$fileId] = $file['filepath'];
+            $fileToFilePathMapping[$fileId] = $file->filepath;
 
-            $date = new DateTime(strtotime($file['dateCreated']));
+            $date = new DateTime(strtotime($file->dateCreated));
             $date->modify('+30d');
             $date = strtotime($date->getResult());
 
@@ -147,8 +147,10 @@ class ContainerOrphanedFilesRemovingSlaveService extends AService {
                     throw new GeneralException('Database error 1.');
                 }
 
-                if(!$container->fileStorageManager->fileStorageRepository->deleteStoredFile($fileId)) {
-                    throw new GeneralException('Database error 2.');
+                try {
+                    $this->app->fileStorageManager->deleteFile($fileId);
+                } catch(AException $e) {
+                    throw new GeneralException('Database error 2.', $e);
                 }
 
                 $filepath = $fileToFilePathMapping[$fileId];

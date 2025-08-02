@@ -124,7 +124,7 @@ class ContainerOrphanedFilesRemovingSlaveService extends AService {
             
             $fileToFilePathMapping[$fileId] = $file->filepath;
 
-            $date = new DateTime(strtotime($file['dateCreated']));
+            $date = new DateTime(strtotime($file->dateCreated));
             $date->modify('+30d');
             $date = strtotime($date->getResult());
 

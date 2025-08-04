@@ -3,6 +3,7 @@
 namespace App\Modules\SuperAdminSettingsModule;
 
 use App\Constants\AppDesignThemes;
+use App\Constants\ContainerStatus;
 use App\Constants\DateFormats;
 use App\Constants\TimeFormats;
 use App\Core\Application;
@@ -16,10 +17,12 @@ use App\Exceptions\GeneralException;
 use App\Exceptions\RequiredAttributeIsNotSetException;
 use App\Helpers\DateTimeFormatHelper;
 use App\Helpers\GridHelper;
+use App\Helpers\LinkHelper;
 use App\Helpers\UserHelper;
 use App\UI\GridBuilder2\Row;
 use App\UI\HTML\HTML;
 use App\UI\LinkBuilder;
+use QueryBuilder\QueryBuilder;
 
 class UsersPresenter extends ASuperAdminSettingsPresenter {
     public function __construct() {
@@ -27,17 +30,28 @@ class UsersPresenter extends ASuperAdminSettingsPresenter {
     }
 
     public function renderList() {
-        $this->template->links = [
-            LinkBuilder::createSimpleLink('New user', $this->createURL('newUserForm'), 'link')
+        $links = [
+            LinkBuilder::createSimpleLink('New user', $this->createURL('newUserForm'), 'link'),
+            LinkBuilder::createSimpleLink('Container users', $this->createURL('containerUsersList'), 'link')
         ];
+
+        $this->template->links = LinkHelper::createLinksFromArray($links);
+    }
+
+    private function getUsersGridDataSource(): QueryBuilder {
+        $qb = $this->app->userRepository->composeQueryForUsers();
+
+        $groupUsers = $this->app->groupManager->getGroupUsersForGroupTitle('Superadministrators');
+
+        $qb->andWhere($qb->getColumnInValues('userId', $groupUsers));
+
+        return $qb;
     }
 
     protected function createComponentUsersGrid() {
         $grid = $this->componentFactory->getGridBuilder();
 
-        $qb = $this->app->userRepository->composeQueryForUsers();
-
-        $grid->createDataSourceFromQueryBuilder($qb, 'userId');
+        $grid->createDataSourceFromQueryBuilder($this->getUsersGridDataSource(), 'userId');
         $grid->setGridName(GridHelper::GRID_USERS);
 
         $grid->addColumnText('fullname', 'Full name');
@@ -52,7 +66,7 @@ class UsersPresenter extends ASuperAdminSettingsPresenter {
             $el = HTML::el('a')
                 ->text('Profile')
                 ->class('grid-link')
-                ->href($this->createFullURLString('SuperAdminSettings:Users', 'profile', ['userId' => $primaryKey]));
+                ->href($this->createURLString('profile', ['userId' => $primaryKey]));
 
             return $el;
         };
@@ -66,7 +80,7 @@ class UsersPresenter extends ASuperAdminSettingsPresenter {
             $el = HTML::el('a')
                 ->text('Edit')
                 ->class('grid-link')
-                ->href($this->createFullURLString('SuperAdminSettings:Users', 'editUserForm', ['userId' => $primaryKey]));
+                ->href($this->createURLString('editUserForm', ['userId' => $primaryKey]));
 
             return $el;
         };
@@ -80,7 +94,7 @@ class UsersPresenter extends ASuperAdminSettingsPresenter {
             $el = HTML::el('a')
                 ->text('Delete')
                 ->class('grid-link')
-                ->href($this->createFullURLString('SuperAdminSettings:Users', 'deleteUserForm', ['userId' => $primaryKey]));
+                ->href($this->createURLString('deleteUserForm', ['userId' => $primaryKey]));
 
             return $el;
         };
@@ -450,6 +464,113 @@ class UsersPresenter extends ASuperAdminSettingsPresenter {
         }
 
         $this->redirect($this->createURL('profile', ['userId' => $userId, 'force' => 1]));
+    }
+
+    public function renderContainerUsersList() {
+        $links = [
+            $this->createBackUrl('list')
+        ];
+
+        $this->template->links = LinkHelper::createLinksFromArray($links);
+    }
+
+    protected function createComponentUsersContainerSelectForm() {
+        $containerId = $this->httpRequest->get('containerId');
+
+        $containers = $this->app->containerManager->getContainersInDistribution();
+        $containerSelect = [];
+        foreach($containers as $container) {
+            $tmp = [
+                'value' => $container->getId(),
+                'text' => $container->getTitle() . ' (' . ContainerStatus::toString($container->getStatus()) . ')'
+            ];
+
+            if($container->getId() == $containerId) {
+                $tmp['selected'] = 'selected';
+            }
+
+            $containerSelect[] = $tmp;
+        }
+
+        if($containerId === null) {
+            $tmp = [
+                'value' => 'null',
+                'text' => '-'
+            ];
+
+            array_unshift($containerSelect, $tmp);
+        }
+
+        $form = $this->componentFactory->getFormBuilder();
+
+        $form->setAction($this->createURL('usersContainerSelectSubmit'));
+
+        $form->addSelect('container', 'Container:')
+            ->addRawOptions($containerSelect)
+            ->setRequired();
+
+        $form->addSubmit('Select');
+
+        return $form;
+    }
+
+    public function handleUsersContainerSelectSubmit(FormRequest $fr) {
+        $params = [];
+        if($fr->container != 'null') {
+            $params['containerId'] = $fr->container;
+        } else {
+            $this->flashMessage('You have not selected any container. Please select a container.');
+        }
+
+        $this->redirect($this->createURL('containerUsersList', $params));
+    }
+
+    private function getContainerUsersGridDataSource(): QueryBuilder {
+        $containerId = $this->httpRequest->get('containerId');
+
+        $qb = $this->app->userRepository->composeQueryForUsers();
+
+        if($containerId === null) {
+            $qb->andWhere('0=1');
+        } else {
+            $container = $this->app->containerManager->getContainerById($containerId);
+            $groupUsers = $this->app->groupManager->getGroupUsersForGroupTitle($container->getTitle() . ' - users');
+
+            $qb->andWhere($qb->getColumnInValues('userId', $groupUsers));
+        }
+
+        return $qb;
+    }
+
+    protected function createComponentContainerUsersGrid() {
+        $containerId = $this->httpRequest->get('containerId');
+
+        $grid = $this->componentFactory->getGridBuilder();
+
+        $grid->createDataSourceFromQueryBuilder($this->getContainerUsersGridDataSource(), 'userId');
+
+        if($containerId !== null) {
+            $grid->addQueryDependency('containerId', $containerId);
+        }
+
+        $grid->addColumnText('fullname', 'Full name');
+        $grid->addColumnText('email', 'Email');
+
+        $profile = $grid->addAction('profile');
+        $profile->setTitle('Profile');
+        $profile->onCanRender[] = function(DatabaseRow $row, Row $_row) {
+            return $row->email != Application::SERVICE_USER_EMAIL;
+        };
+        $profile->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
+            $el = HTML::el('a')
+                ->text('Profile')
+                ->class('grid-link')
+                ->href($this->createURLString('profile', ['userId' => $primaryKey]));
+
+            return $el;
+        };
+
+        return $grid;
     }
 }
 

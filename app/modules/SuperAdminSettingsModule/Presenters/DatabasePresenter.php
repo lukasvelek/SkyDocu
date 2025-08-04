@@ -196,27 +196,42 @@ class DatabasePresenter extends ASuperAdminSettingsPresenter {
             }
 
             // disable them
-            $this->app->containerRepository->beginTransaction(__METHOD__);
-            foreach($enabledContainers as $containerId) {
-                $this->app->containerManager->changeContainerStatus($containerId, ContainerStatus::NOT_RUNNING, $this->app->serviceManager->getServiceUserId(), 'Status change due to migrations. Container was disabled by ' . $this->getUser()->getFullname() . ' (ID: ' . $this->getUserId() . ').');
+            try {
+                $this->app->containerRepository->beginTransaction(__METHOD__);
+                foreach($enabledContainers as $containerId) {
+                    $this->app->containerManager->changeContainerStatus($containerId, ContainerStatus::NOT_RUNNING, $this->app->serviceManager->getServiceUserId(), 'Status change due to migrations. Container was disabled by ' . $this->getUser()->getFullname() . ' (ID: ' . $this->getUserId() . ').');
+                }
+                $this->app->containerRepository->commit($this->getUserId(), __METHOD__);
+            } catch(AException $e) {
+                $this->app->containerRepository->rollback(__METHOD__);
+                throw $e;
             }
-            $this->app->containerRepository->commit($this->getUserId(), __METHOD__);
 
             // run migrations
-            $this->app->containerRepository->beginTransaction(__METHOD__);
+            try {
+                $this->app->containerRepository->beginTransaction(__METHOD__);
 
-            foreach($containersInDistribution as $container) {
-                $this->app->containerManager->runContainerDatabaseMigrations($container->getDefaultDatabase()->getName(), $container->getId());
+                foreach($containersInDistribution as $container) {
+                    $this->app->containerManager->runContainerDatabaseMigrations($container->getDefaultDatabase()->getName(), $container->getId());
+                }
+
+                $this->app->containerRepository->commit($this->getUserId(), __METHOD__);
+            } catch(AException $e) {
+                $this->app->containerRepository->rollback(__METHOD__);
+                throw $e;
             }
-
-            $this->app->containerRepository->commit($this->getUserId(), __METHOD__);
 
             // enable before-enabled containers
-            $this->app->containerRepository->beginTransaction(__METHOD__);
-            foreach($enabledContainers as $containerId) {
-                $this->app->containerManager->changeContainerStatus($containerId, ContainerStatus::RUNNING, $this->app->serviceManager->getServiceUserId(), 'Status change due to migrations. Container was enabled by ' . $this->getUser()->getFullname() . ' (ID: ' . $this->getUserId() . ').');
+            try {
+                $this->app->containerRepository->beginTransaction(__METHOD__);
+                foreach($enabledContainers as $containerId) {
+                    $this->app->containerManager->changeContainerStatus($containerId, ContainerStatus::RUNNING, $this->app->serviceManager->getServiceUserId(), 'Status change due to migrations. Container was enabled by ' . $this->getUser()->getFullname() . ' (ID: ' . $this->getUserId() . ').');
+                }
+                $this->app->containerRepository->commit($this->getUserId(), __METHOD__);
+            } catch(AException $e) {
+                $this->app->containerRepository->rollback(__METHOD__);
+                throw $e;
             }
-            $this->app->containerRepository->commit($this->getUserId(), __METHOD__);
 
             // invalidate cache
             $this->cacheFactory->invalidateCacheByNamespace(CacheNames::CONTAINERS);
@@ -225,8 +240,6 @@ class DatabasePresenter extends ASuperAdminSettingsPresenter {
             // return
             $this->flashMessage('Migrations ran successfully.', 'success');
         } catch(AException $e) {
-            $this->app->containerRepository->rollback(__METHOD__);
-
             $this->flashMessage('An error occurred during migrations. Error: ' . $e->getMessage(), 'error', 10);
         }
 

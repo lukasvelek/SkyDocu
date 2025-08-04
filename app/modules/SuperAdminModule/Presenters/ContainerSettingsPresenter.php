@@ -11,6 +11,7 @@ use App\Constants\Container\SystemGroups as ContainerSystemGroups;
 use App\Constants\ContainerInviteUsageStatus;
 use App\Constants\ContainerStatus;
 use App\Constants\JobQueueTypes;
+use App\Core\Caching\CacheNames;
 use App\Core\Container;
 use App\Core\Datetypes\DateTime;
 use App\Core\DB\DatabaseMigrationManager;
@@ -23,10 +24,6 @@ use App\Exceptions\GeneralException;
 use App\Exceptions\RequiredAttributeIsNotSetException;
 use App\Helpers\DateTimeFormatHelper;
 use App\Helpers\LinkHelper;
-use App\Managers\Container\FileStorageManager;
-use App\Managers\EntityManager;
-use App\Repositories\Container\FileStorageRepository;
-use App\Repositories\ContentRepository;
 use App\UI\GridBuilder2\Action;
 use App\UI\GridBuilder2\Cell;
 use App\UI\GridBuilder2\Row;
@@ -363,6 +360,16 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
         $this->template->container_new_technical_account_form_link = LinkBuilder::createSimpleLink('New technical account', $this->createURL('newTechnicalAccountForm', [
             'containerId' => $containerId
         ]), 'link');
+
+        $containerRunMigrationsLink = HTML::el('a')
+            ->class('link')
+            ->href($this->createURLString('runMigrationsForm', ['containerId' => $containerId]))
+            ->style('color', 'red')
+            ->text('Run migrations')
+            ->title('Run migrations')
+            ->toString();
+
+        $this->template->container_run_migrations_link = $containerRunMigrationsLink;
     }
 
     public function renderNewTechnicalAccountForm() {
@@ -1101,6 +1108,129 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
         $grid->addColumnBoolean('isTechnical', 'Is technical');
 
         return $grid;
+    }
+
+    public function renderRunMigrationsForm() {}
+
+    protected function createComponentRunMigrationsForm() {
+        $hash = HashManager::createHash(8);
+
+        $form = $this->componentFactory->getFormBuilder();
+
+        $form->setAction($this->createURL('runMigrationsSubmit', ['containerId' => $this->httpRequest->get('containerId'), 'h' => md5($hash)]));
+
+        $form->addLabel('lbl_text1', 'Are you sure you want to run the migrations now?');
+        $form->addLabel('lbl_text2', 'Running them will temporarily disable the container, run the migrations and finally enable it again.');
+        $form->addLabel('lbl_text3', 'If you are sure, please enter your password below to be authenticated.');
+
+        $form->addPasswordInput('password', 'Your password:')
+            ->setRequired();
+
+        $form->addSecurityVerificationCodeCheck('hash', $hash);
+
+        $form->addSubmit('Run migrations');
+        $form->addButton('Go back')
+            ->setOnClick('location.href = \'' . $this->createURLString('advanced', ['containerId' => $this->httpRequest->get('containerId')]) . '\';');
+
+        return $form;
+    }
+
+    public function handleRunMigrationsSubmit(FormRequest $fr) {
+        $containerId = $this->httpRequest->get('containerId');
+        $hashMd5 = $this->httpRequest->get('h');
+
+        try {
+            if($hashMd5 !== md5($fr->hash)) {
+                throw new GeneralException('Entered verification code does not match the one provided by the system.');
+            }
+
+            $this->app->userAuth->authUser($fr->password);
+
+            $this->redirect($this->createURL('handleRunMigrations2', ['containerId' => $containerId]));
+        } catch(AException $e) {
+            $this->flashMessage('An error occured while processing your request. Reason: ' . $e->getMessage(), 'error', 10);
+            $this->redirect($this->createURL('advanced', ['containerId' => $containerId]));
+        }
+
+    }
+
+    public function handleRunMigrations2() {
+        $containerId = $this->httpRequest->get('containerId');
+
+        try {
+            // disable container
+            try {
+                $this->app->containerRepository->beginTransaction(__METHOD__);
+
+                $this->app->containerManager->changeContainerStatus(
+                    $containerId,
+                    ContainerStatus::NOT_RUNNING,
+                    $this->getUserId(),
+                    'Status change due to migrations. Container was disabled by ' . $this->getUser()->getFullname() . ' (ID: ' . $this->getUserId() . ').'
+                );
+
+                $this->app->containerRepository->commit($this->getUserId(), __METHOD__);
+            } catch(AException $e) {
+                $this->app->containerRepository->rollback(__METHOD__);
+
+                throw $e;
+            }
+
+            $container = $this->app->containerManager->getContainerById($containerId);
+
+            // run migrations
+            try {
+                $this->app->containerRepository->beginTransaction(__METHOD__);
+
+                $this->app->containerManager->runContainerDatabaseMigrations(
+                    $container->getDefaultDatabase()->getName(),
+                    $containerId
+                );
+
+                $this->app->containerRepository->commit($this->getUserId(), __METHOD__);
+            } catch(AException $e) {
+                $this->app->containerRepository->rollback(__METHOD__);
+
+                throw $e;
+            }
+
+            // enable container
+            try {
+                $this->app->containerRepository->beginTransaction(__METHOD__);
+
+                $this->app->containerManager->changeContainerStatus(
+                    $containerId,
+                    ContainerStatus::RUNNING,
+                    $this->getUserId(),
+                    'Status change due to migrations. Container was enabled by ' . $this->getUser()->getFullname() . ' (ID: ' . $this->getUserId() . ').'
+                );
+
+                $this->app->containerRepository->commit($this->getUserId(), __METHOD__);
+            } catch(AException $e) {
+                $this->app->containerRepository->rollback(__METHOD__);
+
+                throw $e;
+            }
+
+            // invalidate cache
+            $this->cacheFactory->invalidateCacheByNamespace(CacheNames::CONTAINERS);
+            $this->cacheFactory->invalidateCacheByNamespace(CacheNames::CONTAINER_DATABASES);
+
+            $this->flashMessage('Migrations run successfully.', 'success');
+        } catch(AException $e) {
+            $this->flashMessage(
+                'Could not run migrations. Reason: ' . $e->getMessage(),
+                'error',
+                10
+            );
+        }
+
+        $this->redirect($this->createURL(
+            'advanced',
+            [
+                'containerId' => $containerId
+            ]
+        ));
     }
 }
 

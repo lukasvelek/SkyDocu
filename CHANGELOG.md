@@ -15,6 +15,9 @@ Here is the list of changes in versions.
 
 ## SkyDocu `1.8` (__WIP__)
 - Added support for running database migrations for a single container
+- Added container users overview in Superadministartion
+- Fixed the users grid in Superadministration settings
+    - Only users with access to Superadministration are visible
 - Fixed the application version format
 
 ## SkyDocu `1.7` (08/02/2025)

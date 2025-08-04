@@ -11,7 +11,6 @@ use App\Core\FileManager;
 use App\Core\FileUploadManager;
 use App\Core\HashManager;
 use App\Core\Http\FormRequest;
-use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
 use App\Exceptions\RequiredAttributeIsNotSetException;
@@ -33,7 +32,7 @@ class UsersPresenter extends ASuperAdminSettingsPresenter {
         ];
     }
 
-    protected function createComponentUsersGrid(HttpRequest $request) {
+    protected function createComponentUsersGrid() {
         $grid = $this->componentFactory->getGridBuilder();
 
         $qb = $this->app->userRepository->composeQueryForUsers();
@@ -129,7 +128,7 @@ class UsersPresenter extends ASuperAdminSettingsPresenter {
         $this->template->links = $this->createBackUrl('list');
     }
 
-    protected function createComponentNewUserForm(HttpRequest $request) {
+    protected function createComponentNewUserForm() {
         $form = $this->componentFactory->getFormBuilder();
 
         $form->setAction($this->createURL('newUserForm'));
@@ -246,8 +245,8 @@ class UsersPresenter extends ASuperAdminSettingsPresenter {
         $this->template->links = $this->createBackUrl('list');
     }
 
-    protected function createComponentEditUserForm(HttpRequest $request) {
-        $user = $this->app->userManager->getUserById($request->get('userId'));
+    protected function createComponentEditUserForm() {
+        $user = $this->app->userManager->getUserById($this->httpRequest->get('userId'));
 
         $themes = [];
         foreach(AppDesignThemes::getAll() as $key => $title) {
@@ -293,7 +292,7 @@ class UsersPresenter extends ASuperAdminSettingsPresenter {
         
         $form = $this->componentFactory->getFormBuilder();
 
-        $form->setAction($this->createURL('editUserForm', ['userId' => $request->get('userId')]));
+        $form->setAction($this->createURL('editUserForm', ['userId' => $this->httpRequest->get('userId')]));
 
         $form->addTextInput('fullname', 'Fullname:')
             ->setRequired()
@@ -358,12 +357,12 @@ class UsersPresenter extends ASuperAdminSettingsPresenter {
         $this->template->links = $this->createBackUrl('list');
     }
 
-    protected function createComponentDeleteUserForm(HttpRequest $request) {
-        $user = $this->app->userManager->getUserById($request->get('userId'));
+    protected function createComponentDeleteUserForm() {
+        $user = $this->app->userManager->getUserById($this->httpRequest->get('userId'));
 
         $form = $this->componentFactory->getFormBuilder();
 
-        $form->setAction($this->createURL('deleteUserForm', ['userId' => $request->get('userId')]));
+        $form->setAction($this->createURL('deleteUserForm', ['userId' => $this->httpRequest->get('userId')]));
 
         $form->addLabel('main', 'Do you want to delete user \'' . $user->getEmail() . '\'?');
 

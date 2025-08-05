@@ -44,8 +44,8 @@ class LoginPresenter extends AAnonymPresenter {
 
         $form->addSubmit('Log in');
 
-        $form->addButton('Forgotten password')
-            ->setOnClick('location.href = \'' . $this->createFullURLString('Anonym:ForgottenPassword', 'form') . '\';');
+        /*$form->addButton('Forgotten password')
+            ->setOnClick('location.href = \'' . $this->createFullURLString('Anonym:ForgottenPassword', 'form') . '\';');*/
 
         return $form;
     }

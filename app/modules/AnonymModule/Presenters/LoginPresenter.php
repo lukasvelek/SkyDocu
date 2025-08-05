@@ -31,7 +31,7 @@ class LoginPresenter extends AAnonymPresenter {
 
     public function renderLoginForm() {}
 
-    protected function createComponentLoginForm(HttpRequest $request) {
+    protected function createComponentLoginForm() {
         $form = $this->componentFactory->getFormBuilder();
 
         $form->setAction($this->createURL('loginForm'));
@@ -45,7 +45,7 @@ class LoginPresenter extends AAnonymPresenter {
         $form->addSubmit('Log in');
 
         $form->addButton('Forgotten password')
-            ->setOnClick('location.href = "' . $this->createFullURLString('Anonym:ForgottenPassword', 'form') . '";');
+            ->setOnClick('location.href = \'' . $this->createFullURLString('Anonym:ForgottenPassword', 'form') . '\';');
 
         return $form;
     }
@@ -119,7 +119,7 @@ class LoginPresenter extends AAnonymPresenter {
 
     public function renderContainerForm() {}
 
-    protected function createComponentContainerForm(HttpRequest $request) {
+    protected function createComponentContainerForm() {
         $groups = $this->app->groupManager->getMembershipsForUser($this->getUserId());
 
         $containers = [];
@@ -157,7 +157,7 @@ class LoginPresenter extends AAnonymPresenter {
             }
         }
 
-        $form = new ContainerSelectionForm($request);
+        $form = new ContainerSelectionForm($this->httpRequest);
         $form->setContainers($containers);
         $form->setAction($this->createURL('containerForm'));
 

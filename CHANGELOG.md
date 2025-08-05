@@ -19,6 +19,8 @@ Here is the list of changes in versions.
 - Fixed the users grid in Superadministration settings
     - Only users with access to Superadministration are visible
 - Fixed the application version format
+- Fixed in-container process widgets
+    - Removed unnecessary actions and columns
 
 ## SkyDocu `1.7` (08/02/2025)
 - Added support for custom processes in containers

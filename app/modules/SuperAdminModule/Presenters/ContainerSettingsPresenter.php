@@ -1146,7 +1146,7 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
 
             $this->app->userAuth->authUser($fr->password);
 
-            $this->redirect($this->createURL('handleRunMigrations2', ['containerId' => $containerId]));
+            $this->redirect($this->createURL('runMigrations2', ['containerId' => $containerId]));
         } catch(AException $e) {
             $this->flashMessage('An error occured while processing your request. Reason: ' . $e->getMessage(), 'error', 10);
             $this->redirect($this->createURL('advanced', ['containerId' => $containerId]));

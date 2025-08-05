@@ -105,9 +105,11 @@ abstract class AAdminPresenter extends AContainerPresenter {
         if($this->isProcesses) {
             $processes = $this->checkActivePage('Processes', 'dashboard');
             $processList = $this->checkActivePage('Processes', 'list') || $this->checkActivePage('ProcessMetadata');
+            $reportList = $this->checkActivePage('ProcessReports', 'list');
 
             $addLink('Dashboard', $this->createFullURL('Admin:Processes', 'dashboard'), $processes);
             $addLink('Process list', $this->createFullURL('Admin:Processes', 'list'), $processList);
+            $addLink('Process reports', $this->createFullURL('Admin:ProcessReports', 'list'), $reportList);
         }
     }
 

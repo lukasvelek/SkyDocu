@@ -14,7 +14,7 @@ use App\Repositories\Container\GroupRepository;
 use App\Repositories\UserRepository;
 
 class GroupManager extends AManager {
-    private GroupRepository $groupRepository;
+    public GroupRepository $groupRepository;
     private UserRepository $userRepository;
 
     public function __construct(Logger $logger, EntityManager $entityManager, GroupRepository $groupRepository, UserRepository $userRepository) {

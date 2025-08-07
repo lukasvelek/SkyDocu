@@ -25,18 +25,19 @@ class ProcessReportRightsRepository extends ARepository {
     }
 
     /**
-     * Returns rights for user
+     * Returns an array of rights (or a single right) for given entity
      * 
-     * @param string $userId User ID
+     * @param string $entityId Entity ID
+     * @param int $entityType Entity type
      * @param ?string $operation Operation or null
      */
-    public function getRightsForUser(string $userId, ?string $operation): array {
+    public function getRightsForEntity(string $entityId, int $entityType, ?string $operation): array {
         $qb = $this->qb(__METHOD__);
 
         $qb->select(['*'])
             ->from('report_rights')
-            ->where('entityId = ?', [$userId])
-            ->andWhere('entityType = ?', [ReportRightEntityType::USER]);
+            ->where('entityId = ?', [$entityId])
+            ->andWhere('entityType = ?', [$entityType]);
             
         if($operation !== null) {
             $qb->andWhere('operation = ?', [$operation]);
@@ -53,71 +54,20 @@ class ProcessReportRightsRepository extends ARepository {
     }
 
     /**
-     * Returns rights for group
-     * 
-     * @param string $groupId Group ID
-     * @param ?string $operation Operation or null
-     */
-    public function getRightsForGroup(string $groupId, ?string $operation): array {
-        $qb = $this->qb(__METHOD__);
-
-        $qb->select(['*'])
-            ->from('report_rights')
-            ->where('entityId = ?', [$groupId])
-            ->andWhere('entityType = ?', [ReportRightEntityType::GROUP]);
-
-        if($operation !== null) {
-            $qb->andWhere('operation = ?', [$operation]);
-        }
-
-        $qb->execute();
-
-        $rights = [];
-        while($row = $qb->fetchAssoc()) {
-            $rights[] = $row['operation'];
-        }
-
-        return $rights;
-    }
-
-    /**
-     * Returns an array of rights for report for user
+     * Returns an array of rights for a report for given entity
      * 
      * @param string $reportId Report ID
-     * @param string $userId User ID
+     * @param string $entityId Entity ID
+     * @param int $entityType Entity type
      */
-    public function getReportRightsForUser(string $reportId, string $userId): array {
+    public function getReportRightsForEntity(string $reportId, string $entityId, int $entityType): array {
         $qb = $this->qb(__METHOD__);
 
         $qb->select(['*'])
             ->from('report_rights')
             ->where('reportId = ?', [$reportId])
-            ->andWhere('entityId = ?', [$userId])
-            ->andWhere('entityType = ?', [ReportRightEntityType::USER])
-            ->execute();
-
-        $rights = [];
-        while($row = $qb->fetchAssoc()) {
-            $rights[] = $row['operation'];
-        }
-
-        return $rights;
-    }
-
-    /**
-     * Returns an array of rights for report for group
-     * 
-     * @param string $reportId Report ID
-     * @param string $groupId Group ID
-     */
-    public function getReportRightsForGroup(string $reportId, string $groupId): array {
-        $qb = $this->qb(__METHOD__);
-
-        $qb->select(['*'])
-            ->from('report_rights')
-            ->where('reportId = ?', [$reportId])
-            ->andWhere('entityId = ?', [$groupId])
-            ->andWhere('entityType = ?', [ReportRightEntityType::GROUP])
+            ->andWhere('entityId = ?', [$entityId])
+            ->andWhere('entityType = ?', [$entityType])
             ->execute();
 
         $rights = [];
@@ -173,5 +123,27 @@ class ProcessReportRightsRepository extends ARepository {
             ->execute();
 
         return $qb->fetchBool();
+    }
+
+    /**
+     * Returns right ID for entity and operation
+     * 
+     * @param string $reportId Report ID
+     * @param string $entityId Entity ID
+     * @param int $entityType Entity type
+     * @param string $operation Operation name
+     */
+    public function getRightIdForEntityAndOperation(string $reportId, string $entityId, int $entityType, string $operation): ?string {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->select(['rightId'])
+            ->from('report_rights')
+            ->where('reportId = ?', [$reportId])
+            ->andWhere('entityId = ?', [$entityId])
+            ->andWhere('entityType = ?', [$entityType])
+            ->andWhere('operation = ?', [$operation])
+            ->execute();
+
+        return $qb->fetch('rightId');
     }
 }

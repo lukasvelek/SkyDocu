@@ -70,6 +70,8 @@ class EntityManager extends AManager {
     public const C_EXTERNAL_SYSTEM_TOKENS = 'external_system_tokens';
     public const C_EXTERNAL_SYSTEM_RIGHTS = 'external_system_rights';
     public const C_PROCESS_FILE_RELATION = 'process_file_relation';
+    public const C_REPORTS = 'reports';
+    public const C_REPORT_RIGHTS = 'report_rights';
 
     private const __MAX__ = 100;
 
@@ -191,6 +193,8 @@ class EntityManager extends AManager {
                 self::C_EXTERNAL_SYSTEM_RIGHTS => 'rightId',
                 self::C_PROCESS_FILE_RELATION => 'relationId',
                 self::C_PROCESSES_UNIQUE => 'uniqueProcessId',
+                self::C_REPORTS => 'reportId',
+                self::C_REPORT_RIGHTS => 'rightId',
 
                 self::USERS => 'userId',
                 self::TRANSACTIONS => 'transactionId',

@@ -14,12 +14,12 @@ class migration_2025_08_05_0024_custom_reports extends AContainerBaseMigration {
             ->primaryKey('reportId')
             ->varchar('title')
             ->text('description', true)
-            ->text('definition')
+            ->text('definition', true)
             ->varchar('userId')
             ->datetimeAuto('dateCreated')
-            ->enum('status')
-            ->default('status', 1)
-            ->index(['status'])
+            ->bool('isEnabled')
+            ->default('isEnabled', 0)
+            ->index(['isEnabled'])
         ;
 
         $table->create('report_rights')

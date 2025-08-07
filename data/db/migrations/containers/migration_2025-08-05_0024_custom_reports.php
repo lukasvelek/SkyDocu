@@ -27,6 +27,7 @@ class migration_2025_08_05_0024_custom_reports extends AContainerBaseMigration {
             ->varchar('reportId')
             ->varchar('entityId')
             ->enum('entityType')
+            ->varchar('operation')
             ->datetimeAuto('dateCreated')
             ->index(['reportId'])
             ->index(['entityId', 'entityType'])

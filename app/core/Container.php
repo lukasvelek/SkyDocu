@@ -19,6 +19,7 @@ use App\Managers\Container\MetadataManager;
 use App\Managers\Container\ProcessInstanceManager;
 use App\Managers\Container\ProcessManager;
 use App\Managers\Container\ProcessMetadataManager;
+use App\Managers\Container\ProcessReportManager;
 use App\Managers\EntityManager;
 use App\Repositories\Container\ArchiveRepository;
 use App\Repositories\Container\DocumentClassRepository;
@@ -30,6 +31,8 @@ use App\Repositories\Container\GroupRepository;
 use App\Repositories\Container\MetadataRepository;
 use App\Repositories\Container\ProcessInstanceRepository;
 use App\Repositories\Container\ProcessMetadataRepository;
+use App\Repositories\Container\ProcessReportRightsRepository;
+use App\Repositories\Container\ProcessReportsRepository;
 use App\Repositories\Container\ProcessRepository;
 use App\Repositories\ContentRepository;
 use ReflectionClass;
@@ -58,6 +61,8 @@ class Container {
     public FileStorageRepository $fileStorageRepository;
     public ProcessInstanceRepository $processInstanceRepository;
     public ProcessMetadataRepository $processMetadataRepository;
+    public ProcessReportsRepository $processReportsRepository;
+    public ProcessReportRightsRepository $processReportRightsRepository;
     
     public EntityManager $entityManager;
     public FolderManager $folderManager;
@@ -71,6 +76,7 @@ class Container {
     public ProcessManager $processManager;
     public ProcessInstanceManager $processInstanceManager;
     public ProcessMetadataManager $processMetadataManager;
+    public ProcessReportManager $processReportManager;
 
     public GroupStandardOperationsAuthorizator $groupStandardOperationsAuthorizator;
     public SupervisorAuthorizator $supervisorAuthorizator;
@@ -178,6 +184,11 @@ class Container {
             ],
             'processMetadataManager' => [
                 'processMetadataRepository'
+            ],
+            'processReportManager' => [
+                'processReportsRepository',
+                'processReportRightsRepository',
+                'groupManager'
             ]
         ];
 

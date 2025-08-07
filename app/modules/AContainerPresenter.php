@@ -19,6 +19,7 @@ use App\Managers\Container\MetadataManager;
 use App\Managers\Container\ProcessInstanceManager;
 use App\Managers\Container\ProcessManager;
 use App\Managers\Container\ProcessMetadataManager;
+use App\Managers\Container\ProcessReportManager;
 use App\Managers\EntityManager;
 use App\Repositories\Container\ArchiveRepository;
 use App\Repositories\Container\DocumentClassRepository;
@@ -30,6 +31,8 @@ use App\Repositories\Container\GroupRepository;
 use App\Repositories\Container\MetadataRepository;
 use App\Repositories\Container\ProcessInstanceRepository;
 use App\Repositories\Container\ProcessMetadataRepository;
+use App\Repositories\Container\ProcessReportRightsRepository;
+use App\Repositories\Container\ProcessReportsRepository;
 use App\Repositories\Container\ProcessRepository;
 use App\Repositories\ContentRepository;
 use ReflectionClass;
@@ -52,6 +55,8 @@ abstract class AContainerPresenter extends APresenter {
     protected FileStorageRepository $fileStorageRepository;
     protected ProcessInstanceRepository $processInstanceRepository;
     protected ProcessMetadataRepository $processMetadataRepository;
+    protected ProcessReportsRepository $processReportsRepository;
+    protected ProcessReportRightsRepository $processReportRightsRepository;
     
     protected EntityManager $entityManager;
     protected FolderManager $folderManager;
@@ -65,6 +70,7 @@ abstract class AContainerPresenter extends APresenter {
     protected ProcessManager $processManager;
     protected ProcessInstanceManager $processInstanceManager;
     protected ProcessMetadataManager $processMetadataManager;
+    protected ProcessReportManager $processReportManager;
 
     protected GroupStandardOperationsAuthorizator $groupStandardOperationsAuthorizator;
     protected SupervisorAuthorizator $supervisorAuthorizator;
@@ -141,6 +147,11 @@ abstract class AContainerPresenter extends APresenter {
             ],
             'processMetadataManager' => [
                 'processMetadataRepository'
+            ],
+            'processReportManager' => [
+                'processReportsRepository',
+                'processReportRightsRepository',
+                'groupManager'
             ]
         ];
 

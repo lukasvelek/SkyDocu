@@ -119,7 +119,7 @@ abstract class AContainerPresenter extends APresenter {
 
         $this->groupStandardOperationsAuthorizator = new GroupStandardOperationsAuthorizator($containerConnection, $this->logger, $this->groupManager);
         $this->supervisorAuthorizator = new SupervisorAuthorizator($containerConnection, $this->logger, $this->groupManager);
-        $this->containerProcessAuthorizator = new ContainerProcessAuthorizator($containerConnection, $this->logger, $this->processManager, $this->processInstanceManager, $this->groupManager, $this->app->userManager, $this->app->jobQueueRepository);
+        $this->containerProcessAuthorizator = new ContainerProcessAuthorizator($containerConnection, $this->logger, $this->processManager, $this->processInstanceManager, $this->groupManager, $this->app->userManager, $this->app->jobQueueRepository, $this->processReportManager);
 
         $this->injectCacheFactoryToAuthorizators();
 

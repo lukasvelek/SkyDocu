@@ -70,4 +70,20 @@ class ProcessReportsRepository extends ARepository {
 
         return $qb->fetchBool();
     }
+
+    /**
+     * Returns report by ID
+     * 
+     * @param string $reportId Report ID
+     */
+    public function getReportById(string $reportId): mixed {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->select(['*'])
+            ->from('reports')
+            ->where('reportId = ?', [$reportId])
+            ->execute();
+
+        return $qb->fetch();
+    }
 }

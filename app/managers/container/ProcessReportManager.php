@@ -4,7 +4,9 @@ namespace App\Managers\Container;
 
 use App\Constants\Container\ReportRightEntityType;
 use App\Constants\Container\ReportRightOperations;
+use App\Core\DB\DatabaseRow;
 use App\Exceptions\GeneralException;
+use App\Exceptions\NonExistingEntityException;
 use App\Logger\Logger;
 use App\Managers\AManager;
 use App\Managers\EntityManager;
@@ -204,5 +206,40 @@ class ProcessReportManager extends AManager {
         if(!$this->processReportRightsRepository->removeReportRightById($rightId)) {
             throw new GeneralException('Database error.');
         }
+    }
+
+    /**
+     * Returns an array of operation rights for report for given user
+     * 
+     * @param string $reportId Report ID
+     * @param string $userId User ID
+     */
+    public function getReportRightsForUser(string $reportId, string $userId): array {
+        return $this->processReportRightsRepository->getReportRightsForEntity($reportId, $userId, ReportRightEntityType::USER);
+    }
+
+    /**
+     * Returns an array of operation rights for report for given group
+     * 
+     * @param string $reportId Report ID
+     * @param string $groupId Group ID
+     */
+    public function getReportRightsForGroup(string $reportId, string $groupId): array {
+        return $this->processReportRightsRepository->getReportRightsForEntity($reportId, $groupId, ReportRightEntityType::GROUP);
+    }
+
+    /**
+     * Returns report by ID
+     * 
+     * @param string $reportId Report ID
+     */
+    public function getReportById(string $reportId): DatabaseRow {
+        $row = $this->processReportsRepository->getReportById($reportId);
+
+        if($row === null) {
+            throw new NonExistingEntityException('Report does not exist.');
+        }
+
+        return DatabaseRow::createFromDbRow($row);
     }
 }

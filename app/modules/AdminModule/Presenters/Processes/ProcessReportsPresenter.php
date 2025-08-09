@@ -2,12 +2,14 @@
 
 namespace App\Modules\AdminModule;
 
-use App\Core\Application;
+use App\Core\DB\DatabaseRow;
 use App\Core\Http\FormRequest;
-use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
 use App\Helpers\LinkHelper;
+use App\UI\GridBuilder2\Action;
 use App\UI\GridBuilder2\JSON2GB;
+use App\UI\GridBuilder2\Row;
+use App\UI\HTML\HTML;
 use App\UI\LinkBuilder;
 
 class ProcessReportsPresenter extends AAdminPresenter {
@@ -35,6 +37,29 @@ class ProcessReportsPresenter extends AAdminPresenter {
         $grid->addColumnText('title', 'Title');
         $grid->addColumnDatetime('dateCreated', 'Date created');
         $grid->addColumnBoolean('isEnabled', 'Published');
+
+        $liveview = $grid->addAction('liveview');
+        $liveview->setTitle('Live view');
+        $liveview->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) {
+            if($this->supervisorAuthorizator->canUserViewAllReports($this->getUserId())) {
+                return true;
+            }
+
+            if($this->containerProcessAuthorizator->canUserReadProcessReport($this->getUserId(), $row->reportId)) {
+                return true;
+            }
+
+            return false;
+        };
+        $liveview->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
+            $el = HTML::el('a');
+
+            $el->class('grid-link')
+                ->href($this->createURLString('liveview2', ['reportId' => $primaryKey]))
+                ->text('Live view');
+
+            return $el;
+        };
 
         return $grid;
     }
@@ -162,5 +187,21 @@ class ProcessReportsPresenter extends AAdminPresenter {
         $gb = $helper->getGridBuilder();
 
         return $gb;
+    }
+
+    public function handleLiveview2() {
+        $reportId = $this->httpRequest->get('reportId');
+
+        try {
+            $report = $this->processReportManager->getReportById($reportId);
+
+            $reportData = $report->definition;
+
+            $this->redirect($this->createURL('liveview', ['reportData' => $reportData]));
+        } catch(AException $e) {
+            $this->flashMessage('Could not open liveview for report. Reason: ' . $e->getMessage(), 'error', 10);
+
+            $this->redirect($this->createURL('list'));
+        }
     }
 }

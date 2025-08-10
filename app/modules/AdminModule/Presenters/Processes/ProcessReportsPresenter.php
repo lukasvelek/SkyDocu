@@ -302,4 +302,26 @@ class ProcessReportsPresenter extends AAdminPresenter {
             $this->redirect($this->createURL('list'));
         }
     }
+
+    public function renderPublish() {}
+
+    protected function createComponentPublishReportForm() {
+        $report = $this->processReportManager->getReportById($this->httpRequest->get('reportId'));
+
+        $form = $this->componentFactory->getFormBuilder();
+
+        $form->setAction($this->createURL('publishFormSubmit', ['reportId' => $this->httpRequest->get('reportId')]));
+
+        $form->addLabel('lbl_text1', 'Are you sure you want to publish report <b>' . $report->title . '</b>?');
+
+        $form->addSubmit('Publish');
+        $form->addButton('Go back')
+            ->setOnClick('location.href = \'' . $this->createURLString('list') . '\';');
+
+        return $form;
+    }
+
+    public function handlePublishFormSubmit(FormRequest $fr) {
+
+    }
 }

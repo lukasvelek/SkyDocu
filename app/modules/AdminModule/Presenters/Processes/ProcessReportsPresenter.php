@@ -38,6 +38,7 @@ class ProcessReportsPresenter extends AAdminPresenter {
         $grid->addColumnDatetime('dateCreated', 'Date created');
         $grid->addColumnBoolean('isEnabled', 'Published');
 
+        // LIVE VIEW
         $liveview = $grid->addAction('liveview');
         $liveview->setTitle('Live view');
         $liveview->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) {
@@ -57,6 +58,90 @@ class ProcessReportsPresenter extends AAdminPresenter {
             $el->class('grid-link')
                 ->href($this->createURLString('liveview2', ['reportId' => $primaryKey]))
                 ->text('Live view');
+
+            return $el;
+        };
+
+        // PUBLISH
+        $publish = $grid->addAction('publish');
+        $publish->setTitle('Publish');
+        $publish->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) {
+            if($row->isEnabled == true) {
+                return false;
+            }
+
+            if(!$this->containerProcessAuthorizator->canUserEditProcessReport($this->getUserId(), $row->reportId)) {
+                return false;
+            }
+
+            return true;
+        };
+        $publish->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
+            $el = HTML::el('a');
+
+            $el->class('grid-link')
+                ->href($this->createURLString('publish', ['reportId' => $primaryKey]))
+                ->text('Publish');
+
+            return $el;
+        };
+
+        // EDIT
+        $edit = $grid->addAction('edit');
+        $edit->setTitle('Edit');
+        $edit->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) {
+            if(!$this->containerProcessAuthorizator->canUserEditProcessReport($this->getUserId(), $row->reportId)) {
+                return false;
+            }
+
+            return true;
+        };
+        $edit->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
+            $el = HTML::el('a');
+
+            $el->class('grid-link')
+                ->href($this->createURLString('editReportForm', ['reportId' => $primaryKey]))
+                ->text('Edit');
+
+            return $el;
+        };
+
+        // EDIT RIGHTS
+        $rights = $grid->addAction('rights');
+        $rights->setTitle('Rights');
+        $rights->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) {
+            if(!$this->containerProcessAuthorizator->canUserGrantProcessReport($this->getUserId(), $row->reportId)) {
+                return false;
+            }
+
+            return true;
+        };
+        $rights->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
+            $el = HTML::el('a');
+
+            $el->class('grid-link')
+                ->href($this->createURLString('listRights', ['reportId' => $primaryKey]))
+                ->text('Rights');
+
+            return $el;
+        };
+
+        // DELETE
+        $delete = $grid->addAction('delete');
+        $delete->setTitle('Delete');
+        $delete->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) {
+            if(!$this->containerProcessAuthorizator->canUserDeleteProcessReport($this->getUserId(), $row->reportId)) {
+                return false;
+            }
+
+            return true;
+        };
+        $delete->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
+            $el = HTML::el('a');
+
+            $el->class('grid-link')
+                ->href($this->createURLString('deleteForm', ['reportId' => $primaryKey]))
+                ->text('Delete');
 
             return $el;
         };

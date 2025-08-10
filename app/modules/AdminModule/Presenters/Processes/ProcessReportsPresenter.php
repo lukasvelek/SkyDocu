@@ -170,7 +170,17 @@ class ProcessReportsPresenter extends AAdminPresenter {
         }
     }
 
-    public function renderLiveview() {}
+    public function renderLiveview() {
+        $links = [];
+
+        if($this->httpRequest->get('backUrl') !== null) {
+            $backUrl = json_decode(base64_decode($this->httpRequest->get('backUrl')), true);
+
+            $links[] = LinkBuilder::createSimpleLink('&larr; Back', $backUrl, 'link');
+        }
+
+        $this->template->links = LinkHelper::createLinksFromArray($links);
+    }
 
     protected function createComponentProcessReportLiveViewGrid() {
         $data = $this->httpRequest->get('reportData');
@@ -197,7 +207,10 @@ class ProcessReportsPresenter extends AAdminPresenter {
 
             $reportData = $report->definition;
 
-            $this->redirect($this->createURL('liveview', ['reportData' => $reportData]));
+            $this->redirect($this->createURL('liveview', [
+                'reportData' => $reportData,
+                'backUrl' => base64_encode(json_encode($this->createUrl('list')))
+            ]));
         } catch(AException $e) {
             $this->flashMessage('Could not open liveview for report. Reason: ' . $e->getMessage(), 'error', 10);
 

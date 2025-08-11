@@ -106,7 +106,7 @@ class ProcessReportsPresenter extends AAdminPresenter {
             return $el;
         };
 
-        // EDIT RIGHTS
+        // RIGHTS
         $rights = $grid->addAction('rights');
         $rights->setTitle('Rights');
         $rights->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) {
@@ -322,6 +322,25 @@ class ProcessReportsPresenter extends AAdminPresenter {
     }
 
     public function handlePublishFormSubmit(FormRequest $fr) {
+        try {
+            $this->processReportsRepository->beginTransaction(__METHOD__);
 
+            $this->processReportManager->updateReport(
+                $this->httpRequest->get('reportId'),
+                [
+                    'isEnabled' => 1
+                ]
+            );
+
+            $this->processReportsRepository->commit($this->getUserId(), __METHOD__);
+
+            $this->flashMessage('Successfully published report.', 'success');
+        } catch(AException $e) {
+            $this->processReportsRepository->rollback(__METHOD__);
+
+            $this->flashMessage('Could not publish report. Reason: ' . $e->getMessage(), 'error');
+        }
+
+        $this->redirect($this->createURL('list'));
     }
 }

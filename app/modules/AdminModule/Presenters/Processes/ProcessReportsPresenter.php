@@ -21,7 +21,7 @@ class ProcessReportsPresenter extends AAdminPresenter {
 
     public function renderList() {
         $links = [
-            LinkBuilder::createSimpleLink('New report', $this->createURL('newReportForm'), 'link')
+            LinkBuilder::createSimpleLink('New report', $this->createURL('reportForm'), 'link')
         ];
 
         $this->template->links = LinkHelper::createLinksFromArray($links);
@@ -100,7 +100,7 @@ class ProcessReportsPresenter extends AAdminPresenter {
             $el = HTML::el('a');
 
             $el->class('grid-link')
-                ->href($this->createURLString('editReportForm', ['reportId' => $primaryKey]))
+                ->href($this->createURLString('reportForm', ['reportId' => $primaryKey]))
                 ->text('Edit');
 
             return $el;
@@ -149,44 +149,90 @@ class ProcessReportsPresenter extends AAdminPresenter {
         return $grid;
     }
 
-    public function renderNewReportForm() {
+    public function renderReportForm() {
         $this->template->links = $this->createBackUrl('list');
+
+        if($this->httpRequest->get('reportId') === null) {
+            $this->template->report_action = 'New';
+        } else {
+            $this->template->report_action = 'Edit';
+        }
     }
 
-    protected function createComponentNewReportForm() {
+    protected function createComponentReportForm() {
+        $report = null;
+        $params = [];
+        
+        if($this->httpRequest->get('reportId') !== null) {
+            $report = $this->processReportManager->getReportById($this->httpRequest->get('reportId'));
+
+            $params['reportId'] = $report->reportId;
+        }
+
         $form = $this->componentFactory->getFormBuilder();
 
-        $form->setAction($this->createURL('newReportFormSubmit'));
+        $form->setAction($this->createURL('reportFormSubmit', $params));
 
-        $form->addTextInput('title', 'Title:')
+        $title = $form->addTextInput('title', 'Title:')
             ->setRequired();
 
-        $form->addTextArea('description', 'Description:');
+        if($report !== null) {
+            $title->setValue($report->title);
+        }
+
+        $description = $form->addTextArea('description', 'Description:');
+
+        if($report !== null) {
+            $description->setContent($report->description);
+        }
 
         $form->addSubmit('Save');
 
         return $form;
     }
 
-    public function handleNewReportFormSubmit(FormRequest $fr) {
+    public function handleReportFormSubmit(FormRequest $fr) {
+        $reportId = $this->httpRequest->get('reportId');
+        $isNew = true;
+
         try {
             $this->processReportsRepository->beginTransaction(__METHOD__);
 
-            $reportId = $this->processReportManager->createNewReport(
-                $this->getUserId(),
-                $fr->title,
-                $fr->description
-            );
+            if($reportId === null) {
+                $reportId = $this->processReportManager->createNewReport(
+                    $this->getUserId(),
+                    $fr->title,
+                    $fr->description
+                );
+            } else {
+                $this->processReportManager->updateReport(
+                    $reportId,
+                    [
+                        'title' => $fr->title,
+                        'description' => $fr->description
+                    ]
+                );
+
+                $isNew = false;
+            }
 
             $this->processReportsRepository->commit($this->getUserId(), __METHOD__);
 
-            $this->flashMessage('Successfully created a new report. Please create a definition now.', 'success');
+            if($isNew) {
+                $this->flashMessage('Successfully created a new report. Please create a definition now.', 'success');
+            } else {
+                $this->flashMessage('Successfully updated the report. Please create a definition now.', 'success');
+            }
 
             $this->redirect($this->createURL('reportDefinitionForm', ['reportId' => $reportId]));
         } catch(AException $e) {
             $this->processReportsRepository->rollback(__METHOD__);
 
-            $this->flashMessage('Could not create a new report. Reason: ' . $e->getMessage(), 'error', 10);
+            if($isNew) {
+                $this->flashMessage('Could not create a new report. Reason: ' . $e->getMessage(), 'error', 10);
+            } else {
+                $this->flashMessage('Could not update the report. Reason: ' . $e->getMessage(), 'error', 10);
+            }
 
             $this->redirect($this->createURL('list'));
         }
@@ -199,22 +245,48 @@ class ProcessReportsPresenter extends AAdminPresenter {
     }
 
     protected function createComponentReportDefinitionForm() {
+        $reportId = $this->httpRequest->get('reportId');
+
+        $report = $this->processReportManager->getReportById($reportId);
+
         $form = $this->componentFactory->getFormBuilder();
 
-        $form->setAction($this->createURL('reportDefinitionFormSubmit', ['reportId' => $this->httpRequest->get('reportId')]));
+        $form->setAction($this->createURL('reportDefinitionFormSubmit', ['reportId' => $reportId]));
 
         $textArea = $form->addTextArea('definition', 'Definition:')
             ->setLines(20)
             ->setRequired();
 
+        if($report->definition !== null) {
+            $textArea->setContent(base64_decode($report->definition));
+        }
+
+        // If saving fails, the unsaved definition overwrites the current one
         if($this->httpRequest->get('definition') !== null) {
-            $textArea->setContent($this->httpRequest->get('definition'));
+            $textArea->setContent(base64_decode($this->httpRequest->get('definition')));
         }
 
         $form->addSubmit('Save');
 
         $form->addButton('Live view')
             ->setOnClick('openLiveview()');
+
+        if($this->httpRequest->get('definition') !== null) {
+            $form->addButton('Reset to the last saved definition')
+                ->setOnClick('resetToLastSavedDefinition()');
+
+            $this->addScript('
+                function resetToLastSavedDefinition() {
+                    const url = "' . $this->createURLString('reportDefinitionForm', ['reportId' => $reportId]) . '";
+
+                    const confirmResult = confirm("Are you sure you want to reset the unsaved definition to the saved one?");
+
+                    if(confirmResult) {
+                        location.href(url);
+                    }
+                }
+            ');
+        }
 
         $this->addScript('
             function openLiveview() {
@@ -251,7 +323,7 @@ class ProcessReportsPresenter extends AAdminPresenter {
 
             $this->flashMessage('Could not save the definition for the report. Reason: ' . $e->getMessage(), 'error', 10);
 
-            $this->redirect($this->createURL('reportDefinitionForm', ['reportId' => $this->httpRequest->get('reportId'), 'definition' => $fr->definition]));
+            $this->redirect($this->createURL('reportDefinitionForm', ['reportId' => $this->httpRequest->get('reportId'), 'definition' => base64_encode($fr->definition)]));
         }
     }
 

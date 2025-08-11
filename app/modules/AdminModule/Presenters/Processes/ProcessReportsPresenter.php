@@ -2,11 +2,16 @@
 
 namespace App\Modules\AdminModule;
 
+use App\Constants\Container\ReportRightEntityType;
+use App\Constants\Container\ReportRightOperations;
+use App\Constants\Container\SystemGroups;
 use App\Core\DB\DatabaseRow;
 use App\Core\Http\FormRequest;
 use App\Exceptions\AException;
 use App\Helpers\LinkHelper;
+use App\Lib\Forms\Reducers\ProcessReportGrantRightFormReducer;
 use App\UI\GridBuilder2\Action;
+use App\UI\GridBuilder2\Cell;
 use App\UI\GridBuilder2\JSON2GB;
 use App\UI\GridBuilder2\Row;
 use App\UI\HTML\HTML;
@@ -414,5 +419,142 @@ class ProcessReportsPresenter extends AAdminPresenter {
         }
 
         $this->redirect($this->createURL('list'));
+    }
+
+    public function renderListRights() {
+        $links = [
+            $this->createBackUrl('list'),
+            LinkBuilder::createSimpleLink('Grant right', $this->createURL('grantRightForm', ['reportId' => $this->httpRequest->get('reportId')]), 'link')
+        ];
+
+        $this->template->links = LinkHelper::createLinksFromArray($links);
+    }
+
+    protected function createComponentProcessReportRightsGrid() {
+        $reportId = $this->httpRequest->get('reportId');
+
+        $grid = $this->componentFactory->getGridBuilder($this->containerId);
+
+        $qb = $this->processReportRightsRepository->composeQueryForReportRights();
+        $qb->andWhere('reportId = ?', [$reportId])
+            ->orderBy('dateCreated')
+            ->orderBy('entityId');
+
+        $grid->createDataSourceFromQueryBuilder($qb, 'rightId');
+        $grid->addQueryDependency('reportId', $reportId);
+
+        $col = $grid->addColumnText('entityId', 'Entity');
+        $col->onRenderColumn[] = function(DatabaseRow $row, Row $_row, Cell $cell, HTML $html, mixed $value) {
+            $el = HTML::el('span');
+
+            if($row->entityType == ReportRightEntityType::USER) {
+                // user
+
+                try {
+                    $user = $this->app->userManager->getUserById($value);
+
+                    $el->text($user->getFullname());
+                } catch(AException $e) {
+                    $el->text('-')
+                        ->title('Unknown user ID \'' . $value . '\'.');
+                }
+            } else {
+                // group
+
+                try {
+                    $group = $this->groupManager->getGroupById($value);
+
+                    $el->text(SystemGroups::toString($group->title));
+                } catch(AException $e) {
+                    $el->text('-')
+                        ->title('Unknown group ID \'' . $value . '\'.');
+                }
+            }
+
+            return $el;
+        };
+
+        $grid->addColumnConst('operation', 'Operation', ReportRightOperations::class);
+
+        $revoke = $grid->addAction('revoke');
+        $revoke->setTitle('Revoke');
+        $revoke->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) {
+            if($row->entityId == $this->getUserId()) {
+                return false;
+            }
+
+            return true;
+        };
+        $revoke->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
+            $el = HTML::el('a');
+
+            $el->class('grid-link')
+                ->href($this->createURLString('revokeRight', ['reportId' => $row->reportId, 'entityId' => $row->entityId, 'entityType' => $row->entityType, 'operation' => $row->operation]))
+                ->text('Revoke');
+
+            return $el;
+        };
+
+        return $grid;
+    }
+
+    public function handleRevokeRight() {
+        $reportId = $this->httpRequest->get('reportId');
+        $entityId = $this->httpRequest->get('entityId');
+        $entityType = $this->httpRequest->get('entityType');
+        $operation = $this->httpRequest->get('operation');
+
+        try {
+            $this->processReportRightsRepository->beginTransaction(__METHOD__);
+            
+            $this->processReportManager->revokeReportRightToEntity($reportId, $entityId, $entityType, $operation);
+
+            $this->processReportRightsRepository->commit($this->getUserId(), __METHOD__);
+            
+            $this->flashMessage(sprintf(
+                'Successfully revoked operation right \'%s\' to %s \'%s\'.',
+                ReportRightOperations::toString($operation),
+                ($entityType == ReportRightEntityType::USER ? 'user' : 'group'),
+                $entityId
+            ), 'success');
+        } catch(AException $e) {
+            $this->processReportRightsRepository->rollback(__METHOD__);
+
+            $this->flashMessage(sprintf(
+                'Could not revoke operation right \'%s\' to %s \'%s\'. Reason: %s',
+                ReportRightOperations::toString($operation),
+                ($entityType == ReportRightEntityType::USER ? 'user' : 'group'),
+                $entityId,
+                $e->getMessage()
+            ), 'error', 10);
+        }
+
+        $this->redirect('listRights', ['reportId' => $reportId]);
+    }
+
+    public function renderGrantRightForm() {}
+
+    protected function createComponentGrantReportRightForm() {
+        $reportId = $this->httpRequest->get('reportId');
+
+        $form = $this->componentFactory->getFormBuilder();
+
+        $form->setAction($this->createURL('grantRightFormSubmit', ['reportId' => $reportId]));
+
+        $form->addSelect('entityType', 'Entity type:')
+            ->addRawOption(ReportRightEntityType::USER, 'User')
+            ->addRawOption(ReportRightEntityType::GROUP, 'Group');
+
+        $form->addSelect('entityId', 'Entity:')
+            ->setDisabled();
+
+        $form->addSelect('operation', 'Operation:')
+            ->setDisabled();
+
+        $form->setCallReducerOnChange();
+        $form->reducer = new ProcessReportGrantRightFormReducer($this->app, $this->httpRequest);
+        $form->reducer->setContainerId($this->containerId);
+
+        return $form;
     }
 }

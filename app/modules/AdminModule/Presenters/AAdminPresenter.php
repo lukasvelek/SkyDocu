@@ -59,9 +59,9 @@ abstract class AAdminPresenter extends AContainerPresenter {
         };
 
         if($this->isMembers) {
-            $members = $this->checkActivePage('Members');
-            $groups = $this->checkActivePage('Groups');
-            $users = $this->checkActivePage('Users');
+            $members = $this->checkActivePage(['Members' => []]);
+            $groups = $this->checkActivePage(['Groups' => []]);
+            $users = $this->checkActivePage(['Users' => []]);
 
             $addLink('Dashboard', $this->createFullURL('Admin:Members', 'dashboard'), $members);
             $addLink('Groups', $this->createFullURL('Admin:Groups', 'list'), $groups);
@@ -69,9 +69,9 @@ abstract class AAdminPresenter extends AContainerPresenter {
         }
 
         if($this->isDocuments) {
-            $documents = $this->checkActivePage('Documents');
-            $folders = $this->checkActivePage('DocumentFolders');
-            $metadata = $this->checkActivePage('DocumentMetadata');
+            $documents = $this->checkActivePage(['Documents' => []]);
+            $folders = $this->checkActivePage(['DocumentFolders' => []]);
+            $metadata = $this->checkActivePage(['DocumentMetadata' => []]);
 
             $addLink('Dashboard', $this->createFullURL('Admin:Documents', 'dashboard'), $documents);
             $addLink('Folders', $this->createFullURL('Admin:DocumentFolders', 'list'), $folders);
@@ -79,20 +79,20 @@ abstract class AAdminPresenter extends AContainerPresenter {
         }
         
         if($this->isArchive) {
-            $archive = $this->checkActivePage('Archive');
-            $folders = $this->checkActivePage('ArchiveFolders');
+            $archive = $this->checkActivePage(['Archive' => []]);
+            $folders = $this->checkActivePage(['ArchiveFolders' => []]);
             
             $addLink('Archive', $this->createFullURL('Admin:Archive', 'dashboard'), $archive);
             $addLink('Folders', $this->createFullURL('Admin:ArchiveFolders', 'list'), $folders);
         }
 
         if($this->isSystem) {
-            $system = $this->checkActivePage('System');
-            $transactionLog = $this->checkActivePage('TransactionLog');
-            $gridConfiguration = $this->checkActivePage('GridConfiguration');
-            $fileStorage = $this->checkActivePage('FileStorage');
-            $dbAdmin = $this->checkActivePage('DbAdmin');
-            $externalSystems = $this->checkActivePage('ExternalSystems');
+            $system = $this->checkActivePage(['System' => []]);
+            $transactionLog = $this->checkActivePage(['TransactionLog' => []]);
+            $gridConfiguration = $this->checkActivePage(['GridConfiguration' => []]);
+            $fileStorage = $this->checkActivePage(['FileStorage' => []]);
+            $dbAdmin = $this->checkActivePage(['DbAdmin' => []]);
+            $externalSystems = $this->checkActivePage(['ExternalSystems' => []]);
 
             $addLink('Dashboard', $this->createFullURL('Admin:System', 'dashboard'), $system);
             $addLink('Transaction log', $this->createFullURL('Admin:TransactionLog', 'list'), $transactionLog);
@@ -103,9 +103,9 @@ abstract class AAdminPresenter extends AContainerPresenter {
         }
 
         if($this->isProcesses) {
-            $processes = $this->checkActivePage('Processes', 'dashboard');
-            $processList = $this->checkActivePage('Processes', 'list') || $this->checkActivePage('ProcessMetadata');
-            $reportList = $this->checkActivePage('ProcessReports', 'list');
+            $processes = $this->checkActivePage(['Processes' => ['dashboard']]);
+            $processList = $this->checkActivePage(['Processes' => ['list'], 'ProcessMetadata' => []]);
+            $reportList = $this->checkActivePage(['ProcessReports' => []]);
 
             $addLink('Dashboard', $this->createFullURL('Admin:Processes', 'dashboard'), $processes);
             $addLink('Process list', $this->createFullURL('Admin:Processes', 'list'), $processList);
@@ -116,23 +116,30 @@ abstract class AAdminPresenter extends AContainerPresenter {
     /**
      * Checks active page
      * 
-     * @param string $key Presenter name (without Presenter suffix)
-     * @param ?string $action Optional action name for additional checking
+     * @param array $keys Array with key as presenter name (without Presenter suffix) and values as array of actions
      */
-    protected function checkActivePage(string $key, ?string $action = null): bool {
+    protected function checkActivePage(array $keys): bool {
         $name = substr($this->name, 0, -9); //Presenter
 
-        if($action === null) {
-            return $name == $key;
-        } else {
-            if($name == $key) {
-                if($this->httpRequest->get('action') == $action) {
+        foreach($keys as $presenter => $actions) {
+            if(empty($actions)) {
+                if($name == $presenter) {
                     return true;
                 }
-            }
+            } else {
+                if($name == $presenter) {
+                    foreach($actions as $action) {
+                        if($this->httpRequest->get('action') == $action) {
+                            return true;
+                        }
+                    }
+                }
 
-            return false;
+                return false;
+            }
         }
+
+        return false;
     }
 
     protected function createComponentSidebar(HttpRequest $request) {

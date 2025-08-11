@@ -90,6 +90,9 @@ class FormStateListHelper {
             if(isset($request->post('state')[$name]['readonly'])) {
                 $stateList->$name->isReadonly = ($request->post('state')[$name]['readonly'] == 'true');
             }
+            if(isset($request->post('state')[$name]['disabled'])) {
+                $stateList->$name->isDisabled = ($request->post('state')[$name]['disabled'] == 'true');
+            }
             if(isset($request->post('state')[$name]['value'])) {
                 if($request->post('state')[$name]['value'] != 'null' && $request->post('state')[$name]['value'] != '') {
                     $stateList->$name->value = $request->post('state')[$name]['value'];
@@ -103,9 +106,21 @@ class FormStateListHelper {
             if(isset($request->post('state')[$name]['max'])) {
                 $stateList->$name->maximum = $request->post('state')[$name]['max'];
             }
+            if(isset($request->post('state')[$name]['selectValues'])) {
+                $stateList->$name->selectValues = $this->processSelectValues($request->post('state')[$name]['selectValues']);
+            }
+        }
+
+        if($request->post('callingElement') !== null) {
+            $stateList->setCallingElementName($request->post('callingElement'));
         }
 
         return $stateList;
+    }
+
+    private function processSelectValues(string $data) {
+        $data = json_decode(base64_decode($data), true);
+        return $data;
     }
 
     /**

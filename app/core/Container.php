@@ -7,6 +7,7 @@ use App\Authorizators\GroupStandardOperationsAuthorizator;
 use App\Authorizators\SupervisorAuthorizator;
 use App\Core\Caching\CacheFactory;
 use App\Entities\ContainerEntity;
+use App\Entities\UserEntity;
 use App\Logger\Logger;
 use App\Managers\Container\ArchiveManager;
 use App\Managers\Container\DocumentManager;
@@ -285,6 +286,28 @@ class Container {
                 $this->$name->injectCacheFactory($this->cacheFactory);
             }
         }
+    }
+
+    /**
+     * Returns all container users
+     * 
+     * @return array<int, \App\Entities\UserEntity>
+     */
+    public function getContainerUsers(): array {
+        $container = $this->app->containerManager->getContainerById($this->containerId);
+
+        $groupUsers = $this->app->groupManager->getGroupUsersForGroupTitle($container->getTitle() . ' - users');
+
+        $qb = $this->app->userRepository->composeQueryForUsers();
+        $qb->andWhere($qb->getColumnInValues('userId', $groupUsers))
+            ->execute();
+
+        $users = [];
+        while($row = $qb->fetchAssoc()) {
+            $users[] = UserEntity::createEntityFromDbRow($row);
+        }
+
+        return $users;
     }
 }
 

@@ -185,6 +185,10 @@ class ProcessReportManager extends AManager {
         if(!$this->processReportRightsRepository->insertNewReportRight($data)) {
             throw new GeneralException('Database error.');
         }
+
+        if($operation != ReportRightOperations::READ) {
+            $this->grantReportRightToEntity($reportId, $entityId, $entityType, ReportRightOperations::READ);
+        }
     }
 
     /**
@@ -205,6 +209,12 @@ class ProcessReportManager extends AManager {
 
         if(!$this->processReportRightsRepository->removeReportRightById($rightId)) {
             throw new GeneralException('Database error.');
+        }
+
+        if($operation == ReportRightOperations::READ) {
+            // delete all other
+
+            $this->revokeAllReportRightsToEntity($reportId, $entityId, $entityType);
         }
     }
 

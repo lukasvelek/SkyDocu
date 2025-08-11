@@ -2,7 +2,6 @@
 
 namespace App\Repositories\Container;
 
-use App\Constants\Container\ReportRightEntityType;
 use App\Repositories\ARepository;
 use QueryBuilder\QueryBuilder;
 

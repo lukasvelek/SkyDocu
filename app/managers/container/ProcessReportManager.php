@@ -252,4 +252,19 @@ class ProcessReportManager extends AManager {
 
         return DatabaseRow::createFromDbRow($row);
     }
+
+    /**
+     * Deletes report
+     * 
+     * @param string $reportId Report ID
+     */
+    public function deleteReport(string $reportId) {
+        // delete report
+        if(!$this->processReportsRepository->deleteReport($reportId)) {
+            throw new GeneralException('Database error.');
+        }
+
+        // delete report rights
+        $this->deleteAllReportRights($reportId);
+    }
 }

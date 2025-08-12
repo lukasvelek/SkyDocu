@@ -8,6 +8,7 @@ use App\Constants\Container\SystemGroups;
 use App\Core\DB\DatabaseRow;
 use App\Core\Http\FormRequest;
 use App\Exceptions\AException;
+use App\Exceptions\GeneralException;
 use App\Helpers\LinkHelper;
 use App\Lib\Forms\Reducers\ProcessReportGrantRightFormReducer;
 use App\UI\GridBuilder2\Action;
@@ -154,6 +155,63 @@ class ProcessReportsPresenter extends AAdminPresenter {
         return $grid;
     }
 
+    public function handleDeleteForm() {
+        $this->mandatoryUrlParams(['reportId'], $this->createURL('list'));
+    }
+
+    public function renderDeleteForm() {
+        $links = [
+            $this->createBackUrl('list')
+        ];
+
+        $this->template->links = LinkHelper::createLinksFromArray($links);
+    }
+
+    protected function createComponentDeleteReportForm() {
+        $reportId = $this->httpRequest->get('reportId');
+        $report = $this->processReportManager->getReportById($reportId);
+        
+        $form = $this->componentFactory->getFormBuilder();
+
+        $form->setAction($this->createURL('deleteFormSubmit', ['reportId' => $reportId]));
+
+        $form->addLabel('lbl_text1', 'Please type in the name of the report below (\'' . $report->title . '\'):');
+
+        $form->addTextInput('reportName', 'Report name:')
+            ->setRequired();
+
+        $form->addSubmit('Delete');
+
+        return $form;
+    }
+
+    public function handleDeleteFormSubmit(FormRequest $fr) {
+        $this->mandatoryUrlParams(['reportId'], $this->createURL('list'));
+
+        try {
+            $reportId = $this->httpRequest->get('reportId');
+            $report = $this->processReportManager->getReportById($reportId);
+
+            if($fr->reportName != $report->title) {
+                throw new GeneralException('Entered report name does not match the actual report name.');
+            }
+
+            $this->processReportsRepository->beginTransaction(__METHOD__);
+
+            $this->processReportManager->deleteReport($reportId);
+
+            $this->processReportsRepository->commit($this->getUserId(), __METHOD__);
+
+            $this->flashMessage('Successfully deleted report.', 'success');
+        } catch(AException $e) {
+            $this->processReportsRepository->rollback(__METHOD__);
+
+            $this->flashMessage('Could not delete report. Reason: ' . $e->getMessage(), 'error', 10);
+        }
+
+        $this->redirect($this->createURL('list'));
+    }
+
     public function renderReportForm() {
         $this->template->links = $this->createBackUrl('list');
 
@@ -197,6 +255,8 @@ class ProcessReportsPresenter extends AAdminPresenter {
     }
 
     public function handleReportFormSubmit(FormRequest $fr) {
+        $this->mandatoryUrlParams(['reportId'], $this->createURL('list'));
+        
         $reportId = $this->httpRequest->get('reportId');
         $isNew = true;
 
@@ -241,6 +301,10 @@ class ProcessReportsPresenter extends AAdminPresenter {
 
             $this->redirect($this->createURL('list'));
         }
+    }
+
+    public function handleReportDefinitionForm() {
+        $this->mandatoryUrlParams(['reportId'], $this->createURL('list'));
     }
 
     public function renderReportDefinitionForm() {
@@ -309,6 +373,8 @@ class ProcessReportsPresenter extends AAdminPresenter {
     }
 
     public function handleReportDefinitionFormSubmit(FormRequest $fr) {
+        $this->mandatoryUrlParams(['reportId'], $this->createURL('list'));
+
         try {
             $this->processReportsRepository->beginTransaction(__METHOD__);
 
@@ -330,6 +396,10 @@ class ProcessReportsPresenter extends AAdminPresenter {
 
             $this->redirect($this->createURL('reportDefinitionForm', ['reportId' => $this->httpRequest->get('reportId'), 'definition' => base64_encode($fr->definition)]));
         }
+    }
+
+    public function handleLiveview() {
+        $this->mandatoryUrlParams(['reportId'], $this->createURL('list'));
     }
 
     public function renderLiveview() {
@@ -362,6 +432,8 @@ class ProcessReportsPresenter extends AAdminPresenter {
     }
 
     public function handleLiveview2() {
+        $this->mandatoryUrlParams(['reportId'], $this->createURL('list'));
+
         $reportId = $this->httpRequest->get('reportId');
 
         try {
@@ -378,6 +450,10 @@ class ProcessReportsPresenter extends AAdminPresenter {
 
             $this->redirect($this->createURL('list'));
         }
+    }
+
+    public function handlePublish() {
+        $this->mandatoryUrlParams(['reportId'], $this->createURL('list'));
     }
 
     public function renderPublish() {}
@@ -399,6 +475,8 @@ class ProcessReportsPresenter extends AAdminPresenter {
     }
 
     public function handlePublishFormSubmit(FormRequest $fr) {
+        $this->mandatoryUrlParams(['reportId'], $this->createURL('list'));
+
         try {
             $this->processReportsRepository->beginTransaction(__METHOD__);
 
@@ -419,6 +497,10 @@ class ProcessReportsPresenter extends AAdminPresenter {
         }
 
         $this->redirect($this->createURL('list'));
+    }
+
+    public function handleListRights() {
+        $this->mandatoryUrlParams(['reportId'], $this->createURL('list'));
     }
 
     public function renderListRights() {
@@ -499,6 +581,8 @@ class ProcessReportsPresenter extends AAdminPresenter {
     }
 
     public function handleRevokeRight() {
+        $this->mandatoryUrlParams(['reportId', 'entityId', 'entityType', 'operation'], $this->createURL('list'));
+
         $reportId = $this->httpRequest->get('reportId');
         $entityId = $this->httpRequest->get('entityId');
         $entityType = $this->httpRequest->get('entityType');
@@ -530,6 +614,10 @@ class ProcessReportsPresenter extends AAdminPresenter {
         }
 
         $this->redirect('listRights', ['reportId' => $reportId]);
+    }
+
+    public function handleGrantRightForm() {
+        $this->mandatoryUrlParams(['reportId'], $this->createURL('list'));
     }
 
     public function renderGrantRightForm() {

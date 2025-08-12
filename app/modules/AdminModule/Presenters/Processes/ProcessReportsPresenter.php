@@ -652,7 +652,7 @@ class ProcessReportsPresenter extends AAdminPresenter {
             ), 'error', 10);
         }
 
-        $this->redirect('listRights', ['reportId' => $reportId]);
+        $this->redirect($this->createURL('listRights', ['reportId' => $reportId]));
     }
 
     public function handleGrantRightForm() {

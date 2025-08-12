@@ -12,6 +12,8 @@ use App\Managers\AManager;
 use App\Managers\EntityManager;
 use App\Repositories\Container\ProcessReportRightsRepository;
 use App\Repositories\Container\ProcessReportsRepository;
+use App\UI\GridBuilder2\GridBuilder;
+use App\UI\GridBuilder2\JSON2GB;
 use QueryBuilder\QueryBuilder;
 
 /**
@@ -266,5 +268,21 @@ class ProcessReportManager extends AManager {
 
         // delete report rights
         $this->deleteAllReportRights($reportId);
+    }
+
+    /**
+     * Applies report definition to a GridBuilder instance
+     * 
+     * @param string $reportId Report ID
+     * @param GridBuilder &$grid GridBuilder instance
+     */
+    public function applyReportDefinitionToGridBuilder(string $reportId, GridBuilder &$grid) {
+        $report = $this->getReportById($reportId);
+
+        $definition = json_decode(base64_decode($report->definition), true, 1024);
+
+        $json2gb = new JSON2GB($grid, $definition, $this->groupManager, $grid->app);
+
+        $grid = $json2gb->getGridBuilder();
     }
 }

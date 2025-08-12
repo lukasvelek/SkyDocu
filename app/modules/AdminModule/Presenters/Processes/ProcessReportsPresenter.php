@@ -255,8 +255,6 @@ class ProcessReportsPresenter extends AAdminPresenter {
     }
 
     public function handleReportFormSubmit(FormRequest $fr) {
-        $this->mandatoryUrlParams(['reportId'], $this->createURL('list'));
-        
         $reportId = $this->httpRequest->get('reportId');
         $isNew = true;
 
@@ -396,10 +394,6 @@ class ProcessReportsPresenter extends AAdminPresenter {
 
             $this->redirect($this->createURL('reportDefinitionForm', ['reportId' => $this->httpRequest->get('reportId'), 'definition' => base64_encode($fr->definition)]));
         }
-    }
-
-    public function handleLiveview() {
-        $this->mandatoryUrlParams(['reportId'], $this->createURL('list'));
     }
 
     public function renderLiveview() {

@@ -577,6 +577,45 @@ class ProcessReportsPresenter extends AAdminPresenter {
             return $el;
         };
 
+        $entityQb = $this->processReportRightsRepository->composeQueryForReportRights();
+        $entityQb->select(['entityId', 'entityType'])
+            ->andWhere('reportId = ?', [$reportId])
+            ->orderBy('dateCreated')
+            ->orderBy('entityId')
+            ->execute();
+
+        $entitiesDb = [];
+        while($row = $entityQb->fetchAssoc()) {
+            $entitiesDb[] = [
+                'id' => $row['entityId'],
+                'type' => $row['entityType']
+            ];
+        }
+
+        $entities = [];
+        foreach($entitiesDb as $item) {
+            if($item['type'] == ReportRightEntityType::USER) {
+                try {
+                    $user = $this->app->userManager->getUserById($item['id']);
+
+                    $entities[$item['id']] = $user->getFullname();
+                } catch(AException $e) {
+                    continue;
+                }
+            } else {
+                try {
+                    $group = $this->groupManager->getGroupById($item['id']);
+
+                    $entities[$item['id']] = SystemGroups::toString($group->title);
+                } catch(AException $e) {
+                    continue;
+                }
+            }
+        }
+
+        $grid->addFilter('entityId', null, $entities);
+        $grid->addFilter('operation', null, ReportRightOperations::getAll());
+
         return $grid;
     }
 

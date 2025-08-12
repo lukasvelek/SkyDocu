@@ -68,13 +68,13 @@ class ProcessReportsPresenter extends AAdminPresenter {
             return $el;
         };
 
-        // PUBLISH
+        // PUBLISH / UNPUBLISH
         $publish = $grid->addAction('publish');
-        $publish->setTitle('Publish');
+        $publish->setTitle('Publish / Unpublish');
         $publish->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) {
-            if($row->isEnabled == true) {
+            /*if($row->isEnabled == true) {
                 return false;
-            }
+            }*/
 
             if(!$this->containerProcessAuthorizator->canUserEditProcessReport($this->getUserId(), $row->reportId)) {
                 return false;
@@ -85,9 +85,14 @@ class ProcessReportsPresenter extends AAdminPresenter {
         $publish->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
             $el = HTML::el('a');
 
+            $params = [
+                'reportId' => $primaryKey,
+                'publish' => $row->isEnabled
+            ];
+
             $el->class('grid-link')
-                ->href($this->createURLString('publish', ['reportId' => $primaryKey]))
-                ->text('Publish');
+                ->href($this->createURLString('publish', $params))
+                ->text($row->isEnabled == false ? 'Publish' : 'Unpublish');
 
             return $el;
         };
@@ -447,21 +452,22 @@ class ProcessReportsPresenter extends AAdminPresenter {
     }
 
     public function handlePublish() {
-        $this->mandatoryUrlParams(['reportId'], $this->createURL('list'));
+        $this->mandatoryUrlParams(['reportId', 'publish'], $this->createURL('list'));
     }
 
     public function renderPublish() {}
 
     protected function createComponentPublishReportForm() {
         $report = $this->processReportManager->getReportById($this->httpRequest->get('reportId'));
+        $publish = $this->httpRequest->get('publish');
 
         $form = $this->componentFactory->getFormBuilder();
 
-        $form->setAction($this->createURL('publishFormSubmit', ['reportId' => $this->httpRequest->get('reportId')]));
+        $form->setAction($this->createURL('publishFormSubmit', ['reportId' => $this->httpRequest->get('reportId'), 'publish' => $publish]));
 
-        $form->addLabel('lbl_text1', 'Are you sure you want to publish report <b>' . $report->title . '</b>?');
+        $form->addLabel('lbl_text1', 'Are you sure you want to ' . ($publish == 1 ? 'un' : '') . 'publish report <b>' . $report->title . '</b>?');
 
-        $form->addSubmit('Publish');
+        $form->addSubmit($publish == 1 ? 'Unpublish' : 'Publish');
         $form->addButton('Go back')
             ->setOnClick('location.href = \'' . $this->createURLString('list') . '\';');
 
@@ -469,15 +475,17 @@ class ProcessReportsPresenter extends AAdminPresenter {
     }
 
     public function handlePublishFormSubmit(FormRequest $fr) {
-        $this->mandatoryUrlParams(['reportId'], $this->createURL('list'));
+        $this->mandatoryUrlParams(['reportId', 'publish'], $this->createURL('list'));
 
         try {
             $this->processReportsRepository->beginTransaction(__METHOD__);
 
+            $publish = $this->httpRequest->get('publish');
+
             $this->processReportManager->updateReport(
                 $this->httpRequest->get('reportId'),
                 [
-                    'isEnabled' => 1
+                    'isEnabled' => (!$publish)
                 ]
             );
 

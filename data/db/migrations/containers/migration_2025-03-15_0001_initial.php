@@ -314,7 +314,7 @@ class migration_2025_03_15_0001_initial extends AContainerBaseMigration {
                 'canEdit' => 1
             ]);
 
-        $seed->seed('group_standard_operation_rights')
+        $seed->seed('group_rights_standard_operations')
             ->add([
                 'rightId' => $this->getId(),
                 'groupId' => $groupIds[SystemGroups::ADMINISTRATORS],

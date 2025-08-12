@@ -2,11 +2,9 @@
 
 namespace App\Data\Db\Migrations\Containers;
 
-use App\Constants\Container\SystemGroups;
 use App\Core\DB\AContainerBaseMigration;
 use App\Core\DB\Helpers\TableSchema;
 use App\Core\DB\Helpers\TableSeeding;
-use App\Managers\EntityManager;
 
 /**
  * This migration contains database updates for company property management

@@ -5,9 +5,9 @@ namespace App\Repositories;
 use App\Core\Caching\CacheFactory;
 use App\Core\DatabaseConnection;
 use App\Core\DB\AMultipleDatabaseConnectionHandler;
+use App\Core\GUID;
 use App\Exceptions\DatabaseExecutionException;
 use App\Logger\Logger;
-use App\Managers\EntityManager;
 use PeeQL\Operations\QueryOperation;
 use PeeQL\Result\QueryResult;
 use QueryBuilder\ExpressionBuilder;
@@ -195,15 +195,10 @@ abstract class ARepository extends AMultipleDatabaseConnectionHandler {
     }
 
     /**
-     * Creates unique entity ID
-     * 
-     * @param string $category Entity category (EntityManager constants)
-     * @return ?string Entity ID or null
+     * Generates a GUID
      */
-    public function createEntityId(string $category) {
-        $em = new EntityManager($this->logger, new ContentRepository($this->conn, $this->logger, $this->transactionLogRepository), new ContentRepository($this->transactionLogRepository->db, $this->logger, $this->transactionLogRepository));
-
-        return $em->generateEntityId($category);
+    public function createEntityId(): string {
+        return GUID::generate();
     }
 
     /**

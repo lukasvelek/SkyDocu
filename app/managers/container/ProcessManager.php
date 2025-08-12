@@ -9,14 +9,13 @@ use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
 use App\Logger\Logger;
 use App\Managers\AManager;
-use App\Managers\EntityManager;
 use App\Repositories\Container\ProcessRepository;
 
 class ProcessManager extends AManager {
     public ProcessRepository $processRepository;
 
-    public function __construct(Logger $logger, EntityManager $entityManager, ProcessRepository $processRepository) {
-        parent::__construct($logger, $entityManager);
+    public function __construct(Logger $logger, ProcessRepository $processRepository) {
+        parent::__construct($logger);
 
         $this->processRepository = $processRepository;
     }
@@ -32,7 +31,7 @@ class ProcessManager extends AManager {
         if(array_key_exists('processId', $data)) {
             $processId = $data['processId'];
         } else {
-            $processId = $this->createId(EntityManager::C_PROCESSES);
+            $processId = $this->createId();
         }
 
         if(!$this->processRepository->addNewProcess(
@@ -176,7 +175,7 @@ class ProcessManager extends AManager {
         array $definition,
         ?string $oldProcessId
     ) {
-        $processId = $this->createId(EntityManager::C_PROCESSES);
+        $processId = $this->createId();
 
         $version = 1;
         $uniqueProcessId = null;
@@ -186,7 +185,7 @@ class ProcessManager extends AManager {
             $uniqueProcessId = $process->uniqueProcessId;
             $version = (int)($this->getHighestVersionForUniqueProcessId($uniqueProcessId)) + 1;
         } else {
-            $uniqueProcessId = $this->createId(EntityManager::C_PROCESSES_UNIQUE);
+            $uniqueProcessId = $this->createId();
         }
 
         $data = [

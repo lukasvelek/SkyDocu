@@ -10,7 +10,6 @@ use App\Exceptions\GeneralException;
 use App\Exceptions\NonExistingEntityException;
 use App\Logger\Logger;
 use App\Managers\AManager;
-use App\Managers\EntityManager;
 use App\Repositories\Container\FileStorageRepository;
 
 /**
@@ -21,8 +20,8 @@ use App\Repositories\Container\FileStorageRepository;
 class FileStorageManager extends AManager {
     public FileStorageRepository $fileStorageRepository;
 
-    public function __construct(Logger $logger, EntityManager $entityManager, FileStorageRepository $fileStorageRepository) {
-        parent::__construct($logger, $entityManager);
+    public function __construct(Logger $logger, FileStorageRepository $fileStorageRepository) {
+        parent::__construct($logger);
 
         $this->fileStorageRepository = $fileStorageRepository;
     }
@@ -88,7 +87,7 @@ class FileStorageManager extends AManager {
      * @throws GeneralException
      */
     public function createNewFileProcessInstanceRelation(string $instanceId, string $fileId) {
-        $relationId = $this->createId(EntityManager::C_PROCESS_FILE_RELATION);
+        $relationId = $this->createId();
 
         if(!$this->fileStorageRepository->createNewFileProcessInstanceRelation($relationId, $instanceId, $fileId)) {
             throw new GeneralException('Database error.');
@@ -102,7 +101,7 @@ class FileStorageManager extends AManager {
      * @param string $fileId File ID
      */
     public function createNewFileDocumentRelation(string $documentId, string $fileId) {
-        $relationId = $this->createId(EntityManager::C_DOCUMENT_FILE_RELATION);
+        $relationId = $this->createId();
 
         if(!$this->fileStorageRepository->createNewFileDocumentRelation($relationId, $documentId, $fileId)) {
             throw new GeneralException('Database error.');

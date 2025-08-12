@@ -9,7 +9,6 @@ use App\Exceptions\GeneralException;
 use App\Exceptions\NonExistingEntityException;
 use App\Logger\Logger;
 use App\Managers\AManager;
-use App\Managers\EntityManager;
 use App\Repositories\Container\FolderRepository;
 use App\Repositories\Container\GroupRepository;
 
@@ -17,8 +16,8 @@ class FolderManager extends AManager {
     private FolderRepository $folderRepository;
     private GroupRepository $groupRepository;
 
-    public function __construct(Logger $logger, EntityManager $entityManager, FolderRepository $folderRepository, GroupRepository $groupRepository) {
-        parent::__construct($logger, $entityManager);
+    public function __construct(Logger $logger, FolderRepository $folderRepository, GroupRepository $groupRepository) {
+        parent::__construct($logger);
 
         $this->folderRepository = $folderRepository;
         $this->groupRepository = $groupRepository;
@@ -89,7 +88,7 @@ class FolderManager extends AManager {
      * @param ?string $parentFolderId Parent folder's ID or null
      */
     public function createNewFolder(string $title, string $callingUserId, ?string $parentFolderId = null) {
-        $folderId = $this->createId(EntityManager::C_DOCUMENT_FOLDERS);
+        $folderId = $this->createId();
 
         if(!$this->folderRepository->createNewFolder($folderId, $title, $parentFolderId)) {
             throw new GeneralException('Database error.');
@@ -131,7 +130,7 @@ class FolderManager extends AManager {
             $data['folderId'] = $folderId;
             $data['groupId'] = $groupId;
 
-            $relationId = $this->createId(EntityManager::C_DOCUMENT_FOLDER_GROUP_RELATION);
+            $relationId = $this->createId();
             $new = true;
             $result = $this->folderRepository->insertGroupFolderRelation($relationId, $data);
         } else {

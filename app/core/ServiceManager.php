@@ -7,7 +7,6 @@ use App\Constants\SystemServiceStatus;
 use App\Exceptions\AException;
 use App\Exceptions\FileDoesNotExistException;
 use App\Exceptions\ServiceException;
-use App\Managers\EntityManager;
 use App\Repositories\SystemServicesRepository;
 use App\Repositories\UserRepository;
 use Exception;
@@ -20,19 +19,16 @@ use Exception;
 class ServiceManager {
     public SystemServicesRepository $systemServicesRepository;
     private UserRepository $userRepository;
-    private EntityManager $entityManager;
 
     /**
      * Class constructor
      * 
      * @param SystemServicesRepository $systemServicesRepository SystemServicesRepository instance
      * @param UserRepository $userRepository UserRepository instance
-     * @param EntityManager $entityManager EntityManager instance
      */
-    public function __construct(SystemServicesRepository $systemServicesRepository, UserRepository $userRepository, EntityManager $entityManager) {
+    public function __construct(SystemServicesRepository $systemServicesRepository, UserRepository $userRepository) {
         $this->systemServicesRepository = $systemServicesRepository;
         $this->userRepository = $userRepository;
-        $this->entityManager = $entityManager;
     }
 
     /**
@@ -109,7 +105,7 @@ class ServiceManager {
         }
 
         try {
-            $historyId = $this->entityManager->generateEntityId(EntityManager::SERVICE_HISTORY);
+            $historyId = GUID::generate();
 
             $status = ($e !== null) ? SystemServiceHistoryStatus::ERROR : SystemServiceHistoryStatus::SUCCESS;
 

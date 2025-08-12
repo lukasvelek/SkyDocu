@@ -19,8 +19,8 @@ use App\Repositories\ProcessRepository;
 class ProcessManager extends AManager {
     public ProcessRepository $processRepository;
 
-    public function __construct(Logger $logger, EntityManager $entityManager, ProcessRepository $processRepository) {
-        parent::__construct($logger, $entityManager);
+    public function __construct(Logger $logger, ProcessRepository $processRepository) {
+        parent::__construct($logger);
 
         $this->processRepository = $processRepository;
     }
@@ -59,7 +59,7 @@ class ProcessManager extends AManager {
      * @param ?string $oldProcessId Old process ID
      */
     public function createNewProcess(string $title, string $description, string $authorId, array $definition, ?string $oldProcessId = null, int $status = ProcessStatus::IN_DISTRIBUTION): array {
-        $processId = $this->createId(EntityManager::PROCESSES);
+        $processId = $this->createId();
 
         $version = 1;
         $uniqueProcessId = null;
@@ -69,7 +69,7 @@ class ProcessManager extends AManager {
             $uniqueProcessId = $process->uniqueProcessId;
             $version = (int)($this->getHighestVersionForUniqueProcessId($uniqueProcessId)) + 1;
         } else {
-            $uniqueProcessId = $this->createId(EntityManager::PROCESSES_UNIQUE);
+            $uniqueProcessId = $this->createId();
         }
 
         if(!$this->processRepository->insertNewProcess($processId, $uniqueProcessId, $title, $description, base64_encode(json_encode($definition)), $authorId, $status, $version)) {

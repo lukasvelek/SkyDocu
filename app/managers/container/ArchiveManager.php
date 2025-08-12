@@ -9,7 +9,6 @@ use App\Exceptions\GeneralException;
 use App\Exceptions\NonExistingEntityException;
 use App\Logger\Logger;
 use App\Managers\AManager;
-use App\Managers\EntityManager;
 use App\Repositories\Container\ArchiveRepository;
 use QueryBuilder\QueryBuilder;
 
@@ -23,10 +22,9 @@ class ArchiveManager extends AManager {
 
     public function __construct(
         Logger $logger,
-        EntityManager $entityManager,
         ArchiveRepository $archiveRepository
     ) {
-        parent::__construct($logger, $entityManager);
+        parent::__construct($logger);
 
         $this->archiveRepository = $archiveRepository;
     }
@@ -38,7 +36,7 @@ class ArchiveManager extends AManager {
      * @param ?string $parentFolderId Parent Folder ID
      */
     public function createNewArchiveFolder(string $title, ?string $parentFolderId = null) {
-        $folderId = $this->createId(EntityManager::C_ARCHIVE_FOLDERS);
+        $folderId = $this->createId();
 
         if(!$this->archiveRepository->insertNewArchiveFolder($folderId, $title, $parentFolderId)) {
             throw new GeneralException('Database error.');
@@ -240,7 +238,7 @@ class ArchiveManager extends AManager {
      * @param string $folderId Folder ID
      */
     public function insertDocumentToArchiveFolder(string $documentId, string $folderId) {
-        $relationId = $this->createId(EntityManager::C_ARCHIVE_FOLDER_DOCUMENT_RELATION);
+        $relationId = $this->createId();
 
         if(!$this->archiveRepository->insertDocumentToArchiveFolder($relationId, $documentId, $folderId)) {
             throw new GeneralException('Database error.');

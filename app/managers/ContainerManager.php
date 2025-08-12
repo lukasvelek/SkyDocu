@@ -31,8 +31,8 @@ class ContainerManager extends AManager {
     private DatabaseConnection $masterConn;
     private ContainerDatabaseManager $containerDatabaseManager;
 
-    public function __construct(Logger $logger, EntityManager $entityManager, ContainerRepository $containerRepository, DatabaseManager $dbManager, GroupManager $groupManager, DatabaseConnection $masterConn, ContainerDatabaseManager $containerDatabaseManager) {
-        parent::__construct($logger, $entityManager);
+    public function __construct(Logger $logger, ContainerRepository $containerRepository, DatabaseManager $dbManager, GroupManager $groupManager, DatabaseConnection $masterConn, ContainerDatabaseManager $containerDatabaseManager) {
+        parent::__construct($logger);
 
         $this->containerRepository = $containerRepository;
         $this->dbManager = $dbManager;
@@ -64,7 +64,7 @@ class ContainerManager extends AManager {
      * @param int $status Container status
      */
     public function createNewContainer(string $title, string $description, string $callingUserId, bool $canShowReferent, int $status = ContainerStatus::NEW) {
-        $containerId = $this->createId(EntityManager::CONTAINERS);
+        $containerId = $this->createId();
         $databaseName = $this->generateContainerDatabaseName($containerId);
 
         $this->containerDatabaseManager->insertNewContainerDatabase($containerId, $databaseName, 'SkyDocu Database', 'Default SkyDocu database', true);
@@ -83,7 +83,7 @@ class ContainerManager extends AManager {
         }
 
         if($status != ContainerStatus::REQUESTED) {
-            $statusId = $this->createId(EntityManager::CONTAINER_CREATION_STATUS);
+            $statusId = $this->createId();
             if(!$this->containerRepository->createNewCreationStatusEntry($statusId, $containerId)) {
                 throw new GeneralException('Could not queue container for background creation.');
             }
@@ -158,7 +158,7 @@ class ContainerManager extends AManager {
      * @param string $description Description
      */
     public function changeContainerStatus(string $containerId, int $newStatus, string $callingUserId, string $description) {
-        $historyId = $this->createId(EntityManager::CONTAINER_STATUS_HISTORY);
+        $historyId = $this->createId();
 
         $container = $this->getContainerById($containerId);
 
@@ -297,13 +297,8 @@ class ContainerManager extends AManager {
         $userRepository = new UserRepository($this->containerRepository->conn, $this->logger, $this->containerRepository->transactionLogRepository);
         $groupRepository = new GroupRepository($conn, $this->logger, $this->containerRepository->transactionLogRepository);
         $contentRepository = new ContentRepository($conn, $this->logger, $this->containerRepository->transactionLogRepository);
-        $entityManager = new EntityManager($this->logger, $contentRepository, new ContentRepository(
-            $this->containerRepository->transactionLogRepository->db,
-            $this->logger,
-            $this->containerRepository->transactionLogRepository
-        ));
 
-        $groupManager = new Container\GroupManager($this->logger, $entityManager, $groupRepository, $userRepository);
+        $groupManager = new Container\GroupManager($this->logger, $groupRepository, $userRepository);
 
         $groupManager->addUserToGroupTitle(SystemGroups::ALL_USERS, $userId);
     }
@@ -387,7 +382,7 @@ class ContainerManager extends AManager {
             'status' => ContainerStatus::NEW
         ]);
 
-        $statusId = $this->createId(EntityManager::CONTAINER_CREATION_STATUS);
+        $statusId = $this->createId();
         if(!$this->containerRepository->createNewCreationStatusEntry($statusId, $containerId)) {
             throw new GeneralException('Could not queue container for background creation.');
         }

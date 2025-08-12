@@ -12,14 +12,14 @@ use App\Repositories\ContainerInviteRepository;
 class ContainerInviteManager extends AManager {
     private ContainerInviteRepository $containerInviteRepository;
 
-    public function __construct(Logger $logger, EntityManager $entityManager, ContainerInviteRepository $containerInviteRepository) {
-        parent::__construct($logger, $entityManager);
+    public function __construct(Logger $logger, ContainerInviteRepository $containerInviteRepository) {
+        parent::__construct($logger);
 
         $this->containerInviteRepository = $containerInviteRepository;
     }
 
     public function createContainerInvite(string $containerId, string $dateValid) {
-        $inviteId = $this->createId(EntityManager::CONTAINER_INVITES);
+        $inviteId = $this->createId();
 
         if(!$this->containerInviteRepository->createContainerInvite($inviteId, $containerId, $dateValid)) {
             throw new GeneralException('Database error.', null, false);
@@ -53,7 +53,7 @@ class ContainerInviteManager extends AManager {
     }
 
     public function insertNewContainerInviteUsage(string $inviteId, string $containerId, array $data) {
-        $entryId = $this->createId(EntityManager::CONTAINER_INVITE_USAGE);
+        $entryId = $this->createId();
 
         if(!$this->containerInviteRepository->insertContainerInviteUsage($entryId, $inviteId, $containerId, serialize($data))) {
             throw new GeneralException('Database error.', null, false);

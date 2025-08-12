@@ -4,13 +4,16 @@ namespace App\Authorizators;
 
 use App\Constants\Container\ProcessInstanceOfficerTypes;
 use App\Constants\Container\ProcessInstanceStatus;
+use App\Constants\Container\ReportRightOperations;
 use App\Constants\Container\SystemGroups;
 use App\Constants\JobQueueTypes;
 use App\Core\DatabaseConnection;
+use App\Helpers\ArrayHelper;
 use App\Logger\Logger;
 use App\Managers\Container\GroupManager;
 use App\Managers\Container\ProcessInstanceManager;
 use App\Managers\Container\ProcessManager;
+use App\Managers\Container\ProcessReportManager;
 use App\Managers\UserManager;
 use App\Repositories\JobQueueRepository;
 
@@ -25,8 +28,9 @@ class ContainerProcessAuthorizator extends AAuthorizator {
     private GroupManager $groupManager;
     private UserManager $userManager;
     private JobQueueRepository $jobQueueRepository;
+    private ProcessReportManager $processReportManager;
     
-    public function __construct(DatabaseConnection $conn, Logger $logger, ProcessManager $processManager, ProcessInstanceManager $processInstanceManager, GroupManager $groupManager, UserManager $userManager, JobQueueRepository $jobQueueRepository) {
+    public function __construct(DatabaseConnection $conn, Logger $logger, ProcessManager $processManager, ProcessInstanceManager $processInstanceManager, GroupManager $groupManager, UserManager $userManager, JobQueueRepository $jobQueueRepository, ProcessReportManager $processReportManager) {
         parent::__construct($conn, $logger);
 
         $this->processManager = $processManager;
@@ -34,6 +38,7 @@ class ContainerProcessAuthorizator extends AAuthorizator {
         $this->groupManager = $groupManager;
         $this->userManager = $userManager;
         $this->jobQueueRepository = $jobQueueRepository;
+        $this->processReportManager = $processReportManager;
     }
 
     /**
@@ -209,6 +214,75 @@ class ContainerProcessAuthorizator extends AAuthorizator {
         }
 
         return in_array($adminGroup, $userGroups) || in_array($processSupervisorGroup, $userGroups) || $isAuthor;
+    }
+
+    /**
+     * Returns true if user can read process report
+     * 
+     * @param string $userId User ID
+     * @param string $reportId Report ID
+     */
+    public function canUserReadProcessReport(string $userId, string $reportId): bool {
+        return in_array(ReportRightOperations::READ, $this->internalGetUserProcessReportRights($userId, $reportId));
+    }
+
+    /**
+     * Returns true if user can edit process report
+     * 
+     * @param string $userId User ID
+     * @param string $reportId Report ID
+     */
+    public function canUserEditProcessReport(string $userId, string $reportId): bool {
+        return in_array(ReportRightOperations::EDIT, $this->internalGetUserProcessReportRights($userId, $reportId));
+    }
+
+    /**
+     * Returns true if user can delete process report
+     * 
+     * @param string $userId User ID
+     * @param string $reportId Report ID
+     */
+    public function canUserDeleteProcessReport(string $userId, string $reportId): bool {
+        return in_array(ReportRightOperations::DELETE, $this->internalGetUserProcessReportRights($userId, $reportId));
+    }
+
+    /**
+     * Returns true if user can grant process report rights
+     * 
+     * @param string $userId User ID
+     * @param string $reportId Report ID
+     */
+    public function canUserGrantProcessReport(string $userId, string $reportId): bool {
+        return in_array(ReportRightOperations::GRANT, $this->internalGetUserProcessReportRights($userId, $reportId));
+    }
+
+    /**
+     * Returns an array of all rights user is granted on report
+     * 
+     * @param string $userId User ID
+     * @param string $reportId Report ID
+     */
+    private function internalGetUserProcessReportRights(string $userId, string $reportId): array {
+        // check user rights
+        $userRights = $this->processReportManager->getReportRightsForUser($reportId, $userId);
+
+        // check user groups
+        $userGroups = $this->groupManager->getGroupsForUser($userId);
+
+        // check user groups rights
+        $groupRights = [];
+        foreach($userGroups as $groupId) {
+            $current = $this->processReportManager->getReportRightsForGroup($reportId, $groupId);
+
+            foreach($current as $curr) {
+                if(!in_array($curr, $groupRights)) {
+                    $groupRights[] = $curr;
+                }
+            }
+        }
+
+        // merge list
+        return ArrayHelper::joinArrays($userRights, $groupRights);
     }
 }
 

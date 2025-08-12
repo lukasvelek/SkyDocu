@@ -7,6 +7,7 @@ use App\Authorizators\GroupStandardOperationsAuthorizator;
 use App\Authorizators\SupervisorAuthorizator;
 use App\Core\Caching\CacheFactory;
 use App\Entities\ContainerEntity;
+use App\Entities\UserEntity;
 use App\Logger\Logger;
 use App\Managers\Container\ArchiveManager;
 use App\Managers\Container\DocumentManager;
@@ -19,6 +20,7 @@ use App\Managers\Container\MetadataManager;
 use App\Managers\Container\ProcessInstanceManager;
 use App\Managers\Container\ProcessManager;
 use App\Managers\Container\ProcessMetadataManager;
+use App\Managers\Container\ProcessReportManager;
 use App\Managers\EntityManager;
 use App\Repositories\Container\ArchiveRepository;
 use App\Repositories\Container\DocumentClassRepository;
@@ -30,6 +32,8 @@ use App\Repositories\Container\GroupRepository;
 use App\Repositories\Container\MetadataRepository;
 use App\Repositories\Container\ProcessInstanceRepository;
 use App\Repositories\Container\ProcessMetadataRepository;
+use App\Repositories\Container\ProcessReportRightsRepository;
+use App\Repositories\Container\ProcessReportsRepository;
 use App\Repositories\Container\ProcessRepository;
 use App\Repositories\ContentRepository;
 use ReflectionClass;
@@ -58,6 +62,8 @@ class Container {
     public FileStorageRepository $fileStorageRepository;
     public ProcessInstanceRepository $processInstanceRepository;
     public ProcessMetadataRepository $processMetadataRepository;
+    public ProcessReportsRepository $processReportsRepository;
+    public ProcessReportRightsRepository $processReportRightsRepository;
     
     public EntityManager $entityManager;
     public FolderManager $folderManager;
@@ -71,6 +77,7 @@ class Container {
     public ProcessManager $processManager;
     public ProcessInstanceManager $processInstanceManager;
     public ProcessMetadataManager $processMetadataManager;
+    public ProcessReportManager $processReportManager;
 
     public GroupStandardOperationsAuthorizator $groupStandardOperationsAuthorizator;
     public SupervisorAuthorizator $supervisorAuthorizator;
@@ -119,7 +126,7 @@ class Container {
         
         $this->groupStandardOperationsAuthorizator = new GroupStandardOperationsAuthorizator($this->conn, $this->logger, $this->groupManager);
         $this->supervisorAuthorizator = new SupervisorAuthorizator($this->conn, $this->logger, $this->groupManager);
-        $this->containerProcessAuthorizator = new ContainerProcessAuthorizator($this->conn, $this->logger, $this->processManager, $this->processInstanceManager, $this->groupManager, $this->app->userManager, $this->app->jobQueueRepository);
+        $this->containerProcessAuthorizator = new ContainerProcessAuthorizator($this->conn, $this->logger, $this->processManager, $this->processInstanceManager, $this->groupManager, $this->app->userManager, $this->app->jobQueueRepository, $this->processReportManager);
 
         $this->injectCacheFactoryToAuthorizators();
 
@@ -178,6 +185,11 @@ class Container {
             ],
             'processMetadataManager' => [
                 'processMetadataRepository'
+            ],
+            'processReportManager' => [
+                'processReportsRepository',
+                'processReportRightsRepository',
+                'groupManager'
             ]
         ];
 
@@ -274,6 +286,28 @@ class Container {
                 $this->$name->injectCacheFactory($this->cacheFactory);
             }
         }
+    }
+
+    /**
+     * Returns all container users
+     * 
+     * @return array<int, \App\Entities\UserEntity>
+     */
+    public function getContainerUsers(): array {
+        $container = $this->app->containerManager->getContainerById($this->containerId);
+
+        $groupUsers = $this->app->groupManager->getGroupUsersForGroupTitle($container->getTitle() . ' - users');
+
+        $qb = $this->app->userRepository->composeQueryForUsers();
+        $qb->andWhere($qb->getColumnInValues('userId', $groupUsers))
+            ->execute();
+
+        $users = [];
+        while($row = $qb->fetchAssoc()) {
+            $users[] = UserEntity::createEntityFromDbRow($row);
+        }
+
+        return $users;
     }
 }
 

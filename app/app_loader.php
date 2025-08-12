@@ -177,7 +177,7 @@ function checkDefines() {
     ];
     foreach($defines as $define) {
         if(!defined($define)) {
-            throw new UndefinedConstantException($define);
+            throw new Exception('Constant \'' . $define . '\' is not defined.');
         }
     }
 }

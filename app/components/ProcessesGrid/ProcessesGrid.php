@@ -3,6 +3,7 @@
 namespace App\Components\ProcessesGrid;
 
 use App\Authorizators\ContainerProcessAuthorizator;
+use App\Constants\Container\ProcessGridViews;
 use App\Constants\Container\ProcessInstanceOfficerTypes;
 use App\Constants\Container\ProcessInstanceStatus;
 use App\Constants\Container\SystemGroups;
@@ -106,24 +107,26 @@ class ProcessesGrid extends GridBuilder implements IGridExtendingComponent {
 
         $this->addColumnText('description', 'Description');
 
-        $col = $this->addColumnText('currentOfficer', 'Officer');
-        $col->onRenderColumn[] = function(DatabaseRow $row, Row $_row, Cell $cell, HTML $html, mixed $value) {
-            $el = HTML::el('span');
+        if($this->view != ProcessGridViews::VIEW_WAITING_FOR_ME) {
+            $col = $this->addColumnText('currentOfficer', 'Officer');
+            $col->onRenderColumn[] = function(DatabaseRow $row, Row $_row, Cell $cell, HTML $html, mixed $value) {
+                $el = HTML::el('span');
 
-            if($row->currentOfficerType == ProcessInstanceOfficerTypes::GROUP) {
-                $group = $this->groupManager->getGroupById($row->currentOfficerId);
+                if($row->currentOfficerType == ProcessInstanceOfficerTypes::GROUP) {
+                    $group = $this->groupManager->getGroupById($row->currentOfficerId);
 
-                $el->text(SystemGroups::toString($group->title));
-            } else if($row->currentOfficerType == ProcessInstanceOfficerTypes::USER) {
-                $user = $this->app->userManager->getUserById($row->currentOfficerId);
+                    $el->text(SystemGroups::toString($group->title));
+                } else if($row->currentOfficerType == ProcessInstanceOfficerTypes::USER) {
+                    $user = $this->app->userManager->getUserById($row->currentOfficerId);
 
-                $el->text($user->getFullname());
-            } else {
-                return null;
-            }
+                    $el->text($user->getFullname());
+                } else {
+                    return null;
+                }
 
-            return $el;
-        };
+                return $el;
+            };
+        }
 
         $this->addColumnConst('status', 'Status', ProcessInstanceStatus::class);
     }

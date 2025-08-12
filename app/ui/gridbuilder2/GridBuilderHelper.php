@@ -10,6 +10,7 @@ use App\Core\Http\Ajax\Operations\HTMLPageOperation;
 use App\Core\Http\Ajax\Requests\AAjaxRequest;
 use App\Core\Http\Ajax\Requests\PostAjaxRequest;
 use App\Core\Http\HttpRequest;
+use App\Exceptions\AException;
 use App\Helpers\AppThemeHelper;
 use App\Helpers\ArrayHelper;
 use App\Helpers\DateTimeFormatHelper;
@@ -461,11 +462,12 @@ class GridBuilderHelper {
                 if($value === null) {
                     return $value;
                 }
-                $user = $this->app->userManager->getUserById($value);
-                if($user === null) {
-                    return $value;
-                } else {
+                try {
+                    $user = $this->app->userManager->getUserById($value);
+
                     return $user->getFullname();
+                } catch(AException $e) {
+                    return $value;
                 }
             };
 

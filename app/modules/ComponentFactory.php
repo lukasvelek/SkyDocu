@@ -61,6 +61,8 @@ class ComponentFactory {
         $grid->setHelper($helper);
         $grid->setCacheFactory($this->getCacheFactory());
         $grid->setContainerId($containerId);
+        $grid->setApplication($this->app);
+        $grid->setPresenter($this->presenter);
         return $grid;
     }
     
@@ -129,7 +131,10 @@ class ComponentFactory {
         $obj = new $className($this->request, ...$params);
 
         $obj->setApplication($this->app);
-        $obj->setPresenter($this->presenter);
+
+        $presenter = &$this->presenter;
+
+        $obj->setPresenter($presenter);
 
         return $obj;
     }

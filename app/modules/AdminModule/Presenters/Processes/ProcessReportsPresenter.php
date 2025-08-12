@@ -532,7 +532,13 @@ class ProcessReportsPresenter extends AAdminPresenter {
         $this->redirect('listRights', ['reportId' => $reportId]);
     }
 
-    public function renderGrantRightForm() {}
+    public function renderGrantRightForm() {
+        $links = [
+            $this->createBackUrl('listRights', ['reportId' => $this->httpRequest->get('reportId')])
+        ];
+
+        $this->template->links = LinkHelper::createLinksFromArray($links);
+    }
 
     protected function createComponentGrantReportRightForm() {
         $reportId = $this->httpRequest->get('reportId');
@@ -551,10 +557,46 @@ class ProcessReportsPresenter extends AAdminPresenter {
         $form->addSelect('operation', 'Operation:')
             ->setDisabled();
 
+        $form->addSubmit('Grant');
+
         $form->setCallReducerOnChange();
         $form->reducer = new ProcessReportGrantRightFormReducer($this->app, $this->httpRequest);
         $form->reducer->setContainerId($this->containerId);
 
         return $form;
+    }
+
+    public function handleGrantRightFormSubmit(FormRequest $fr) {
+        $reportId = $this->httpRequest->get('reportId');
+
+        try {
+            $this->processReportRightsRepository->beginTransaction(__METHOD__);
+
+            $this->processReportManager->grantReportRightToEntity($reportId, $fr->entityId, $fr->entityType, $fr->operation);
+
+            $this->processReportRightsRepository->commit($this->getUserId(), __METHOD__);
+
+            $type = '';
+            $name = '';
+            if($fr->entityType == ReportRightEntityType::GROUP) {
+                $group = $this->groupManager->getGroupById($fr->entityId);
+
+                $name = SystemGroups::toString($group);
+                $type = 'group';
+            } else {
+                $user = $this->app->userManager->getUserById($fr->entityId);
+
+                $name = $user->getFullname();
+                $type = 'user';
+            }
+
+            $this->flashMessage(sprintf('Successfully granted right for operation <b>%s</b> to %s %s.', ReportRightOperations::toString($fr->operation), $type, $name), 'success');
+        } catch(AException $e) {
+            $this->processReportRightsRepository->rollback(__METHOD__);
+
+            $this->flashMessage('Could not grant right for operation. Reason: ' . $e->getMessage(), 'error', 10);
+        }
+
+        $this->redirect($this->createURL('listRights', ['reportId' => $reportId]));
     }
 }

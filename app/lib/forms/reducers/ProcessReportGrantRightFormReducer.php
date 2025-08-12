@@ -17,14 +17,27 @@ class ProcessReportGrantRightFormReducer extends ABaseFormReducer {
                 $stateList->entityId->selectValues = $entities;
                 $stateList->entityId->isDisabled = false;
 
-                $rights = $this->getAvailableOperationsForEntity($entities[0]['value'], $stateList->entityType->value);;
+                $rights = $this->getAvailableOperationsForEntity($entities[0]['value'], $stateList->entityType->value);
 
                 $stateList->operation->selectValues = $rights;
+                if(count($rights) > 0) {
+                    $stateList->operation->value = $rights[0]['value'];
+                }
+                $stateList->operation->isDisabled = false;
             } else {
                 $stateList->entityId->selectvalues = [];
                 $stateList->entityId->isDisabled = true;
                 $stateList->operation->selectValues = [];
                 $stateList->operation->isDisabled = true;
+            }
+        }
+
+        if($stateList->getCallingElementName() == 'entityId') {
+            $rights = $this->getAvailableOperationsForEntity($stateList->entityId->value, $stateList->entityType->value);
+
+            $stateList->operation->selectValues = $rights;
+            if(count($rights) > 0) {
+                $stateList->operation->value = $rights[0]['value'];
             }
         }
     }
@@ -35,14 +48,12 @@ class ProcessReportGrantRightFormReducer extends ABaseFormReducer {
 
         if(count($entities) > 0) {
             $stateList->entityId->isDisabled = false;
+            $stateList->operation->isDisabled = false;
         } else {
-            $stateList->entityId->selectValues = [
-                [
-                    'value' => 'null',
-                    'text' => 'Empty'
-                ]
-            ];
+            $stateList->entityId->selectValues = [];
             $stateList->entityId->isDisabled = true;
+            $stateList->operation->selectValues = [];
+            $stateList->operation->isDisabled = true;
         }
     }
 

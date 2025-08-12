@@ -118,9 +118,13 @@ class FormStateListHelper {
         return $stateList;
     }
 
-    private function processSelectValues(string $data) {
-        $data = json_decode(base64_decode($data), true);
-        return $data;
+    /**
+     * Processes select values for select elements
+     * 
+     * @param string $data Data encoded in base64
+     */
+    private function processSelectValues(string $data): array {
+        return json_decode(base64_decode($data), true);
     }
 
     /**

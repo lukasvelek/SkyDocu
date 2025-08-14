@@ -21,7 +21,6 @@ use App\Managers\Container\ProcessInstanceManager;
 use App\Managers\Container\ProcessManager;
 use App\Managers\Container\ProcessMetadataManager;
 use App\Managers\Container\ProcessReportManager;
-use App\Managers\EntityManager;
 use App\Repositories\Container\ArchiveRepository;
 use App\Repositories\Container\DocumentClassRepository;
 use App\Repositories\Container\DocumentRepository;
@@ -65,7 +64,6 @@ class Container {
     public ProcessReportsRepository $processReportsRepository;
     public ProcessReportRightsRepository $processReportRightsRepository;
     
-    public EntityManager $entityManager;
     public FolderManager $folderManager;
     public DocumentManager $documentManager;
     public GroupManager $groupManager;
@@ -111,13 +109,12 @@ class Container {
 
         $this->initRepositories();
 
-        $this->entityManager = new EntityManager($this->logger, $this->contentRepository, $this->app->contentRepository);
-        $this->folderManager = new FolderManager($this->logger, $this->entityManager, $this->folderRepository, $this->groupRepository);
-        $this->documentManager = new DocumentManager($this->logger, $this->entityManager, $this->documentRepository, $this->documentClassRepository, $this->groupRepository, $this->folderRepository);
-        $this->groupManager = new GroupManager($this->logger, $this->entityManager, $this->groupRepository, $this->app->userRepository);
-        $this->metadataManager = new MetadataManager($this->logger, $this->entityManager, $this->metadataRepository, $this->folderRepository);
-        $this->enumManager = new EnumManager($this->logger, $this->entityManager, $this->app->userRepository, $this->app->groupManager, $this->container);
-        $this->gridManager = new GridManager($this->logger, $this->entityManager, $this->gridRepository);
+        $this->folderManager = new FolderManager($this->logger,  $this->folderRepository, $this->groupRepository);
+        $this->documentManager = new DocumentManager($this->logger,  $this->documentRepository, $this->documentClassRepository, $this->groupRepository, $this->folderRepository);
+        $this->groupManager = new GroupManager($this->logger,  $this->groupRepository, $this->app->userRepository);
+        $this->metadataManager = new MetadataManager($this->logger,  $this->metadataRepository, $this->folderRepository);
+        $this->enumManager = new EnumManager($this->logger,  $this->app->userRepository, $this->app->groupManager, $this->container);
+        $this->gridManager = new GridManager($this->logger,  $this->gridRepository);
 
         $this->initManagers();
         $this->injectCacheFactoryToManagers();
@@ -201,8 +198,7 @@ class Container {
                 $className = (string)$class;
 
                 $realArgs = [
-                    $this->logger,
-                    $this->entityManager
+                    $this->logger
                 ];
                 foreach($args as $arg) {
                     if($arg == ':currentUser') {
@@ -223,7 +219,7 @@ class Container {
                  * @var \App\Managers\AManager $obj
                  */
                 $obj = new $className(...$realArgs);
-                $obj->inject($this->logger, $this->entityManager);
+                $obj->inject($this->logger);
                 $this->{$varName} = $obj;
             } else {
                 $notFound[] = $varName;
@@ -244,7 +240,7 @@ class Container {
                      * @var \App\Managers\AManager $obj
                      */
                     $obj = new $className(...$args);
-                    $obj->inject($this->logger, $this->entityManager);
+                    $obj->inject($this->logger);
                     $this->{$varName} = $obj;
                     $this->_reflectionParamsCache[$varName] = $class;
                 }

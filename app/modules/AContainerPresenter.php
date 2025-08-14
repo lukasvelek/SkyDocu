@@ -20,7 +20,6 @@ use App\Managers\Container\ProcessInstanceManager;
 use App\Managers\Container\ProcessManager;
 use App\Managers\Container\ProcessMetadataManager;
 use App\Managers\Container\ProcessReportManager;
-use App\Managers\EntityManager;
 use App\Repositories\Container\ArchiveRepository;
 use App\Repositories\Container\DocumentClassRepository;
 use App\Repositories\Container\DocumentRepository;
@@ -58,7 +57,6 @@ abstract class AContainerPresenter extends APresenter {
     protected ProcessReportsRepository $processReportsRepository;
     protected ProcessReportRightsRepository $processReportRightsRepository;
     
-    protected EntityManager $entityManager;
     protected FolderManager $folderManager;
     protected DocumentManager $documentManager;
     protected GroupManager $groupManager;
@@ -104,13 +102,12 @@ abstract class AContainerPresenter extends APresenter {
 
         $this->initRepositories($containerConnection);
 
-        $this->entityManager = new EntityManager($this->logger, $this->contentRepository, $this->app->contentRepository);
-        $this->folderManager = new FolderManager($this->logger, $this->entityManager, $this->folderRepository, $this->groupRepository);
-        $this->documentManager = new DocumentManager($this->logger, $this->entityManager, $this->documentRepository, $this->documentClassRepository, $this->groupRepository, $this->folderRepository);
-        $this->groupManager = new GroupManager($this->logger, $this->entityManager, $this->groupRepository, $this->app->userRepository);
-        $this->metadataManager = new MetadataManager($this->logger, $this->entityManager, $this->metadataRepository, $this->folderRepository);
-        $this->enumManager = new EnumManager($this->logger, $this->entityManager, $this->app->userRepository, $this->app->groupManager, $container);
-        $this->gridManager = new GridManager($this->logger, $this->entityManager, $this->gridRepository);
+        $this->folderManager = new FolderManager($this->logger,  $this->folderRepository, $this->groupRepository);
+        $this->documentManager = new DocumentManager($this->logger,  $this->documentRepository, $this->documentClassRepository, $this->groupRepository, $this->folderRepository);
+        $this->groupManager = new GroupManager($this->logger,  $this->groupRepository, $this->app->userRepository);
+        $this->metadataManager = new MetadataManager($this->logger,  $this->metadataRepository, $this->folderRepository);
+        $this->enumManager = new EnumManager($this->logger,  $this->app->userRepository, $this->app->groupManager, $container);
+        $this->gridManager = new GridManager($this->logger,  $this->gridRepository);
 
         $this->initManagers();
         $this->injectCacheFactoryToManagers();
@@ -163,8 +160,7 @@ abstract class AContainerPresenter extends APresenter {
                 $className = (string)$class;
 
                 $realArgs = [
-                    $this->logger,
-                    $this->entityManager
+                    $this->logger
                 ];
                 foreach($args as $arg) {
                     if(str_starts_with($arg, ':')) {
@@ -179,7 +175,7 @@ abstract class AContainerPresenter extends APresenter {
                  * @var \App\Managers\AManager $obj
                  */
                 $obj = new $className(...$realArgs);
-                $obj->inject($this->logger, $this->entityManager);
+                $obj->inject($this->logger);
                 $this->{$varName} = $obj;
             } else {
                 $notFound[] = $varName;
@@ -200,7 +196,7 @@ abstract class AContainerPresenter extends APresenter {
                      * @var \App\Managers\AManager $obj
                      */
                     $obj = new $className(...$args);
-                    $obj->inject($this->logger, $this->entityManager);
+                    $obj->inject($this->logger);
                     $this->{$varName} = $obj;
                     $this->_reflectionParamsCache[$varName] = $class;
                 }

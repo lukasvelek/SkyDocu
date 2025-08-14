@@ -9,7 +9,6 @@ use App\Exceptions\GeneralException;
 use App\Exceptions\NonExistingEntityException;
 use App\Logger\Logger;
 use App\Managers\AManager;
-use App\Managers\EntityManager;
 use App\Repositories\Container\ProcessReportRightsRepository;
 use App\Repositories\Container\ProcessReportsRepository;
 use App\UI\GridBuilder2\GridBuilder;
@@ -28,12 +27,11 @@ class ProcessReportManager extends AManager {
 
     public function __construct(
         Logger $logger,
-        EntityManager $entityManager,
         ProcessReportsRepository $processReportsRepository,
         ProcessReportRightsRepository $processReportRightsRepository,
         GroupManager $groupManager
     ) {
-        parent::__construct($logger, $entityManager);
+        parent::__construct($logger);
 
         $this->processReportsRepository = $processReportsRepository;
         $this->processReportRightsRepository = $processReportRightsRepository;
@@ -81,7 +79,7 @@ class ProcessReportManager extends AManager {
         string $title,
         ?string $description
     ): string {
-        $reportId = $this->createId(EntityManager::C_REPORTS);
+        $reportId = $this->createId();
 
         $data = [
             'reportId' => $reportId,
@@ -174,7 +172,7 @@ class ProcessReportManager extends AManager {
      * @throws GeneralException
      */
     public function grantReportRightToEntity(string $reportId, string $entityId, int $entityType, string $operation) {
-        $rightId = $this->createId(EntityManager::C_REPORT_RIGHTS);
+        $rightId = $this->createId();
 
         $data = [
             'rightId' => $rightId,

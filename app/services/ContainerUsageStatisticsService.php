@@ -5,8 +5,8 @@ namespace App\Services;
 use App\Constants\ContainerStatus;
 use App\Core\Application;
 use App\Core\FileManager;
+use App\Core\GUID;
 use App\Exceptions\AException;
-use App\Managers\EntityManager;
 use Exception;
 
 class ContainerUsageStatisticsService extends AService {
@@ -172,7 +172,7 @@ class ContainerUsageStatisticsService extends AService {
                 try {
                     $this->app->containerRepository->beginTransaction(__METHOD__);
                     
-                    $entryId = $this->app->containerManager->entityManager->generateEntityId(EntityManager::CONTAINER_USAGE_STATISTICS);
+                    $entryId = GUID::generate();
 
                     $this->app->containerRepository->insertNewContainerUsageStatisticsEntry($entryId, $containerId, $totalSqlQueries, $averageTimeTaken, $date, $totalTimeTaken);
 

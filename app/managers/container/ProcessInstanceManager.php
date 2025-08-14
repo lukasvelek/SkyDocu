@@ -10,7 +10,6 @@ use App\Entities\ProcessInstanceDataEntity;
 use App\Exceptions\GeneralException;
 use App\Logger\Logger;
 use App\Managers\AManager;
-use App\Managers\EntityManager;
 use App\Managers\UserManager;
 use App\Repositories\Container\ProcessInstanceRepository;
 
@@ -26,12 +25,11 @@ class ProcessInstanceManager extends AManager {
 
     public function __construct(
         Logger $logger,
-        EntityManager $entityManager,
         ProcessInstanceRepository $processInstanceRepository,
         GroupManager $groupManager,
         UserManager $userManager
     ) {
-        parent::__construct($logger, $entityManager);
+        parent::__construct($logger);
 
         $this->processInstanceRepository = $processInstanceRepository;
         $this->groupManager = $groupManager;
@@ -42,7 +40,7 @@ class ProcessInstanceManager extends AManager {
      * Generates unique process instance ID
      */
     public function generateUniqueInstanceId(): ?string {
-        return $this->createId(EntityManager::C_PROCESS_INSTANCES);
+        return $this->createId();
     }
 
     /**

@@ -9,7 +9,6 @@ use App\Core\DB\AContainerBaseMigration;
 use App\Core\DB\Helpers\TableSchema;
 use App\Core\DB\Helpers\TableSeeding;
 use App\Exceptions\GeneralException;
-use App\Managers\EntityManager;
 
 /**
  * This is the initial migration that defines the database schema for each SkyDocu container.
@@ -221,27 +220,27 @@ class migration_2025_03_15_0001_initial extends AContainerBaseMigration {
 
         $groupIds = [];
         foreach(SystemGroups::getAll() as $value => $text) {
-            $groupIds[$value] = $this->getId(EntityManager::C_GROUPS);
+            $groupIds[$value] = $this->getId();
         }
 
         $folderIds = [
-            'Default' => $this->getId(EntityManager::C_DOCUMENT_FOLDERS),
-            'Invoices' => $this->getId(EntityManager::C_DOCUMENT_FOLDERS)
+            'Default' => $this->getId(),
+            'Invoices' => $this->getId()
         ];
 
         $classIds = [
-            'Default' => $this->getId(EntityManager::C_DOCUMENT_CLASSES),
-            'Invoices' => $this->getId(EntityManager::C_DOCUMENT_CLASSES)
+            'Default' => $this->getId(),
+            'Invoices' => $this->getId()
         ];
 
         $metadataIds = [
-            InvoiceCustomMetadata::COMPANY => $this->getId(EntityManager::C_CUSTOM_METADATA),
-            InvoiceCustomMetadata::SUM => $this->getId(EntityManager::C_CUSTOM_METADATA),
-            InvoiceCustomMetadata::INVOICE_NO => $this->getId(EntityManager::C_CUSTOM_METADATA),
-            InvoiceCustomMetadata::SUM_CURRENCY => $this->getId(EntityManager::C_CUSTOM_METADATA),
+            InvoiceCustomMetadata::COMPANY => $this->getId(),
+            InvoiceCustomMetadata::SUM => $this->getId(),
+            InvoiceCustomMetadata::INVOICE_NO => $this->getId(),
+            InvoiceCustomMetadata::SUM_CURRENCY => $this->getId(),
         ];
 
-        $seed->seed(EntityManager::C_DOCUMENT_CLASSES)
+        $seed->seed('document_classes')
             ->add([
                 'classId' => $classIds['Default'],
                 'title' => 'Default'
@@ -251,9 +250,9 @@ class migration_2025_03_15_0001_initial extends AContainerBaseMigration {
                 'title' => 'Invoices'
             ]);
 
-        $seed->seed(EntityManager::C_DOCUMENT_CLASS_GROUP_RIGHTS)
+        $seed->seed('document_class_group_rights')
             ->add([
-                'rightId' => $this->getId(EntityManager::C_DOCUMENT_CLASS_GROUP_RIGHTS),
+                'rightId' => $this->getId(),
                 'groupId' => $groupIds[SystemGroups::ACCOUNTANTS],
                 'classId' => $classIds['Invoices'],
                 'canView' => 1,
@@ -261,14 +260,14 @@ class migration_2025_03_15_0001_initial extends AContainerBaseMigration {
                 'canEdit' => 1
             ])
             ->add([
-                'rightId' => $this->getId(EntityManager::C_DOCUMENT_CLASS_GROUP_RIGHTS),
+                'rightId' => $this->getId(),
                 'groupId' => $groupIds[SystemGroups::ALL_USERS],
                 'classId' => $classIds['Default'],
                 'canView' => 1,
                 'canCreate' => 1
             ])
             ->add([
-                'rightId' => $this->getId(EntityManager::C_DOCUMENT_CLASS_GROUP_RIGHTS),
+                'rightId' => $this->getId(),
                 'groupId' => $groupIds[SystemGroups::ADMINISTRATORS],
                 'classId' => $classIds['Default'],
                 'canView' => 1,
@@ -277,7 +276,7 @@ class migration_2025_03_15_0001_initial extends AContainerBaseMigration {
                 'canDelete' => 1
             ]);
 
-        $seed->seed(EntityManager::C_DOCUMENT_FOLDERS)
+        $seed->seed('document_folders')
             ->add([
                 'folderId' => $folderIds['Default'],
                 'title' => 'Default',
@@ -289,16 +288,16 @@ class migration_2025_03_15_0001_initial extends AContainerBaseMigration {
                 'isSystem' => 1
             ]);
 
-        $seed->seed(EntityManager::C_DOCUMENT_FOLDER_GROUP_RELATION)
+        $seed->seed('document_folder_group_relation')
             ->add([
-                'relationId' => $this->getId(EntityManager::C_DOCUMENT_FOLDER_GROUP_RELATION),
+                'relationId' => $this->getId(),
                 'folderId' => $folderIds['Default'],
                 'groupId' => $groupIds[SystemGroups::ALL_USERS],
                 'canView' => 1,
                 'canCreate' => 1
             ])
             ->add([
-                'relationId' => $this->getId(EntityManager::C_DOCUMENT_FOLDER_GROUP_RELATION),
+                'relationId' => $this->getId(),
                 'folderId' => $folderIds['Default'],
                 'groupId' => $groupIds[SystemGroups::ADMINISTRATORS],
                 'canView' => 1,
@@ -307,7 +306,7 @@ class migration_2025_03_15_0001_initial extends AContainerBaseMigration {
                 'canDelete' => 1
             ])
             ->add([
-                'relationId' => $this->getId(EntityManager::C_DOCUMENT_FOLDER_GROUP_RELATION),
+                'relationId' => $this->getId(),
                 'folderId' => $folderIds['Invoices'],
                 'groupId' => $groupIds[SystemGroups::ACCOUNTANTS],
                 'canView' => 1,
@@ -315,23 +314,23 @@ class migration_2025_03_15_0001_initial extends AContainerBaseMigration {
                 'canEdit' => 1
             ]);
 
-        $seed->seed(EntityManager::C_GROUP_STANDARD_OPERATION_RIGHTS)
+        $seed->seed('group_rights_standard_operations')
             ->add([
-                'rightId' => $this->getId(EntityManager::C_GROUP_STANDARD_OPERATION_RIGHTS),
+                'rightId' => $this->getId(),
                 'groupId' => $groupIds[SystemGroups::ADMINISTRATORS],
                 'canShareDocuments' => 1,
                 'canExportDocuments' => 1,
                 'canViewDocumentHistory' => 1
             ]);
 
-        $seed->seed(EntityManager::C_ARCHIVE_FOLDERS)
+        $seed->seed('archive_folders')
             ->add([
                 'folderId' => $folderIds['Default'],
                 'title' => 'Default',
                 'isSystem' => 1
             ]);
 
-        $seed->seed(EntityManager::C_CUSTOM_METADATA)
+        $seed->seed('custom_metadata')
             ->add([
                 'metadataId' => $metadataIds['Invoices_SumCurrency'],
                 'title' => InvoiceCustomMetadata::SUM_CURRENCY,
@@ -361,17 +360,17 @@ class migration_2025_03_15_0001_initial extends AContainerBaseMigration {
                 'isRequired' => 1
             ]);
 
-        $metadataFolderRelationSeed = $seed->seed(EntityManager::C_CUSTOM_METADATA_FOLDER_RELATION);
+        $metadataFolderRelationSeed = $seed->seed('document_folder_custom_metadata_relation');
 
         foreach($metadataIds as $title => $id) {
             $metadataFolderRelationSeed->add([
-                'relationId' => $this->getId(EntityManager::C_CUSTOM_METADATA_FOLDER_RELATION),
+                'relationId' => $this->getId(),
                 'customMetadataId' => $id,
                 'folderId' => $folderIds['Invoices']
             ]);
         }
 
-        $groupSeed = $seed->seed(EntityManager::C_GROUPS);
+        $groupSeed = $seed->seed('groups');
 
         foreach($groupIds as $value => $groupId) {
             $groupSeed->add([
@@ -380,12 +379,12 @@ class migration_2025_03_15_0001_initial extends AContainerBaseMigration {
             ]);
         }
 
-        $groupUserSeed = $seed->seed(EntityManager::C_GROUP_USERS_RELATION);
+        $groupUserSeed = $seed->seed('group_users_relation');
 
         foreach($users as $userId) {
             foreach($groupIds as $name => $groupId) {
                 $groupUserSeed->add([
-                    'relationId' => $this->getId(EntityManager::C_GROUP_USERS_RELATION),
+                    'relationId' => $this->getId(),
                     'userId' => $userId,
                     'groupId' => $groupId
                 ]);

@@ -5,9 +5,9 @@ namespace App\Core\DB;
 use App\Core\DatabaseConnection;
 use App\Core\DB\Helpers\TableSchema;
 use App\Core\DB\Helpers\TableSeeding;
+use App\Core\GUID;
 use App\Core\HashManager;
 use App\Logger\Logger;
-use App\Managers\EntityManager;
 use QueryBuilder\QueryBuilder;
 
 /**
@@ -85,38 +85,10 @@ abstract class ABaseMigration {
     }
 
     /**
-     * Generates unique ID
-     * 
-     * @param string $tableName Table name
-     * @param ?string $primaryKeyName Primary key name or null for auto-complete
+     * Generates GUID
      */
-    protected function getId(string $tableName, ?string $primaryKeyName = null): ?string {
-        if($primaryKeyName === null) {
-            $primaryKeyName = EntityManager::getPrimaryKeyNameByCategory($tableName);
-        }
-
-        $runs = 0;
-        $maxRuns = 1000;
-
-        $final = null;
-        while($runs < $maxRuns) {
-            $id = HashManager::createEntityId();
-
-            $result = $this->conn->query('SELECT COUNT(' . $primaryKeyName . ') AS cnt FROM ' . $tableName . ' WHERE ' . $primaryKeyName . ' = \'' . $id . '\'');
-
-            if($result !== false) {
-                foreach($result as $row) {
-                    if($row['cnt'] == 0) {
-                        $final = $id;
-                        break;
-                    }
-                }
-            }
-
-            $runs++;
-        }
-
-        return $final;
+    protected function getId(): string {
+        return GUID::generate();
     }
 
     /**

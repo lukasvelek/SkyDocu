@@ -16,8 +16,8 @@ class GroupManager extends AManager {
     private GroupRepository $groupRepository;
     private GroupMembershipRepository $groupMembershipRepository;
 
-    public function __construct(Logger $logger, EntityManager $entityManager, GroupRepository $groupRepository, GroupMembershipRepository $groupMembershipRepository) {
-        parent::__construct($logger, $entityManager);
+    public function __construct(Logger $logger, GroupRepository $groupRepository, GroupMembershipRepository $groupMembershipRepository) {
+        parent::__construct($logger);
 
         $this->groupRepository = $groupRepository;
         $this->groupMembershipRepository = $groupMembershipRepository;
@@ -40,7 +40,7 @@ class GroupManager extends AManager {
     }
 
     public function createNewGroup(string $title, array $userIdsToAdd = [], ?string $containerId = null) {
-        $groupId = $this->createId(EntityManager::GROUPS);
+        $groupId = $this->createId();
 
         if(!$this->groupRepository->createNewGroup($groupId, $title, $containerId)) {
             throw new GeneralException('Could not create group.');
@@ -49,7 +49,7 @@ class GroupManager extends AManager {
         if(!empty($userIdsToAdd)) {
             foreach($userIdsToAdd as $userId) {
                 try {
-                    $groupUserId = $this->createId(EntityManager::GROUP_USERS);
+                    $groupUserId = $this->createId();
 
                     if(!$this->groupMembershipRepository->addUserToGroup($groupUserId, $groupId, $userId)) {
                         throw new GeneralException('Could not add user to group.');
@@ -80,7 +80,7 @@ class GroupManager extends AManager {
     }
 
     public function addUserToGroup(string $userId, string $groupId) {
-        $groupUserId = $this->createId(EntityManager::GROUP_USERS);
+        $groupUserId = $this->createId();
 
         if(!$this->groupMembershipRepository->addUserToGroup($groupUserId, $groupId, $userId)) {
             throw new GeneralException('User is probably member of the group.');

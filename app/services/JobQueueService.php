@@ -7,8 +7,8 @@ use App\Constants\JobQueueProcessingHistoryTypes;
 use App\Constants\JobQueueTypes;
 use App\Core\Application;
 use App\Core\DB\DatabaseRow;
+use App\Core\GUID;
 use App\Exceptions\AException;
-use App\Managers\EntityManager;
 use Exception;
 
 class JobQueueService extends AService {
@@ -272,7 +272,7 @@ class JobQueueService extends AService {
                     $this->logJob($job, sprintf('Creating new metadata for process.'));
                     foreach($cMetadata as $name) {
                         $data = [
-                            'metadataId' => $container->entityManager->generateEntityId(EntityManager::C_PROCESS_CUSTOM_METADATA),
+                            'metadataId' => GUID::generate(),
                             'uniqueProcessId' => $process->getUniqueProcessId(),
                             'title' => $name,
                             'guiTitle' => $process->getMetadataDefinitionForMetadataName($name)['label'],

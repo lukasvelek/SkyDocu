@@ -16,7 +16,6 @@ use App\Logger\Logger;
 use App\Managers\ContainerDatabaseManager;
 use App\Managers\ContainerInviteManager;
 use App\Managers\ContainerManager;
-use App\Managers\EntityManager;
 use App\Managers\ExternalSystemsManager;
 use App\Managers\FileStorageManager;
 use App\Managers\GroupManager;
@@ -100,7 +99,6 @@ class Application {
 
     public ServiceManager $serviceManager;
     public UserManager $userManager;
-    public EntityManager $entityManager;
     public GroupManager $groupManager;
     public ContainerManager $containerManager;
     public ContainerInviteManager $containerInviteManager;
@@ -150,19 +148,18 @@ class Application {
 
         $this->dbManager = new DatabaseManager($this->db, $this->logger);
 
-        $this->entityManager = new EntityManager($this->logger, $this->contentRepository, $this->contentRepository);
-        $this->serviceManager = new ServiceManager($this->systemServicesRepository, $this->userRepository, $this->entityManager);
-        $this->userManager = new UserManager($this->logger, $this->userRepository, $this->entityManager);
-        $this->groupManager = new GroupManager($this->logger, $this->entityManager, $this->groupRepository, $this->groupMembershipRepository);
-        $this->containerDatabaseManager = new ContainerDatabaseManager($this->logger, $this->entityManager, $this->containerDatabaseRepository, $this->dbManager);
-        $this->containerManager = new ContainerManager($this->logger, $this->entityManager, $this->containerRepository, $this->dbManager, $this->groupManager, $this->db, $this->containerDatabaseManager);
-        $this->containerInviteManager = new ContainerInviteManager($this->logger, $this->entityManager, $this->containerInviteRepository);
-        $this->userAbsenceManager = new UserAbsenceManager($this->logger, $this->entityManager, $this->userAbsenceRepository);
-        $this->userSubstituteManager = new UserSubstituteManager($this->logger, $this->entityManager, $this->userSubstituteRepository);
-        $this->processManager = new ProcessManager($this->logger, $this->entityManager, $this->processRepository);
-        $this->jobQueueManager = new JobQueueManager($this->logger, $this->entityManager, $this->jobQueueRepository, $this->jobQueueProcessingHistoryRepository);
-        $this->fileStorageManager = new FileStorageManager($this->logger, $this->entityManager, $this->fileStorageRepository);
-        $this->externalSystemsManager = new ExternalSystemsManager($this->logger, $this->entityManager, $this->externalSystemsRepository, $this->externalSystemsLogRepository, $this->externalSystemsTokenRepository, $this->externalSystemsRightsRepository);
+        $this->serviceManager = new ServiceManager($this->systemServicesRepository, $this->userRepository);
+        $this->userManager = new UserManager($this->logger, $this->userRepository);
+        $this->groupManager = new GroupManager($this->logger, $this->groupRepository, $this->groupMembershipRepository);
+        $this->containerDatabaseManager = new ContainerDatabaseManager($this->logger, $this->containerDatabaseRepository, $this->dbManager);
+        $this->containerManager = new ContainerManager($this->logger, $this->containerRepository, $this->dbManager, $this->groupManager, $this->db, $this->containerDatabaseManager);
+        $this->containerInviteManager = new ContainerInviteManager($this->logger, $this->containerInviteRepository);
+        $this->userAbsenceManager = new UserAbsenceManager($this->logger,  $this->userAbsenceRepository);
+        $this->userSubstituteManager = new UserSubstituteManager($this->logger,  $this->userSubstituteRepository);
+        $this->processManager = new ProcessManager($this->logger,  $this->processRepository);
+        $this->jobQueueManager = new JobQueueManager($this->logger,  $this->jobQueueRepository, $this->jobQueueProcessingHistoryRepository);
+        $this->fileStorageManager = new FileStorageManager($this->logger,  $this->fileStorageRepository);
+        $this->externalSystemsManager = new ExternalSystemsManager($this->logger,  $this->externalSystemsRepository, $this->externalSystemsLogRepository, $this->externalSystemsTokenRepository, $this->externalSystemsRightsRepository);
 
         $this->initManagers();
 
@@ -188,7 +185,7 @@ class Application {
      */
     private function initManagers() {
         foreach([
-            $this->entityManager,
+            
             $this->userManager,
             $this->groupManager,
             $this->containerDatabaseManager,

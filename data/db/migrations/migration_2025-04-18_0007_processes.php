@@ -6,7 +6,6 @@ use App\Constants\ProcessColorCombos;
 use App\Core\DB\ABaseMigration;
 use App\Core\DB\Helpers\TableSchema;
 use App\Core\DB\Helpers\TableSeeding;
-use App\Managers\EntityManager;
 
 class migration_2025_04_18_0007_processes extends ABaseMigration {
     public function up(): TableSchema {
@@ -41,8 +40,8 @@ class migration_2025_04_18_0007_processes extends ABaseMigration {
         $seed->seed('processes')
             // HOME OFFICE
             ->add([
-                'processId' => $this->getId(EntityManager::PROCESSES),
-                'uniqueProcessId' => $this->getId(EntityManager::PROCESSES_UNIQUE),
+                'processId' => $this->getId(),
+                'uniqueProcessId' => $this->getId(),
                 'title' => 'Home Office',
                 'description' => 'Home Office form',
                 'form' => 'eyJuYW1lIjogImhvbWVPZmZpY2VGb3JtIiwiZWxlbWVudHMiOiBbeyJuYW1lIjogInJlYXNvbiIsInR5cGUiOiAidGV4dGFyZWEiLCJsYWJlbCI6ICJSZWFzb246IiwiYXR0cmlidXRlcyI6IFsicmVxdWlyZWQiXX0seyJuYW1lIjogImRhdGVGcm9tIiwidHlwZSI6ICJkYXRlIiwibGFiZWwiOiAiRGF0ZSBmcm9tOiIsImF0dHJpYnV0ZXMiOiBbInJlcXVpcmVkIl19LHsibmFtZSI6ICJkYXRlVG8iLCJ0eXBlIjogImRhdGUiLCJsYWJlbCI6ICJEYXRlIHRvOiIsImF0dHJpYnV0ZXMiOiBbInJlcXVpcmVkIl19XSwicmVkdWNlciI6ICJcXEFwcFxcQ29tcG9uZW50c1xcUHJvY2Vzc0Zvcm1cXFByb2Nlc3Nlc1xcUmVkdWNlcnNcXEhvbWVPZmZpY2VSZWR1Y2VyIn0=',
@@ -55,8 +54,8 @@ class migration_2025_04_18_0007_processes extends ABaseMigration {
             ])
             // FUNCTION REQUEST
             ->add([
-                'processId' => $this->getId(EntityManager::PROCESSES),
-                'uniqueProcessId' => $this->getId(EntityManager::PROCESSES_UNIQUE),
+                'processId' => $this->getId(),
+                'uniqueProcessId' => $this->getId(),
                 'title' => 'Function Request',
                 'description' => 'Function Request form',
                 'form' => 'ew0KICJuYW1lIjogImZ1bmN0aW9uUmVxdWVzdCIsDQogImVsZW1lbnRzIjogWw0KICB7DQogICAibmFtZSI6ICJ0aXRsZSIsDQogICAidHlwZSI6ICJ0ZXh0IiwNCiAgICJsYWJlbCI6ICJUaXRsZToiLA0KICAgImF0dHJpYnV0ZXMiOiBbDQogICAgInJlcXVpcmVkIg0KICAgXQ0KICB9LA0KICB7DQogICAibmFtZSI6ICJkZXNjcmlwdGlvbiIsDQogICAidHlwZSI6ICJ0ZXh0YXJlYSIsDQogICAibGFiZWwiOiAiRGVzY3JpcHRpb246IiwNCiAgICJhdHRyaWJ1dGVzIjogWw0KICAgICJyZXF1aXJlZCINCiAgIF0NCiAgfQ0KIF0NCn0=',
@@ -69,8 +68,8 @@ class migration_2025_04_18_0007_processes extends ABaseMigration {
             ])
             // CONTAINER REQUEST
             ->add([
-                'processId' => $this->getId(EntityManager::PROCESSES),
-                'uniqueProcessId' => $this->getId(EntityManager::PROCESSES_UNIQUE),
+                'processId' => $this->getId(),
+                'uniqueProcessId' => $this->getId(),
                 'title' => 'Container Request',
                 'description' => 'Container Request form',
                 'form' => 'ew0KICJuYW1lIjogImNvbnRhaW5lclJlcXVlc3QiLA0KICJlbGVtZW50cyI6IFsNCiAgew0KICAgIm5hbWUiOiAiY29udGFpbmVyTmFtZSIsDQogICAidHlwZSI6ICJ0ZXh0IiwNCiAgICJsYWJlbCI6ICJDb250YWluZXIgbmFtZToiLA0KICAgImF0dHJpYnV0ZXMiOiBbDQogICAgInJlcXVpcmVkIg0KICAgXQ0KICB9LA0KICB7DQogICAibmFtZSI6ICJlbnZpcm9ubWVudCIsDQogICAidHlwZSI6ICJzZWxlY3QiLA0KICAgInZhbHVlc0Zyb21Db25zdCI6ICJcXEFwcFxcQ29uc3RhbnRzXFxDb250YWluZXJFbnZpcm9ubWVudHMiLA0KICAgImxhYmVsIjogIkVudmlyb25tZW50IiwNCiAgICJhdHRyaWJ1dGVzIjogWw0KICAgICJyZXF1aXJlZCINCiAgIF0NCiAgfSwNCiAgew0KICAgIm5hbWUiOiAicmVhc29uIiwNCiAgICJ0eXBlIjogInRleHRhcmVhIiwNCiAgICJsYWJlbCI6ICJSZWFzb246IiwNCiAgICJhdHRyaWJ1dGVzIjogWw0KICAgICJyZXF1aXJlZCINCiAgIF0NCiAgfSwNCiAgew0KICAgIm5hbWUiOiAiYWRkaXRpb25hbE5vdGVzIiwNCiAgICJ0eXBlIjogInRleHRhcmVhIiwNCiAgICJsYWJlbCI6ICJBZGRpdGlvbmFsIG5vdGVzOiINCiAgfQ0KIF0NCn0=',
@@ -83,8 +82,8 @@ class migration_2025_04_18_0007_processes extends ABaseMigration {
             ])
             // INVOICE
             ->add([
-                'processId' => $this->getId(EntityManager::PROCESSES),
-                'uniqueProcessId' => $this->getId(EntityManager::PROCESSES_UNIQUE),
+                'processId' => $this->getId(),
+                'uniqueProcessId' => $this->getId(),
                 'title' => 'Invoice',
                 'description' => 'Invoice form',
                 'form' => 'ew0KICJuYW1lIjogImludm9pY2VGb3JtIiwNCiAiZWxlbWVudHMiOiBbDQogIHsNCiAgICJuYW1lIjogImludm9pY2VObyIsDQogICAidHlwZSI6ICJ0ZXh0IiwNCiAgICJsYWJlbCI6ICJJbnZvaWNlIE5vLjoiLA0KICAgImF0dHJpYnV0ZXMiOiBbDQogICAgInJlcXVpcmVkIiwNCiAgICAicmVhZG9ubHkiDQogICBdDQogIH0sDQogIHsNCiAgICJuYW1lIjogImNvbXBhbnkiLA0KICAgInR5cGUiOiAic2VsZWN0U2VhcmNoIiwNCiAgICJsYWJlbCI6ICJDb21wYW55OiIsDQogICAic2VhcmNoQnlMYWJlbCI6ICJDb21wYW55IG5hbWU6IiwNCiAgICJhY3Rpb25OYW1lIjogInNlYXJjaENvbXBhbmllcyIsDQogICAiYXR0cmlidXRlcyI6IFsNCiAgICAicmVxdWlyZWQiDQogICBdDQogIH0sDQogIHsNCiAgICJuYW1lIjogInN1bSIsDQogICAidHlwZSI6ICJudW1iZXIiLA0KICAgImxhYmVsIjogIlN1bToiLA0KICAgImF0dHJpYnV0ZXMiOiBbDQogICAgInJlcXVpcmVkIg0KICAgXQ0KICB9LA0KICB7DQogICAibmFtZSI6ICJzdW1DdXJyZW5jeSIsDQogICAidHlwZSI6ICJzZWxlY3QiLA0KICAgImxhYmVsIjogIlN1bSBjdXJyZW5jeToiLA0KICAgImF0dHJpYnV0ZXMiOiBbDQogICAgInJlcXVpcmVkIg0KICAgXQ0KICB9LA0KICB7DQogICAibmFtZSI6ICJmaWxlIiwNCiAgICJ0eXBlIjogImZpbGUiLA0KICAgImxhYmVsIjogIkludm9pY2UgZmlsZToiLA0KICAgImF0dHJpYnV0ZXMiOiBbDQogICAgInJlcXVpcmVkIg0KICAgXQ0KICB9DQogXSwNCiAicmVkdWNlciI6ICJcXEFwcFxcQ29tcG9uZW50c1xcUHJvY2Vzc0Zvcm1cXFByb2Nlc3Nlc1xccmVkdWNlcnNcXEludm9pY2VSZWR1Y2VyLnBocCINCn0=',

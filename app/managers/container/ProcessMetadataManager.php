@@ -7,7 +7,6 @@ use App\Exceptions\GeneralException;
 use App\Exceptions\NonExistingEntityException;
 use App\Logger\Logger;
 use App\Managers\AManager;
-use App\Managers\EntityManager;
 use App\Repositories\Container\ProcessMetadataRepository;
 
 /**
@@ -18,8 +17,8 @@ use App\Repositories\Container\ProcessMetadataRepository;
 class ProcessMetadataManager extends AManager {
     public ProcessMetadataRepository $processMetadataRepository;
 
-    public function __construct(Logger $logger, EntityManager $entityManager, ProcessMetadataRepository $processMetadataRepository) {
-        parent::__construct($logger, $entityManager);
+    public function __construct(Logger $logger, ProcessMetadataRepository $processMetadataRepository) {
+        parent::__construct($logger);
 
         $this->processMetadataRepository = $processMetadataRepository;
     }
@@ -48,7 +47,7 @@ class ProcessMetadataManager extends AManager {
      */
     public function addNewMetadataValue(array $data) {
         // add value id
-        $valueId = $this->createId(EntityManager::C_PROCESS_CUSTOM_METADATA_VALUES);
+        $valueId = $this->createId();
 
         $data['valueId'] = $valueId;
 
@@ -177,7 +176,7 @@ class ProcessMetadataManager extends AManager {
      * @throws GeneralException
      */
     public function addNewMetadata(array $data) {
-        $metadataId = $this->createId(EntityManager::C_PROCESS_CUSTOM_METADATA);
+        $metadataId = $this->createId();
 
         $data['metadataId'] = $metadataId;
 

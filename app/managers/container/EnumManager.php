@@ -7,12 +7,9 @@ use App\Core\Datatypes\ArrayList;
 use App\Core\DB\DatabaseRow;
 use App\Entities\ContainerEntity;
 use App\Enums\AEnumForMetadata;
-use App\Enums\InvoiceCompaniesEnum;
-use App\Enums\InvoiceSumCurrencyEnum;
 use App\Enums\MetadataUserEnum;
 use App\Logger\Logger;
 use App\Managers\AManager;
-use App\Managers\EntityManager;
 use App\Managers\GroupManager;
 use App\Repositories\UserRepository;
 
@@ -30,19 +27,17 @@ class EnumManager extends AManager {
      * Class constructor
      * 
      * @param Logger $logger Instance
-     * @param EntityManager $entityManager EntityManager instance
      * @param UserRepository $userRepository UserRepository instance
      * @param GroupManager $groupManager GroupManager instance
      * @param ContainerEntity $container Container DB row
      */
     public function __construct(
         Logger $logger,
-        EntityManager $entityManager,
         UserRepository $userRepository,
         GroupManager $groupManager,
         ContainerEntity $container
     ) {
-        parent::__construct($logger, $entityManager);
+        parent::__construct($logger);
 
         $this->userRepository = $userRepository;
         $this->groupManager = $groupManager;

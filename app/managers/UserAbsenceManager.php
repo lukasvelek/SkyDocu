@@ -16,8 +16,8 @@ class UserAbsenceManager extends AManager {
     public UserAbsenceRepository $userAbsenceRepository;
     private array $mUserAbsenceCache;
 
-    public function __construct(Logger $logger, EntityManager $entityManager, UserAbsenceRepository $userAbsenceRepository) {
-        parent::__construct($logger, $entityManager);
+    public function __construct(Logger $logger, UserAbsenceRepository $userAbsenceRepository) {
+        parent::__construct($logger);
 
         $this->userAbsenceRepository = $userAbsenceRepository;
 
@@ -65,7 +65,7 @@ class UserAbsenceManager extends AManager {
      * @throws GeneralException
      */
     public function createUserAbsence(string $userId, string $dateFrom, string $dateTo): void {
-        $absenceId = $this->createId(EntityManager::USER_ABSENCE);
+        $absenceId = $this->createId();
 
         if(!$this->userAbsenceRepository->insertUserAbsence($absenceId, $userId, $dateFrom, $dateTo)) {
             throw new GeneralException('Database error.');

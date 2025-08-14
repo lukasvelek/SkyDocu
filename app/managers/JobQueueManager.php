@@ -21,8 +21,8 @@ class JobQueueManager extends AManager {
     private JobQueueRepository $jobQueueRepository;
     private JobQueueProcessingHistoryRepository $jobQueueProcessingHistoryRepository;
 
-    public function __construct(Logger $logger, EntityManager $entityManager, JobQueueRepository $jobQueueRepository, JobQueueProcessingHistoryRepository $jobQueueProcessingHistoryRepository) {
-        parent::__construct($logger, $entityManager);
+    public function __construct(Logger $logger, JobQueueRepository $jobQueueRepository, JobQueueProcessingHistoryRepository $jobQueueProcessingHistoryRepository) {
+        parent::__construct($logger);
 
         $this->jobQueueRepository = $jobQueueRepository;
         $this->jobQueueProcessingHistoryRepository = $jobQueueProcessingHistoryRepository;
@@ -41,7 +41,7 @@ class JobQueueManager extends AManager {
         array $params,
         ?DateTime $executionDate
     ) {
-        $jobId = $this->createId(EntityManager::JOB_QUEUE);
+        $jobId = $this->createId();
 
         $data = [
             'jobId' => $jobId,
@@ -133,7 +133,7 @@ class JobQueueManager extends AManager {
      * @throws GeneralException
      */
     public function insertNewProcessingHistoryEntry(?string $jobId, int $type, ?string $description) {
-        $entryId = $this->createId(EntityManager::JOB_QUEUE_PROCESSING_HISTORY);
+        $entryId = $this->createId();
 
         $data = [
             'entryId' => $entryId,

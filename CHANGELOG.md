@@ -17,6 +17,7 @@ Here is the list of changes in versions.
 - Added support for running database migrations for a single container
 - Added container users overview in Superadministartion
 - Added support for custom process reports
+- Added support for GUIDs instead of random hashes
 - Reworked process reports
 - Fixed the users grid in Superadministration settings
     - Only users with access to Superadministration are visible

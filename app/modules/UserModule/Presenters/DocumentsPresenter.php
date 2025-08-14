@@ -151,17 +151,19 @@ class DocumentsPresenter extends AUserPresenter {
 
         // FILE ATTACHMENT
         $fileId = $this->documentRepository->getFileIdForDocumentId($document->documentId);
-        $url = $this->app->fileStorageManager->generateDownloadLinkForFileInDocument($fileId, $this->containerId);
-        $file = $this->app->fileStorageManager->getFileById($fileId, $this->containerId);
-        $fileSize = UnitConversionHelper::convertBytesToUserFriendly($file->filesize);
+        if($fileId !== null) {
+            $url = $this->app->fileStorageManager->generateDownloadLinkForFileInDocument($fileId, $this->containerId);
+            $file = $this->app->fileStorageManager->getFileById($fileId, $this->containerId);
+            $fileSize = UnitConversionHelper::convertBytesToUserFriendly($file->filesize);
 
-        $el = HTML::el('a')
-            ->text('Download file (' . $fileSize . ')')
-            ->class('changelog-link')
-            ->target('_blank')
-            ->href($url);
+            $el = HTML::el('a')
+                ->text('Download file (' . $fileSize . ')')
+                ->class('changelog-link')
+                ->target('_blank')
+                ->href($url);
 
-        $createRow('File', $el->toString());
+            $createRow('File', $el->toString());
+        }
         // END OF FILE ATTACHMENT
 
         $this->saveToPresenterCache('documentBasicInformation', $basicInformationCode);

@@ -911,57 +911,32 @@ class GridBuilderHelper {
                     }).get();
 
                     if(_ids.length == 0) {
-                        ' . $this->componentName . '_processBulkActionsModalClose();
+                        $("#grid-links").html("");
+                        $("#links").show();
                         return;
                     }
-
-                    $("#modal").show(); ' . $this->componentName . '_processBulkActionsModalOpen(true);
-
-                    await sleep(2000);
 
                     if(_checkboxHandlerTimestamp != _now) {
                         return;
                     };
 
                     if(_ids.length == 0) {
-                        ' . $this->componentName . '_processBulkActionsModalClose();
+                        $("#grid-links").html("");
+                        $("#links").show();
                         return;
                     }
                 ')
-                ->updateHTMLElement('modal', 'modal')
+                ->updateHTMLElement('grid-links', 'modal')
                 ->addWhenDoneOperation('_checkboxHandlerTimestamp = null;')
                 ->addWhenDoneOperation('
-                    $("#modal").show(); ' . $this->componentName . '_processBulkActionsModalOpen(false);
+                    if(obj.modal) {
+                        $("#links").hide();
+                    }
                 ')
                 ->addCustomArg('_ids')
             ;
 
             $addScript($arb);
-
-            if(AppThemeHelper::getAppThemeForUser($this->app) == AppDesignThemes::DARK) {
-                $modalStyle = 'visibility: hidden; height: 0px; position: absolute; top: 5%; left: 5%; background-color: rgba(70, 70, 70, 1); z-index: 9999; border-radius: 5px;';
-            } else {
-                $modalStyle = 'visibility: hidden; height: 0px; position: absolute; top: 5%; left: 5%; background-color: rgba(225, 225, 225, 1); z-index: 9999; border-radius: 5px;';
-            }
-
-            $scripts[] = '
-                    function ' . $this->componentName . '_processBulkActionsModalOpen(_showLoading) {
-                        if(_showLoading) {
-                            $("#modal").html(\'<div id="bulk-actions-modal-inner" style="' . $modalStyle . '"></div>\');
-                            $("#bulk-actions-modal-inner").html(\'<div id="center" style="margin-top: 20px"><img src="resources/loading.gif" width="64"><br>Loading...</div>\');
-                        }
-
-                        $("#bulk-actions-modal-inner")
-                            .css("height", "15%")
-                            .css("visibility", "visible")
-                            .css("width", "90%");
-                    }
-
-                    function ' . $this->componentName . '_processBulkActionsModalClose() {
-                        $("#modal").html(\'\');
-                        $("#modal").hide();
-                    }
-            ';
         }
 
         return '<script type="text/javascript">' . implode("\r\n\r\n", $scripts) . '</script>';

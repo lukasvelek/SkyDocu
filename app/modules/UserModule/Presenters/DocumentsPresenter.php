@@ -21,6 +21,7 @@ use App\Exceptions\RequiredAttributeIsNotSetException;
 use App\Helpers\DateTimeFormatHelper;
 use App\Helpers\LinkHelper;
 use App\Helpers\UnitConversionHelper;
+use App\UI\GridBuilder2\CheckboxLink;
 use App\UI\HTML\HTML;
 use App\UI\LinkBuilder;
 
@@ -86,8 +87,35 @@ class DocumentsPresenter extends AUserPresenter {
             $documentsGrid->setCurrentFolder($this->currentFolderId);
         }
         $documentsGrid->showCustomMetadata();
-        //$documentsGrid->useCheckboxes($this); // WILL BE ADDED IN 1.8
+        $documentsGrid->useCheckboxes($this); // WILL BE ADDED IN 1.8
         $documentsGrid->setGridName(GridNames::DOCUMENTS_GRID);
+
+        $documentsGrid->addCheckboxLinkCallback(
+            (new CheckboxLink('moveToFolder'))
+                ->setCheckCallback(function(string $primaryKey) {
+                    try {
+                        $document = $this->documentManager->getDocumentById($primaryKey);
+
+                        if(!in_array($document->status, [DocumentStatus::NEW])) {
+                            return false;
+                        }
+
+                        return true;
+                    } catch(AException $e) {
+                        return false;
+                    }
+                })
+                ->setLinkCallback(function(array $primaryKeys) {
+                    return LinkBuilder::createSimpleLink(
+                        'Move to folder',
+                        $this->createURL('moveToFolder', [
+                            'currentFolderId' => $this->httpRequest->get('folderId'),
+                            'ids[]' => $primaryKeys
+                        ]),
+                        'link'
+                    );
+                })
+        );
 
         return $documentsGrid;
     }

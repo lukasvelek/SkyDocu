@@ -50,8 +50,7 @@ class ArchivePresenter extends AUserPresenter {
             $this->groupStandardOperationsAuthorizator,
             $this->enumManager,
             $this->gridManager,
-            $this->archiveManager,
-            $this->fileStorageManager
+            $this->archiveManager
         );
 
         if(!$this->httpRequest->isAjax) {

@@ -79,8 +79,7 @@ class DocumentsPresenter extends AUserPresenter {
             $this->groupStandardOperationsAuthorizator,
             $this->enumManager,
             $this->gridManager,
-            $this->archiveManager,
-            $this->fileStorageManager
+            $this->archiveManager
         );
 
         if(!$this->httpRequest->isAjax || str_contains($this->httpRequest->get('do'), 'getSkeleton')) {
@@ -313,8 +312,7 @@ class DocumentsPresenter extends AUserPresenter {
             $this->groupStandardOperationsAuthorizator,
             $this->enumManager,
             $this->gridManager,
-            $this->archiveManager,
-            $this->fileStorageManager
+            $this->archiveManager
         );
 
         $documentsGrid->setShowShared();

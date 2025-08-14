@@ -5,7 +5,6 @@ namespace App\Components\Widgets\FileStorageStatsForContainerWidget;
 use App\Components\Widgets\Widget;
 use App\Core\Http\HttpRequest;
 use App\Helpers\UnitConversionHelper;
-use App\Managers\Container\FileStorageManager;
 
 /**
  * FileStorageStatsForContainerWidget display statistics for container file storage

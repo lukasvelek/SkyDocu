@@ -12,7 +12,6 @@ use App\Logger\Logger;
 use App\Managers\Container\ArchiveManager;
 use App\Managers\Container\DocumentManager;
 use App\Managers\Container\EnumManager;
-use App\Managers\Container\FileStorageManager;
 use App\Managers\Container\FolderManager;
 use App\Managers\Container\GridManager;
 use App\Managers\Container\GroupManager;
@@ -24,7 +23,6 @@ use App\Managers\Container\ProcessReportManager;
 use App\Repositories\Container\ArchiveRepository;
 use App\Repositories\Container\DocumentClassRepository;
 use App\Repositories\Container\DocumentRepository;
-use App\Repositories\Container\FileStorageRepository;
 use App\Repositories\Container\FolderRepository;
 use App\Repositories\Container\GridRepository;
 use App\Repositories\Container\GroupRepository;
@@ -58,7 +56,6 @@ class Container {
     public GridRepository $gridRepository;
     public ProcessRepository $processRepository;
     public ArchiveRepository $archiveRepository;
-    public FileStorageRepository $fileStorageRepository;
     public ProcessInstanceRepository $processInstanceRepository;
     public ProcessMetadataRepository $processMetadataRepository;
     public ProcessReportsRepository $processReportsRepository;
@@ -71,7 +68,6 @@ class Container {
     public EnumManager $enumManager;
     public GridManager $gridManager;
     public ArchiveManager $archiveManager;
-    public FileStorageManager $fileStorageManager;
     public ProcessManager $processManager;
     public ProcessInstanceManager $processInstanceManager;
     public ProcessMetadataManager $processMetadataManager;
@@ -168,9 +164,6 @@ class Container {
         $managers = [
             'archiveManager' => [
                 'archiveRepository'
-            ],
-            'fileStorageManager' => [
-                'fileStorageRepository'
             ],
             'processManager' => [
                 'processRepository'

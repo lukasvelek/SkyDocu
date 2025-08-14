@@ -11,7 +11,6 @@ use App\Constants\Container\GridNames;
 use App\Core\Application;
 use App\Core\DB\DatabaseRow;
 use App\Core\Http\JsonResponse;
-use App\Core\Http\TemplateResponse;
 use App\Enums\AEnumForMetadata;
 use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
@@ -19,7 +18,6 @@ use App\Helpers\AppThemeHelper;
 use App\Managers\Container\ArchiveManager;
 use App\Managers\Container\DocumentManager;
 use App\Managers\Container\EnumManager;
-use App\Managers\Container\FileStorageManager;
 use App\Managers\Container\GridManager;
 use App\Modules\APresenter;
 use App\UI\GridBuilder2\Cell;
@@ -40,7 +38,6 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
     private EnumManager $enumManager;
     private GridManager $gridManager;
     private ArchiveManager $archiveManager;
-    private FileStorageManager $fileStorageManager;
 
     private bool $allMetadata;
     private ?string $currentFolderId;
@@ -58,7 +55,6 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
      * @param EnumManager $enumManager
      * @param GridManager $gridManager
      * @param ArchiveManager $archiveManager
-     * @param FileStorageManager $fileStorageManager
      */
     public function __construct(
         GridBuilder $grid,
@@ -67,8 +63,7 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
         GroupStandardOperationsAuthorizator $groupStandardOperationsAuthorizator,
         EnumManager $enumManager,
         GridManager $gridManager,
-        ArchiveManager $archiveManager,
-        FileStorageManager $fileStorageManager
+        ArchiveManager $archiveManager
     ) {
         parent::__construct($grid->httpRequest);
         $this->setHelper($grid->getHelper());
@@ -81,7 +76,6 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
         $this->enumManager = $enumManager;
         $this->gridManager = $gridManager;
         $this->archiveManager = $archiveManager;
-        $this->fileStorageManager = $fileStorageManager;
 
         $this->allMetadata = false;
         $this->currentFolderId = null;
@@ -265,15 +259,6 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
                 case DocumentsGridSystemMetadata::STATUS:
                     $this->addColumnConst(DocumentsGridSystemMetadata::STATUS, DocumentsGridSystemMetadata::toString(DocumentsGridSystemMetadata::STATUS), DocumentStatus::class);
                     break;
-
-                /*case DocumentsGridSystemMetadata::HAS_FILE:
-                    $documentsWithFile = $this->fileStorageManager->doDocumentsHaveFile($documentIds);
-
-                    $col = $this->addColumnBoolean(DocumentsGridSystemMetadata::HAS_FILE, DocumentsGridSystemMetadata::toString(DocumentsGridSystemMetadata::HAS_FILE));
-                    array_unshift($col->onRenderColumn, function(DatabaseRow $row, Row $_row, Cell $cell, HTML $html, mixed $value) use ($documentsWithFile) {
-                        return in_array($row->documentId, $documentsWithFile);
-                    });
-                    break;*/
 
                 case DocumentsGridSystemMetadata::DATE_CREATED:
                     $this->addColumnDatetime(DocumentsGridSystemMetadata::DATE_CREATED, DocumentsGridSystemMetadata::toString(DocumentsGridSystemMetadata::DATE_CREATED));

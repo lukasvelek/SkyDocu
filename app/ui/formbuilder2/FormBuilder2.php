@@ -376,6 +376,7 @@ class FormBuilder2 extends AComponent {
 
         foreach($this->action as $k => $v) {
             if(in_array($k, ['page', 'action', 'do'])) continue;
+            if(is_array($v)) continue;
 
             $___args[] = '\'' . $v . '\'';
         }
@@ -645,6 +646,19 @@ class FormBuilder2 extends AComponent {
         $this->processLabel($name, $label);
 
         return $ta;
+    }
+
+    /**
+     * Adds a hidden input
+     * 
+     * @param string $name Element name
+     */
+    public function addHiddenInput(string $name): HiddenInput {
+        $hi = new HiddenInput($name);
+
+        $this->elements[$name] = &$hi;
+
+        return $hi;
     }
 
     /**

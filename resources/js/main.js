@@ -90,3 +90,23 @@ async function copyTextToClipboardWithLink(_text, _link, _beforeText, _afterText
 function showLoadingAnimation(_element) {
     $("#" + _element).html("<div id=\"center\"><img src=\"resources/loading.gif\" width=\"64px\"></div>");
 }
+
+function post(url, params) {
+    const form = document.createElement("form");
+    form.method = "POST";
+    form.action = url;
+
+    for(const key in params) {
+        if(params.hasOwnProperty(key)) {
+            const hiddenField = document.createElement("input");
+            hiddenField.type = "hidden";
+            hiddenField.name = key;
+            hiddenField.value = params[key];
+
+            form.appendChild(hiddenField);
+        }
+    }
+    
+    document.body.appendChild(form);
+    form.submit();
+}

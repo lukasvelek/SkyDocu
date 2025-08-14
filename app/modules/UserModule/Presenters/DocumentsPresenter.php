@@ -12,6 +12,7 @@ use App\Constants\SessionNames;
 use App\Core\Caching\CacheNames;
 use App\Core\DB\DatabaseRow;
 use App\Core\FileUploadManager;
+use App\Core\Http\Ajax\Requests\PostAjaxRequest;
 use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
 use App\Enums\AEnumForMetadata;
@@ -70,6 +71,14 @@ class DocumentsPresenter extends AUserPresenter {
             LinkBuilder::createSimpleLink('New document', $this->createFullURL('User:CreateDocument', 'form', ['folderId' => $this->currentFolderId]), 'link')
         ];
         $this->template->folder_title = $folder;
+
+        $this->addScript('
+            function processBulkAction_MoveToFolder(_ids) {
+                const url = "' . $this->createURLString('moveToFolderForm', ['currentFolderId' => $this->currentFolderId]) . '";
+
+                post(url, _ids);
+            }
+        ');
     }
 
     protected function createComponentDocumentsGrid() {
@@ -106,12 +115,21 @@ class DocumentsPresenter extends AUserPresenter {
                     }
                 })
                 ->setLinkCallback(function(array $primaryKeys) {
-                    return LinkBuilder::createSimpleLink(
+                    /*return LinkBuilder::createSimpleLink(
                         'Move to folder',
-                        $this->createURL('moveToFolder', [
+                        $this->createURL('moveToFolderForm', [
                             'currentFolderId' => $this->httpRequest->get('folderId'),
                             'ids[]' => $primaryKeys
                         ]),
+                        'link'
+                    );*/
+
+                    $data = [
+                        'ids' => $primaryKeys
+                    ];
+
+                    return LinkBuilder::createJSOnclickLink('Move to folder',
+                        'processBulkAction_MoveToFolder(' . htmlspecialchars(json_encode($data)) . ')',
                         'link'
                     );
                 })
@@ -345,35 +363,22 @@ class DocumentsPresenter extends AUserPresenter {
         return $documentsGrid;
     }
 
-    public function handleMoveToFolderForm(?FormRequest $fr = null) {
-        if($fr !== null) {
-            $documentIds = $this->httpRequest->get('documentId');
-            
-            try {
-                $this->folderRepository->beginTransaction(__METHOD__);
-
-                foreach($documentIds as $documentId) {
-                    $this->documentManager->updateDocument($documentId, ['folderId' => $fr->folder]);
-                }
-
-                $this->folderRepository->commit($this->getUserId(), __METHOD__);
-
-                $this->flashMessage('Documents moved to selected folder successfully.', 'success');
-            } catch(AException $e) {
-                $this->folderRepository->rollback(__METHOD__);
-
-                $this->flashMessage('Could not move documents to selected folder. Reason: ' . $e->getMessage(), 'error', 10);
-            }
-
-            $this->redirect($this->createFullURL($this->httpRequest->get('backPage'), $this->httpRequest->get('backAction'), ['folderId' => $this->httpRequest->get('backFolderId')]));
+    public function handleMoveToFolderForm() {
+        if($this->httpRequest->get('ids') === null) {
+            $this->flashMessage('No documents were selected.', 'error', 10);
+            $this->redirect($this->createURL('list', ['folderId' => $this->httpRequest->get('currentFolderId')]));
         }
     }
 
     public function renderMoveToFolderForm() {
-        $this->template->links = $this->createBackFullUrl($this->httpRequest->get('backPage'), $this->httpRequest->get('backAction'), ['folderId' => $this->httpRequest->get('backFolderId')]);
+        $links = [
+            $this->createBackUrl('list', ['folderId' => $this->httpRequest->get('currentFolderId')])
+        ];
+
+        $this->template->links = LinkHelper::createLinksFromArray($links);
     }
 
-    protected function createComponentMoveDocumentToFolderForm(HttpRequest $request) {
+    protected function createComponentMoveDocumentToFolderForm() {
         $folders = [];
         $foldersDb = $this->folderManager->getVisibleFoldersForUser($this->getUserId());
 
@@ -382,23 +387,58 @@ class DocumentsPresenter extends AUserPresenter {
                 continue;
             }
 
+            if($folder->folderId == $this->httpRequest->get('currentFolderId')) continue;
+
             $folders[] = [
                 'value' => $folder->folderId,
                 'text' => $folder->title
             ];
         }
 
+        if(empty($folders)) {
+            $this->flashMessage('No folders are available.', 'error', 10);
+            $this->redirect($this->createURL('list', ['folderId' => $this->httpRequest->get('currentFolderId')]));
+        }
+
         $form = $this->componentFactory->getFormBuilder();
 
-        $form->setAction($this->createURL('moveToFolderForm', ['backPage' => $request->get('backPage'), 'backAction' => $request->get('backAction'), 'backFolderId' => $request->get('backFolderId'), 'documentId' => $request->get('documentId')]));
+        $form->setAction($this->createURL('moveToFolderFormSubmit', [
+            'currentFolderId' => $this->httpRequest->get('currentFolderId'),
+            'ids' => $this->httpRequest->get('ids')
+        ]));
 
         $form->addSelect('folder', 'Folder:')
             ->setRequired()
             ->addRawOptions($folders);
 
-        $form->addSubmit('Move');
+        $form->addHiddenInput('ids')
+            ->setValue($this->httpRequest->get('ids'));
+
+        $form->addSubmit('Move to folder');
 
         return $form;
+    }
+
+    public function handleMoveToFolderFormSubmit(FormRequest $fr) {
+        $documentIds = explode(',', $this->httpRequest->get('ids'));
+
+        try {
+            $this->folderRepository->beginTransaction(__METHOD__);
+
+            foreach($documentIds as $documentId) {
+                $this->documentManager->updateDocument($documentId, ['folderId' => $fr->folder]);
+            }
+
+            $this->folderRepository->commit($this->getUserId(), __METHOD__);
+
+            $this->flashMessage('Documents moved to selected folder successfully.', 'success');
+        } catch(AException $e) {
+            $this->folderRepository->rollback(__METHOD__);
+
+            $this->flashMessage('Could not move documents to selected folder. Reason: ' . $e->getMessage(), 'error', 10);
+        }
+
+        $this->redirect($this->createURL('list', ['folderId' => $this->httpRequest->get('currentFolderId')]));
     }
 }
 

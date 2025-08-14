@@ -18,6 +18,7 @@ Here is the list of changes in versions.
 - Added container users overview in Superadministartion
 - Added support for custom process reports
 - Added support for GUIDs instead of random hashes
+- Added support for deleting uncreated containers
 - Reworked process reports
 - Fixed the users grid in Superadministration settings
     - Only users with access to Superadministration are visible

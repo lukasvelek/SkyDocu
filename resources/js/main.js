@@ -91,6 +91,12 @@ function showLoadingAnimation(_element) {
     $("#" + _element).html("<div id=\"center\"><img src=\"resources/loading.gif\" width=\"64px\"></div>");
 }
 
+/**
+ * Redirects to given URL as a POST request
+ * 
+ * @param {*} url
+ * @param {*} params
+ */
 function post(url, params) {
     const form = document.createElement("form");
     form.method = "POST";

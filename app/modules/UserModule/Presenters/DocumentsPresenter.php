@@ -71,7 +71,7 @@ class DocumentsPresenter extends AUserPresenter {
         $this->template->folder_title = $folder;
     }
 
-    protected function createComponentDocumentsGrid(HttpRequest $request) {
+    protected function createComponentDocumentsGrid() {
         $documentsGrid = new DocumentsGrid(
             $this->componentFactory->getGridBuilder($this->containerId),
             $this->app,
@@ -150,20 +150,18 @@ class DocumentsPresenter extends AUserPresenter {
         $createRow('Date modified', ($document->dateModified !== null) ? DateTimeFormatHelper::formatDateToUserFriendly($document->dateModified, $this->app->currentUser->getDatetimeFormat()) : '-');
 
         // FILE ATTACHMENT
-        if($this->fileStorageManager->doesDocumentHaveFile($document->documentId)) {
-            $relation = $this->fileStorageManager->getFileRelationForDocumentId($document->documentId);
-            $url = $this->app->fileStorageManager->generateDownloadLinkForFileInDocument($relation->fileId, $this->containerId);
-            $file =  $this->app->fileStorageManager->getFileById($relation->fileId);
-            $fileSize = UnitConversionHelper::convertBytesToUserFriendly($file->filesize);
+        $fileId = $this->documentRepository->getFileIdForDocumentId($document->documentId);
+        $url = $this->app->fileStorageManager->generateDownloadLinkForFileInDocument($fileId, $this->containerId);
+        $file = $this->app->fileStorageManager->getFileById($fileId, $this->containerId);
+        $fileSize = UnitConversionHelper::convertBytesToUserFriendly($file->filesize);
 
-            $el = HTML::el('a')
-                ->text('Download file (' . $fileSize . ')')
-                ->class('changelog-link')
-                ->target('_blank')
-                ->href($url);
+        $el = HTML::el('a')
+            ->text('Download file (' . $fileSize . ')')
+            ->class('changelog-link')
+            ->target('_blank')
+            ->href($url);
 
-            $createRow('File', $el->toString());
-        }
+        $createRow('File', $el->toString());
         // END OF FILE ATTACHMENT
 
         $this->saveToPresenterCache('documentBasicInformation', $basicInformationCode);
@@ -249,10 +247,6 @@ class DocumentsPresenter extends AUserPresenter {
             $this->createBackUrl('list', ['folderId' => $document->folderId])
         ];
 
-        if(!$this->fileStorageManager->doesDocumentHaveFile($document->documentId)) {
-            $links[] = LinkBuilder::createSimpleLink('Upload a file', $this->createURL('fileUploadForm', ['documentId' => $document->documentId]), 'link');
-        }
-
         $this->saveToPresenterCache('links', LinkHelper::createLinksFromArray($links));
     }
 
@@ -319,77 +313,6 @@ class DocumentsPresenter extends AUserPresenter {
         $documentsGrid->useCheckboxes($this);
 
         return $documentsGrid;
-    }
-
-    public function handleFileUploadForm(?FormRequest $fr = null) {
-        if($fr !== null) {
-            try {
-                $fum = new FileUploadManager();
-
-                $data = $fum->uploadFile($_FILES['file'], $this->getUserId(), $this->containerId, [$this->httpRequest->get('documentId')]);
-
-                if(empty($data)) {
-                    throw new GeneralException('Could not upload file');
-                }
-
-                try {
-                    $this->app->fileStorageRepository->beginTransaction(__METHOD__);
-
-                    $fileId = $this->app->fileStorageManager->createNewFile(
-                        $this->getUserId(),
-                        $data[FileUploadManager::FILE_FILENAME],
-                        $data[FileUploadManager::FILE_FILEPATH],
-                        $data[FileUploadManager::FILE_FILESIZE],
-                        $this->containerId
-                    );
-
-                    $this->app->fileStorageRepository->commit($this->getUserId(), __METHOD__);
-                } catch(AException $e) {
-                    $this->app->fileStorageRepository->rollback(__METHOD__);
-
-                    throw $e;
-                }
-
-                try {
-                    $this->fileStorageRepository->beginTransaction(__METHOD__);
-
-                    $this->fileStorageManager->createNewFileDocumentRelation($this->httpRequest->get('documentId'), $fileId);
-
-                    $this->fileStorageRepository->commit($this->getUserId(), __METHOD__);
-                } catch(AException $e) {
-                    $this->fileStorageRepository->rollback(__METHOD__);
-
-                    throw $e;
-                }
-
-                if(!$this->cacheFactory->invalidateCacheByNamespace(CacheNames::DOCUMENT_FILE_MAPPING)) {
-                    throw new GeneralException('Could not invalidate cache.');
-                }
-
-                $this->flashMessage('Successfully uploaded file.', 'success');
-            } catch(AException $e) {
-                $this->flashMessage('Could not upload file. Reason: ' . $e->getMessage(), 'error', 10);
-            }
-
-            $this->redirect($this->createURL('info', ['documentId' => $this->httpRequest->get('documentId')]));
-        }
-    }
-
-    public function renderFileUploadForm() {
-        $this->template->links = $this->createBackUrl('info', ['documentId' => $this->httpRequest->get('documentId')]);
-    }
-
-    protected function createComponentUploadFileForm(HttpRequest $request) {
-        $form = $this->componentFactory->getFormBuilder();
-
-        $form->setAction($this->createURL('fileUploadForm', ['documentId' => $request->query['documentId']]));
-
-        $form->addFileInput('file', 'File:')
-            ->setRequired();
-
-        $form->addSubmit('Upload');
-
-        return $form;
     }
 
     public function handleMoveToFolderForm(?FormRequest $fr = null) {

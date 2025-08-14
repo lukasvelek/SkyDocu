@@ -204,6 +204,17 @@ class DocumentRepository extends ARepository {
         return $qb->fetchBool();
     }
 
+    public function getFileIdForDocumentId(string $documentId) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->select(['fileId'])
+            ->from('document_file_relation')
+            ->where('documentId = ?', [$documentId])
+            ->execute();
+
+        return $qb->fetch('fileId');
+    }
+
     public function get(QueryOperation $operation): QueryResult {
         return $this->processPeeQL('documents', $operation);
     }

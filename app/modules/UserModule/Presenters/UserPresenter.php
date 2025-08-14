@@ -4,7 +4,6 @@ namespace App\Modules\UserModule;
 
 use App\Components\Static\UserProfileStatic\UserProfileStatic;
 use App\Constants\Container\SystemGroups;
-use App\Core\Caching\CacheNames;
 use App\Core\FileManager;
 use App\Core\FileUploadManager;
 use App\Core\Http\FormRequest;

@@ -357,9 +357,13 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
             $this->template->container_remove_from_distribution_link = '';
         }
 
-        $this->template->container_new_technical_account_form_link = LinkBuilder::createSimpleLink('New technical account', $this->createURL('newTechnicalAccountForm', [
-            'containerId' => $containerId
-        ]), 'link');
+        if(!in_array($container->getStatus(), [ContainerStatus::ERROR_DURING_CREATION])) {
+            $this->template->container_new_technical_account_form_link = LinkBuilder::createSimpleLink('New technical account', $this->createURL('newTechnicalAccountForm', [
+                'containerId' => $containerId
+            ]), 'link');
+        } else {
+            $this->template->container_new_technical_account_form_link = '';
+        }
 
         $containerRunMigrationsLink = HTML::el('a')
             ->class('link')
@@ -369,7 +373,11 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
             ->title('Run migrations')
             ->toString();
 
-        $this->template->container_run_migrations_link = $containerRunMigrationsLink;
+        if(!in_array($container->getStatus(), [ContainerStatus::ERROR_DURING_CREATION])) {
+            $this->template->container_run_migrations_link = $containerRunMigrationsLink;
+        } else {
+            $this->template->container_run_migrations_link = '';
+        }
     }
 
     public function renderNewTechnicalAccountForm() {

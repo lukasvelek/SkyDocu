@@ -8,10 +8,22 @@ use App\Exceptions\AException;
 use App\Managers\Container\ProcessInstanceManager;
 use App\Managers\Container\ProcessManager;
 
+/**
+ * ProcessStatsWidget displays statistics for container processes and instances
+ * 
+ * @author Lukas Velek
+ */
 class ProcessStatsWidget extends Widget {
     private ProcessManager $processManager;
     private ProcessInstanceManager $processInstanceManager;
 
+    /**
+     * Class constructor
+     * 
+     * @param HttpRequest $request HttpRequest instance
+     * @param ProcessManager $processManager ProcessManager instance
+     * @param ProcessInstanceManager $processInstanceManager ProcessInstanceManager instance
+     */
     public function __construct(
         HttpRequest $request,
         ProcessManager $processManager,
@@ -31,6 +43,9 @@ class ProcessStatsWidget extends Widget {
         $this->enableRefresh();
     }
 
+    /**
+     * Processes widget data
+     */
     private function processData(): array {
         $data = $this->fetchDataFromDb();
 
@@ -43,6 +58,9 @@ class ProcessStatsWidget extends Widget {
         return $rows;
     }
 
+    /**
+     * Fetches data from the database
+     */
     private function fetchDataFromDb(): array {
         $distributionProcesses = 0;
         $customProcesses = 0;
@@ -63,6 +81,9 @@ class ProcessStatsWidget extends Widget {
         ];
     }
 
+    /**
+     * Fetches process count
+     */
     private function fetchProcessCount(): array {
         $qb = $this->processManager->processRepository->composeQueryForAvailableProcesses();
         $qb->execute();
@@ -83,6 +104,9 @@ class ProcessStatsWidget extends Widget {
         ];
     }
 
+    /**
+     * Fetches count of active process instances
+     */
     private function fetchActiveProcessInstances() {
         $qb = $this->processInstanceManager->processInstanceRepository->commonComposeQuery();
         $qb->select(['COUNT(instanceId) AS cnt'])

@@ -92,6 +92,8 @@ class ContainersPresenter extends ASuperAdminPresenter {
         };
 
         $grid->addQuickSearch('title', 'Title');
+
+        $grid->addFilter('status', 'null', ContainerStatus::getAll());
         
         return $grid;
     }

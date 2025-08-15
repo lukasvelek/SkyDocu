@@ -110,6 +110,22 @@ class ExternalSystemsManager extends AManager {
     }
 
     /**
+     * Updates external systems in bulk
+     * 
+     * @param array $systemIds System IDs
+     * @param array $data Data array
+     * @throws GeneralException
+     */
+    public function bulkUpdateExternalSystems(
+        array $systemIds,
+        array $data
+    ) {
+        if(!$this->externalSystemsRepository->bulkUpdateExternalSystems($systemIds, $data)) {
+            throw new GeneralException('Database error.');
+        }
+    }
+
+    /**
      * Enables external system
      * 
      * @param string $systemId System ID

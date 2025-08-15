@@ -90,7 +90,7 @@ class ProcessesPresenter extends AUserPresenter {
         $grid->addCheckboxLinkCallback(
             (new CheckboxLink('deleteInstance'))
                 ->setCheckCallback(function(string $primaryKey) {
-                    return $this->containerProcessAuthorizator->canUserCancelProcessInstance($primaryKey, $this->getUserId());
+                    return $this->containerProcessAuthorizator->canUserDeleteProcessInstance($primaryKey, $this->getUserId());
                 })
                 ->setLinkCallback(function(array $primaryKeys) {
                     $data = [

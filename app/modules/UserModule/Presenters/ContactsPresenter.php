@@ -50,7 +50,9 @@ class ContactsPresenter extends AUserPresenter {
     }
 
     public function renderOrganizationChart() {
-        $links = [];
+        $links = [
+            LinkBuilder::createSimpleLink('Contacts', $this->createURL('contactsGrid'), 'link')
+        ];
 
         if($this->httpRequest->get('userId') !== null) {
             $links[] = LinkBuilder::createSimpleLink('Root view', $this->createURL('organizationChart'), 'link');

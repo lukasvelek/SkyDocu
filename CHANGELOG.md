@@ -20,6 +20,7 @@ Here is the list of changes in versions.
 - Added support for GUIDs instead of random hashes
 - Added support for deleting uncreated containers
 - Added process statistics widget to container process administration
+- Added document bulk actions
 - Reworked process reports
 - Fixed the users grid in Superadministration settings
     - Only users with access to Superadministration are visible

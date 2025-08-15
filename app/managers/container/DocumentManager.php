@@ -2,6 +2,7 @@
 
 namespace App\Managers\Container;
 
+use App\Constants\Container\DocumentStatus;
 use App\Core\Caching\CacheNames;
 use App\Core\Datetypes\DateTime;
 use App\Core\DB\DatabaseRow;
@@ -65,6 +66,8 @@ class DocumentManager extends AManager {
                 $visibleCustomMetadata[] = $this->folderRepository->getCustomMetadataById($metadataId);
             }
         }
+
+        $qb->andWhere($qb->getColumnNotInValues('status', [DocumentStatus::DELETED]));
 
         return $qb;
     }

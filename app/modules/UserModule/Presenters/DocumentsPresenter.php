@@ -178,6 +178,34 @@ class DocumentsPresenter extends AUserPresenter {
                 })
         );
 
+        $documentsGrid->addCheckboxLinkCallback(
+            (new CheckboxLink('delete'))
+                ->setCheckCallback(function(string $primaryKey) {
+                    try {
+                        $document = $this->documentManager->getDocumentById($primaryKey);
+
+                        if(!in_array($document->status, [DocumentStatus::SHREDDED, DocumentStatus::NEW, DocumentStatus::ARCHIVED])) {
+                            return false;
+                        }
+
+                        return true;
+                    } catch(AException $e) {
+                        return false;
+                    }
+                })
+                ->setLinkCallback(function(array $primaryKeys) {
+                    $data = [
+                        'ids' => $primaryKeys,
+                        'url' => $this->createURLString('deleteForm', ['folderId' => $this->currentFolderId])
+                    ];
+
+                    return LinkBuilder::createJSOnclickLink('Delete',
+                        'processBulkAction(' . htmlspecialchars(json_encode($data)) . ')',
+                        'link'
+                    );
+                })
+        );
+
         return $documentsGrid;
     }
 
@@ -555,7 +583,7 @@ class DocumentsPresenter extends AUserPresenter {
         $this->template->links = LinkHelper::createLinksFromArray($links);
     }
 
-    private function getListBuilderWithDocumentsToShred(): ListBuilder {
+    private function getListBuilderWithDocuments(): ListBuilder {
         $documentIds = explode(',', $this->httpRequest->post('ids'));
 
         $qb = $this->documentRepository->composeQueryForDocuments();
@@ -583,7 +611,7 @@ class DocumentsPresenter extends AUserPresenter {
 
         $form->addLabel('text1', 'Are you sure you want to shred these documents?');
 
-        $list = $this->getListBuilderWithDocumentsToShred();
+        $list = $this->getListBuilderWithDocuments();
 
         $form->addList('documentList', $list);
 
@@ -616,6 +644,59 @@ class DocumentsPresenter extends AUserPresenter {
             $this->documentRepository->rollback(__METHOD__);
 
             $this->flashMessage('Could not shred documents. Reason: ' . $e->getMessage(), 'error', 10);
+        }
+
+        $this->redirect($this->createURL('list', ['folderId' => $this->httpRequest->get('folderId')]));
+    }
+
+    public function renderDeleteForm() {
+        $links = [
+            $this->createBackUrl('list', ['folderId' => $this->httpRequest->get('folderId')])
+        ];
+
+        $this->template->links = LinkHelper::createLinksFromArray($links);
+    }
+
+    protected function createComponentDeleteDocumentForm() {
+        $form = $this->componentFactory->getFormBuilder();
+
+        $form->setAction($this->createURL('deleteFormSubmit', ['folderId' => $this->httpRequest->get('folderId')]));
+
+        $form->addLabel('text1', 'Are you sure you want to delete these documents?');
+
+        $list = $this->getListBuilderWithDocuments();
+
+        $form->addList('documentList', $list);
+
+        $form->addHiddenInput('ids')
+            ->setValue($this->httpRequest->post('ids'));
+
+        $form->addSubmit('Delete');
+        $form->addButton('Go back')
+            ->setOnClick('
+                location.href = \'' . $this->createURLString('list', ['folderId' => $this->httpRequest->get('folderId')]) . '\';
+            ');
+
+        return $form;
+    }
+
+    public function handleDeleteFormSubmit(FormRequest $fr) {
+        try {
+            $documentIds = explode(',', $this->httpRequest->post('ids'));
+
+            $this->documentRepository->beginTransaction(__METHOD__);
+
+            $this->documentManager->bulkUpdateDocuments($documentIds, [
+                'status' => DocumentStatus::DELETED
+            ]);
+
+            $this->documentRepository->commit($this->getUserId(), __METHOD__);
+
+            $this->flashMessage('Successfully deleted documents.' ,'success');
+        } catch(AException $e) {
+            $this->documentRepository->rollback(__METHOD__);
+
+            $this->flashMessage('Could not delete documents. Reason: ' . $e->getMessage(), 'error', 10);
         }
 
         $this->redirect($this->createURL('list', ['folderId' => $this->httpRequest->get('folderId')]));

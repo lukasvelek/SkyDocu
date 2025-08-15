@@ -22,6 +22,7 @@ Here is the list of changes in versions.
 - Added process statistics widget to container process administration
 - Added document bulk actions
 - Added process bulk actions
+- Added external system bulk actions
 - Reworked process reports
 - Fixed the users grid in Superadministration settings
     - Only users with access to Superadministration are visible

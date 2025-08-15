@@ -156,7 +156,7 @@ class DocumentsPresenter extends AUserPresenter {
                     try {
                         $document = $this->documentManager->getDocumentById($primaryKey);
 
-                        if(!in_array($document->status, [DocumentStatus::READY_FOR_SHREDDING, DocumentStatus::NEW, DocumentStatus::ARCHIVED])) {
+                        if(!in_array($document->status, [DocumentStatus::READY_FOR_SHREDDING, DocumentStatus::ARCHIVED])) {
                             return false;
                         }
 

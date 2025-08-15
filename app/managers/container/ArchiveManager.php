@@ -276,6 +276,22 @@ class ArchiveManager extends AManager {
     }
 
     /**
+     * Removes documents from archive folder in bulk
+     * 
+     * @param array $documentIds Document IDs
+     * @throws GeneralException
+     */
+    public function bulkRemoveDocumentsFromArchiveFolder(array $documentIds) {
+        foreach($documentIds as $documentId) {
+            $folderId = $this->getArchiveFolderForDocument($documentId);
+
+            if(!$this->archiveRepository->removeDocumentFromArchiveFolder($documentId, $folderId)) {
+                throw new GeneralException('Database error.');
+            }
+        }
+    }
+
+    /**
      * Returns an instance of DatabaseRow of the default archive folder
      */
     public function getDefaultFolder(): DatabaseRow {

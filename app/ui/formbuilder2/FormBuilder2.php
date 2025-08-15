@@ -15,6 +15,7 @@ use App\Modules\ModuleManager;
 use App\UI\AComponent;
 use App\UI\FormBuilder2\FormState\FormStateList;
 use App\UI\FormBuilder2\FormState\FormStateListHelper;
+use App\UI\ListBuilder\ListBuilder;
 
 /**
  * FormBuilder allows building forms for interaction with the server
@@ -886,6 +887,20 @@ class FormBuilder2 extends AComponent {
         $this->elements['hl_' . count($this->elements)] = &$de;
 
         return $de;
+    }
+
+    /**
+     * Adds a list to the form
+     * 
+     * @param string $name Element name
+     * @param ListBuilder $list ListBuilder instance
+     */
+    public function addList(string $name, ListBuilder $list): ListElement {
+        $le = new ListElement($name, $list);
+
+        $this->elements[$name] = &$le;
+
+        return $le;
     }
 
     /**

@@ -25,6 +25,7 @@ use App\Helpers\UnitConversionHelper;
 use App\UI\GridBuilder2\CheckboxLink;
 use App\UI\HTML\HTML;
 use App\UI\LinkBuilder;
+use App\UI\ListBuilder\ListBuilder;
 
 class DocumentsPresenter extends AUserPresenter {
     private ?string $currentFolderId;
@@ -73,16 +74,8 @@ class DocumentsPresenter extends AUserPresenter {
         $this->template->folder_title = $folder;
 
         $this->addScript('
-            function processBulkAction_MoveToFolder(_ids) {
-                const url = "' . $this->createURLString('moveToFolderForm', ['currentFolderId' => $this->currentFolderId]) . '";
-
-                post(url, _ids);
-            }
-
-            function processBulkAction_MoveToArchive(_ids) {
-                const url = "' . $this->createURLString('moveToArchiveForm', ['folderId' => $this->currentFolderId]) . '";
-
-                post(url, _ids);
+            function processBulkAction(data) {
+                post(data.url, {"ids": data.ids});
             }
         ');
     }
@@ -122,11 +115,12 @@ class DocumentsPresenter extends AUserPresenter {
                 })
                 ->setLinkCallback(function(array $primaryKeys) {
                     $data = [
-                        'ids' => $primaryKeys
+                        'ids' => $primaryKeys,
+                        'url' => $this->createURLString('moveToFolderForm', ['currentFolderId' => $this->currentFolderId])
                     ];
 
                     return LinkBuilder::createJSOnclickLink('Move to folder',
-                        'processBulkAction_MoveToFolder(' . htmlspecialchars(json_encode($data)) . ')',
+                        'processBulkAction(' . htmlspecialchars(json_encode($data)) . ')',
                         'link'
                     );
                 })
@@ -149,11 +143,40 @@ class DocumentsPresenter extends AUserPresenter {
                 })
                 ->setLinkCallback(function(array $primaryKeys) {
                     $data = [
-                        'ids' => $primaryKeys
+                        'ids' => $primaryKeys,
+                        'url' => $this->createURLString('moveToArchiveForm', ['folderId' => $this->currentFolderId])
                     ];
 
                     return LinkBuilder::createJSOnclickLink('Move to archive', 
-                        'processBulkAction_MoveToArchive(' . htmlspecialchars(json_encode($data)) . ')',
+                        'processBulkAction(' . htmlspecialchars(json_encode($data)) . ')',
+                        'link'
+                    );
+                })
+        );
+
+        $documentsGrid->addCheckboxLinkCallback(
+            (new CheckboxLink('shred'))
+                ->setCheckCallback(function(string $primaryKey) {
+                    try {
+                        $document = $this->documentManager->getDocumentById($primaryKey);
+
+                        if(!in_array($document->status, [DocumentStatus::READY_FOR_SHREDDING, DocumentStatus::NEW, DocumentStatus::ARCHIVED])) {
+                            return false;
+                        }
+
+                        return true;
+                    } catch(AException $e) {
+                        return false;
+                    }
+                })
+                ->setLinkCallback(function(array $primaryKeys) {
+                    $data = [
+                        'ids' => $primaryKeys,
+                        'url' => $this->createURLString('shredForm', ['folderId' => $this->currentFolderId])
+                    ];
+
+                    return LinkBuilder::createJSOnclickLink('Shred',
+                        'processBulkAction(' . htmlspecialchars(json_encode($data)) . ')',
                         'link'
                     );
                 })
@@ -526,6 +549,80 @@ class DocumentsPresenter extends AUserPresenter {
         }
 
         $this->redirect($this->createURL('list', ['folderId' => $folderId]));
+    }
+
+    public function renderShredForm() {
+        $links = [
+            $this->createBackUrl('list', ['folderId' => $this->httpRequest->get('folderId')])
+        ];
+
+        $this->template->links = LinkHelper::createLinksFromArray($links);
+    }
+
+    private function getListBuilderWithDocumentsToShred(): ListBuilder {
+        $documentIds = explode(',', $this->httpRequest->post('ids'));
+
+        $qb = $this->documentRepository->composeQueryForDocuments();
+        $qb->andWhere($qb->getColumnInValues('documentId', $documentIds))
+            ->execute();
+
+        $documents = [];
+        while($row = $qb->fetchAssoc()) {
+            $documents[] = $row;
+        }
+
+        $list = $this->componentFactory->getListBuilder();
+
+        $list->setDataSource($documents);
+
+        $list->addColumnText('title', 'Title');
+
+        return $list;
+    }
+
+    public function createComponentShredDocumentForm() {
+        $form = $this->componentFactory->getFormBuilder();
+
+        $form->setAction($this->createURL('shredFormSubmit', ['folderId' => $this->httpRequest->get('folderId')]));
+
+        $form->addLabel('text1', 'Are you sure you want to shred these documents?');
+
+        $list = $this->getListBuilderWithDocumentsToShred();
+
+        $form->addList('documentList', $list);
+
+        $form->addHiddenInput('ids')
+            ->setValue($this->httpRequest->post('ids'));
+
+        $form->addSubmit('Shred');
+        $form->addButton('Go back')
+            ->setOnClick('
+                location.href = \'' . $this->createURLString('list', ['folderId' => $this->httpRequest->get('folderId')]) . '\';
+            ');
+
+        return $form;
+    }
+
+    public function handleShredFormSubmit(FormRequest $fr) {
+        try {
+            $documentIds = explode(',', $this->httpRequest->post('ids'));
+
+            $this->documentRepository->beginTransaction(__METHOD__);
+
+            $this->documentManager->bulkUpdateDocuments($documentIds, [
+                'status' => DocumentStatus::SHREDDED
+            ]);
+
+            $this->documentRepository->commit($this->getUserId(), __METHOD__);
+
+            $this->flashMessage('Successfully shredded documents.' ,'success');
+        } catch(AException $e) {
+            $this->documentRepository->rollback(__METHOD__);
+
+            $this->flashMessage('Could not shred documents. Reason: ' . $e->getMessage(), 'error', 10);
+        }
+
+        $this->redirect($this->createURL('list', ['folderId' => $this->httpRequest->get('folderId')]));
     }
 }
 

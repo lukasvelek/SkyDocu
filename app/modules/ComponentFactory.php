@@ -46,6 +46,7 @@ class ComponentFactory {
      */
     public function getListBuilder() {
         $list = new ListBuilder($this->request);
+        $this->injectDefault($list);
         return $list;
     }
 

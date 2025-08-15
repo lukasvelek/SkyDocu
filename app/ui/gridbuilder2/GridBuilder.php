@@ -1139,9 +1139,13 @@ class GridBuilder extends AComponent {
                     }
                     $callback = $link->getCheckCallback();
 
-                    $result = $callback($primaryKey);
+                    if($callback === null) {
+                        $result = false;
+                    } else {
+                        $result = $callback($primaryKey);
+                    }
                 } catch(AException $e) {
-                    $result = false;    
+                    $result = false;
                 }
             }
 
@@ -1158,6 +1162,10 @@ class GridBuilder extends AComponent {
 
             try {
                 $callback = $link->getLinkCallback();
+
+                if($callback === null) {
+                    continue;
+                }
 
                 $result = $callback($primaryKeys);
 

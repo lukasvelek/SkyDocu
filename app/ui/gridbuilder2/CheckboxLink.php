@@ -55,15 +55,23 @@ class CheckboxLink {
     /**
      * Returns callback for availability checking
      */
-    public function getCheckCallback(): callable {
-        return $this->checkCallback[0];
+    public function getCheckCallback(): ?callable {
+        if(!empty($this->checkCallback)) {
+            return $this->checkCallback[0];
+        } else {
+            return null;
+        }
     }
     
     /**
      * Returns callback for link generation
      */
-    public function getLinkCallback(): callable {
-        return $this->getLinkCallback[0];
+    public function getLinkCallback(): ?callable {
+        if(!empty($this->getLinkCallback)) {
+            return $this->getLinkCallback[0];
+        } else {
+            return null;
+        }
     }
 
     /**

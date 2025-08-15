@@ -928,16 +928,13 @@ class GridBuilderHelper {
                         return;
                     }
 
+                    $("#links").hide();
+                        $("#grid-links").show();
+
                     showLoadingAnimation("grid-links", 32);
                 ')
                 ->updateHTMLElement('grid-links', 'modal')
                 ->addWhenDoneOperation('_checkboxHandlerTimestamp = null;')
-                ->addWhenDoneOperation('
-                    /*if(obj.modal) {*/
-                        $("#links").hide();
-                        $("#grid-links").show();
-                    /*}*/
-                ')
                 ->addCustomArg('_ids')
             ;
 

@@ -8,6 +8,8 @@ use App\Constants\Container\ProcessGridViews;
 use App\Constants\JobQueueTypes;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
+use App\UI\GridBuilder2\CheckboxLink;
+use App\UI\LinkBuilder;
 
 class ProcessesPresenter extends AUserPresenter {
     public function __construct() {
@@ -40,6 +42,10 @@ class ProcessesPresenter extends AUserPresenter {
                 }
 
                 autoUpdate();
+
+                function processBulkAction(data) {
+                    post(data.url, {"ids": data.ids});
+                }
             ');
         }
     }
@@ -51,65 +57,109 @@ class ProcessesPresenter extends AUserPresenter {
     }
 
     protected function createComponentProcessesGrid(HttpRequest $request) {
-        $grid = $this->componentFactory->getGridBuilder($this->containerId);
-        $grid->setApplication($this->app);
-
-        $processGrid = new ProcessesGrid(
-            $grid,
+        $grid = new ProcessesGrid(
+            $this->componentFactory->getGridBuilder($this->containerId),
             $this->processInstanceRepository,
-            $request->get('view'),
+            $this->httpRequest->get('view'),
             $this->groupManager,
             $this->processManager,
             $this->containerProcessAuthorizator
         );
 
-        return $processGrid;
+        $grid->useCheckboxes($this);
+
+        $grid->addCheckboxLinkCallback(
+            (new CheckboxLink('cancelInstance'))
+                ->setCheckCallback(function(string $primaryKey) {
+                    return $this->containerProcessAuthorizator->canUserCancelProcessInstance($primaryKey, $this->getUserId());
+                })
+                ->setLinkCallback(function(array $primaryKeys) {
+                    $data = [
+                        'ids' => $primaryKeys,
+                        'url' => $this->createURLString('cancelInstances', ['view' => $this->httpRequest->get('view')])
+                    ];
+
+                    return LinkBuilder::createJSOnclickLink(
+                        'Cancel instance',
+                        'processBulkAction(' . htmlspecialchars(json_encode($data)) . ')',
+                        'link'
+                    );
+                })
+        );
+
+        $grid->addCheckboxLinkCallback(
+            (new CheckboxLink('deleteInstance'))
+                ->setCheckCallback(function(string $primaryKey) {
+                    return $this->containerProcessAuthorizator->canUserCancelProcessInstance($primaryKey, $this->getUserId());
+                })
+                ->setLinkCallback(function(array $primaryKeys) {
+                    $data = [
+                        'ids' => $primaryKeys,
+                        'url' => $this->createURLString('deleteInstances', ['view' => $this->httpRequest->get('view')])
+                    ];
+
+                    return LinkBuilder::createJSOnclickLink(
+                        'Delete instance',
+                        'processBulkAction(' . htmlspecialchars(json_encode($data)) . ')',
+                        'link'
+                    );
+                })
+        );
+
+        return $grid;
     }
 
-    public function handleDeleteInstance() {
-        $instanceId = $this->httpRequest->get('instanceId');
+    public function handleDeleteInstances() {
+        $instanceIds = explode(',', $this->httpRequest->post('ids'));
         $view = $this->httpRequest->get('view');
 
         try {
             $this->app->jobQueueRepository->beginTransaction(__METHOD__);
 
-            $this->app->jobQueueManager->insertNewJob(JobQueueTypes::DELETE_CONTAINER_PROCESS_INSTANCE, [
-                'instanceId' => $instanceId,
-                'containerId' => $this->containerId
-            ], null);
+            $this->app->jobQueueManager->insertNewJob(
+                JobQueueTypes::DELETE_CONTAINER_PROCESS_INSTANCE, 
+                [
+                    'instanceIds' => $instanceIds,
+                    'containerId' => $this->containerId
+                ],
+                null);
 
             $this->app->jobQueueRepository->commit($this->getUserId(), __METHOD__);
 
-            $this->flashMessage('Process instance was enqueued for deletion.', 'success');
+            $this->flashMessage('Process instances were enqueued for deletion.', 'success');
         } catch(AException $e) {
             $this->app->jobQueueRepository->rollback(__METHOD__);
 
-            $this->flashMessage('Could not enqueue process instance for deletion. Reason: ' . $e->getMessage(), 'error', 10);
+            $this->flashMessage('Could not enqueue process instances for deletion. Reason: ' . $e->getMessage(), 'error', 10);
         }
 
         $this->redirect($this->createURL('list', ['view' => $view]));
     }
 
-    public function handleCancelInstance() {
-        $instanceId = $this->httpRequest->get('instanceId');
+    public function handleCancelInstances() {
+        $instanceIds = explode(',', $this->httpRequest->post('ids'));
         $view = $this->httpRequest->get('view');
 
         try {
             $this->app->jobQueueRepository->beginTransaction(__METHOD__);
 
-            $this->app->jobQueueManager->insertNewJob(JobQueueTypes::CANCEL_CONTAINER_PROCESS_INSTANCE, [
-                'instanceId' => $instanceId,
-                'containerId' => $this->containerId,
-                'userId' => $this->getUserId()
-            ], null);
+            $this->app->jobQueueManager->insertNewJob(
+                JobQueueTypes::CANCEL_CONTAINER_PROCESS_INSTANCE,
+                [
+                    'instanceIds' => $instanceIds,
+                    'containerId' => $this->containerId,
+                    'userId' => $this->getUserId()
+                ],
+                null
+            );
 
             $this->app->jobQueueRepository->commit($this->getUserId(), __METHOD__);
 
-            $this->flashMessage('Process instance was enqueued for cancelation.', 'success');
+            $this->flashMessage('Process instances were enqueued for cancelation.', 'success');
         } catch(AException $e) {
             $this->app->jobQueueRepository->rollback(__METHOD__);
 
-            $this->flashMessage('Could not enqueue process instance for cancelation. Reason: ' . $e->getMessage(), 'error', 10);
+            $this->flashMessage('Could not enqueue process instances for cancelation. Reason: ' . $e->getMessage(), 'error', 10);
         }
 
         $this->redirect($this->createURL('list', ['view' => $view]));

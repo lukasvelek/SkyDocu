@@ -336,22 +336,24 @@ class JobQueueService extends AService {
     private function _CANCEL_CONTAINER_PROCESS_INSTANCE(DatabaseRow $job) {
         $params = $this->parseParams($job);
 
-        $instanceId = $params['instanceId'];
+        $instanceIds = $params['instanceIds'];
         $containerId = $params['containerId'];
         $userId = $params['userId'];
 
         $container = $this->getContainerInstance($containerId);
 
         try {
-            $this->logJob($job, sprintf('Canceling process instance %s.', $instanceId));
+            $this->logJob($job, sprintf('Canceling process instances [%s].', implode(', ', $instanceIds)));
 
             $container->processInstanceRepository->beginTransaction(__METHOD__);
 
-            $container->processInstanceManager->cancelProcessInstance($instanceId, $userId);
+            foreach($instanceIds as $instanceId) {
+                $container->processInstanceManager->cancelProcessInstance($instanceId, $userId);
+            }
 
             $container->processInstanceRepository->commit($this->app->userManager->getServiceUserId(), __METHOD__);
 
-            $this->logJob($job, sprintf('Canceled process instance %s.', $instanceId));
+            $this->logJob($job, sprintf('Canceled process instances [%s].', implode(', ', $instanceIds)));
         } catch(AException $e) {
             $container->processInstanceRepository->rollback(__METHOD__);
 

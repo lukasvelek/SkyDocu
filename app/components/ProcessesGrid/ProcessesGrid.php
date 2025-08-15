@@ -10,8 +10,10 @@ use App\Constants\Container\SystemGroups;
 use App\Constants\ProcessColorCombos;
 use App\Core\DB\DatabaseRow;
 use App\Core\Http\JsonResponse;
+use App\Helpers\LinkHelper;
 use App\Managers\Container\GroupManager;
 use App\Managers\Container\ProcessManager;
+use App\Modules\APresenter;
 use App\Repositories\Container\ProcessInstanceRepository;
 use App\UI\GridBuilder2\Action;
 use App\UI\GridBuilder2\Cell;
@@ -176,38 +178,6 @@ class ProcessesGrid extends GridBuilder implements IGridExtendingComponent {
 
             return $el;
         };
-
-        // CANCEL PROCESS INSTANCE
-        $cancelInstance = $this->addAction('cancelInstance');
-        $cancelInstance->setTitle('Cancel instance');
-        $cancelInstance->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) {
-            return $this->processAuthorizator->canUserCancelProcessInstance($row->instanceId, $this->app->currentUser->getId());
-        };
-        $cancelInstance->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
-            $el = HTML::el('a')
-                ->class('grid-link')
-                ->href($this->createFullURLString('User:Processes', 'cancelInstance', ['instanceId' => $primaryKey, 'processId' => $row->processId, 'view' => $this->view]))
-                ->text('Cancel instance')
-            ;
-
-            return $el;
-        };
-
-        // DELETE PROCESS INSTANCE
-        $deleteInstance = $this->addAction('deleteInstance');
-        $deleteInstance->setTitle('Delete instance');
-        $deleteInstance->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) {
-            return $this->processAuthorizator->canUserDeleteProcessInstance($row->instanceId, $this->app->currentUser->getId());
-        };
-        $deleteInstance->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
-            $el = HTML::el('a')
-                ->class('grid-link')
-                ->href($this->createFullURLString('User:Processes', 'deleteInstance', ['instanceId' => $primaryKey, 'processId' => $row->processId, 'view' => $this->view]))
-                ->text('Delete instance')
-            ;
-
-            return $el;
-        };
     }
 
     /**
@@ -238,10 +208,32 @@ class ProcessesGrid extends GridBuilder implements IGridExtendingComponent {
         return false;
     }
 
+    /**
+     * Adds checkboxes to grid and forward the selected IDs to "actionBulkAction()"
+     * 
+     * @param APresenter $presenter Sender presenter
+     */
+    public function useCheckboxes(APresenter $presenter) {
+        $params = [];
+        if($this->httpRequest->get('view') !== null) {
+            $params['view'] = $this->httpRequest->get('view');
+        }
+
+        $this->addCheckboxes2($presenter, 'bulkAction', $params);
+    }
+
     public function actionGetSkeleton(): JsonResponse {
         $this->prerender();
 
         return parent::actionGetSkeleton();
+    }
+
+    public function actionBulkAction(): JsonResponse {
+        $links = $this->getBulkActionLinks($this->httpRequest->get('ids'));
+
+        return new JsonResponse([
+            'modal' => LinkHelper::createLinksFromArray($links)
+        ]);
     }
 }
 

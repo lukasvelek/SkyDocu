@@ -194,6 +194,17 @@ class DocumentRepository extends ARepository {
         return $qb->fetchBool();
     }
 
+    public function bulkUpdateDocuments(array $documentIds, array $data) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->update('documents')
+            ->set($data)
+            ->where($qb->getColumnInValues('documentId', $documentIds))
+            ->execute();
+
+        return $qb->fetchBool();
+    }
+
     public function createNewDocumentSharing(string $sharingId, string $documentId, string $sharedByUserId, string $sharedToUserId, string $dateValidUntil) {
         $qb = $this->qb(__METHOD__);
 

@@ -267,8 +267,19 @@ class DocumentManager extends AManager {
         }
     }
 
-    public function updateDocumentCustom(string $documentId, array $data) {
+    /**
+     * Updates documents in bulk
+     * 
+     * @param array $documentIds Document IDs
+     * @param array $data Data array
+     * @throws GeneralException
+     */
+    public function bulkUpdateDocuments(array $documentIds, array $data) {
+        $data['dateModified'] = DateTime::now();
 
+        if(!$this->documentRepository->bulkUpdateDocuments($documentIds, $data)) {
+            throw new GeneralException('Database error.');
+        }
     }
 
     /**

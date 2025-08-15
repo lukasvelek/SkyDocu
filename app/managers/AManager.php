@@ -59,6 +59,25 @@ abstract class AManager {
     public function createId() {
         return GUID::generate();
     }
+
+    /**
+     * Returns an array filled with generated GUIDs
+     * 
+     * @param int $count Number of GUIDs to generate
+     */
+    public function bulkCreateIds(int $count): array {
+        if($count == 0) {
+            return [];
+        }
+
+        $guids = [];
+
+        for($i = 0; $i < $count; $i++) {
+            $guids[] = GUID::generate();
+        }
+
+        return $guids;
+    }
 }
 
 ?>

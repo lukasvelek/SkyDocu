@@ -86,9 +86,10 @@ async function copyTextToClipboardWithLink(_text, _link, _beforeText, _afterText
  * Displays loading animation in given DOM element
  * 
  * @param {string} _element 
+ * @param {number} _size Size in pixels
  */
-function showLoadingAnimation(_element) {
-    $("#" + _element).html("<div id=\"center\"><img src=\"resources/loading.gif\" width=\"64px\"></div>");
+function showLoadingAnimation(_element, _size = 64) {
+    $("#" + _element).html("<div id=\"center\"><img src=\"resources/loading.gif\" width=\"" + _size + "px\"></div>");
 }
 
 /**

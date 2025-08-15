@@ -1145,7 +1145,9 @@ class GridBuilder extends AComponent {
                 }
             }
 
-            $availables[] = $link->getName();
+            if($result === true) {
+                $availables[] = $link->getName();
+            }
         }
 
         foreach($availables as $linkName) {

@@ -912,6 +912,7 @@ class GridBuilderHelper {
 
                     if(_ids.length == 0) {
                         $("#grid-links").html("");
+                        $("#grid-links").hide();
                         $("#links").show();
                         return;
                     }
@@ -922,16 +923,20 @@ class GridBuilderHelper {
 
                     if(_ids.length == 0) {
                         $("#grid-links").html("");
+                        $("#grid-links").hide();
                         $("#links").show();
                         return;
                     }
+
+                    showLoadingAnimation("grid-links", 32);
                 ')
                 ->updateHTMLElement('grid-links', 'modal')
                 ->addWhenDoneOperation('_checkboxHandlerTimestamp = null;')
                 ->addWhenDoneOperation('
-                    if(obj.modal) {
+                    /*if(obj.modal) {*/
                         $("#links").hide();
-                    }
+                        $("#grid-links").show();
+                    /*}*/
                 ')
                 ->addCustomArg('_ids')
             ;

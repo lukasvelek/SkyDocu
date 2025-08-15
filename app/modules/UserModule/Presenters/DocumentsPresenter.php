@@ -78,6 +78,12 @@ class DocumentsPresenter extends AUserPresenter {
 
                 post(url, _ids);
             }
+
+            function processBulkAction_MoveToArchive(_ids) {
+                const url = "' . $this->createURLString('moveToArchiveForm', ['folderId' => $this->currentFolderId]) . '";
+
+                post(url, _ids);
+            }
         ');
     }
 
@@ -96,7 +102,7 @@ class DocumentsPresenter extends AUserPresenter {
             $documentsGrid->setCurrentFolder($this->currentFolderId);
         }
         $documentsGrid->showCustomMetadata();
-        $documentsGrid->useCheckboxes($this); // WILL BE ADDED IN 1.8
+        $documentsGrid->useCheckboxes($this);
         $documentsGrid->setGridName(GridNames::DOCUMENTS_GRID);
 
         $documentsGrid->addCheckboxLinkCallback(
@@ -115,21 +121,39 @@ class DocumentsPresenter extends AUserPresenter {
                     }
                 })
                 ->setLinkCallback(function(array $primaryKeys) {
-                    /*return LinkBuilder::createSimpleLink(
-                        'Move to folder',
-                        $this->createURL('moveToFolderForm', [
-                            'currentFolderId' => $this->httpRequest->get('folderId'),
-                            'ids[]' => $primaryKeys
-                        ]),
-                        'link'
-                    );*/
-
                     $data = [
                         'ids' => $primaryKeys
                     ];
 
                     return LinkBuilder::createJSOnclickLink('Move to folder',
                         'processBulkAction_MoveToFolder(' . htmlspecialchars(json_encode($data)) . ')',
+                        'link'
+                    );
+                })
+        );
+
+        $documentsGrid->addCheckboxLinkCallback(
+            (new CheckboxLink('moveToArchive'))
+                ->setCheckCallback(function(string $primaryKey) {
+                    try {
+                        $document = $this->documentManager->getDocumentById($primaryKey);
+
+                        if(!in_array($document->status, [DocumentStatus::NEW])) {
+                            return false;
+                        }
+
+                        return true;
+                    } catch(AException $e) {
+                        return false;
+                    }
+                })
+                ->setLinkCallback(function(array $primaryKeys) {
+                    $data = [
+                        'ids' => $primaryKeys
+                    ];
+
+                    return LinkBuilder::createJSOnclickLink('Move to archive', 
+                        'processBulkAction_MoveToArchive(' . htmlspecialchars(json_encode($data)) . ')',
                         'link'
                     );
                 })
@@ -439,6 +463,69 @@ class DocumentsPresenter extends AUserPresenter {
         }
 
         $this->redirect($this->createURL('list', ['folderId' => $this->httpRequest->get('currentFolderId')]));
+    }
+
+    public function renderMoveToArchiveForm() {
+        $links = [
+            $this->createBackUrl('list', ['folderId' => $this->httpRequest->get('folderId')])
+        ];
+
+        $this->template->links = $links;
+    }
+
+    protected function createComponentMoveDocumentToArchiveForm() {
+        $qb = $this->archiveManager->composeQueryForAvailableArchiveFolders();
+        $qb->execute();
+
+        $archive = [];
+        while($row = $qb->fetchAssoc()) {
+            $archive[] = [
+                'value' => $row['folderId'],
+                'text' => $row['title']
+            ];
+        }
+
+        $form = $this->componentFactory->getFormBuilder();
+
+        $form->setAction($this->createURL('moveToArchiveFormSubmit', ['folderId' => $this->httpRequest->get('folderId')]));
+
+        $form->addSelect('archiveFolder', 'Archive folder:')
+            ->setRequired()
+            ->addRawOptions($archive);
+
+        $form->addHiddenInput('ids')
+            ->setValue($this->httpRequest->post('ids'));
+
+        $form->addSubmit('Move to archive');
+
+        return $form;
+    }
+
+    public function handleMoveToArchiveFormSubmit(FormRequest $fr) {
+        $this->mandatoryUrlParams(['folderId'], $this->createURL('list'));
+
+        $folderId = $this->httpRequest->get('folderId');
+        $documentIds = explode(',', $this->httpRequest->get('ids'));
+
+        try {
+            $this->archiveRepository->beginTransaction(__METHOD__);
+
+            $this->archiveManager->bulkInsertDocumentsToArchiveFolder($fr->archiveFolder, $documentIds);
+
+            $this->documentManager->bulkUpdateDocuments($documentIds, [
+                'status' => DocumentStatus::ARCHIVED
+            ]);
+
+            $this->archiveRepository->commit($this->getUserId(), __METHOD__);
+
+            $this->flashMessage('Successfully moved files to archive.', 'success');
+        } catch(AException $e) {
+            $this->archiveRepository->rollback(__METHOD__);
+
+            $this->flashMessage('Could not move files to archive. Reason: ' . $e->getMessage(), 'error', 10);
+        }
+
+        $this->redirect($this->createURL('list', ['folderId' => $folderId]));
     }
 }
 

@@ -6,10 +6,12 @@ use App\Components\Sidebar\Sidebar2;
 use App\Core\Application;
 use App\Core\Caching\CacheFactory;
 use App\Core\Http\HttpRequest;
+use App\Exceptions\GeneralException;
 use App\Helpers\GridHelper;
 use App\UI\AComponent;
 use App\UI\FormBuilder2\FormBuilder2;
 use App\UI\GridBuilder2\GridBuilder;
+use App\UI\GridBuilder2\IGridExtendingComponent;
 use App\UI\ListBuilder\ListBuilder;
 
 /**
@@ -55,8 +57,26 @@ class ComponentFactory {
      * 
      * @return GridBuilder GridBuilder instance
      */
-    public function getGridBuilder(?string $containerId = null) {
+    public function getGridBuilder(?string $containerId = null): GridBuilder {
         $grid = new GridBuilder($this->request);
+        $helper = new GridHelper($this->presenter->logger, $this->presenter->getUserId(), $containerId);
+        $helper->setCacheFactory($this->cacheFactory);
+        $grid->setHelper($helper);
+        $grid->setCacheFactory($this->getCacheFactory());
+        $grid->setContainerId($containerId);
+        $grid->setApplication($this->app);
+        $grid->setPresenter($this->presenter);
+        return $grid;
+    }
+
+    /**
+     * Returns an instance of an extending class of GridBuilder
+     * 
+     * @param string $className Class name
+     * @param ?string $containerId Container ID
+     */
+    public function getGridBuilderExtendingClassInstance(string $className, ?string $containerId = null): GridBuilder {
+        $grid = new $className($this->request);
         $helper = new GridHelper($this->presenter->logger, $this->presenter->getUserId(), $containerId);
         $helper->setCacheFactory($this->cacheFactory);
         $grid->setHelper($helper);
@@ -72,7 +92,7 @@ class ComponentFactory {
      * 
      * @return FormBuilder2 FormBuilder2 instance
      */
-    public function getFormBuilder() {
+    public function getFormBuilder(): FormBuilder2 {
         $form = new FormBuilder2($this->request);
         $this->injectDefault($form);
         return $form;
@@ -83,7 +103,7 @@ class ComponentFactory {
      * 
      * @return Sidebar2 Sidebar2 instance
      */
-    public function getSidebar() {
+    public function getSidebar(): Sidebar2 {
         $sidebar = new Sidebar2($this->request);
         return $sidebar;
     }
@@ -102,7 +122,7 @@ class ComponentFactory {
      * 
      * @return CacheFactory CacheFactory instance
      */
-    private function getCacheFactory() {
+    private function getCacheFactory(): CacheFactory {
         return ($this->cacheFactory !== null) ? $this->cacheFactory : $this->presenter->cacheFactory;
     }
 

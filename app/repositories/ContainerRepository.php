@@ -132,6 +132,17 @@ class ContainerRepository extends ARepository {
         return $qb->fetchBool();
     }
 
+    public function bulkUpdateContainers(array $containerIds, array $data): bool {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->update('containers')
+            ->set($data)
+            ->where($qb->getColumnInValues('containerId', $containerIds))
+            ->execute();
+
+        return $qb->fetchBool();
+    }
+
     public function composeQueryForContainerStatusHistory(string $containerId) {
         $qb = $this->qb(__METHOD__);
 

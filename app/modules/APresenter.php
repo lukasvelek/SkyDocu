@@ -223,7 +223,7 @@ abstract class APresenter extends AGUICore {
         $result = array_merge($url, $params);
 
         if(Configuration::getAppBranch() == 'TEST') {
-            $this->router->checkEndpointExists($result, $throwException);
+            //$this->router->checkEndpointExists($result, $throwException);
         }
 
         return $result;
@@ -625,7 +625,7 @@ abstract class APresenter extends AGUICore {
                     throw new NoAjaxResponseException();
                 }
             } else {
-                throw new ActionDoesNotExistException('Method \'' . $component::class . '::' . $methodName . '()\' does not exist.');
+                throw new ActionDoesNotExistException($component::class . '::' . $methodName . '()');
             }
         } else {
             return null;

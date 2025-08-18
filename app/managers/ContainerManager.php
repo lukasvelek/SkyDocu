@@ -320,6 +320,23 @@ class ContainerManager extends AManager {
     }
 
     /**
+     * Updates containers in bulk
+     * 
+     * @param array $containerIds Container IDs
+     * @param array $data Data array
+     * @throws GeneralException
+     */
+    public function bulkUpdateContainers(array $containerIds, array $data) {
+        if(!$this->containerRepository->bulkUpdateContainers($containerIds, $data)) {
+            throw new GeneralException('Database error.');
+        }
+
+        if(!$this->cacheFactory->invalidateCacheByNamespace(CacheNames::CONTAINERS)) {
+            throw new GeneralException('Could not invalidate cache.');
+        }
+    }
+
+    /**
      * Returns the number of all usage statistics entries for given container
      * 
      * @param string $containerId Container ID

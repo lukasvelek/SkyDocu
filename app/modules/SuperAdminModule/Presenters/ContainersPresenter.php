@@ -190,8 +190,8 @@ class ContainersPresenter extends ASuperAdminPresenter {
             ->setPlaceHolder('Description')
             ->setRequired();
 
-        $form->addCheckboxInput('canShowReferent', 'Is referent visible?')
-            ->setChecked();
+        /*$form->addCheckboxInput('canShowReferent', 'Is referent visible?')
+            ->setChecked();*/
 
         $form->addSubmit('Submit');
 

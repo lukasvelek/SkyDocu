@@ -15,6 +15,7 @@ use App\Modules\ModuleManager;
 use App\UI\AComponent;
 use App\UI\FormBuilder2\FormState\FormStateList;
 use App\UI\FormBuilder2\FormState\FormStateListHelper;
+use App\UI\ListBuilder\ListBuilder;
 
 /**
  * FormBuilder allows building forms for interaction with the server
@@ -376,6 +377,7 @@ class FormBuilder2 extends AComponent {
 
         foreach($this->action as $k => $v) {
             if(in_array($k, ['page', 'action', 'do'])) continue;
+            if(is_array($v)) continue;
 
             $___args[] = '\'' . $v . '\'';
         }
@@ -648,6 +650,19 @@ class FormBuilder2 extends AComponent {
     }
 
     /**
+     * Adds a hidden input
+     * 
+     * @param string $name Element name
+     */
+    public function addHiddenInput(string $name): HiddenInput {
+        $hi = new HiddenInput($name);
+
+        $this->elements[$name] = &$hi;
+
+        return $hi;
+    }
+
+    /**
      * Adds form submit button
      * 
      * @param string $text Button text
@@ -872,6 +887,20 @@ class FormBuilder2 extends AComponent {
         $this->elements['hl_' . count($this->elements)] = &$de;
 
         return $de;
+    }
+
+    /**
+     * Adds a list to the form
+     * 
+     * @param string $name Element name
+     * @param ListBuilder $list ListBuilder instance
+     */
+    public function addList(string $name, ListBuilder $list): ListElement {
+        $le = new ListElement($name, $list);
+
+        $this->elements[$name] = &$le;
+
+        return $le;
     }
 
     /**

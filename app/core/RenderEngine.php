@@ -66,7 +66,7 @@ class RenderEngine {
             }
 
             // Optimization - the returned code is on a single line
-            if(!$this->isAjax) {
+            if(!$this->isAjax && APP_BRANCH == 'PROD') {
                 $parts = explode("\r\n", $this->renderedContent);
 
                 $tmp = [];

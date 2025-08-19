@@ -2,6 +2,7 @@
 
 namespace App\Modules\AdminModule;
 
+use App\Components\ContainerExternalSystemsGrid\ContainerExternalSystemsGrid;
 use App\Constants\Container\ExternalSystemLogActionTypes;
 use App\Constants\Container\ExternalSystemLogObjectTypes;
 use App\Constants\Container\ExternalSystemRightsOperations;
@@ -13,6 +14,7 @@ use App\Exceptions\AException;
 use App\Exceptions\RequiredAttributeIsNotSetException;
 use App\Helpers\LinkHelper;
 use App\UI\GridBuilder2\Action;
+use App\UI\GridBuilder2\CheckboxLink;
 use App\UI\GridBuilder2\Row;
 use App\UI\HTML\HTML;
 use App\UI\LinkBuilder;
@@ -30,112 +32,178 @@ class ExternalSystemsPresenter extends AAdminPresenter {
         ];
 
         $this->template->links = LinkHelper::createLinksFromArray($links);
+
+        $this->addScript('
+            function processBulkAction(data) {
+                post(data.url, {"ids": data.ids});
+            }
+        ');
     }
 
-    protected function createComponentContainerExternalSystemsGrid(HttpRequest $request) {
-        $grid = $this->componentFactory->getGridBuilder($this->containerId);
+    protected function createComponentContainerExternalSystemsGrid() {
+        $grid = new ContainerExternalSystemsGrid(
+            $this->componentFactory->getGridBuilder($this->containerId),
+            $this->containerId
+        );
 
-        $qb = $this->app->externalSystemsRepository->composeQueryForExternalSystemsForContainer($this->containerId);
+        $grid->useCheckboxes($this);
 
-        $grid->createDataSourceFromQueryBuilder($qb, 'systemId');
+        $grid->addCheckboxLinkCallback(
+            (new CheckboxLink('enable'))
+                ->setCheckCallback(function(string $primaryKey) {
+                    try {
+                        $system = $this->app->externalSystemsManager->getExternalSystemById($primaryKey);
 
-        $grid->addColumnText('title', 'Title');
-        $grid->addColumnBoolean('isEnabled', 'Enabled');
-        $grid->addColumnText('login', 'Login');
+                        if($system->isEnabled == true) {
+                            return false;
+                        }
 
-        $info = $grid->addAction('info');
-        $info->setTitle('Information');
-        $info->onCanRender[] = function() {
-            return true;
-        };
-        $info->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
-            $el = HTML::el('a');
-            $el->href($this->createURLString('info', ['systemId' => $primaryKey]))
-                ->class('grid-link')
-                ->text('Information');
+                        return true;
+                    } catch(AException $e) {
+                        return false;
+                    }
+                })
+                ->setLinkCallback(function(array $primaryKeys) {
+                    $data = [
+                        'ids' => $primaryKeys,
+                        'url' => $this->createURLString('changeBulk', ['operation' => 'enable'])
+                    ];
 
-            return $el;
-        };
+                    return LinkBuilder::createJSOnclickLink(
+                        'Enable',
+                        'processBulkAction(' . htmlspecialchars(json_encode($data)) . ')',
+                        'link'
+                    );
+                })
+        );
 
-        $log = $grid->addAction('log');
-        $log->setTitle('Log');
-        $log->onCanRender[] = function() {
-            return true;
-        };
-        $log->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
-            $el = HTML::el('a');
-            $el->href($this->createURLString('log', ['systemId' => $primaryKey]))
-                ->class('grid-link')
-                ->text('Log');
+        $grid->addCheckboxLinkCallback(
+            (new CheckboxLink('disable'))
+                ->setCheckCallback(function(string $primaryKey) {
+                    try {
+                        $system = $this->app->externalSystemsManager->getExternalSystemById($primaryKey);
 
-            return $el;
-        };
+                        if($system->isEnabled == false) {
+                            return false;
+                        }
 
-        $rights = $grid->addAction('rights');
-        $rights->setTitle('Rights');
-        $rights->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) {
-            if($row->isEnabled == false) {
-                return false;
-            }
+                        return true;
+                    } catch(AException $e) {
+                        return false;
+                    }
+                })
+                ->setLinkCallback(function(array $primaryKeys) {
+                    $data = [
+                        'ids' => $primaryKeys,
+                        'url' => $this->createURLString('changeBulk', ['operation' => 'disable'])
+                    ];
 
-            return true;
-        };
-        $rights->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
-            $el = HTML::el('a');
-            $el->href($this->createURLString('rightsList', ['systemId' => $primaryKey]))
-                ->class('grid-link')
-                ->text('Rights');
+                    return LinkBuilder::createJSOnclickLink(
+                        'Disable',
+                        'processBulkAction(' . htmlspecialchars(json_encode($data)) . ')',
+                        'link'
+                    );
+                })
+        );
 
-            return $el;
-        };
+        $grid->addCheckboxLinkCallback(
+            (new CheckboxLink('delete'))
+                ->setCheckCallback(function(string $primaryKey) {
+                    try {
+                        $system = $this->app->externalSystemsManager->getExternalSystemById($primaryKey);
 
-        $enable = $grid->addAction('enable');
-        $enable->setTitle('Enable');
-        $enable->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) {
-            return ($row->isEnabled == false);
-        };
-        $enable->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
-            $el = HTML::el('a');
-            $el->href($this->createURLString('change', ['systemId' => $primaryKey, 'operation' => 'enable']))
-                ->class('grid-link')
-                ->text('Enable');
+                        if($system->isEnabled == true) {
+                            return false;
+                        }
 
-            return $el;
-        };
+                        return true;
+                    } catch(AException $e) {
+                        return false;
+                    }
+                })
+                ->setLinkCallback(function(array $primaryKeys) {
+                    $data = [
+                        'ids' => $primaryKeys,
+                        'url' => $this->createURLString('deleteBulkForm')
+                    ];
 
-        $disable = $grid->addAction('disable');
-        $disable->setTitle('Disable');
-        $disable->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) {
-            return ($row->isEnabled == true);
-        };
-        $disable->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
-            $el = HTML::el('a');
-            $el->href($this->createURLString('change', ['systemId' => $primaryKey, 'operation' => 'disable']))
-                ->class('grid-link')
-                ->text('Disable');
-
-            return $el;
-        };
-
-        $delete = $grid->addAction('delete');
-        $delete->setTitle('Delete');
-        $delete->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) {
-            if($row->isEnabled == true) {
-                return false;
-            }
-
-            return true;
-        };
-        $delete->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
-            $el = HTML::el('a');
-            $el->href($this->createURLString('deleteForm', ['systemId' => $primaryKey]))
-                ->class('grid-link')
-                ->text('Delete');
-
-            return $el;
-        };
+                    return LinkBuilder::createJSOnclickLink(
+                        'Delete',
+                        'processBulkAction(' . htmlspecialchars(json_encode($data)) . ')',
+                        'link'
+                    );
+                })
+        );
 
         return $grid;
+    }
+
+    public function renderDeleteBulkForm() {
+        $this->template->links = $this->createBackUrl('list');
+    }
+
+    protected function createComponentDeleteExternalSystemsForm() {
+        //$systemId = $request->get('systemId');
+        //$system = $this->app->externalSystemsManager->getExternalSystemById($systemId);
+
+        $systemIds = explode(',', $this->httpRequest->post('ids'));
+
+        $form = $this->componentFactory->getFormBuilder();
+        
+        $form->setAction($this->createURL('deleteBulkFormSubmit'));
+
+        $form->addLabel('text1', 'Are you sure you want to delete these external systems?');
+
+        $list = $this->componentFactory->getListBuilder();
+
+        $qb = $this->app->externalSystemsRepository->composeQueryForExternalSystemsForContainer($this->containerId);
+        $qb->andWhere($qb->getColumnInValues('systemId', $systemIds))
+            ->execute();
+
+        $systems = [];
+        while($row = $qb->fetchAssoc()) {
+            $systems[] = $row;
+        }
+
+        $list->setDataSource($systems);
+
+        $list->addColumnText('title', 'Title');
+
+        $form->addList('externalSystems', $list);
+
+        $form->addPasswordInput('password', 'Your password:')
+            ->setRequired();
+
+        $form->addHiddenInput('ids')
+            ->setValue($this->httpRequest->post('ids'));
+
+        $form->addSubmit('Delete');
+
+        return $form;
+    }
+
+    public function handleDeleteBulkFormSubmit(FormRequest $fr) {
+        $systemIds = explode(',', $this->httpRequest->post('ids'));
+
+        try {
+            $this->app->userAuth->authUser($fr->password);
+
+            $this->app->externalSystemsRepository->beginTransaction(__METHOD__);
+
+            foreach($systemIds as $systemId) {
+                $this->app->externalSystemsManager->deleteExternalSystem($systemId);
+            }
+
+            $this->app->externalSystemsRepository->commit($this->getUserId(), __METHOD__);
+
+            $this->flashMessage('Successfully deleted the external systems.', 'success');
+        } catch(AException $e) {
+            $this->app->externalSystemsRepository->rollback(__METHOD__);
+
+            $this->flashMessage('Could not delete the external systems. Reason: ' . $e->getMessage(), 'error', 10);
+        }
+
+        $this->redirect($this->createURL('list'));
     }
 
     public function handleDeleteForm(?FormRequest $fr = null) {
@@ -327,6 +395,32 @@ class ExternalSystemsPresenter extends AAdminPresenter {
             $this->app->externalSystemsRepository->rollback(__METHOD__);
 
             $this->flashMessage(sprintf('Could not %s external system. Reason: %s', ($operation == 'enable' ? 'enable' : 'disable'), $e->getMessage()), 'error', '10');
+        }
+
+        $this->redirect($this->createURL('list'));
+    }
+
+    public function handleChangeBulk() {
+        $operation = $this->httpRequest->get('operation');
+        $systemIds = explode(',', $this->httpRequest->post('ids'));
+
+        try {
+            $this->app->externalSystemsRepository->beginTransaction(__METHOD__);
+
+            $this->app->externalSystemsManager->bulkUpdateExternalSystems(
+                $systemIds,
+                [
+                    'isEnabled' => ($operation == 'enable' ? 1 : 0)
+                ]
+            );
+
+            $this->app->externalSystemsRepository->commit($this->getUserId(), __METHOD__);
+
+            $this->flashMessage(sprintf('Successfully %s external systems.', ($operation == 'enable' ? 'enabled' : 'disabled')), 'success');
+        } catch(AException $e) {
+            $this->app->externalSystemsRepository->rollback(__METHOD__);
+
+            $this->flashMessage(sprintf('Could not %s external systems. Reason: %s', ($operation == 'enable' ? 'enable' : 'disable'), $e->getMessage()), 'error', '10');
         }
 
         $this->redirect($this->createURL('list'));

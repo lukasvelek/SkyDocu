@@ -3,7 +3,6 @@
 namespace App\Components\DocumentsGrid;
 
 use App\Authorizators\GroupStandardOperationsAuthorizator;
-use App\Constants\AppDesignThemes;
 use App\Constants\Container\CustomMetadataTypes;
 use App\Constants\Container\DocumentsGridSystemMetadata;
 use App\Constants\Container\DocumentStatus;
@@ -14,7 +13,7 @@ use App\Core\Http\JsonResponse;
 use App\Enums\AEnumForMetadata;
 use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
-use App\Helpers\AppThemeHelper;
+use App\Helpers\LinkHelper;
 use App\Managers\Container\ArchiveManager;
 use App\Managers\Container\DocumentManager;
 use App\Managers\Container\EnumManager;
@@ -615,18 +614,10 @@ class DocumentsGrid extends GridBuilder implements IGridExtendingComponent {
     }
 
     public function actionBulkAction(): JsonResponse {
-        $template = $this->getTemplate(__DIR__ . '\\test.html');
-
-        if(AppThemeHelper::getAppThemeForUser($this->app) == AppDesignThemes::DARK) {
-            $modalStyle = 'visibility: hidden; height: 0px; position: absolute; top: 5%; left: 5%; background-color: rgba(70, 70, 70, 1); z-index: 9999; border-radius: 5px;';
-        } else {
-            $modalStyle = 'visibility: hidden; height: 0px; position: absolute; top: 5%; left: 5%; background-color: rgba(225, 225, 225, 1); z-index: 9999; border-radius: 5px;';
-        }
-        
-        $template->modal_style = $modalStyle;
+        $links = $this->getBulkActionLinks($this->httpRequest->get('ids'));
 
         return new JsonResponse([
-            'modal' => $template->render()->getRenderedContent()
+            'modal' => LinkHelper::createLinksFromArray($links)
         ]);
     }
 }

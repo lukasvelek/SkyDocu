@@ -2,6 +2,7 @@
 
 namespace App\Managers\Container;
 
+use App\Constants\Container\DocumentStatus;
 use App\Core\Caching\CacheNames;
 use App\Core\Datetypes\DateTime;
 use App\Core\DB\DatabaseRow;
@@ -65,6 +66,8 @@ class DocumentManager extends AManager {
                 $visibleCustomMetadata[] = $this->folderRepository->getCustomMetadataById($metadataId);
             }
         }
+
+        $qb->andWhere($qb->getColumnNotInValues('status', [DocumentStatus::DELETED]));
 
         return $qb;
     }
@@ -267,8 +270,19 @@ class DocumentManager extends AManager {
         }
     }
 
-    public function updateDocumentCustom(string $documentId, array $data) {
+    /**
+     * Updates documents in bulk
+     * 
+     * @param array $documentIds Document IDs
+     * @param array $data Data array
+     * @throws GeneralException
+     */
+    public function bulkUpdateDocuments(array $documentIds, array $data) {
+        $data['dateModified'] = DateTime::now();
 
+        if(!$this->documentRepository->bulkUpdateDocuments($documentIds, $data)) {
+            throw new GeneralException('Database error.');
+        }
     }
 
     /**

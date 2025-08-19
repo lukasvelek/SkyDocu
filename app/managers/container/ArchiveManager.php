@@ -246,6 +246,23 @@ class ArchiveManager extends AManager {
     }
 
     /**
+     * Inserts documents to archive folder in bulk
+     * 
+     * @param string $folderId Folder ID
+     * @param array $documentIds Document IDs
+     * @throws GeneralException
+     */
+    public function bulkInsertDocumentsToArchiveFolder(string $folderId, array $documentIds) {
+        $relationIds = $this->bulkCreateIds(count($documentIds));
+
+        for($i = 0; $i < count($documentIds); $i++) {
+            if(!$this->archiveRepository->insertDocumentToArchiveFolder($relationIds[$i], $documentIds[$i], $folderId)) {
+                throw new GeneralException('Database error.');
+            }
+        }
+    }
+
+    /**
      * Removes given document from an archive folder
      * 
      * @param string $documentId Document ID
@@ -255,6 +272,22 @@ class ArchiveManager extends AManager {
 
         if(!$this->archiveRepository->removeDocumentFromArchiveFolder($documentId, $folderId)) {
             throw new GeneralException('Database error.');
+        }
+    }
+
+    /**
+     * Removes documents from archive folder in bulk
+     * 
+     * @param array $documentIds Document IDs
+     * @throws GeneralException
+     */
+    public function bulkRemoveDocumentsFromArchiveFolder(array $documentIds) {
+        foreach($documentIds as $documentId) {
+            $folderId = $this->getArchiveFolderForDocument($documentId);
+
+            if(!$this->archiveRepository->removeDocumentFromArchiveFolder($documentId, $folderId)) {
+                throw new GeneralException('Database error.');
+            }
         }
     }
 

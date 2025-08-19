@@ -86,7 +86,34 @@ async function copyTextToClipboardWithLink(_text, _link, _beforeText, _afterText
  * Displays loading animation in given DOM element
  * 
  * @param {string} _element 
+ * @param {number} _size Size in pixels
  */
-function showLoadingAnimation(_element) {
-    $("#" + _element).html("<div id=\"center\"><img src=\"resources/loading.gif\" width=\"64px\"></div>");
+function showLoadingAnimation(_element, _size = 64) {
+    $("#" + _element).html("<div id=\"center\"><img src=\"resources/loading.gif\" width=\"" + _size + "px\"></div>");
+}
+
+/**
+ * Redirects to given URL as a POST request
+ * 
+ * @param {*} url
+ * @param {*} params
+ */
+function post(url, params) {
+    const form = document.createElement("form");
+    form.method = "POST";
+    form.action = url;
+
+    for(const key in params) {
+        if(params.hasOwnProperty(key)) {
+            const hiddenField = document.createElement("input");
+            hiddenField.type = "hidden";
+            hiddenField.name = key;
+            hiddenField.value = params[key];
+
+            form.appendChild(hiddenField);
+        }
+    }
+    
+    document.body.appendChild(form);
+    form.submit();
 }

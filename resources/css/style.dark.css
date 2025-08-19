@@ -393,6 +393,17 @@ button #formSubmit {
     margin-left: 25px;
 }
 
+#grid-links, #links {
+    background-color: rgba(50, 50, 50, 0.75);
+
+    border: 0;
+    border-radius: 12px;
+
+    height: 45px;
+
+    padding: 10px;
+}
+
 p.widget-title {
     font-size: 24px;
 }

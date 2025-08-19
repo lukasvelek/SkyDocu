@@ -10,6 +10,7 @@ namespace App\UI\FormBuilder2;
 class Label extends AElement {
     private string $name;
     private string $text;
+    private string $title;
     private string $for;
     private bool $required;
     private bool $isTitle;
@@ -24,6 +25,7 @@ class Label extends AElement {
         parent::__construct();
 
         $this->text = $text;
+        $this->title = $text;
         $this->for = $name;
         $this->name = 'lbl_' . $name;
         $this->required = false;
@@ -51,12 +53,22 @@ class Label extends AElement {
     }
 
     /**
+     * Sets the label text
+     * 
+     * @param string $text Text
+     */
+    public function setText(string $text): static {
+        $this->text = $text;
+        return $this;
+    }
+
+    /**
      * Renders the form element
      * 
      * @return string HTML code
      */
     public function render() {
-        $code = '<label id="' . $this->name . '" for="' . $this->for . '" title="' . (str_ends_with($this->text, ':') ? substr($this->text, 0, -1) : $this->text) . '">';
+        $code = '<label id="' . $this->name . '" for="' . $this->for . '" title="' . (str_ends_with($this->title, ':') ? substr($this->title, 0, -1) : $this->title) . '">';
 
         if($this->isTitle) {
             $code .= '<span style="font-size: 20px">' . $this->text . '</span>';

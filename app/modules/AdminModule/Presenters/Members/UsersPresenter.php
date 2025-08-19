@@ -14,6 +14,7 @@ use App\Core\Http\HttpRequest;
 use App\Core\Http\JsonResponse;
 use App\Exceptions\AException;
 use App\Helpers\LinkHelper;
+use App\UI\FormBuilder2\PasswordInput;
 use App\UI\GridBuilder2\Action;
 use App\UI\GridBuilder2\Row;
 use App\UI\HTML\HTML;
@@ -193,7 +194,8 @@ class UsersPresenter extends AAdminPresenter {
             ->setRequired();
 
         $form->addPasswordInput('password', 'Password:')
-            ->setRequired();
+            ->setRequired()
+            ->setPasswordComplexityRequirements(6, 32, PasswordInput::COMPLEXITY_TEXT_NUMBERS_SPECIAL_CHARS);
 
         $form->addHorizontalLine();
 

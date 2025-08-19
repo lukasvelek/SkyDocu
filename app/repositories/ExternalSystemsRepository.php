@@ -82,6 +82,23 @@ class ExternalSystemsRepository extends ARepository {
     }
 
     /**
+     * Updates external systems in bulk
+     * 
+     * @param array $systemIds System IDs
+     * @param array $data Data array
+     */
+    public function bulkUpdateExternalSystems(array $systemIds, array $data): bool {
+        $qb = $this->qb(__METHOD__);
+        
+        $qb->update('external_systems')
+            ->set($data)
+            ->where($qb->getColumnInValues('systemId', $systemIds))
+            ->execute();
+
+        return $qb->fetchBool();
+    }
+
+    /**
      * Deletes given external system
      * 
      * @param string $systemId System ID

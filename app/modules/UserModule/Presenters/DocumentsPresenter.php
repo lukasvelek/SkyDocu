@@ -9,20 +9,19 @@ use App\Constants\Container\CustomMetadataTypes;
 use App\Constants\Container\DocumentStatus;
 use App\Constants\Container\GridNames;
 use App\Constants\SessionNames;
-use App\Core\Caching\CacheNames;
 use App\Core\DB\DatabaseRow;
-use App\Core\FileUploadManager;
 use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
 use App\Enums\AEnumForMetadata;
 use App\Exceptions\AException;
-use App\Exceptions\GeneralException;
 use App\Exceptions\RequiredAttributeIsNotSetException;
 use App\Helpers\DateTimeFormatHelper;
 use App\Helpers\LinkHelper;
 use App\Helpers\UnitConversionHelper;
+use App\UI\GridBuilder2\CheckboxLink;
 use App\UI\HTML\HTML;
 use App\UI\LinkBuilder;
+use App\UI\ListBuilder\ListBuilder;
 
 class DocumentsPresenter extends AUserPresenter {
     private ?string $currentFolderId;
@@ -69,9 +68,15 @@ class DocumentsPresenter extends AUserPresenter {
             LinkBuilder::createSimpleLink('New document', $this->createFullURL('User:CreateDocument', 'form', ['folderId' => $this->currentFolderId]), 'link')
         ];
         $this->template->folder_title = $folder;
+
+        $this->addScript('
+            function processBulkAction(data) {
+                post(data.url, {"ids": data.ids});
+            }
+        ');
     }
 
-    protected function createComponentDocumentsGrid(HttpRequest $request) {
+    protected function createComponentDocumentsGrid() {
         $documentsGrid = new DocumentsGrid(
             $this->componentFactory->getGridBuilder($this->containerId),
             $this->app,
@@ -86,8 +91,120 @@ class DocumentsPresenter extends AUserPresenter {
             $documentsGrid->setCurrentFolder($this->currentFolderId);
         }
         $documentsGrid->showCustomMetadata();
-        //$documentsGrid->useCheckboxes($this); // WILL BE ADDED IN 1.8
+        $documentsGrid->useCheckboxes($this);
         $documentsGrid->setGridName(GridNames::DOCUMENTS_GRID);
+
+        $documentsGrid->addCheckboxLinkCallback(
+            (new CheckboxLink('moveToFolder'))
+                ->setCheckCallback(function(string $primaryKey) {
+                    try {
+                        $document = $this->documentManager->getDocumentById($primaryKey);
+
+                        if(!in_array($document->status, [DocumentStatus::NEW])) {
+                            return false;
+                        }
+
+                        return true;
+                    } catch(AException $e) {
+                        return false;
+                    }
+                })
+                ->setLinkCallback(function(array $primaryKeys) {
+                    $data = [
+                        'ids' => $primaryKeys,
+                        'url' => $this->createURLString('moveToFolderForm', ['currentFolderId' => $this->currentFolderId])
+                    ];
+
+                    return LinkBuilder::createJSOnclickLink('Move to folder',
+                        'processBulkAction(' . htmlspecialchars(json_encode($data)) . ')',
+                        'link'
+                    );
+                })
+        );
+
+        $documentsGrid->addCheckboxLinkCallback(
+            (new CheckboxLink('moveToArchive'))
+                ->setCheckCallback(function(string $primaryKey) {
+                    try {
+                        $document = $this->documentManager->getDocumentById($primaryKey);
+
+                        if(!in_array($document->status, [DocumentStatus::NEW])) {
+                            return false;
+                        }
+
+                        return true;
+                    } catch(AException $e) {
+                        return false;
+                    }
+                })
+                ->setLinkCallback(function(array $primaryKeys) {
+                    $data = [
+                        'ids' => $primaryKeys,
+                        'url' => $this->createURLString('moveToArchiveForm', ['folderId' => $this->currentFolderId])
+                    ];
+
+                    return LinkBuilder::createJSOnclickLink('Move to archive', 
+                        'processBulkAction(' . htmlspecialchars(json_encode($data)) . ')',
+                        'link'
+                    );
+                })
+        );
+
+        $documentsGrid->addCheckboxLinkCallback(
+            (new CheckboxLink('shred'))
+                ->setCheckCallback(function(string $primaryKey) {
+                    try {
+                        $document = $this->documentManager->getDocumentById($primaryKey);
+
+                        if(!in_array($document->status, [DocumentStatus::READY_FOR_SHREDDING, DocumentStatus::ARCHIVED])) {
+                            return false;
+                        }
+
+                        return true;
+                    } catch(AException $e) {
+                        return false;
+                    }
+                })
+                ->setLinkCallback(function(array $primaryKeys) {
+                    $data = [
+                        'ids' => $primaryKeys,
+                        'url' => $this->createURLString('shredForm', ['folderId' => $this->currentFolderId])
+                    ];
+
+                    return LinkBuilder::createJSOnclickLink('Shred',
+                        'processBulkAction(' . htmlspecialchars(json_encode($data)) . ')',
+                        'link'
+                    );
+                })
+        );
+
+        $documentsGrid->addCheckboxLinkCallback(
+            (new CheckboxLink('delete'))
+                ->setCheckCallback(function(string $primaryKey) {
+                    try {
+                        $document = $this->documentManager->getDocumentById($primaryKey);
+
+                        if(!in_array($document->status, [DocumentStatus::SHREDDED, DocumentStatus::NEW, DocumentStatus::ARCHIVED])) {
+                            return false;
+                        }
+
+                        return true;
+                    } catch(AException $e) {
+                        return false;
+                    }
+                })
+                ->setLinkCallback(function(array $primaryKeys) {
+                    $data = [
+                        'ids' => $primaryKeys,
+                        'url' => $this->createURLString('deleteForm', ['folderId' => $this->currentFolderId])
+                    ];
+
+                    return LinkBuilder::createJSOnclickLink('Delete',
+                        'processBulkAction(' . htmlspecialchars(json_encode($data)) . ')',
+                        'link'
+                    );
+                })
+        );
 
         return $documentsGrid;
     }
@@ -150,10 +267,10 @@ class DocumentsPresenter extends AUserPresenter {
         $createRow('Date modified', ($document->dateModified !== null) ? DateTimeFormatHelper::formatDateToUserFriendly($document->dateModified, $this->app->currentUser->getDatetimeFormat()) : '-');
 
         // FILE ATTACHMENT
-        if($this->fileStorageManager->doesDocumentHaveFile($document->documentId)) {
-            $relation = $this->fileStorageManager->getFileRelationForDocumentId($document->documentId);
-            $url = $this->app->fileStorageManager->generateDownloadLinkForFileInDocument($relation->fileId, $this->containerId);
-            $file =  $this->app->fileStorageManager->getFileById($relation->fileId);
+        $fileId = $this->documentRepository->getFileIdForDocumentId($document->documentId);
+        if($fileId !== null) {
+            $url = $this->app->fileStorageManager->generateDownloadLinkForFileInDocument($fileId, $this->containerId);
+            $file = $this->app->fileStorageManager->getFileById($fileId, $this->containerId);
             $fileSize = UnitConversionHelper::convertBytesToUserFriendly($file->filesize);
 
             $el = HTML::el('a')
@@ -249,10 +366,6 @@ class DocumentsPresenter extends AUserPresenter {
             $this->createBackUrl('list', ['folderId' => $document->folderId])
         ];
 
-        if(!$this->fileStorageManager->doesDocumentHaveFile($document->documentId)) {
-            $links[] = LinkBuilder::createSimpleLink('Upload a file', $this->createURL('fileUploadForm', ['documentId' => $document->documentId]), 'link');
-        }
-
         $this->saveToPresenterCache('links', LinkHelper::createLinksFromArray($links));
     }
 
@@ -321,106 +434,22 @@ class DocumentsPresenter extends AUserPresenter {
         return $documentsGrid;
     }
 
-    public function handleFileUploadForm(?FormRequest $fr = null) {
-        if($fr !== null) {
-            try {
-                $fum = new FileUploadManager();
-
-                $data = $fum->uploadFile($_FILES['file'], $this->getUserId(), $this->containerId, [$this->httpRequest->get('documentId')]);
-
-                if(empty($data)) {
-                    throw new GeneralException('Could not upload file');
-                }
-
-                try {
-                    $this->app->fileStorageRepository->beginTransaction(__METHOD__);
-
-                    $fileId = $this->app->fileStorageManager->createNewFile(
-                        $this->getUserId(),
-                        $data[FileUploadManager::FILE_FILENAME],
-                        $data[FileUploadManager::FILE_FILEPATH],
-                        $data[FileUploadManager::FILE_FILESIZE],
-                        $this->containerId
-                    );
-
-                    $this->app->fileStorageRepository->commit($this->getUserId(), __METHOD__);
-                } catch(AException $e) {
-                    $this->app->fileStorageRepository->rollback(__METHOD__);
-
-                    throw $e;
-                }
-
-                try {
-                    $this->fileStorageRepository->beginTransaction(__METHOD__);
-
-                    $this->fileStorageManager->createNewFileDocumentRelation($this->httpRequest->get('documentId'), $fileId);
-
-                    $this->fileStorageRepository->commit($this->getUserId(), __METHOD__);
-                } catch(AException $e) {
-                    $this->fileStorageRepository->rollback(__METHOD__);
-
-                    throw $e;
-                }
-
-                if(!$this->cacheFactory->invalidateCacheByNamespace(CacheNames::DOCUMENT_FILE_MAPPING)) {
-                    throw new GeneralException('Could not invalidate cache.');
-                }
-
-                $this->flashMessage('Successfully uploaded file.', 'success');
-            } catch(AException $e) {
-                $this->flashMessage('Could not upload file. Reason: ' . $e->getMessage(), 'error', 10);
-            }
-
-            $this->redirect($this->createURL('info', ['documentId' => $this->httpRequest->get('documentId')]));
-        }
-    }
-
-    public function renderFileUploadForm() {
-        $this->template->links = $this->createBackUrl('info', ['documentId' => $this->httpRequest->get('documentId')]);
-    }
-
-    protected function createComponentUploadFileForm(HttpRequest $request) {
-        $form = $this->componentFactory->getFormBuilder();
-
-        $form->setAction($this->createURL('fileUploadForm', ['documentId' => $request->query['documentId']]));
-
-        $form->addFileInput('file', 'File:')
-            ->setRequired();
-
-        $form->addSubmit('Upload');
-
-        return $form;
-    }
-
-    public function handleMoveToFolderForm(?FormRequest $fr = null) {
-        if($fr !== null) {
-            $documentIds = $this->httpRequest->get('documentId');
-            
-            try {
-                $this->folderRepository->beginTransaction(__METHOD__);
-
-                foreach($documentIds as $documentId) {
-                    $this->documentManager->updateDocument($documentId, ['folderId' => $fr->folder]);
-                }
-
-                $this->folderRepository->commit($this->getUserId(), __METHOD__);
-
-                $this->flashMessage('Documents moved to selected folder successfully.', 'success');
-            } catch(AException $e) {
-                $this->folderRepository->rollback(__METHOD__);
-
-                $this->flashMessage('Could not move documents to selected folder. Reason: ' . $e->getMessage(), 'error', 10);
-            }
-
-            $this->redirect($this->createFullURL($this->httpRequest->get('backPage'), $this->httpRequest->get('backAction'), ['folderId' => $this->httpRequest->get('backFolderId')]));
+    public function handleMoveToFolderForm() {
+        if($this->httpRequest->get('ids') === null) {
+            $this->flashMessage('No documents were selected.', 'error', 10);
+            $this->redirect($this->createURL('list', ['folderId' => $this->httpRequest->get('currentFolderId')]));
         }
     }
 
     public function renderMoveToFolderForm() {
-        $this->template->links = $this->createBackFullUrl($this->httpRequest->get('backPage'), $this->httpRequest->get('backAction'), ['folderId' => $this->httpRequest->get('backFolderId')]);
+        $links = [
+            $this->createBackUrl('list', ['folderId' => $this->httpRequest->get('currentFolderId')])
+        ];
+
+        $this->template->links = LinkHelper::createLinksFromArray($links);
     }
 
-    protected function createComponentMoveDocumentToFolderForm(HttpRequest $request) {
+    protected function createComponentMoveDocumentToFolderForm() {
         $folders = [];
         $foldersDb = $this->folderManager->getVisibleFoldersForUser($this->getUserId());
 
@@ -429,23 +458,248 @@ class DocumentsPresenter extends AUserPresenter {
                 continue;
             }
 
+            if($folder->folderId == $this->httpRequest->get('currentFolderId')) continue;
+
             $folders[] = [
                 'value' => $folder->folderId,
                 'text' => $folder->title
             ];
         }
 
+        if(empty($folders)) {
+            $this->flashMessage('No folders are available.', 'error', 10);
+            $this->redirect($this->createURL('list', ['folderId' => $this->httpRequest->get('currentFolderId')]));
+        }
+
         $form = $this->componentFactory->getFormBuilder();
 
-        $form->setAction($this->createURL('moveToFolderForm', ['backPage' => $request->get('backPage'), 'backAction' => $request->get('backAction'), 'backFolderId' => $request->get('backFolderId'), 'documentId' => $request->get('documentId')]));
+        $form->setAction($this->createURL('moveToFolderFormSubmit', [
+            'currentFolderId' => $this->httpRequest->get('currentFolderId'),
+            'ids' => $this->httpRequest->get('ids')
+        ]));
 
         $form->addSelect('folder', 'Folder:')
             ->setRequired()
             ->addRawOptions($folders);
 
-        $form->addSubmit('Move');
+        $form->addHiddenInput('ids')
+            ->setValue($this->httpRequest->get('ids'));
+
+        $form->addSubmit('Move to folder');
 
         return $form;
+    }
+
+    public function handleMoveToFolderFormSubmit(FormRequest $fr) {
+        $documentIds = explode(',', $this->httpRequest->get('ids'));
+
+        try {
+            $this->folderRepository->beginTransaction(__METHOD__);
+
+            foreach($documentIds as $documentId) {
+                $this->documentManager->updateDocument($documentId, ['folderId' => $fr->folder]);
+            }
+
+            $this->folderRepository->commit($this->getUserId(), __METHOD__);
+
+            $this->flashMessage('Documents moved to selected folder successfully.', 'success');
+        } catch(AException $e) {
+            $this->folderRepository->rollback(__METHOD__);
+
+            $this->flashMessage('Could not move documents to selected folder. Reason: ' . $e->getMessage(), 'error', 10);
+        }
+
+        $this->redirect($this->createURL('list', ['folderId' => $this->httpRequest->get('currentFolderId')]));
+    }
+
+    public function renderMoveToArchiveForm() {
+        $links = [
+            $this->createBackUrl('list', ['folderId' => $this->httpRequest->get('folderId')])
+        ];
+
+        $this->template->links = $links;
+    }
+
+    protected function createComponentMoveDocumentToArchiveForm() {
+        $qb = $this->archiveManager->composeQueryForAvailableArchiveFolders();
+        $qb->execute();
+
+        $archive = [];
+        while($row = $qb->fetchAssoc()) {
+            $archive[] = [
+                'value' => $row['folderId'],
+                'text' => $row['title']
+            ];
+        }
+
+        $form = $this->componentFactory->getFormBuilder();
+
+        $form->setAction($this->createURL('moveToArchiveFormSubmit', ['folderId' => $this->httpRequest->get('folderId')]));
+
+        $form->addSelect('archiveFolder', 'Archive folder:')
+            ->setRequired()
+            ->addRawOptions($archive);
+
+        $form->addHiddenInput('ids')
+            ->setValue($this->httpRequest->post('ids'));
+
+        $form->addSubmit('Move to archive');
+
+        return $form;
+    }
+
+    public function handleMoveToArchiveFormSubmit(FormRequest $fr) {
+        $this->mandatoryUrlParams(['folderId'], $this->createURL('list'));
+
+        $folderId = $this->httpRequest->get('folderId');
+        $documentIds = explode(',', $this->httpRequest->get('ids'));
+
+        try {
+            $this->archiveRepository->beginTransaction(__METHOD__);
+
+            $this->archiveManager->bulkInsertDocumentsToArchiveFolder($fr->archiveFolder, $documentIds);
+
+            $this->documentManager->bulkUpdateDocuments($documentIds, [
+                'status' => DocumentStatus::ARCHIVED
+            ]);
+
+            $this->archiveRepository->commit($this->getUserId(), __METHOD__);
+
+            $this->flashMessage('Successfully moved files to archive.', 'success');
+        } catch(AException $e) {
+            $this->archiveRepository->rollback(__METHOD__);
+
+            $this->flashMessage('Could not move files to archive. Reason: ' . $e->getMessage(), 'error', 10);
+        }
+
+        $this->redirect($this->createURL('list', ['folderId' => $folderId]));
+    }
+
+    public function renderShredForm() {
+        $links = [
+            $this->createBackUrl('list', ['folderId' => $this->httpRequest->get('folderId')])
+        ];
+
+        $this->template->links = LinkHelper::createLinksFromArray($links);
+    }
+
+    private function getListBuilderWithDocuments(): ListBuilder {
+        $documentIds = explode(',', $this->httpRequest->post('ids'));
+
+        $qb = $this->documentRepository->composeQueryForDocuments();
+        $qb->andWhere($qb->getColumnInValues('documentId', $documentIds))
+            ->execute();
+
+        $documents = [];
+        while($row = $qb->fetchAssoc()) {
+            $documents[] = $row;
+        }
+
+        $list = $this->componentFactory->getListBuilder();
+
+        $list->setDataSource($documents);
+
+        $list->addColumnText('title', 'Title');
+
+        return $list;
+    }
+
+    public function createComponentShredDocumentForm() {
+        $form = $this->componentFactory->getFormBuilder();
+
+        $form->setAction($this->createURL('shredFormSubmit', ['folderId' => $this->httpRequest->get('folderId')]));
+
+        $form->addLabel('text1', 'Are you sure you want to shred these documents?');
+
+        $list = $this->getListBuilderWithDocuments();
+
+        $form->addList('documentList', $list);
+
+        $form->addHiddenInput('ids')
+            ->setValue($this->httpRequest->post('ids'));
+
+        $form->addSubmit('Shred');
+        $form->addButton('Go back')
+            ->setOnClick('
+                location.href = \'' . $this->createURLString('list', ['folderId' => $this->httpRequest->get('folderId')]) . '\';
+            ');
+
+        return $form;
+    }
+
+    public function handleShredFormSubmit(FormRequest $fr) {
+        try {
+            $documentIds = explode(',', $this->httpRequest->post('ids'));
+
+            $this->documentRepository->beginTransaction(__METHOD__);
+
+            $this->documentManager->bulkUpdateDocuments($documentIds, [
+                'status' => DocumentStatus::SHREDDED
+            ]);
+
+            $this->documentRepository->commit($this->getUserId(), __METHOD__);
+
+            $this->flashMessage('Successfully shredded documents.' ,'success');
+        } catch(AException $e) {
+            $this->documentRepository->rollback(__METHOD__);
+
+            $this->flashMessage('Could not shred documents. Reason: ' . $e->getMessage(), 'error', 10);
+        }
+
+        $this->redirect($this->createURL('list', ['folderId' => $this->httpRequest->get('folderId')]));
+    }
+
+    public function renderDeleteForm() {
+        $links = [
+            $this->createBackUrl('list', ['folderId' => $this->httpRequest->get('folderId')])
+        ];
+
+        $this->template->links = LinkHelper::createLinksFromArray($links);
+    }
+
+    protected function createComponentDeleteDocumentForm() {
+        $form = $this->componentFactory->getFormBuilder();
+
+        $form->setAction($this->createURL('deleteFormSubmit', ['folderId' => $this->httpRequest->get('folderId')]));
+
+        $form->addLabel('text1', 'Are you sure you want to delete these documents?');
+
+        $list = $this->getListBuilderWithDocuments();
+
+        $form->addList('documentList', $list);
+
+        $form->addHiddenInput('ids')
+            ->setValue($this->httpRequest->post('ids'));
+
+        $form->addSubmit('Delete');
+        $form->addButton('Go back')
+            ->setOnClick('
+                location.href = \'' . $this->createURLString('list', ['folderId' => $this->httpRequest->get('folderId')]) . '\';
+            ');
+
+        return $form;
+    }
+
+    public function handleDeleteFormSubmit(FormRequest $fr) {
+        try {
+            $documentIds = explode(',', $this->httpRequest->post('ids'));
+
+            $this->documentRepository->beginTransaction(__METHOD__);
+
+            $this->documentManager->bulkUpdateDocuments($documentIds, [
+                'status' => DocumentStatus::DELETED
+            ]);
+
+            $this->documentRepository->commit($this->getUserId(), __METHOD__);
+
+            $this->flashMessage('Successfully deleted documents.' ,'success');
+        } catch(AException $e) {
+            $this->documentRepository->rollback(__METHOD__);
+
+            $this->flashMessage('Could not delete documents. Reason: ' . $e->getMessage(), 'error', 10);
+        }
+
+        $this->redirect($this->createURL('list', ['folderId' => $this->httpRequest->get('folderId')]));
     }
 }
 

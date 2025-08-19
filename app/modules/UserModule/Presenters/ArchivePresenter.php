@@ -4,9 +4,13 @@ namespace App\Modules\UserModule;
 
 use App\Components\ArchiveFoldersSidebar\ArchiveFoldersSidebar;
 use App\Components\DocumentsGrid\DocumentsGrid;
+use App\Constants\Container\DocumentStatus;
 use App\Constants\Container\GridNames;
 use App\Constants\SessionNames;
 use App\Core\Http\HttpRequest;
+use App\Exceptions\AException;
+use App\UI\GridBuilder2\CheckboxLink;
+use App\UI\LinkBuilder;
 
 class ArchivePresenter extends AUserPresenter {
     private ?string $currentFolderId;
@@ -34,6 +38,12 @@ class ArchivePresenter extends AUserPresenter {
 
         $this->template->links = [];
         $this->template->folder_title = $folder->title;
+
+        $this->addScript('
+            function processBulkAction(data) {
+                post(data.url, {"ids": data.ids});
+            }
+        ');
     }
 
     protected function createComponentFoldersSidebar(HttpRequest $request) {
@@ -60,7 +70,60 @@ class ArchivePresenter extends AUserPresenter {
         $documentsGrid->useCheckboxes($this);
         $documentsGrid->setGridName(GridNames::DOCUMENTS_GRID);
 
+        $documentsGrid->addCheckboxLinkCallback(
+            (new CheckboxLink('moveFromArchive'))
+                ->setCheckCallback(function(string $primaryKey) {
+                    try {
+                        $document = $this->documentManager->getDocumentById($primaryKey);
+
+                        if(!in_array($document->status, [DocumentStatus::ARCHIVED])) {
+                            return false;
+                        }
+
+                        return true;
+                    } catch(AException $e) {
+                        return false;
+                    }
+                })
+                ->setLinkCallback(function(array $primaryKeys) {
+                    $data = [
+                        'ids' => $primaryKeys,
+                        'url' => $this->createURLString('moveFromArchive', ['folderId' => $this->currentFolderId])
+                    ];
+
+                    return LinkBuilder::createJSOnclickLink('Move from archive',
+                        'processBulkAction(' . htmlspecialchars(json_encode($data)) . ')',
+                        'link'
+                    );
+                })
+        );
+
         return $documentsGrid;
+    }
+
+    public function handleMoveFromArchive() {
+        $documentIds = explode(',', $this->httpRequest->post('ids'));
+        $folderId = $this->httpRequest->get('folderId');
+
+        try {
+            $this->documentRepository->beginTransaction(__METHOD__);
+
+            $this->archiveManager->bulkRemoveDocumentsFromArchiveFolder($documentIds);
+
+            $this->documentManager->bulkUpdateDocuments($documentIds, [
+                'status' => DocumentStatus::NEW
+            ]);
+
+            $this->documentRepository->commit($this->getUserId(), __METHOD__);
+
+            $this->flashMessage('Successfully moved documents from archive.', 'success');
+        } catch(AException $e) {
+            $this->documentRepository->rollback(__METHOD__);
+
+            $this->flashMessage('Could not move documents from archive. Reason: ' . $e->getMessage(), 'error', 10);
+        }
+
+        $this->redirect($this->createURL('list', ['folderId' => $folderId]));
     }
 }
 

@@ -352,17 +352,16 @@ class DbAdminPresenter extends AAdminPresenter {
         }
         
         $scheme = $list->addAction('scheme');
-        $scheme->setTitle('Scheme');
+        $scheme->setTitle('Schema');
         $scheme->onCanRender[] = function() {
             return true;
         };
         $scheme->onRender[] = function(mixed $primaryKey, ArrayRow $row, ListRow $_row, HTML $html) use ($entryId, $data) {
-            $index = substr($primaryKey, 4);
-            $table = $data[$index]['table'];
+            $table = $data[$primaryKey]['table'];
             $el = HTML::el('a')
                 ->class('grid-link')
                 ->href($this->createURLString('tableSchemeList', ['entryId' => $entryId, 'table' => $table]))
-                ->text('Scheme');
+                ->text('Schema');
 
             return $el;
         };

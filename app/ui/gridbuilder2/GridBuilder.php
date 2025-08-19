@@ -99,6 +99,8 @@ class GridBuilder extends AComponent {
 
     private array $disabledActionList;
 
+    protected array $checkboxLinks = [];
+
     /**
      * Class constructor
      * 
@@ -135,6 +137,16 @@ class GridBuilder extends AComponent {
         $this->disabledActionList = [];
 
         $this->helper = new GridBuilderHelper($request);
+    }
+
+    /**
+     * Adds a checkbox link callback
+     * 
+     * @param string $actionName Action name
+     * @param callback $callback Callback
+     */
+    public function addCheckboxLinkCallback(CheckboxLink $checkboxLink) {
+        $this->checkboxLinks[$checkboxLink->getName()] = $checkboxLink;
     }
 
     /**
@@ -1102,6 +1114,66 @@ class GridBuilder extends AComponent {
             ->offset(($this->gridPage * $this->resultLimit));
 
         return $qb;
+    }
+
+    /**
+     * Returns an array of bulk action links
+     * 
+     * @param array $primaryKeys Array of primary keys
+     */
+    protected function getBulkActionLinks(array $primaryKeys): array {
+        $links = [];
+
+        $availables = [];
+
+        /**
+         * @var \App\UI\GridBuilder2\CheckboxLink $link
+         */
+        foreach($this->checkboxLinks as $link) {
+            $result = true;
+
+            foreach($primaryKeys as $primaryKey) {
+                try {
+                    if($result === false) {
+                        break;
+                    }
+                    $callback = $link->getCheckCallback();
+
+                    if($callback === null) {
+                        $result = false;
+                    } else {
+                        $result = $callback($primaryKey);
+                    }
+                } catch(AException $e) {
+                    $result = false;
+                }
+            }
+
+            if($result === true) {
+                $availables[] = $link->getName();
+            }
+        }
+
+        foreach($availables as $linkName) {
+            /**
+             * @var \App\UI\GridBuilder2\CheckboxLink $link 
+             */
+            $link = $this->checkboxLinks[$linkName];
+
+            try {
+                $callback = $link->getLinkCallback();
+
+                if($callback === null) {
+                    continue;
+                }
+
+                $result = $callback($primaryKeys);
+
+                $links[] = $result;
+            } catch(AException $e) {}
+        }
+
+        return $links;
     }
 
     // AJAX REQUEST HANDLERS

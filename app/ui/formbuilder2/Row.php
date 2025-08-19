@@ -52,6 +52,10 @@ class Row implements IRenderable {
      * @return string HTML code
      */
     public function render() {
+        if($this->element instanceof HiddenInput) {
+            return $this->element->render();
+        }
+
         $code = '<div id="' . $this->id . '"';
 
         if($this->hide) {

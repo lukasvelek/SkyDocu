@@ -364,20 +364,6 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
         } else {
             $this->template->container_new_technical_account_form_link = '';
         }
-
-        $containerRunMigrationsLink = HTML::el('a')
-            ->class('link')
-            ->href($this->createURLString('runMigrationsForm', ['containerId' => $containerId]))
-            ->style('color', 'red')
-            ->text('Run migrations')
-            ->title('Run migrations')
-            ->toString();
-
-        if(!in_array($container->getStatus(), [ContainerStatus::ERROR_DURING_CREATION])) {
-            $this->template->container_run_migrations_link = $containerRunMigrationsLink;
-        } else {
-            $this->template->container_run_migrations_link = '';
-        }
     }
 
     public function renderNewTechnicalAccountForm() {

@@ -2,6 +2,7 @@
 
 namespace App\Modules\SuperAdminModule;
 
+use App\Components\ContainersGrid\ContainersGrid;
 use App\Constants\ContainerStatus;
 use App\Core\DB\DatabaseRow;
 use App\Core\Http\FormRequest;
@@ -11,6 +12,7 @@ use App\Exceptions\GeneralException;
 use App\Helpers\GridHelper;
 use App\Helpers\LinkHelper;
 use App\UI\GridBuilder2\Action;
+use App\UI\GridBuilder2\CheckboxLink;
 use App\UI\GridBuilder2\Row;
 use App\UI\HTML\HTML;
 use App\UI\LinkBuilder;
@@ -30,71 +32,118 @@ class ContainersPresenter extends ASuperAdminPresenter {
         }
 
         $this->template->links = LinkHelper::createLinksFromArray($links);
+
+        $this->addScript('
+            function processBulkAction(data) {
+                post(data.url, {"ids": data.ids});
+            }
+        ');
     }
 
-    protected function createComponentContainersGrid(HttpRequest $request) {
-        $grid = $this->componentFactory->getGridBuilder();
+    protected function createComponentContainersGrid() {
+        $grid = $this->componentFactory->getGridBuilderExtendingClassInstance(ContainersGrid::class);
 
-        $qb = $this->app->containerRepository->composeQueryForContainers();
+        $grid->addCheckboxes2($this, 'bulkAction');
 
-        if(!$this->app->groupManager->isUserMemberOfContainerManagers($this->getUserId())) {
-            $qb->andWhere('userId = ?', [$this->getUserId()]);
-        }
+        $grid->addCheckboxLinkCallback(
+            (new CheckboxLink('approveRequest'))
+                ->setCheckCallback(function(string $primaryKey) {
+                    try {
+                        $container = $this->app->containerManager->getContainerById($primaryKey);
 
-        $grid->createDataSourceFromQueryBuilder($qb, 'containerId');
-        $grid->setGridName(GridHelper::GRID_CONTAINERS);
+                        if($container->getStatus() != ContainerStatus::REQUESTED) {
+                            return false;
+                        }
 
-        $grid->addColumnText('title', 'Title');
-        $grid->addColumnConst('status', 'Status', ContainerStatus::class);
+                        if(!$this->app->groupManager->isUserMemberOfContainerManagers($this->getUserId())) {
+                            return false;
+                        }
 
-        $settings = $grid->addAction('settings');
-        $settings->setTitle('Settings');
-        $settings->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) {
-            $isContainerManager = $this->app->groupManager->isUserMemberOfContainerManagers($this->getUserId());
+                        return true;
+                    } catch(AException $e) {
+                        return false;
+                    }
+                })
+                ->setLinkCallback(function(array $primaryKeys) {
+                    $data = [
+                        'ids' => $primaryKeys,
+                        'url' => $this->createURLString('approveRequest')
+                    ];
 
-            return ($isContainerManager && ($row->status != ContainerStatus::SCHEDULED_FOR_REMOVAL));
-        };
-        $settings->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
-            $el = HTML::el('a')
-                ->class('grid-link')
-                ->href($this->createFullURLString('SuperAdmin:ContainerSettings', 'home', ['containerId' => $primaryKey]))
-                ->text('Settings');
+                    return LinkBuilder::createJSOnclickLink(
+                        'Approve request',
+                        'processBulkAction(' . htmlspecialchars(json_encode($data)) . ')',
+                        'link'
+                    );
+                })
+        );
 
-            return $el;
-        };
+        $grid->addCheckboxLinkCallback(
+            (new CheckboxLink('declineRequest'))
+                ->setCheckCallback(function(string $primaryKey) {
+                    try {
+                        $container = $this->app->containerManager->getContainerById($primaryKey);
 
-        $approveRequest = $grid->addAction('approveRequest');
-        $approveRequest->setTitle('Approve');
-        $approveRequest->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) {
-            return ($row->status == ContainerStatus::REQUESTED && $this->app->groupManager->isUserMemberOfContainerManagers($this->getUserId()));
-        };
-        $approveRequest->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
-            $el = HTML::el('a')
-                ->class('grid-link')
-                ->href($this->createURLString('approveRequest', ['containerId' => $primaryKey]))
-                ->text('Approve');
+                        if($container->getStatus() != ContainerStatus::REQUESTED) {
+                            return false;
+                        }
 
-            return $el;
-        };
+                        if(!$this->app->groupManager->isUserMemberOfContainerManagers($this->getUserId())) {
+                            return false;
+                        }
 
-        $declineRequest = $grid->addAction('declineRequest');
-        $declineRequest->setTitle('Decline');
-        $declineRequest->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) {
-            return ($row->status == ContainerStatus::REQUESTED && $this->app->groupManager->isUserMemberOfContainerManagers($this->getUserId()));
-        };
-        $declineRequest->onRender[] = function(mixed $primaryKey, DatabaseRow $row, Row $_row, HTML $html) {
-            $el = HTML::el('a')
-                ->class('grid-link')
-                ->href($this->createURLString('declineRequest', ['containerId' => $primaryKey]))
-                ->text('Decline');
+                        return true;
+                    } catch(AException $e) {
+                        return false;
+                    }
+                })
+                ->setLinkCallback(function(array $primaryKeys) {
+                    $data = [
+                        'ids' => $primaryKeys,
+                        'url' => $this->createURLString('declineRequest')
+                    ];
 
-            return $el;
-        };
+                    return LinkBuilder::createJSOnclickLink(
+                        'Decline request',
+                        'processBulkAction(' . htmlspecialchars(json_encode($data)) . ')',
+                        'link'
+                    );
+                })
+        );
 
-        $grid->addQuickSearch('title', 'Title');
+        $grid->addCheckboxLinkCallback(
+            (new CheckboxLink('changeStatus'))
+                ->setCheckCallback(function(string $primaryKey) {
+                    try {
+                        $container = $this->app->containerManager->getContainerById($primaryKey);
 
-        $grid->addFilter('status', 'null', ContainerStatus::getAll());
-        
+                        if(!in_array($container->getStatus(), [ContainerStatus::NOT_RUNNING, ContainerStatus::RUNNING])) {
+                            return false;
+                        }
+
+                        if(!$this->app->groupManager->isUserMemberOfContainerManagers($this->getUserId())) {
+                            return false;
+                        }
+
+                        return true;
+                    } catch(AException $e) {
+                        return false;
+                    }
+                })
+                ->setLinkCallback(function(array $primaryKeys) {
+                    $data = [
+                        'ids' => $primaryKeys,
+                        'url' => $this->createURLString('changeStatusForm')
+                    ];
+
+                    return LinkBuilder::createJSOnclickLink(
+                        'Change status',
+                        'processBulkAction(' . htmlspecialchars(json_encode($data)) . ')',
+                        'link'
+                    );
+                })
+        );
+
         return $grid;
     }
 
@@ -104,13 +153,8 @@ class ContainersPresenter extends ASuperAdminPresenter {
                 if($this->app->containerManager->checkContainerTitleExists($fr->title)) {
                     throw new GeneralException('Container with this name already exists.');
                 }
-
-                $canShowReferent = false;
-                if($fr->isset('canShowReferent') && $fr->canShowReferent == 'on') {
-                    $canShowReferent = true;
-                }
     
-                $containerId = $this->app->containerManager->createNewContainer($fr->title, $fr->description, $this->getUserId(), $canShowReferent);
+                $containerId = $this->app->containerManager->createNewContainer($fr->title, $fr->description, $this->getUserId());
     
                 $this->flashMessage('New container created. Container interface will be generated by background service.', 'success');
             } catch(AException $e) {
@@ -125,7 +169,7 @@ class ContainersPresenter extends ASuperAdminPresenter {
         $this->template->links = LinkBuilder::createSimpleLink('&larr; Back', $this->createURL('list'), 'link');
     }
 
-    protected function createComponentForm(HttpRequest $request) {
+    protected function createComponentForm() {
         $form = $this->componentFactory->getFormBuilder();
 
         $form->setAction($this->createURL('newContainerForm'));
@@ -141,9 +185,6 @@ class ContainersPresenter extends ASuperAdminPresenter {
             ->setPlaceHolder('Description')
             ->setRequired();
 
-        $form->addCheckboxInput('canShowReferent', 'Is referent visible?')
-            ->setChecked();
-
         $form->addSubmit('Submit');
 
         return $form;
@@ -154,12 +195,7 @@ class ContainersPresenter extends ASuperAdminPresenter {
             try {
                 $this->app->containerRepository->beginTransaction(__METHOD__);
 
-                $canShowReferent = false;
-                if($fr->isset('canShowReferent') && $fr->canShowReferent == 'on') {
-                    $canShowReferent = true;
-                }
-
-                $this->app->containerManager->createNewContainer($fr->title, $fr->description, $this->getUserId(), $canShowReferent, ContainerStatus::REQUESTED);
+                $this->app->containerManager->createNewContainer($fr->title, $fr->description, $this->getUserId(), ContainerStatus::REQUESTED);
 
                 $this->app->containerRepository->commit($this->getUserId(), __METHOD__);
 
@@ -178,7 +214,7 @@ class ContainersPresenter extends ASuperAdminPresenter {
         $this->template->links = $this->createBackUrl('list');
     }
 
-    protected function createComponentNewContainerRequestForm(HttpRequest $request) {
+    protected function createComponentNewContainerRequestForm() {
         $form = $this->componentFactory->getFormBuilder();
 
         $form->setAction($this->createURL('newContainerRequestForm'));
@@ -194,49 +230,107 @@ class ContainersPresenter extends ASuperAdminPresenter {
             ->setPlaceHolder('Description')
             ->setRequired();
 
-        $form->addCheckboxInput('canShowReferent', 'Is referent visible?')
-            ->setChecked();
-
         $form->addSubmit('Submit');
 
         return $form;
     }
 
     public function handleApproveRequest() {
-        $containerId = $this->httpRequest->get('containerId');
+        $containerIds = $this->httpRequest->get('ids');
 
         try {
             $this->app->containerRepository->beginTransaction(__METHOD__);
 
-            $this->app->containerManager->approveContainerRequest($containerId, $this->getUserId());
+            foreach($containerIds as $containerId) {
+                $this->app->containerManager->approveContainerRequest($containerId, $this->getUserId());
+            }
 
             $this->app->containerRepository->commit($this->getUserId(), __METHOD__);
 
-            $this->flashMessage('Container request approved. Container will be created asynchronously.', 'success');
+            $this->flashMessage('Container requests approved. Containers will be created asynchronously.', 'success');
         } catch(AException $e) {
             $this->app->containerRepository->rollback(__METHOD__);
 
-            $this->flashMessage('Could not approve container request. Reason: ' . $e->getMessage(), 'error');
+            $this->flashMessage('Could not approve container requests. Reason: ' . $e->getMessage(), 'error');
         }
 
         $this->redirect($this->createURL('list'));
     }
 
     public function handleDeclineRequest() {
-        $containerId = $this->httpRequest->get('containerId');
+        $containerIds = $this->httpRequest->get('ids');
 
         try {
             $this->app->containerRepository->beginTransaction(__METHOD__);
 
-            $this->app->containerManager->declineContainerRequest($containerId);
+            foreach($containerIds as $containerId) {
+                $this->app->containerManager->declineContainerRequest($containerId);
+            }
 
             $this->app->containerRepository->commit($this->getUserId(), __METHOD__);
 
-            $this->flashMessage('Container request approved. Container will be created asynchronously.', 'success');
+            $this->flashMessage('Container requests approved. Containers will be created asynchronously.', 'success');
         } catch(AException $e) {
             $this->app->containerRepository->rollback(__METHOD__);
 
-            $this->flashMessage('Could not approve container request. Reason: ' . $e->getMessage(), 'error');
+            $this->flashMessage('Could not approve container requests. Reason: ' . $e->getMessage(), 'error');
+        }
+
+        $this->redirect($this->createURL('list'));
+    }
+
+    public function renderChangeStatusForm() {
+        $links = [
+            $this->createBackUrl('list')
+        ];
+
+        $this->template->links = LinkHelper::createLinksFromArray($links);
+    }
+
+    protected function createComponentChangeStatusForm() {
+        $statuses = [];
+        foreach(ContainerStatus::getAll() as $key => $value) {
+            if(!in_array($key, [ContainerStatus::RUNNING, ContainerStatus::NOT_RUNNING])) continue;
+
+            $statuses[] = [
+                'value' => $key,
+                'text' => $value
+            ];
+        }
+
+        $form = $this->componentFactory->getFormBuilder();
+
+        $form->setAction($this->createURL('changeStatusFormSubmit'));
+        
+        $form->addSelect('status', 'Status:')
+            ->setRequired()
+            ->addRawOptions($statuses);
+
+        $form->addHiddenInput('ids')
+            ->setValue($this->httpRequest->get('ids'));
+
+        $form->addSubmit('Change');
+
+        return $form;
+    }
+
+    public function handleChangeStatusFormSubmit(FormRequest $fr) {
+        try {
+            $containerIds = explode(', ', $this->httpRequest->post('ids'));
+
+            $this->app->contentRepository->beginTransaction(__METHOD__);
+
+            $this->app->containerManager->bulkUpdateContainers($containerIds, [
+                'status' => $fr->status
+            ]);
+
+            $this->app->contentRepository->commit($this->getUserId(), __METHOD__);
+
+            $this->flashMessage('Successfully changed status for selected containers.', 'success');
+        } catch(AException $e) {
+            $this->app->contentRepository->rollback(__METHOD__);
+
+            $this->flashMessage('Could not change status for selected containers. Reason: ' . $e->getMessage(), 'error', 10);
         }
 
         $this->redirect($this->createURL('list'));

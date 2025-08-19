@@ -2,7 +2,6 @@
 
 namespace PeeQL\Schema;
 
-use App\Exceptions\GeneralException;
 use Exception;
 use PeeQL\Operations\AOperation;
 use PeeQL\Operations\Conditions\QueryConditionList;

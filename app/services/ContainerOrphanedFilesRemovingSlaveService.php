@@ -77,7 +77,7 @@ class ContainerOrphanedFilesRemovingSlaveService extends AService {
         $this->logInfo(sprintf('Found %d files stored for container.', count($fileIds)));
 
         // get all document-file relations
-        $qb = $container->fileStorageManager->fileStorageRepository->composeQueryForFileDocumentRelations();
+        $qb = $container->documentRepository->composeQueryForDocumentFileRelations();
         $qb->execute();
 
         $documentIds = [];
@@ -139,11 +139,11 @@ class ContainerOrphanedFilesRemovingSlaveService extends AService {
 
         foreach($fileIdsToDelete as $fileId) {
             try {
-                $container->fileStorageManager->fileStorageRepository->beginTransaction(__METHOD__);
+                $container->documentRepository->beginTransaction(__METHOD__);
 
                 $documentId = array_search($fileId, $documentToFileMapping);
 
-                if(!$container->fileStorageManager->fileStorageRepository->deleteDocumentFileRelation($documentId, $fileId)) {
+                if(!$container->documentRepository->deleteDocumentFileRelation($documentId, $fileId)) {
                     throw new GeneralException('Database error 1.');
                 }
 
@@ -160,11 +160,11 @@ class ContainerOrphanedFilesRemovingSlaveService extends AService {
                     throw new GeneralException('File error.');
                 }
 
-                $container->fileStorageManager->fileStorageRepository->commit($this->serviceManager->getServiceUserId(), __METHOD__);
+                $container->documentRepository->commit($this->serviceManager->getServiceUserId(), __METHOD__);
 
                 $this->logInfo(sprintf('File \'%s\' deleted.', $fileId));
             } catch(AException $e) {
-                $container->fileStorageManager->fileStorageRepository->rollback(__METHOD__);
+                $container->documentRepository->rollback(__METHOD__);
 
                 $this->logInfo(sprintf('File \'%s\' could not be deleted. Reason: ' . $e->getMessage(), $fileId));
             }

@@ -226,6 +226,27 @@ class DocumentRepository extends ARepository {
         return $qb->fetch('fileId');
     }
 
+    public function composeQueryForDocumentFileRelations() {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->select(['*'])
+            ->from('document_file_relation');
+
+        return $qb;
+    }
+
+    public function deleteDocumentFileRelation(string $documentId, string $fileId) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->delete()
+            ->from('document_file_relation')
+            ->where('documentId = ?', [$documentId])
+            ->andWhere('fileId = ?', [$fileId])
+            ->execute();
+
+        return $qb->fetchBool();
+    }
+
     public function get(QueryOperation $operation): QueryResult {
         return $this->processPeeQL('documents', $operation);
     }

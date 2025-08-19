@@ -203,6 +203,19 @@ class GroupManager extends AManager {
 
         return $users;
     }
+
+    /**
+     * Removes user from all groups he is member of
+     * 
+     * @param string $userId User ID
+     */
+    public function removeUserFromAllGroups(string $userId) {
+        $groups = $this->getMembershipsForUser($userId, true);
+
+        foreach($groups as $group) {
+            $this->removeUserFromGroup($userId, $group->groupId);
+        }
+    }
 }
 
 ?>

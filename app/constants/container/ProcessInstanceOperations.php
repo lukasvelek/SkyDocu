@@ -12,6 +12,7 @@ class ProcessInstanceOperations extends AConstant {
     public const REJECT = 'reject';
     public const CREATE = 'create';
     public const PROCESS = 'process';
+    public const SYS_REASSIGN = 'sys_reassign';
 
     public static function toString($key): ?string {
         return match($key) {
@@ -21,7 +22,8 @@ class ProcessInstanceOperations extends AConstant {
             self::ACCEPT => 'Accept',
             self::REJECT => 'Reject',
             self::CREATE => 'Create',
-            self::PROCESS => 'Process'
+            self::PROCESS => 'Process',
+            self::SYS_REASSIGN => 'Reassigned by system'
         };
     }
 }

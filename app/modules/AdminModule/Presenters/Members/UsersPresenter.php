@@ -5,6 +5,7 @@ namespace App\Modules\AdminModule;
 use App\Constants\Container\SystemGroups;
 use App\Core\AjaxRequestBuilder;
 use App\Core\Caching\CacheNames;
+use App\Core\Datetypes\DateTime;
 use App\Core\DB\DatabaseRow;
 use App\Core\HashManager;
 use App\Core\Http\Ajax\Operations\CustomOperation;
@@ -406,7 +407,10 @@ class UsersPresenter extends AAdminPresenter {
         try {
             $this->app->userRepository->beginTransaction(__METHOD__);
 
-            $this->app->userManager->updateUser($userId, ['isDeleted' => 1]);
+            $this->app->userManager->updateUser($userId, [
+                'isDeleted' => 1,
+                'dateDeleted' => DateTime::now()
+            ]);
 
             $this->app->userRepository->commit($this->getUserId(), __METHOD__);
 

@@ -24,6 +24,8 @@ Here is the list of changes in versions.
 - Added process grid bulk actions
 - Added external system grid bulk actions
 - Added superadministration container grid bulk actions
+- Added support for automatic user deleting
+    - Users are deleted after the retention period has ended
 - Reworked process reports
 - Fixed the users grid in Superadministration settings
     - Only users with access to Superadministration are visible

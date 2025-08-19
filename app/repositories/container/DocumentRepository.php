@@ -215,6 +215,30 @@ class DocumentRepository extends ARepository {
         return $qb->fetchBool();
     }
 
+    public function deleteDocumentSharingForUserId(string $documentId, string $userId) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->delete()
+            ->from('document_sharing')
+            ->where('documentId = ?', [$documentId])
+            ->andWhere('userId = ?', [$userId])
+            ->execute();
+
+        return $qb->fetchBool();
+    }
+
+    public function deleteDocumentSharingByUserId(string $documentId, string $userId): bool {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->delete()
+            ->from('document_sharing')
+            ->where('documentId = ?', [$documentId])
+            ->andWhere('authorUserId = ?', [$userId])
+            ->execute();
+
+        return $qb->fetchBool();
+    }
+
     public function getFileIdForDocumentId(string $documentId) {
         $qb = $this->qb(__METHOD__);
 

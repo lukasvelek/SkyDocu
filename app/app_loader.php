@@ -157,11 +157,11 @@ function requireFiles(array $files, bool $createContainer) {
  */
 function checkDefines() {
     $defines = [
-        'CACHE_DIR',
         'LOG_LEVEL',
         'SQL_LOG_LEVEL',
         'LOG_STOPWATCH',
         'LOG_DIR',
+        'CACHE_DIR',
         'UPLOAD_DIR',
         'APP_ABSOLUTE_DIR',
         'PHP_ABSOLUTE_DIR',
@@ -170,6 +170,10 @@ function checkDefines() {
         'GRID_SIZE',
         'MAX_GRID_EXPORT_SIZE',
         'MAX_CONTAINER_DOCUMENT_FOLDER_NESTING_LEVEL',
+        'MAX_CONTAINER_ARCHIVE_FOLDER_NESTING_LEVEL',
+        'APP_BRANCH',
+        'CONTAINER_DB_NAME_PREFIX',
+        'DELETED_USER_RETENTION_PERIOD',
         'DB_SERVER',
         'DB_USER',
         'DB_PASS',

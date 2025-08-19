@@ -7,6 +7,7 @@ use App\Constants\ContainerStatus;
 use App\Constants\DateFormats;
 use App\Constants\TimeFormats;
 use App\Core\Application;
+use App\Core\Datetypes\DateTime;
 use App\Core\DB\DatabaseRow;
 use App\Core\FileManager;
 use App\Core\FileUploadManager;
@@ -342,17 +343,13 @@ class UsersPresenter extends ASuperAdminSettingsPresenter {
                     throw new GeneralException('Authentication failed. Bad password entered.');
                 }
 
-                $userMemberships = $this->app->groupManager->getMembershipsForUser($user->getId());
-
                 $this->app->userRepository->beginTransaction(__METHOD__);
 
                 // delete user
-                $this->app->userManager->deleteUser($user->getId());
-
-                // delete memberships
-                foreach($userMemberships as $group) {
-                    $this->app->groupManager->removeUserFromGroup($user->getId(), $group->groupId);
-                }
+                $this->app->userManager->updateUser($user->getId(), [
+                    'isDeleted' => 1,
+                    'dateDeleted' => DateTime::now()
+                ]);
 
                 $this->app->userRepository->commit($this->getUserId(), __METHOD__);
 

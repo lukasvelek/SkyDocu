@@ -154,6 +154,24 @@ class UserManager extends AManager {
 
         return UserEntity::createEntityFromDbRow($row);
     }
+
+    /**
+     * Returns all subordinates for given user
+     * 
+     * @param string $userId User ID
+     */
+    public function getAllSubordinatesForUser(string $userId): array {
+        $qb = $this->userRepository->composeQueryForUsers();
+        $qb->andWhere('superiorUserId = ?', [$userId])
+            ->execute();
+        
+        $userIds = [];
+        while($row = $qb->fetchAssoc()) {
+            $userIds[] = $row['userId'];
+        }
+
+        return $userIds;
+    }
 }
 
 ?>

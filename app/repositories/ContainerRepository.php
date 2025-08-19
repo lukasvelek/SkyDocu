@@ -56,6 +56,14 @@ class ContainerRepository extends ARepository {
         return $qb->fetch();
     }
 
+    public function getContainerByTitle(string $containerTitle) {
+        $qb = $this->composeQueryForContainers()
+            ->where('title = ?', [$containerTitle])
+            ->execute();
+            
+        return $qb->fetch();
+    }
+
     public function createNewCreationStatusEntry(string $statusId, string $containerId, int $percentFinished = 0, ?string $description = null) {
         $qb = $this->qb(__METHOD__);
 

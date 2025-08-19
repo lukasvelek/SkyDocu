@@ -3,6 +3,7 @@
 namespace App\Managers\Container;
 
 use App\Constants\Container\ProcessInstanceOfficerTypes;
+use App\Constants\Container\ProcessInstanceOperations;
 use App\Constants\Container\ProcessInstanceStatus;
 use App\Constants\Container\SystemGroups;
 use App\Core\DB\DatabaseRow;
@@ -258,6 +259,19 @@ class ProcessInstanceManager extends AManager {
     public function archiveProcessInstance(string $instanceId, string $userId) {
         $this->changeProcessInstanceStatus($instanceId, ProcessInstanceStatus::ARCHIVED);
         $this->addWorkflowHistoryEntryToProcessInstance($instanceId, $userId, 'archive');
+    }
+
+    /**
+     * Reassigns process instance to different user (system only)
+     * 
+     * @param string $instanceId Instance ID
+     * @param string $userId User ID
+     */
+    public function sysReassignProcessInstance(string $instanceId, string $userId) {
+        $this->updateInstance($instanceId, [
+            'currentOfficerId' => $userId
+        ]);
+        $this->addWorkflowHistoryEntryToProcessInstance($instanceId, $userId, ProcessInstanceOperations::SYS_REASSIGN);
     }
 
     /**

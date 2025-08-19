@@ -338,7 +338,19 @@ class DocumentManager extends AManager {
         $sharingId = $this->createId();
 
         if(!$this->documentRepository->createNewDocumentSharing($sharingId, $documentId, $sharedByUserId, $sharedToUserId, $sharedUntil)) {
-            throw new GeneralException('Database error.', null, false);
+            throw new GeneralException('Database error.');
+        }
+    }
+
+    public function unshareDocumentForUserId(string $documentId, string $userId) {
+        if(!$this->documentRepository->deleteDocumentSharingForUserId($documentId, $userId)) {
+            throw new GeneralException('Database error.');
+        }
+    }
+
+    public function unshareDocumentByUserId(string $documentId, string $userId) {
+    if(!$this->documentRepository->deleteDocumentSharingByUserId($documentId, $userId)) {
+            throw new GeneralException('Database error.');
         }
     }
 

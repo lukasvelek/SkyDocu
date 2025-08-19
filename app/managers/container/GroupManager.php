@@ -57,6 +57,14 @@ class GroupManager extends AManager {
         }
     }
 
+    public function removeUserFromAllGroups(string $userId) {
+        $groups = $this->getGroupsForUser($userId);
+
+        foreach($groups as $groupId) {
+            $this->removeUserFromGroupId($groupId, $userId);
+        }
+    }
+
     public function getGroupByTitle(string $groupTitle) {
         $result = $this->groupRepository->getGroupByTitle($groupTitle);
 

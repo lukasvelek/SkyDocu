@@ -2,14 +2,13 @@
 
 namespace App\Services;
 
-use App\Core\ServiceManager;
+use App\Core\Application;
 use App\Exceptions\AException;
-use App\Logger\Logger;
 use Exception;
 
 class SERVICE_NAME extends AService {
-    public function __construct(Logger $logger, ServiceManager $serviceManager) {
-        parent::__construct('SERVICE_NAME_WITHOUT_SERVICE_SUFFIX', $logger, $serviceManager);
+    public function __construct(Application $app) {
+        parent::__construct('SERVICE_NAME_WITHOUT_SERVICE_SUFFIX', $app);
     }
 
     public function run() {

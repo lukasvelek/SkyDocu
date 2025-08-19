@@ -227,6 +227,22 @@ class ContainerManager extends AManager {
     }
 
     /**
+     * Returns an instance of ContainerEntity for given container
+     * 
+     * @param string $containerTitle Container title
+     * @param bool $force Force fetch data from the database (overrides cache and updates it)
+     */
+    public function getContainerByTitle(string $containerTitle, bool $force = false): ContainerEntity {
+        $row = $this->containerRepository->getContainerByTitle($containerTitle);
+
+        if($row === null) {
+            throw new NonExistingEntityException('Container \'' . $containerTitle . '\' does not exist.');
+        }
+
+        return $this->getContainerById($row['containerId'], $force);
+    }
+
+    /**
      * Deletes container and all its data
      * 
      * @param string $containerId Container ID

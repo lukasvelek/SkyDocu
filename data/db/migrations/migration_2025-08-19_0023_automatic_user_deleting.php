@@ -21,6 +21,16 @@ class migration_2025_08_19_0023_automatic_user_deleting extends ABaseMigration {
     }
 
     public function seeding(): TableSeeding {
-        return $this->getTableSeeding();
+        $seed = $this->getTableSeeding();
+
+        $seed->seed('system_services')
+            ->add([
+                'serviceId' => $this->getId(),
+                'title' => 'UserDeleting',
+                'scriptPath' => 'user_deleting.php'
+            ])
+        ;
+
+        return $seed;
     }
 }

@@ -40,7 +40,7 @@ class ContainersPresenter extends ASuperAdminPresenter {
         ');
     }
 
-    protected function createComponentContainersGrid(HttpRequest $request) {
+    protected function createComponentContainersGrid() {
         $grid = $this->componentFactory->getGridBuilderExtendingClassInstance(ContainersGrid::class);
 
         $grid->addCheckboxes2($this, 'bulkAction');
@@ -174,7 +174,7 @@ class ContainersPresenter extends ASuperAdminPresenter {
         $this->template->links = LinkBuilder::createSimpleLink('&larr; Back', $this->createURL('list'), 'link');
     }
 
-    protected function createComponentForm(HttpRequest $request) {
+    protected function createComponentForm() {
         $form = $this->componentFactory->getFormBuilder();
 
         $form->setAction($this->createURL('newContainerForm'));
@@ -227,7 +227,7 @@ class ContainersPresenter extends ASuperAdminPresenter {
         $this->template->links = $this->createBackUrl('list');
     }
 
-    protected function createComponentNewContainerRequestForm(HttpRequest $request) {
+    protected function createComponentNewContainerRequestForm() {
         $form = $this->componentFactory->getFormBuilder();
 
         $form->setAction($this->createURL('newContainerRequestForm'));

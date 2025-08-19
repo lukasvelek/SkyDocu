@@ -2,6 +2,8 @@
 
 namespace PeeQL\Schema;
 
+use App\Exceptions\GeneralException;
+use Exception;
 use PeeQL\Operations\AOperation;
 use PeeQL\Operations\Conditions\QueryConditionList;
 use PeeQL\Operations\QueryOperation;
@@ -133,6 +135,8 @@ abstract class AQuerySchema extends ACommonSchema {
 
             if(in_array($condition->getColumnName(), $this->filterableColumns)) {
                 $conditionList->addObjectCondition($condition);
+            } else {
+                throw new Exception('It is not allowed to filter by column \'' . $condition->getColumnName() . '\'.');
             }
         }
 

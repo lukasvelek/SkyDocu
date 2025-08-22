@@ -38,6 +38,7 @@ class ProcessManager extends AManager {
             $process->description,
             $process->userId,
             json_decode(base64_decode($process->definition), true),
+            $process->name,
             $oldProcessId,
             ProcessStatus::NEW
         );
@@ -56,9 +57,18 @@ class ProcessManager extends AManager {
      * @param string $description Description
      * @param string $authorId Author user ID
      * @param array $definition Form definition
+     * @param string $name Name
      * @param ?string $oldProcessId Old process ID
+     * @param int $status Status
      */
-    public function createNewProcess(string $title, string $description, string $authorId, array $definition, ?string $oldProcessId = null, int $status = ProcessStatus::IN_DISTRIBUTION): array {
+    public function createNewProcess(
+        string $title,
+        string $description,
+        string $authorId,
+        array $definition,
+        string $name,
+        ?string $oldProcessId = null,
+        int $status = ProcessStatus::IN_DISTRIBUTION): array {
         $processId = $this->createId();
 
         $version = 1;
@@ -72,7 +82,7 @@ class ProcessManager extends AManager {
             $uniqueProcessId = $this->createId();
         }
 
-        if(!$this->processRepository->insertNewProcess($processId, $uniqueProcessId, $title, $description, base64_encode(json_encode($definition)), $authorId, $status, $version)) {
+        if(!$this->processRepository->insertNewProcess($processId, $uniqueProcessId, $title, $description, base64_encode(json_encode($definition)), $authorId, $status, $version, $name)) {
             throw new GeneralException('Database error.');
         }
 

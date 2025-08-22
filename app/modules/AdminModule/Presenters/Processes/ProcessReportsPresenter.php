@@ -364,6 +364,12 @@ class ProcessReportsPresenter extends AAdminPresenter {
             function openLiveview() {
                 const definition = $("#definition").val();
 
+                if(definition.length == 0) {
+                    alert("No report definition set.");
+
+                    return;
+                }
+
                 const b64 = btoa(definition);
 
                 const url = "?page=Admin:ProcessReports&action=liveview&reportData=" + b64;

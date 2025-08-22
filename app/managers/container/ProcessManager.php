@@ -41,7 +41,8 @@ class ProcessManager extends AManager {
             $data['description'],
             $data['definition'],
             $data['userId'],
-            $data['status']
+            $data['status'],
+            $data['name']
         )) {
             throw new GeneralException('Database error.');
         }
@@ -162,18 +163,20 @@ class ProcessManager extends AManager {
     /**
      * Creates a new process and returns a new process ID and unique process ID
      * 
-     * @param string $title TItle
+     * @param string $title Title
      * @param string $description Description
      * @param string $authorId Author user ID
      * @param array $definition Definition
      * @param ?string $oldProcessId Old process ID
+     * @param string $name Name
      */
     public function createNewProcess(
         string $title,
         string $description,
         string $authorId,
         array $definition,
-        ?string $oldProcessId
+        ?string $oldProcessId,
+        string $name
     ) {
         $processId = $this->createId();
 
@@ -196,7 +199,8 @@ class ProcessManager extends AManager {
             'userId' => $authorId,
             'definition' => base64_encode(json_encode($definition)),
             'status' => ProcessStatus::NEW,
-            'version' => $version
+            'version' => $version,
+            'name' => $name
         ];
 
         if(!$this->processRepository->addNewProcessFromArray($data)) {
@@ -325,7 +329,8 @@ class ProcessManager extends AManager {
             $process->description,
             $process->userId,
             json_decode(base64_decode($process->definition), true),
-            $oldProcessId
+            $oldProcessId,
+            $process->name
         );
 
         return [$newProcessId, $uniqueProcessId];

@@ -30,6 +30,7 @@
         }
     ],
     "filter": "status = 2",
+    "processFilter": "homeOffice",
     "order": [
         {
             "name": "dateModified",

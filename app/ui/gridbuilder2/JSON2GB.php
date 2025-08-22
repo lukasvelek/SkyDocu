@@ -39,6 +39,12 @@ class JSON2GB {
         'datetime'
     ];
 
+    private const CUSTOM_COLUMN_TYPES = [
+        'processInstanceData_text',
+        'processInstanceData_user',
+        'processInstanceData_datetime'
+    ];
+
     /**
      * List of supported optional parameters
      */
@@ -146,97 +152,164 @@ class JSON2GB {
             $title = $column['title'];
             $type = $column['type'];
 
-            if(!in_array($type, self::COLUMN_TYPES)) {
+            if(!in_array($type, self::COLUMN_TYPES) && !in_array($type, self::CUSTOM_COLUMN_TYPES)) {
                 throw new GeneralException('Unsupported column type \'' . $type . '\' for column \'' . $name . '\'.');
             }
 
-            switch($type) {
-                case 'text':
-                    $this->gb->addColumnText($name, $title);
-                    break;
+            if(in_array($type, self::COLUMN_TYPES)) {
+                switch($type) {
+                    case 'text':
+                        $this->gb->addColumnText($name, $title);
+                        break;
 
-                case 'user':
-                    $this->gb->addColumnUser($name, $title);
-                    break;
+                    case 'user':
+                        $this->gb->addColumnUser($name, $title);
+                        break;
 
-                case 'enum':
-                    if(!array_key_exists('enumClass', $column)) {
-                        throw new GeneralException('Column \'' . $name . '\' is of type \'' . $type . '\' but no \'enumClass\' attribute is set.');
-                    }
-
-                    $this->gb->addColumnConst($name, $title, $column['enumClass']);
-                    break;
-
-                case 'group':
-                    $col = $this->gb->addColumnText($name, $title);
-                    $col->onRenderColumn[] = function(DatabaseRow $row, Row $_row, Cell $cell, HTML $html, mixed $value) {
-                        $el = HTML::el('span');
-                        try {
-                            $group = $this->groupManager->getGroupById($value);
-                            $el->text($group->title);
-                        } catch(AException $e) {
-                            $el->text('#ERROR')
-                                ->title($e->getMessage());
+                    case 'enum':
+                        if(!array_key_exists('enumClass', $column)) {
+                            throw new GeneralException('Column \'' . $name . '\' is of type \'' . $type . '\' but no \'enumClass\' attribute is set.');
                         }
-                        return $el;
-                    };
-                    break;
 
-                case 'userGroup':
-                    if(!array_key_exists('typeCheckColumnEnum', $column)) {
-                        throw new GeneralException('Column \'' . $name . '\' is of type \'' . $type . '\' but no \'typeCheckColumnEnum\' attribute is set.');
-                    }
-                    if(!array_key_exists('name', $column['typeCheckColumnEnum'])) {
-                        throw new GeneralException('Column \'' . $name . '\' is of type \'' . $type . '\' but no \'name\' for \'typeCheckColumnEnum\' attribute is set.');
-                    }
-                    if(!array_key_exists('userKey', $column['typeCheckColumnEnum'])) {
-                        throw new GeneralException('Column \'' . $name . '\' is of type \'' . $type . '\' but no \'userKey\' for \'typeCheckColumnEnum\' attribute is set.');
-                    }
-                    if(!array_key_exists('groupKey', $column['typeCheckColumnEnum'])) {
-                        throw new GeneralException('Column \'' . $name . '\' is of type \'' . $type . '\' but no \'groupKey\' for \'typeCheckColumnEnum\' attribute is set.');
-                    }
+                        $this->gb->addColumnConst($name, $title, $column['enumClass']);
+                        break;
 
-                    $col = $this->gb->addColumnText($name, $title);
-                    $col->onRenderColumn[] = function(DatabaseRow $row, Row $_row, Cell $cell, HTML $html, mixed $value) use ($column) {
-                        $el = HTML::el('span');
-
-                        if($row->{$column['typeCheckColumnEnum']['name']} == $column['typeCheckColumnEnum']['userKey']) {
-                            // user
-
-                            try {
-                                $user = $this->app->userManager->getUserById($value);
-
-                                $el->text($user->getFullname());
-                            } catch(AException $e) {
-                                $el->text('#ERROR');
-                            }
-                        } else if($row->{$column['typeCheckColumnEnum']['name']} == $column['typeCheckColumnEnum']['groupKey']) {
-                            // group
-
+                    case 'group':
+                        $col = $this->gb->addColumnText($name, $title);
+                        $col->onRenderColumn[] = function(DatabaseRow $row, Row $_row, Cell $cell, HTML $html, mixed $value) {
+                            $el = HTML::el('span');
                             try {
                                 $group = $this->groupManager->getGroupById($value);
-
-                                $el->text(SystemGroups::toString($group->title));
+                                $el->text($group->title);
                             } catch(AException $e) {
                                 $el->text('#ERROR')
                                     ->title($e->getMessage());
                             }
-                        } else {
-                            $el->text('#ERROR')
-                                ->title('Undefined key.');
+                            return $el;
+                        };
+                        break;
+
+                    case 'userGroup':
+                        if(!array_key_exists('typeCheckColumnEnum', $column)) {
+                            throw new GeneralException('Column \'' . $name . '\' is of type \'' . $type . '\' but no \'typeCheckColumnEnum\' attribute is set.');
+                        }
+                        if(!array_key_exists('name', $column['typeCheckColumnEnum'])) {
+                            throw new GeneralException('Column \'' . $name . '\' is of type \'' . $type . '\' but no \'name\' for \'typeCheckColumnEnum\' attribute is set.');
+                        }
+                        if(!array_key_exists('userKey', $column['typeCheckColumnEnum'])) {
+                            throw new GeneralException('Column \'' . $name . '\' is of type \'' . $type . '\' but no \'userKey\' for \'typeCheckColumnEnum\' attribute is set.');
+                        }
+                        if(!array_key_exists('groupKey', $column['typeCheckColumnEnum'])) {
+                            throw new GeneralException('Column \'' . $name . '\' is of type \'' . $type . '\' but no \'groupKey\' for \'typeCheckColumnEnum\' attribute is set.');
                         }
 
-                        return $el;
-                    };
-                    break;
+                        $col = $this->gb->addColumnText($name, $title);
+                        $col->onRenderColumn[] = function(DatabaseRow $row, Row $_row, Cell $cell, HTML $html, mixed $value) use ($column) {
+                            $el = HTML::el('span');
 
-                case 'boolean':
-                    $this->gb->addColumnBoolean($name, $title);
-                    break;
+                            if($row->{$column['typeCheckColumnEnum']['name']} == $column['typeCheckColumnEnum']['userKey']) {
+                                // user
 
-                case 'datetime':
-                    $this->gb->addColumnDatetime($name, $title);
-                    break;
+                                try {
+                                    $user = $this->app->userManager->getUserById($value);
+
+                                    $el->text($user->getFullname());
+                                } catch(AException $e) {
+                                    $el->text('#ERROR');
+                                }
+                            } else if($row->{$column['typeCheckColumnEnum']['name']} == $column['typeCheckColumnEnum']['groupKey']) {
+                                // group
+
+                                try {
+                                    $group = $this->groupManager->getGroupById($value);
+
+                                    $el->text(SystemGroups::toString($group->title));
+                                } catch(AException $e) {
+                                    $el->text('#ERROR')
+                                        ->title($e->getMessage());
+                                }
+                            } else {
+                                $el->text('#ERROR')
+                                    ->title('Undefined key.');
+                            }
+
+                            return $el;
+                        };
+                        break;
+
+                    case 'boolean':
+                        $this->gb->addColumnBoolean($name, $title);
+                        break;
+
+                    case 'datetime':
+                        $this->gb->addColumnDatetime($name, $title);
+                        break;
+                }
+            } else if(in_array($type, self::CUSTOM_COLUMN_TYPES)) {
+                switch($type) {
+                    case 'processInstanceData_text':
+                        if(!array_key_exists('jsonPath', $column)) {
+                            throw new GeneralException('Column \'' . $name . '\' is of type \'' . $type . '\' but no \'jsonPath\' attribute is set.');
+                        }
+                        $col = $this->gb->addColumnText($name, $title);
+                        $col->onRenderColumn[] = function(DatabaseRow $row, Row $_row, Cell $cell, HTML $html, mixed $value) use ($column) {
+                            $data = unserialize($row->data);
+
+                            $jsonPath = $column['jsonPath'];
+                            $jsonPath = explode('.', $jsonPath);
+
+                            $_value = null;
+                            $d = $data;
+                            for($i = 0; $i < count($jsonPath); $i++) {
+                                $x = $jsonPath[$i];
+                                $d[$x];
+                            }
+
+                            $_value = $d;
+
+                            //$_value = $data['forms'][0]['data'][$column['name']];
+
+                            $el = HTML::el('span');
+
+                            $el->value($_value);
+
+                            return $el;
+                        };
+                        break;
+
+                    case 'processInstanceData_user':
+                        break;
+                    
+                    case 'processInstanceData_datetime':
+                        if(!array_key_exists('jsonPath', $column)) {
+                            throw new GeneralException('Column \'' . $name . '\' is of type \'' . $type . '\' but no \'jsonPath\' attribute is set.');
+                        }
+                        $col = $this->gb->addColumnDatetime($name, $title);
+                        $col->onRenderColumn[] = function(DatabaseRow $row, Row $_row, Cell $cell, HTML $html, mixed $value) use ($column) {
+                            $data = unserialize($row->data);
+
+                            $jsonPath = $column['jsonPath'];
+                            $jsonPath = explode('.', $jsonPath);
+
+                            $_value = null;
+                            $d = $data;
+                            for($i = 0; $i < count($jsonPath); $i++) {
+                                $x = $jsonPath[$i];
+                                $d = $d[$x];
+                            }
+
+                            $_value = $d;
+
+                            //$_value = $data['forms'][0]['data'][$column['name']];
+
+                            $el = HTML::el('span');
+
+                            $el->value($_value);
+
+                            return $el;
+                        };
+                        break;
+                }
             }
         }
     }
@@ -250,10 +323,19 @@ class JSON2GB {
         $qb->select(['*'])
             ->from($this->data['table']);
 
+        $this->processProcessFilter($qb);
         $this->processFilters($qb);
         $this->processOrder($qb);
 
         $this->gb->createDataSourceFromQueryBuilder($qb, $this->data['primaryKey']);
+    }
+
+    private function processProcessFilter(QueryBuilder &$qb) {
+        if(!array_key_exists('processFilter', $this->data)) {
+            return;
+        }
+
+        $qb->andWhere('processId = (SELECT processId FROM processes WHERE name = \'' . $this->data['processFilter'] . '\' AND status = 1 LIMIT 1)');
     }
 
     /**
@@ -266,7 +348,7 @@ class JSON2GB {
             return;
         }
 
-        $qb->where($this->data['filter']);
+        $qb->andWhere($this->data['filter']);
     }
 
     /**

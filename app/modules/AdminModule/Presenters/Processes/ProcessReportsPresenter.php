@@ -72,10 +72,6 @@ class ProcessReportsPresenter extends AAdminPresenter {
         $publish = $grid->addAction('publish');
         $publish->setTitle('Publish / Unpublish');
         $publish->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) {
-            /*if($row->isEnabled == true) {
-                return false;
-            }*/
-
             if(!$this->containerProcessAuthorizator->canUserEditProcessReport($this->getUserId(), $row->reportId)) {
                 return false;
             }
@@ -102,6 +98,10 @@ class ProcessReportsPresenter extends AAdminPresenter {
         $edit->setTitle('Edit');
         $edit->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) {
             if(!$this->containerProcessAuthorizator->canUserEditProcessReport($this->getUserId(), $row->reportId)) {
+                return false;
+            }
+
+            if($row->isEnabled == true) {
                 return false;
             }
 
@@ -142,6 +142,10 @@ class ProcessReportsPresenter extends AAdminPresenter {
         $delete->setTitle('Delete');
         $delete->onCanRender[] = function(DatabaseRow $row, Row $_row, Action &$action) {
             if(!$this->containerProcessAuthorizator->canUserDeleteProcessReport($this->getUserId(), $row->reportId)) {
+                return false;
+            }
+
+            if($row->isEnabled == true) {
                 return false;
             }
 
@@ -225,6 +229,34 @@ class ProcessReportsPresenter extends AAdminPresenter {
         } else {
             $this->template->report_action = 'Edit';
         }
+
+        $this->addScript('
+            $("#title").on("blur", function (e) {
+                const text = $(this).val();
+
+                const clear = text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9 ]/g, "");
+
+                var result = "";
+
+                const clearParts = clear.split(" ");
+
+                result += clearParts[0].toLowerCase();
+
+                if(clearParts.length > 1) {
+                    for(let i = 1; i < clearParts.length; i++) {
+                        result += clearParts[i][0].toUpperCase();
+
+                        if(clearParts[i].length > 1) {
+                            for(let j = 1; j < clearParts[i].length; j++) {
+                                result += clearParts[i][j];
+                            }
+                        }
+                    }
+                }
+
+                $("#name").val(result);
+            });
+        ');
     }
 
     protected function createComponentReportForm() {
@@ -248,10 +280,18 @@ class ProcessReportsPresenter extends AAdminPresenter {
             $title->setValue($report->title);
         }
 
-        $description = $form->addTextArea('description', 'Description:');
+        $description = $form->addTextArea('description', 'Description:')
+            ->setRequired();
 
         if($report !== null) {
             $description->setContent($report->description);
+        }
+
+        $name = $form->addTextInput('name', 'Name:')
+            ->setReadonly();
+
+        if($report !== null) {
+            $name->setValue($report->name);
         }
 
         $form->addSubmit('Save');
@@ -270,14 +310,16 @@ class ProcessReportsPresenter extends AAdminPresenter {
                 $reportId = $this->processReportManager->createNewReport(
                     $this->getUserId(),
                     $fr->title,
-                    $fr->description
+                    $fr->description,
+                    $fr->name
                 );
             } else {
                 $this->processReportManager->updateReport(
                     $reportId,
                     [
                         'title' => $fr->title,
-                        'description' => $fr->description
+                        'description' => $fr->description,
+                        'name' => $fr->name
                     ]
                 );
 
@@ -364,6 +406,12 @@ class ProcessReportsPresenter extends AAdminPresenter {
             function openLiveview() {
                 const definition = $("#definition").val();
 
+                if(definition.length == 0) {
+                    alert("No report definition set.");
+
+                    return;
+                }
+
                 const b64 = btoa(definition);
 
                 const url = "?page=Admin:ProcessReports&action=liveview&reportData=" + b64;
@@ -425,7 +473,11 @@ class ProcessReportsPresenter extends AAdminPresenter {
             $this->app
         );
 
-        $gb = $helper->getGridBuilder();
+        try {
+            $gb = $helper->getGridBuilder();
+        } catch(AException $e) {
+            var_dump($e);
+        }
 
         return $gb;
     }

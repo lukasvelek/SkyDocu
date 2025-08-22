@@ -167,7 +167,23 @@ abstract class ABaseMigration {
      * Returns technical user's ID or null if no technical user exists
      */
     protected function getTechnicalUserId(): ?string {
-        $sql = 'SELECT userId FROM users WHERE username = \'service_user\'';
+        $sql = "SELECT userId FROM users WHERE fullname = 'service_user'";
+
+        $result = $this->masterConn->query($sql);
+
+        $userId = null;
+        foreach($result as $row) {
+            $userId = $row['userId'];
+        }
+
+        return $userId;
+    }
+
+    /**
+     * Returns administrator's ID or null if no administrator exists
+     */
+    protected function getAdministratorUserId(): ?string {
+        $sql = "SELECT userId FROM users WHERE fullname = 'Administrator'";
 
         $result = $this->masterConn->query($sql);
 

@@ -72,8 +72,6 @@ class ContainersGrid extends GridBuilder implements IGridExtendingComponent {
     public function actionBulkAction() {
         $links = $this->getBulkActionLinks($this->httpRequest->get('ids'));
 
-        file_put_contents('__test3.txt', var_export($links, true));
-
         return new JsonResponse([
             'modal' => LinkHelper::createLinksFromArray($links)
         ]);

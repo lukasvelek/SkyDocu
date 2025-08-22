@@ -73,11 +73,13 @@ class ProcessReportManager extends AManager {
      * @param string $userId User ID
      * @param string $title Title
      * @param ?string $description Description
+     * @param string $name Name
      */
     public function createNewReport(
         string $userId,
         string $title,
-        ?string $description
+        ?string $description,
+        string $name
     ): string {
         $reportId = $this->createId();
 
@@ -85,12 +87,10 @@ class ProcessReportManager extends AManager {
             'reportId' => $reportId,
             'title' => $title,
             'userId' => $userId,
-            'isEnabled' => false
+            'isEnabled' => false,
+            'name' => $name,
+            'description' => $description
         ];
-
-        if($description !== null) {
-            $data['description'] = $description;
-        }
 
         if(!$this->processReportsRepository->insertNewReport($data)) {
             throw new GeneralException('Database error.');
@@ -277,7 +277,7 @@ class ProcessReportManager extends AManager {
     public function applyReportDefinitionToGridBuilder(string $reportId, GridBuilder &$grid) {
         $report = $this->getReportById($reportId);
 
-        $definition = json_decode(base64_decode($report->definition), true, 1024);
+        $definition = json_decode(base64_decode($report->definition), true);
 
         $json2gb = new JSON2GB($grid, $definition, $this->groupManager, $grid->app);
 

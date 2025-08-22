@@ -4,7 +4,7 @@
     "columns": [
         {
             "name": "userId",
-            "title": "User",
+            "title": "Author",
             "type": "user"
         },
         {
@@ -27,9 +27,22 @@
             "name": "dateCreated",
             "title": "Date created",
             "type": "datetime"
+        },
+        {
+            "name": "dateFrom",
+            "title": "Date from",
+            "type": "processInstanceData_datetime",
+            "jsonPath": "forms.0.data.dateFrom"
+        },
+        {
+            "name": "dateTo",
+            "title": "Date to",
+            "type": "processInstanceData_datetime",
+            "jsonPath": "forms.0.data.dateTo"
         }
     ],
     "filter": "status = 2",
+    "processFilter": "sys_homeOffice",
     "order": [
         {
             "name": "dateModified",

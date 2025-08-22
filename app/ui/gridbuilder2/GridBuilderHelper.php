@@ -145,7 +145,13 @@ class GridBuilderHelper {
                         foreach($this->columns[$name]->onRenderColumn as $render) {
                             try {
                                 $content = $render($row, $_row, $_cell, $_cell->html, $content);
-                            } catch(Exception $e) {}
+                            } catch(Exception $e) {
+                                $el = HTML::el('span');
+                                $el->title($e->getMessage())
+                                    ->text('#ERROR')
+                                    ->style('color', 'red');
+                                $content = $el->toString();
+                            }
                         }
                     }
                 } else {
@@ -155,7 +161,13 @@ class GridBuilderHelper {
                         foreach($this->columns[$name]->onRenderColumn as $render) {
                             try {
                                 $content = $render($row, $_row, $_cell, $_cell->html, $content);
-                            } catch(Exception $e) {}
+                            } catch(Exception $e) {
+                                $el = HTML::el('span');
+                                $el->title($e->getMessage())
+                                    ->text("#ERROR")
+                                    ->style('color', 'red');
+                                $content = $el->toString();
+                            }
                         }
                     }
                 }

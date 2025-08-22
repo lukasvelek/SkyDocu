@@ -45,6 +45,26 @@ abstract class AGUICore {
     }
 
     /**
+     * Creates a permanent flash message and returns its HTML code
+     * 
+     * @param string $type Flash message type
+     * @param string $text Flash message text
+     */
+    protected function createPermanentFlashMessage(string $type, string $text): string {
+        $code = '
+            <div class="row fmp-' . $type . '">
+                <div class="col-md">
+                    <p class="fm-text">
+                        ' . $text . '
+                    </p>
+                </div>
+            </div>
+        ';
+
+        return $code;
+    }
+
+    /**
      * Sets Application instance
      * 
      * @param Application $application Application instance

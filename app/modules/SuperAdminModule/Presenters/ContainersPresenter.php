@@ -21,6 +21,7 @@ class ContainersPresenter extends ASuperAdminPresenter {
 
         if($this->app->groupManager->isUserMemberOfContainerManagers($this->getUserId())) {
             $links[] = LinkBuilder::createSimpleLink('New container', $this->createURL('newContainerForm'), 'link');
+            $links[] = LinkBuilder::createSimpleLink('Permanent flash message', $this->createFullURL('SuperAdmin:ContainersPermanentFlashMessage', 'list'), 'link');
         } else {
             $links[] = LinkBuilder::createSimpleLink('New container request', $this->createURL('newContainerRequestForm'), 'link');
         }

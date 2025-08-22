@@ -4,7 +4,6 @@ namespace App\Modules\UserModule;
 
 use App\Components\ProcessesGrid\ProcessesGrid;
 use App\Constants\Container\ProcessGridViews;
-use App\Core\Http\HttpRequest;
 use App\UI\LinkBuilder;
 
 class HomePresenter extends AUserPresenter {
@@ -17,7 +16,8 @@ class HomePresenter extends AUserPresenter {
 
         $code = null;
         if($container->getPermanentFlashMessage() !== null) {
-            $code = $this->createFlashMessage('info', $container->getPermanentFlashMessage(), 0, false, true);
+            $fm = $container->getPermanentFlashMessage();
+            $code = $this->createPermanentFlashMessage($fm['type'], $fm['message']);
         }
 
         $this->template->permanent_flash_message = $code ?? '';

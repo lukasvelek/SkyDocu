@@ -6,6 +6,7 @@ use App\Constants\Container\SystemGroups;
 use App\Constants\ContainerStatus;
 use App\Core\Caching\CacheNames;
 use App\Core\DatabaseConnection;
+use App\Core\Datetypes\DateTime;
 use App\Core\DB\DatabaseManager;
 use App\Core\DB\DatabaseMigrationManager;
 use App\Core\HashManager;
@@ -15,6 +16,7 @@ use App\Exceptions\GeneralException;
 use App\Exceptions\NonExistingEntityException;
 use App\Logger\Logger;
 use App\Repositories\Container\GroupRepository;
+use app\Repositories\ContainerPermanentFlashMessagesRepository;
 use App\Repositories\ContainerRepository;
 use App\Repositories\ContentRepository;
 use App\Repositories\UserRepository;
@@ -30,8 +32,17 @@ class ContainerManager extends AManager {
     private GroupManager $groupManager;
     private DatabaseConnection $masterConn;
     private ContainerDatabaseManager $containerDatabaseManager;
+    public ContainerPermanentFlashMessagesRepository $containerPermanentFlashMessagesRepository;
 
-    public function __construct(Logger $logger, ContainerRepository $containerRepository, DatabaseManager $dbManager, GroupManager $groupManager, DatabaseConnection $masterConn, ContainerDatabaseManager $containerDatabaseManager) {
+    public function __construct(
+        Logger $logger,
+        ContainerRepository $containerRepository,
+        DatabaseManager $dbManager,
+        GroupManager $groupManager,
+        DatabaseConnection $masterConn,
+        ContainerDatabaseManager $containerDatabaseManager,
+        ContainerPermanentFlashMessagesRepository $containerPermanentFlashMessagesRepository
+    ) {
         parent::__construct($logger);
 
         $this->containerRepository = $containerRepository;
@@ -39,6 +50,7 @@ class ContainerManager extends AManager {
         $this->groupManager = $groupManager;
         $this->masterConn = $masterConn;
         $this->containerDatabaseManager = $containerDatabaseManager;
+        $this->containerPermanentFlashMessagesRepository = $containerPermanentFlashMessagesRepository;
     }
 
     /**
@@ -222,6 +234,11 @@ class ContainerManager extends AManager {
         });
 
         $containerEntity->addContainerDatabases($databases);
+
+        $permanentFlashMessage = $this->containerPermanentFlashMessagesRepository->getActivePermanentFlashMessage();
+        if($permanentFlashMessage !== null) {
+            $containerEntity->setPermanentFlashMessage($permanentFlashMessage['message'], $permanentFlashMessage['type']);
+        }
 
         return $containerEntity;
     }
@@ -480,6 +497,68 @@ class ContainerManager extends AManager {
             return $containers;
         } else {
             return $containerIds;
+        }
+    }
+
+    /**
+     * Creates a new container permanent flash message and returns the messageId
+     * 
+     * @param string $userId User ID
+     * @param string $message Message
+     * @param int $type Message type
+     * @param string $dateValidUntil Date valid until
+     * @throws GeneralException
+     */
+    public function createNewContainerPermanentFlashMessage(string $userId, string $message, int $type, string $dateValidUntil): string {
+        $messageId = $this->createId();
+
+        $data = [
+            'messageId' => $messageId,
+            'userId' => $userId,
+            'message' => $message,
+            'type' => $type,
+            'dateValidUntil' => $dateValidUntil
+        ];
+
+        if(!$this->containerPermanentFlashMessagesRepository->createNewPermanentFlashMessage($data)) {
+            throw new GeneralException('Database error.');
+        }
+
+        return $messageId;
+    }
+
+    /**
+     * Updates container permanent flash message
+     * 
+     * @param string $messageId Message ID
+     * @param array $data Data array
+     */
+    public function updateContainerPermanentFlashMessage(string $messageId, array $data) {
+        if(!$this->containerPermanentFlashMessagesRepository->updatePermanentFlashMessage($messageId, $data)) {
+            throw new GeneralException('Database error.');
+        }
+    }
+
+    /**
+     * Disables previous container permanent flash messages
+     * 
+     * @param string $newMessageId New message ID
+     */
+    public function disablePreviousContainerPermanentFlashMessages(string $newMessageId) {
+        $qb = $this->containerPermanentFlashMessagesRepository->composeQueryForPermanentFlashMessages();
+        $qb->andWhere('messageId <> ?', [$newMessageId])
+            ->orderBy('dateCreated', 'DESC')
+            ->execute();
+
+        $messageIds = [];
+        while($row = $qb->fetchAssoc()) {
+            $messageIds[] = $row['messageId'];
+        }
+
+        foreach($messageIds as $messageId) {
+            $this->updateContainerPermanentFlashMessage($messageId, [
+                'isActive' => 0
+            ]);
         }
     }
 }

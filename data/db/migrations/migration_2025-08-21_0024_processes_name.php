@@ -33,7 +33,7 @@ class migration_2025_08_21_0024_processes_name extends ABaseMigration {
         ];
 
         foreach($mapping as $title => $name) {
-            $processes->update(['title' => $title], ['name' => $name]);
+            $processes->update('title = \'' . $title . '\'', ['name' => $name]);
         }
 
         return $seed;

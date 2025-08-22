@@ -146,6 +146,13 @@ class DateTime {
 
         return $now->getResult();
     }
+
+    /**
+     * Returns new DateTime instance with the current timestamp
+     */
+    public static function nowAsObject(): DateTime {
+        return new self();
+    }
 }
 
 ?>

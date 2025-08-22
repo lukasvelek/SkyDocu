@@ -4,17 +4,11 @@ namespace App\Modules\SuperAdminModule;
 
 use App\Components\ContainersGrid\ContainersGrid;
 use App\Constants\ContainerStatus;
-use App\Core\DB\DatabaseRow;
 use App\Core\Http\FormRequest;
-use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
-use App\Helpers\GridHelper;
 use App\Helpers\LinkHelper;
-use App\UI\GridBuilder2\Action;
 use App\UI\GridBuilder2\CheckboxLink;
-use App\UI\GridBuilder2\Row;
-use App\UI\HTML\HTML;
 use App\UI\LinkBuilder;
 
 class ContainersPresenter extends ASuperAdminPresenter {
@@ -27,6 +21,7 @@ class ContainersPresenter extends ASuperAdminPresenter {
 
         if($this->app->groupManager->isUserMemberOfContainerManagers($this->getUserId())) {
             $links[] = LinkBuilder::createSimpleLink('New container', $this->createURL('newContainerForm'), 'link');
+            $links[] = LinkBuilder::createSimpleLink('Permanent flash message', $this->createFullURL('SuperAdmin:ContainersPermanentFlashMessage', 'list'), 'link');
         } else {
             $links[] = LinkBuilder::createSimpleLink('New container request', $this->createURL('newContainerRequestForm'), 'link');
         }

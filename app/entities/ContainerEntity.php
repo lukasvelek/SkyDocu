@@ -2,6 +2,7 @@
 
 namespace App\Entities;
 
+use App\Constants\ContainerPermanentFlashMessageTypes;
 use App\Exceptions\GeneralException;
 
 /**
@@ -17,7 +18,7 @@ class ContainerEntity extends AEntity {
     private int $status;
     private string $dateCreated;
     private bool $canShowContainerReferent;
-    private ?string $permanentFlashMessage;
+    private ?array $permanentFlashMessage;
     private bool $isInDistribution;
 
     /**
@@ -35,7 +36,6 @@ class ContainerEntity extends AEntity {
      * @param int $status Status
      * @param string $dateCreated Date created
      * @param bool $canShowContainerReferent Can show container referent?
-     * @param ?string $permanentFlashMessage Permanent flash message
      * @param bool $isInDistribution Is in distribution?
      */
     public function __construct(
@@ -46,7 +46,6 @@ class ContainerEntity extends AEntity {
         int $status,
         string $dateCreated,
         bool $canShowContainerReferent,
-        ?string $permanentFlashMessage,
         bool $isInDistribution
     ) {
         $this->containerId = $containerId;
@@ -56,9 +55,9 @@ class ContainerEntity extends AEntity {
         $this->status = $status;
         $this->dateCreated = $dateCreated;
         $this->canShowContainerReferent = $canShowContainerReferent;
-        $this->permanentFlashMessage = $permanentFlashMessage;
         $this->isInDistribution = $isInDistribution;
-
+        
+        $this->permanentFlashMessage = null;
         $this->databases = [];
     }
 
@@ -114,8 +113,21 @@ class ContainerEntity extends AEntity {
     /**
      * Returns container's permanent flash message
      */
-    public function getPermanentFlashMessage(): ?string {
+    public function getPermanentFlashMessage(): ?array {
         return $this->permanentFlashMessage;
+    }
+
+    /**
+     * Sets container's permanent flash message
+     * 
+     * @param string $message Message
+     * @param int $type Message type
+     */
+    public function setPermanentFlashMessage(string $message/*, int $type*/) {
+        $this->permanentFlashMessage = [
+            'message' => $message,
+            'type' => ContainerPermanentFlashMessageTypes::getKey(ContainerPermanentFlashMessageTypes::PERMANENT)
+        ];
     }
 
     /**
@@ -176,7 +188,6 @@ class ContainerEntity extends AEntity {
             'status' => 'int',
             'dateCreated' => 'string',
             'canShowContainerReferent' => 'bool',
-            'permanentFlashMessage' => '?string',
             'isInDistribution' => 'bool'
         ]);
 
@@ -188,7 +199,6 @@ class ContainerEntity extends AEntity {
             $row->status,
             $row->dateCreated,
             $row->canShowContainerReferent,
-            $row->permanentFlashMessage,
             $row->isInDistribution
         );
 

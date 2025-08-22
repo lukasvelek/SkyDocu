@@ -27,6 +27,7 @@ use App\Managers\UserSubstituteManager;
 use App\Modules\ModuleManager;
 use App\Repositories\ContainerDatabaseRepository;
 use App\Repositories\ContainerInviteRepository;
+use app\Repositories\ContainerPermanentFlashMessagesRepository;
 use App\Repositories\ContainerRepository;
 use App\Repositories\ContentRepository;
 use App\Repositories\ExternalSystemsLogRepository;
@@ -96,6 +97,7 @@ class Application {
     public ExternalSystemsTokenRepository $externalSystemsTokenRepository;
     public ExternalSystemsLogRepository $externalSystemsLogRepository;
     public ExternalSystemsRightsRepository $externalSystemsRightsRepository;
+    public ContainerPermanentFlashMessagesRepository $containerPermanentFlashMessagesRepository;
 
     public ServiceManager $serviceManager;
     public UserManager $userManager;
@@ -152,7 +154,7 @@ class Application {
         $this->userManager = new UserManager($this->logger, $this->userRepository);
         $this->groupManager = new GroupManager($this->logger, $this->groupRepository, $this->groupMembershipRepository);
         $this->containerDatabaseManager = new ContainerDatabaseManager($this->logger, $this->containerDatabaseRepository, $this->dbManager);
-        $this->containerManager = new ContainerManager($this->logger, $this->containerRepository, $this->dbManager, $this->groupManager, $this->db, $this->containerDatabaseManager);
+        $this->containerManager = new ContainerManager($this->logger, $this->containerRepository, $this->dbManager, $this->groupManager, $this->db, $this->containerDatabaseManager, $this->containerPermanentFlashMessagesRepository);
         $this->containerInviteManager = new ContainerInviteManager($this->logger, $this->containerInviteRepository);
         $this->userAbsenceManager = new UserAbsenceManager($this->logger,  $this->userAbsenceRepository);
         $this->userSubstituteManager = new UserSubstituteManager($this->logger,  $this->userSubstituteRepository);

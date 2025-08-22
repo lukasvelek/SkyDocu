@@ -78,6 +78,21 @@ body {
     border: 1px solid red;
 }
 
+div[class^="fmp-"], div[class*="fmp-"] {
+    padding-top: 15px;
+    padding-left: 10px;
+    padding-right: 10px;
+
+    border-radius: 5px;
+}
+
+.fmp-permanent {
+    color: black;
+    background-color: rgb(200, 200, 200);
+
+    border: 1px solid black;
+}
+
 div[class^="fm-"], div[class*="fm-"] {
     padding-top: 20px;
     padding-left: 20px;

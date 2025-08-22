@@ -27,6 +27,7 @@ Here is the list of changes in versions.
 - Added support for automatic user deleting
     - Users are deleted after the retention period has ended
 - Reworked process reports
+- Reworked container permanent flash messages
 - Fixed the users grid in Superadministration settings
     - Only users with access to Superadministration are visible
 - Fixed the application version format

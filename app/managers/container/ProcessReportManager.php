@@ -277,7 +277,7 @@ class ProcessReportManager extends AManager {
     public function applyReportDefinitionToGridBuilder(string $reportId, GridBuilder &$grid) {
         $report = $this->getReportById($reportId);
 
-        $definition = json_decode(base64_decode($report->definition), true, 1024);
+        $definition = json_decode(base64_decode($report->definition), true);
 
         $json2gb = new JSON2GB($grid, $definition, $this->groupManager, $grid->app);
 

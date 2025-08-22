@@ -7,6 +7,8 @@ use App\Core\Application;
 use App\Core\DB\DatabaseRow;
 use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
+use App\Helpers\DateTimeFormatHelper;
+use App\Helpers\ProcessHelper;
 use App\Managers\Container\GroupManager;
 use App\UI\HTML\HTML;
 use QueryBuilder\QueryBuilder;
@@ -42,7 +44,8 @@ class JSON2GB {
     private const CUSTOM_COLUMN_TYPES = [
         'processInstanceData_text',
         'processInstanceData_user',
-        'processInstanceData_datetime'
+        'processInstanceData_datetime',
+        'processInstanceData_textCombination'
     ];
 
     /**
@@ -256,22 +259,71 @@ class JSON2GB {
                             $data = unserialize($row->data);
 
                             $jsonPath = $column['jsonPath'];
-                            $jsonPath = explode('.', $jsonPath);
-
-                            $_value = null;
-                            $d = $data;
-                            for($i = 0; $i < count($jsonPath); $i++) {
-                                $x = $jsonPath[$i];
-                                $d[$x];
-                            }
-
-                            $_value = $d;
-
-                            //$_value = $data['forms'][0]['data'][$column['name']];
+                            
+                            $_value = ProcessHelper::getInstanceDataByJsonPath($data, $jsonPath);
 
                             $el = HTML::el('span');
 
-                            $el->value($_value);
+                            $el->title($_value)
+                                ->text($_value);
+
+                            return $el;
+                        };
+                        break;
+                    
+                    case 'processInstanceData_textCombination':
+                        if(!array_key_exists('combinationParts', $column)) {
+                            throw new GeneralException('Column \'' . $name . '\' is of type \'' . $type . '\' but no \'combinationParts\' attribute is set.');
+                        }
+                        $col = $this->gb->addColumnText($name, $title);
+                        $col->onRenderColumn[] = function(DatabaseRow $row, Row $_row, Cell $cell, HTML $html, mixed $value) use ($column) {
+                            $data = unserialize($row->data);
+
+                            $result = '';
+
+                            $parts = $column['combinationParts'];
+
+                            foreach($parts as $part) {
+                                if(!array_key_exists('type', $part)) {
+                                    throw new GeneralException('No \'type\' is defined for column \'' . $column['name'] . '\' of type \'' . $column['type'] . '\'.');
+                                }
+                                $type = $part['type'];
+                                
+                                switch($type) {
+                                    case 'processInstanceData_text':
+                                        if(!array_key_exists('jsonPath', $part)) {
+                                            throw new GeneralException('No \'jsonPath\' is defined for column \'' . $column['name'] . '\' of type \'' . $column['type'] . '\'.');
+                                        }
+                                        $jsonPath = $part['jsonPath'];
+
+                                        $result .= ProcessHelper::getInstanceDataByJsonPath($data, $jsonPath);
+
+                                        break;
+
+                                    case 'processInstanceData_enum':
+                                        $jsonPath = $part['jsonPath'];
+                                        $enumClass = $part['enumClass'];
+
+                                        $valueFromData = ProcessHelper::getInstanceDataByJsonPath($data, $jsonPath);
+
+                                        if(!class_exists($enumClass)) {
+                                            throw new GeneralException('No enum \'' . $enumClass . '\' has been found.');
+                                        }
+
+                                        $result .= $enumClass::toString($valueFromData);
+
+                                        break;
+
+                                    case 'text':
+                                        $result .= $part['value'];
+                                        break;
+                                }
+                            }
+
+                            $el = HTML::el('span');
+
+                            $el->title($result)
+                                ->text($result);
 
                             return $el;
                         };
@@ -289,22 +341,15 @@ class JSON2GB {
                             $data = unserialize($row->data);
 
                             $jsonPath = $column['jsonPath'];
-                            $jsonPath = explode('.', $jsonPath);
 
-                            $_value = null;
-                            $d = $data;
-                            for($i = 0; $i < count($jsonPath); $i++) {
-                                $x = $jsonPath[$i];
-                                $d = $d[$x];
-                            }
-
-                            $_value = $d;
-
-                            //$_value = $data['forms'][0]['data'][$column['name']];
+                            $_value = ProcessHelper::getInstanceDataByJsonPath($data, $jsonPath);
 
                             $el = HTML::el('span');
 
-                            $el->value($_value);
+                            $friendlyValue = DateTimeFormatHelper::formatDateToUserFriendly($_value, $this->app->currentUser->getDateFormat());
+
+                            $el->title($_value)
+                                ->text($friendlyValue);
 
                             return $el;
                         };
@@ -330,6 +375,11 @@ class JSON2GB {
         $this->gb->createDataSourceFromQueryBuilder($qb, $this->data['primaryKey']);
     }
 
+    /**
+     * Processes process filter
+     * 
+     * @param QueryBuilder &$qb QueryBuilder instance
+     */
     private function processProcessFilter(QueryBuilder &$qb) {
         if(!array_key_exists('processFilter', $this->data)) {
             return;

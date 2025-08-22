@@ -42,9 +42,13 @@ class ReportsPresenter extends AUserPresenter {
     }
 
     protected function createComponentReportGrid() {
+        $reportId = $this->httpRequest->get('reportId');
+
         $grid = $this->componentFactory->getGridBuilder($this->containerId);
 
-        $this->processReportManager->applyReportDefinitionToGridBuilder('0pRWMccV4WnLNj5XAIr2DVaFemebhHU1', $grid);
+        $this->processReportManager->applyReportDefinitionToGridBuilder($reportId, $grid);
+
+        $grid->addQueryDependency('reportId', $reportId);
 
         return $grid;
     }

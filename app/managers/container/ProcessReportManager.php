@@ -73,11 +73,13 @@ class ProcessReportManager extends AManager {
      * @param string $userId User ID
      * @param string $title Title
      * @param ?string $description Description
+     * @param string $name Name
      */
     public function createNewReport(
         string $userId,
         string $title,
-        ?string $description
+        ?string $description,
+        string $name
     ): string {
         $reportId = $this->createId();
 
@@ -85,12 +87,10 @@ class ProcessReportManager extends AManager {
             'reportId' => $reportId,
             'title' => $title,
             'userId' => $userId,
-            'isEnabled' => false
+            'isEnabled' => false,
+            'name' => $name,
+            'description' => $description
         ];
-
-        if($description !== null) {
-            $data['description'] = $description;
-        }
 
         if(!$this->processReportsRepository->insertNewReport($data)) {
             throw new GeneralException('Database error.');

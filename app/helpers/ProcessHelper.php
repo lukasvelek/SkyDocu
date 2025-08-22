@@ -62,6 +62,24 @@ class ProcessHelper {
 
         return ($i + 1) == count($workflowUsers);
     }
+
+    /**
+     * Returns process instance data by JSON path
+     * 
+     * @param array $data Process instance data
+     * @param string $jsonPath JSON path
+     */
+    public static function getInstanceDataByJsonPath(array $data, string $jsonPath) {
+        $jsonPathParts = explode('.', $jsonPath);
+
+        $d = $data;
+        for($i = 0; $i < count($jsonPathParts); $i++) {
+            $x = $jsonPathParts[$i];
+            $d = $d[$x];
+        }
+
+        return $d;
+    }
 }
 
 ?>

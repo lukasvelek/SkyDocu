@@ -16,6 +16,7 @@ class NavbarSuperAdminSettingsLinks {
     public const FILE_STORAGE = ['page' => 'SuperAdminSettings:FileStorage', 'action' => 'dashboard'];
     public const EXTERNAL_SYSTEMS = ['page' => 'SuperAdminSettings:ExternalSystems', 'action' => 'list'];
     public const DATABASE = ['page' => 'SuperAdminSettings:Database', 'action' => 'home'];
+    public const APPLICATION_LOG = ['page' => 'SuperAdminSettings:ApplicationLog', 'action' => 'list'];
     public const ABOUT_APP = ['page' => 'SuperAdminSettings:AboutApplication', 'action' => 'default'];
 
     public const USER_PROFILE = ['page' => 'SuperAdmin:UserProfile', 'action' => 'profile'];
@@ -36,6 +37,7 @@ class NavbarSuperAdminSettingsLinks {
             'File storage' => self::FILE_STORAGE,
             'External systems' => self::EXTERNAL_SYSTEMS,
             'Database' => self::DATABASE,
+            'Application log' => self::APPLICATION_LOG,
             'About application' => self::ABOUT_APP
         ];
     }

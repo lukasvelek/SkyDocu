@@ -2,12 +2,11 @@
 
 namespace App\Constants;
 
-class ApplicationLogLevels extends AConstant {
+class ApplicationLogLevels extends AConstant implements IColorable, IBackgroundColorable {
     public const ERROR = 1;
     public const WARNING = 2;
     public const INFO = 3;
     public const SQL = 4;
-    public const SERVICE = 5;
 
     public static function toString($key): ?string {
         return match((int)$key) {
@@ -15,7 +14,6 @@ class ApplicationLogLevels extends AConstant {
             self::WARNING => 'Warning',
             self::INFO => 'Information',
             self::SQL => 'SQL',
-            self::SERVICE => 'Service',
             default => null
         };
     }
@@ -26,8 +24,25 @@ class ApplicationLogLevels extends AConstant {
             'warning' => self::WARNING,
             'error' => self::ERROR,
             'sql' => self::SQL,
-            'service' => self::SERVICE,
             default => null
+        };
+    }
+
+    public static function getColor($key): ?string {
+        return match((int)$key) {
+            self::ERROR => 'red',
+            self::WARNING => 'yellow',
+            self::INFO => 'green',
+            self::SQL => 'blue'
+        };
+    }
+
+    public static function getBackgroundColor($key): ?string {
+        return match((int)$key) {
+            self::ERROR => 'pink',
+            self::WARNING => 'orange',
+            self::INFO => 'lightgreen',
+            self::SQL => 'lightblue'
         };
     }
 }

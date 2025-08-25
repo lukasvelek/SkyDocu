@@ -122,10 +122,6 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
 
         if($fr !== null) {
             try {
-                /*$this->handleDbOperation(function() use ($containerId, $fr) {
-                    $this->app->containerManager->changeContainerStatus($containerId, $fr->status, $this->getUserId(), $fr->description);
-                });*/
-
                 $this->handleDbOperation([
                     [
                         $this->app->containerManager,
@@ -261,17 +257,27 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
         
         if($fr !== null) {
             try {
-                $this->app->containerRepository->beginTransaction(__METHOD__);
+                $this->handleDbOperation([
+                    [
+                        $this->app->containerManager,
+                        'updateContainer',
+                        [$containerId, [
+                            'permanentFlashMessage' => $fr->permanentFlashMessage
+                        ]]
+                    ]
+                ]);
+
+                /*$this->app->containerRepository->beginTransaction(__METHOD__);
 
                 $data['permanentFlashMessage'] = $fr->permanentFlashMessage;
 
                 $this->app->containerManager->updateContainer($containerId, $data);
 
-                $this->app->containerRepository->commit($this->getUserId(), __METHOD__);
+                $this->app->containerRepository->commit($this->getUserId(), __METHOD__);*/
 
                 $this->flashMessage('Permanent flash message successfully saved.', 'success');
             } catch(AException $e) {
-                $this->app->containerRepository->rollback(__METHOD__);
+                //$this->app->containerRepository->rollback(__METHOD__);
 
                 $this->flashMessage('Could not update permanent flash message.', 'error', 10);
             }

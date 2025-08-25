@@ -281,6 +281,15 @@ abstract class AContainerPresenter extends APresenter {
         $tmp = &$this->containerCacheFactory;
         return $tmp;
     }
+
+    /**
+     * Handles a database operation in transaction
+     * 
+     * @param array $operations Operations
+     */
+    protected function handleDbOperation(array $operations) {
+        $this->app->appLogManager->handleOperation($operations, $this->getUserId(), $this->containerId);
+    }
 }
 
 ?>

@@ -3,6 +3,7 @@
 namespace App\Managers;
 
 use App\Constants\ApplicationLogLevels;
+use App\Constants\ApplicationLogTypes;
 use App\Exceptions\GeneralException;
 use App\Logger\Logger;
 use App\Repositories\ApplicationLogRepository;
@@ -22,7 +23,7 @@ class ApplicationLogManager extends AManager {
      * 
      * @param array $operations Operations
      */
-    public function handleOperation(array $operations) {
+    public function handleOperation(array $operations, string $userId, ?string $containerId = null) {
         $contextId = null;
 
         foreach($operations as $operation) {
@@ -45,7 +46,7 @@ class ApplicationLogManager extends AManager {
                 $message = $e->getMessage();
             }
 
-            $this->createNewLogEntry($contextId, $stackTrace, __METHOD__, $message, ApplicationLogLevels::INFO);
+            $this->createNewLogEntry($contextId, $stackTrace, __METHOD__, $message, ApplicationLogTypes::APPLICATION, ApplicationLogLevels::INFO, $userId, $containerId);
         }
     }
 
@@ -58,12 +59,14 @@ class ApplicationLogManager extends AManager {
      * @param string $message Message
      * @param string $type Type
      */
-    public function createNewLogEntry(?string $contextId, ?string $callStack, string $caller, string $message, string $type): string {
+    public function createNewLogEntry(?string $contextId, ?string $callStack, string $caller, string $message, int $type, int $level, string $userId, ?string $containerId = null): string {
         if($contextId === null) {
             $contextId = $this->createId();
         }
 
         $entryId = $this->createId();
+
+        $caller = str_replace('\\', '\\\\', $caller) . '()';
 
         $data = [
             'logId' => $entryId,
@@ -71,10 +74,13 @@ class ApplicationLogManager extends AManager {
             'caller' => $caller,
             'message' => $message,
             'type' => $type,
-            'level' => ApplicationLogLevels::getConstByKey($type) ?? ApplicationLogLevels::INFO
+            'level' => $level,
+            'userId' => $userId,
+            'containerId' => $containerId
         ];
 
         if($callStack !== null) {
+            $callStack = str_replace('\\', '\\\\', $callStack);
             $data['callStack'] = htmlspecialchars($callStack);
         }
 

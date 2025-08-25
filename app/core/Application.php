@@ -3,6 +3,8 @@
 namespace App\Core;
 
 use App\Authenticators\UserAuthenticator;
+use App\Constants\ApplicationLogLevels;
+use App\Constants\ApplicationLogTypes;
 use App\Constants\SessionNames;
 use App\Core\Caching\CacheFactory;
 use App\Core\DB\DatabaseManager;
@@ -187,8 +189,6 @@ class Application {
         }
 
         $this->peeql = new PeeQL($this->db, $this->logger, $this->transactionLogRepository);
-
-        $this->applicationLog('Application initialized');
     }
 
     /**
@@ -272,6 +272,7 @@ class Application {
         try {
             echo $this->render();
         } catch(AException|Exception $e) {
+            $this->applicationLog($e->getMessage(), ApplicationLogLevels::ERROR, ApplicationLogTypes::APPLICATION);
             throw $e;
         }
     }
@@ -353,8 +354,6 @@ class Application {
             throw new ModuleDoesNotExistException($this->currentModule);
         }
 
-        //$this->logger->info('Creating module.', __METHOD__);
-        $this->applicationLog('Creating module');
         try {
             $moduleObject = $this->moduleManager->createModule($this->currentModule);
         } catch(Exception $e) {
@@ -364,11 +363,7 @@ class Application {
         $moduleObject->setHttpRequest($this->getRequest());
         $moduleObject->setCacheFactory($this->cacheFactory);
 
-        //$this->logger->info('Initializing render engine.', __METHOD__);
-        $this->applicationLog('Initializing render engine');
         $re = new RenderEngine($this->logger, $moduleObject, $this->currentPresenter, $this->currentAction, $this);
-        //$this->logger->info('Rendering page content.', __METHOD__);
-        $this->applicationLog('Rendering page content');
         $re->setAjax($this->isAjaxRequest);
         try {
             return $re->render();
@@ -413,8 +408,6 @@ class Application {
      * Loads modules
      */
     private function loadModules() {
-        //$this->logger->info('Loading modules.', __METHOD__);
-        $this->applicationLog('Loading modules');
         $this->modules = $this->moduleManager->loadModules();
     }
 
@@ -434,9 +427,6 @@ class Application {
         } else {
             $this->currentAction = 'default';
         }
-
-        //if ($log) $this->logger->info('Current URL: [module => ' . $this->currentModule . ', presenter => ' . $this->currentPresenter . ', action => ' . $this->currentAction . ']', __METHOD__);
-        $this->applicationLog('Current URL: [module => ' . $this->currentModule . ', presenter => ' . $this->currentPresenter . ', action => ' . $this->currentAction . ']');
         
         $params = [];
         foreach($_GET as $k => $v) {
@@ -449,12 +439,16 @@ class Application {
 
             $params[] = sprintf('%s => %s', $k, $v);
         }
-
-        //if ($log) $this->logger->info('Current URL parameters: [' . implode(', ', $params) . ']', __METHOD__);
-        $this->applicationLog('Current URL parameters: [' . implode(', ', $params) . ']');
     }
 
-    private function applicationLog(string $message, string $type = 'info') {
+    /**
+     * Logs application
+     * 
+     * @param string $message Message
+     * @param int $level Level
+     * @param int $type Type
+     */
+    private function applicationLog(string $message, int $level, int $type) {
         $e = new Exception();
 
         $this->applicationLogContextId = $this->appLogManager->createNewLogEntry(
@@ -462,7 +456,9 @@ class Application {
             $e->getTraceAsString(),
             __METHOD__,
             $message,
-            $type
+            $type,
+            $level,
+            $this->currentUser?->getId() ?? $this->userManager->getServiceUserId()
         );
     }
 }

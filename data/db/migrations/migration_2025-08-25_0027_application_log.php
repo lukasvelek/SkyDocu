@@ -16,7 +16,7 @@ class migration_2025_08_25_0027_application_log extends ABaseMigration {
             ->text('callstack', true)
             ->text('caller')
             ->text('message')
-            ->varchar('type')
+            ->enum('type')
             ->enum('level')
             ->datetimeAuto('dateCreated')
         ;

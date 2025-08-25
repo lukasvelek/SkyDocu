@@ -823,7 +823,7 @@ abstract class APresenter extends AGUICore {
      * @param array $operations Operations
      */
     protected function handleDbOperation(array $operations) {
-        return $this->app->appLogManager->handleOperation($operations);
+        return $this->app->appLogManager->handleOperation($operations, $this->getUserId());
     }
 }
 

@@ -72,7 +72,7 @@ class Application {
 
     private ModuleManager $moduleManager;
     public Logger $logger;
-    private DatabaseConnection $db;
+    public DatabaseConnection $db;
     public DatabaseManager $dbManager;
 
     public UserAuthenticator $userAuth;
@@ -187,7 +187,6 @@ class Application {
      */
     private function initManagers() {
         foreach([
-            
             $this->userManager,
             $this->groupManager,
             $this->containerDatabaseManager,

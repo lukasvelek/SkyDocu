@@ -301,6 +301,9 @@ class ContainersPresenter extends ASuperAdminPresenter {
             ->setRequired()
             ->addRawOptions($statuses);
 
+        $form->addTextArea('reason', 'Reason:')
+            ->setRequired();
+
         $form->addHiddenInput('ids')
             ->setValue($this->httpRequest->get('ids'));
 
@@ -313,11 +316,28 @@ class ContainersPresenter extends ASuperAdminPresenter {
         try {
             $containerIds = explode(', ', $this->httpRequest->post('ids'));
 
+            $oldStatuses = [];
+            foreach($containerIds as $containerId) {
+                $container = $this->app->containerManager->getContainerById($containerId, true);
+                $oldStatuses[$containerId] = $container->getStatus();
+            }
+
             $this->app->contentRepository->beginTransaction(__METHOD__);
 
             $this->app->containerManager->bulkUpdateContainers($containerIds, [
                 'status' => $fr->status
             ]);
+
+            foreach($containerIds as $containerId) {
+                $this->app->containerManager->containerRepository->createNewStatusHistoryEntry(
+                    $this->app->containerManager->createId(),
+                    $containerId,
+                    $this->getUserId(),
+                    $fr->reason,
+                    $oldStatuses[$containerId],
+                    $fr->status
+                );
+            }
 
             $this->app->contentRepository->commit($this->getUserId(), __METHOD__);
 

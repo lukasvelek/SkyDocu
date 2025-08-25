@@ -143,7 +143,7 @@ class GridBuilder extends AComponent {
      * Adds a checkbox link callback
      * 
      * @param string $actionName Action name
-     * @param callback $callback Callback
+     * @param callable $callback Callback
      */
     public function addCheckboxLinkCallback(CheckboxLink $checkboxLink) {
         $this->checkboxLinks[$checkboxLink->getName()] = $checkboxLink;

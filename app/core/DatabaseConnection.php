@@ -115,6 +115,29 @@ class DatabaseConnection implements IDbQueriable {
     public function getName(): string {
         return $this->dbName;
     }
+
+    /**
+     * Handles passed operation in a transaction
+     * 
+     * @param callable $operation Operation
+     */
+    public function handle(callable $operation) {
+        $result = null;
+
+        try {
+            $this->beginTransaction();
+            
+            $result = $operation();
+            
+            $this->commit();
+        } catch(AException|Exception $e) {
+            $this->rollback();
+            
+            throw $e;
+        }
+
+        return $result;
+    }
 }
 
 ?>

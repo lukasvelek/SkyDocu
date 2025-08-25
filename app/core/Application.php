@@ -13,6 +13,7 @@ use App\Exceptions\AException;
 use App\Exceptions\GeneralException;
 use App\Exceptions\ModuleDoesNotExistException;
 use App\Logger\Logger;
+use App\Managers\ApplicationLogManager;
 use App\Managers\ContainerDatabaseManager;
 use App\Managers\ContainerInviteManager;
 use App\Managers\ContainerManager;
@@ -25,6 +26,7 @@ use App\Managers\UserAbsenceManager;
 use App\Managers\UserManager;
 use App\Managers\UserSubstituteManager;
 use App\Modules\ModuleManager;
+use App\Repositories\ApplicationLogRepository;
 use App\Repositories\ContainerDatabaseRepository;
 use App\Repositories\ContainerInviteRepository;
 use app\Repositories\ContainerPermanentFlashMessagesRepository;
@@ -68,6 +70,8 @@ class Application {
     private ?string $currentPresenter;
     private ?string $currentAction;
 
+    private ?string $applicationLogContextId = null;
+
     private bool $isAjaxRequest;
 
     private ModuleManager $moduleManager;
@@ -98,6 +102,7 @@ class Application {
     public ExternalSystemsLogRepository $externalSystemsLogRepository;
     public ExternalSystemsRightsRepository $externalSystemsRightsRepository;
     public ContainerPermanentFlashMessagesRepository $containerPermanentFlashMessagesRepository;
+    public ApplicationLogRepository $appLogRepository;
 
     public ServiceManager $serviceManager;
     public UserManager $userManager;
@@ -111,6 +116,7 @@ class Application {
     public JobQueueManager $jobQueueManager;
     public FileStorageManager $fileStorageManager;
     public ExternalSystemsManager $externalSystemsManager;
+    public ApplicationLogManager $appLogManager;
 
     public array $repositories;
 
@@ -132,13 +138,13 @@ class Application {
         $this->moduleManager = new ModuleManager();
 
         $this->logger = new Logger();
-        $this->logger->info('Logger initialized.', __METHOD__);
+        //$this->logger->info('Logger initialized.', __METHOD__);
         try {
             $this->db = new DatabaseConnection(DB_MASTER_NAME);
         } catch(AException $e) {
             throw $e;
         }
-        $this->logger->info('Database connection established', __METHOD__);
+        //$this->logger->info('Database connection established', __METHOD__);
 
         $this->cacheFactory = new CacheFactory();
 
@@ -162,6 +168,7 @@ class Application {
         $this->jobQueueManager = new JobQueueManager($this->logger,  $this->jobQueueRepository, $this->jobQueueProcessingHistoryRepository);
         $this->fileStorageManager = new FileStorageManager($this->logger,  $this->fileStorageRepository);
         $this->externalSystemsManager = new ExternalSystemsManager($this->logger,  $this->externalSystemsRepository, $this->externalSystemsLogRepository, $this->externalSystemsTokenRepository, $this->externalSystemsRightsRepository);
+        $this->appLogManager = new ApplicationLogManager($this->logger, $this->appLogRepository);
 
         $this->initManagers();
 
@@ -180,6 +187,8 @@ class Application {
         }
 
         $this->peeql = new PeeQL($this->db, $this->logger, $this->transactionLogRepository);
+
+        $this->applicationLog('Application initialized');
     }
 
     /**
@@ -196,7 +205,8 @@ class Application {
             $this->userSubstituteManager,
             $this->processManager,
             $this->jobQueueManager,
-            $this->externalSystemsManager
+            $this->externalSystemsManager,
+            $this->appLogManager
         ] as $manager) {
             $manager->injectCacheFactory($this->cacheFactory);
         }
@@ -343,7 +353,8 @@ class Application {
             throw new ModuleDoesNotExistException($this->currentModule);
         }
 
-        $this->logger->info('Creating module.', __METHOD__);
+        //$this->logger->info('Creating module.', __METHOD__);
+        $this->applicationLog('Creating module');
         try {
             $moduleObject = $this->moduleManager->createModule($this->currentModule);
         } catch(Exception $e) {
@@ -353,9 +364,11 @@ class Application {
         $moduleObject->setHttpRequest($this->getRequest());
         $moduleObject->setCacheFactory($this->cacheFactory);
 
-        $this->logger->info('Initializing render engine.', __METHOD__);
+        //$this->logger->info('Initializing render engine.', __METHOD__);
+        $this->applicationLog('Initializing render engine');
         $re = new RenderEngine($this->logger, $moduleObject, $this->currentPresenter, $this->currentAction, $this);
-        $this->logger->info('Rendering page content.', __METHOD__);
+        //$this->logger->info('Rendering page content.', __METHOD__);
+        $this->applicationLog('Rendering page content');
         $re->setAjax($this->isAjaxRequest);
         try {
             return $re->render();
@@ -400,7 +413,8 @@ class Application {
      * Loads modules
      */
     private function loadModules() {
-        $this->logger->info('Loading modules.', __METHOD__);
+        //$this->logger->info('Loading modules.', __METHOD__);
+        $this->applicationLog('Loading modules');
         $this->modules = $this->moduleManager->loadModules();
     }
 
@@ -421,7 +435,8 @@ class Application {
             $this->currentAction = 'default';
         }
 
-        if ($log) $this->logger->info('Current URL: [module => ' . $this->currentModule . ', presenter => ' . $this->currentPresenter . ', action => ' . $this->currentAction . ']', __METHOD__);
+        //if ($log) $this->logger->info('Current URL: [module => ' . $this->currentModule . ', presenter => ' . $this->currentPresenter . ', action => ' . $this->currentAction . ']', __METHOD__);
+        $this->applicationLog('Current URL: [module => ' . $this->currentModule . ', presenter => ' . $this->currentPresenter . ', action => ' . $this->currentAction . ']');
         
         $params = [];
         foreach($_GET as $k => $v) {
@@ -435,7 +450,20 @@ class Application {
             $params[] = sprintf('%s => %s', $k, $v);
         }
 
-        if ($log) $this->logger->info('Current URL parameters: [' . implode(', ', $params) . ']', __METHOD__);
+        //if ($log) $this->logger->info('Current URL parameters: [' . implode(', ', $params) . ']', __METHOD__);
+        $this->applicationLog('Current URL parameters: [' . implode(', ', $params) . ']');
+    }
+
+    private function applicationLog(string $message, string $type = 'info') {
+        $e = new Exception();
+
+        $this->applicationLogContextId = $this->appLogManager->createNewLogEntry(
+            $this->applicationLogContextId,
+            $e->getTraceAsString(),
+            __METHOD__,
+            $message,
+            $type
+        );
     }
 }
 

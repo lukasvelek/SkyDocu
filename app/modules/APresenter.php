@@ -816,6 +816,15 @@ abstract class APresenter extends AGUICore {
             $this->redirect($redirectUrl);
         }
     }
+
+    /**
+     * Handles a database operation in transaction
+     * 
+     * @param array $operations Operations
+     */
+    protected function handleDbOperation(array $operations) {
+        return $this->app->appLogManager->handleOperation($operations);
+    }
 }
 
 ?>

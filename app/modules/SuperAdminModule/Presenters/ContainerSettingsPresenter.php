@@ -122,22 +122,26 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
 
         if($fr !== null) {
             try {
-                $this->app->containerRepository->beginTransaction(__METHOD__);
+                /*$this->handleDbOperation(function() use ($containerId, $fr) {
+                    $this->app->containerManager->changeContainerStatus($containerId, $fr->status, $this->getUserId(), $fr->description);
+                });*/
 
-                $this->app->containerManager->changeContainerStatus($containerId, $fr->status, $this->getUserId(), $fr->description);
-                
+                $this->handleDbOperation([
+                    [
+                        $this->app->containerManager,
+                        'changeContainerStatus',
+                        [$containerId, $fr->status, $this->getUserId(), $fr->description]
+                    ]
+                ]);
+
                 /**
                  * @var \App\Modules\SuperAdminModule\SuperAdminModule $module
                  */
                 $module = &$this->module;
                 $module->navbar?->revalidateContainerSwitch();
 
-                $this->app->containerRepository->commit($this->getUserId(), __METHOD__);
-
                 $this->flashMessage('Container status changed.', 'success');
             } catch(AException $e) {
-                $this->app->containerRepository->rollback(__METHOD__);
-
                 $this->flashMessage('Could not change container status. Reason: ' . $e->getMessage(), 'error', 10);
             }
 
@@ -233,7 +237,12 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
             ->setRequired()
             ->setDisabled($disabled);
 
-        $permanentFlashMessage->setContent($container->getPermanentFlashMessage());
+        $permanentFlashMessageText = $container->getPermanentFlashMessage();
+        if($permanentFlashMessageText !== null) {
+            $permanentFlashMessageText = $permanentFlashMessageText['message'];
+        }
+
+        $permanentFlashMessage->setContent($permanentFlashMessageText);
 
         $form->addSubmit('Save')
             ->setDisabled($disabled);

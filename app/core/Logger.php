@@ -42,7 +42,7 @@ class Logger implements ILoggerCallable {
     /**
      * Measures the time taken to process given function and returns the result of the given function
      * 
-     * @param callback $function Function to measure
+     * @param callable $function Function to measure
      * @param string $method Calling method name
      * @return mixed Result of $function
      */

@@ -33,7 +33,7 @@ class CheckboxLink {
     /**
      * Sets callback for availability checking
      * 
-     * @param callback $callback Callback called with parameters: string $primaryKey
+     * @param callable $callback Callback called with parameters: string $primaryKey
      */
     public function setCheckCallback(callable $callback): static {
         $this->checkCallback[] = $callback;
@@ -44,7 +44,7 @@ class CheckboxLink {
     /**
      * Sets callback for link generation
      * 
-     * @param callback $callback Callback called with parameters: array $primaryKeys
+     * @param callable $callback Callback called with parameters: array $primaryKeys
      */
     public function setLinkCallback(callable $callback): static {
         $this->getLinkCallback[] = $callback;

@@ -58,7 +58,7 @@ class Cache {
      * Loads data from cache
      * 
      * @param mixed $key Data key
-     * @param callback $generator Data generator
+     * @param callable $generator Data generator
      * @param array $generatorDependencies Data generator dependencies (arguments)
      * @param bool $force Force generate result or not
      * @return mixed|null Data or null
@@ -87,7 +87,7 @@ class Cache {
      * Saves data to cache
      * 
      * @param mixed $key Data key
-     * @param callback $generator Data generator
+     * @param callable $generator Data generator
      * @param array $generatorDependencies Data generator dependencies (arguments)
      */
     public function save(mixed $key, callable $generator, array $generatorDependencies = []) {
@@ -108,7 +108,7 @@ class Cache {
      * Method checks if given key exists in cache and is different. The data is saved to cache only if the does not exist or exists but is different.
      * 
      * @param mixed $key Data key
-     * @param callback $generator Data generator
+     * @param callable $generator Data generator
      * @param array $generatorDependencies Data generator dependencies (arguments)
      */
     public function update(mixed $key, callable $generator, array $generatorDependencies = []) {

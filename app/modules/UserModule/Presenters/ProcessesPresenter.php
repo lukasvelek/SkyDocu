@@ -42,12 +42,14 @@ class ProcessesPresenter extends AUserPresenter {
                 }
 
                 autoUpdate();
-
-                function processBulkAction(data) {
-                    post(data.url, {"ids": data.ids});
-                }
             ');
         }
+
+        $this->addScript('
+            function processBulkAction(data) {
+                post(data.url, {"ids": data.ids});
+            }
+        ');
     }
 
     protected function createComponentProcessViewsSidebar(HttpRequest $request) {
@@ -122,7 +124,8 @@ class ProcessesPresenter extends AUserPresenter {
                     'instanceIds' => $instanceIds,
                     'containerId' => $this->containerId
                 ],
-                null);
+                null
+            );
 
             $this->app->jobQueueRepository->commit($this->getUserId(), __METHOD__);
 

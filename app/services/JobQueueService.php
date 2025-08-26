@@ -10,6 +10,7 @@ use App\Core\DB\DatabaseRow;
 use App\Core\GUID;
 use App\Exceptions\AException;
 use Exception;
+use Throwable;
 
 class JobQueueService extends AService {
     public function __construct(
@@ -108,7 +109,7 @@ class JobQueueService extends AService {
      * 
      * @param DatabaseRow $job Job
      */
-    private function errorJob(DatabaseRow $job, AException $e) {
+    private function errorJob(DatabaseRow $job, AException|Throwable $e) {
         $this->app->jobQueueManager->errorJob($job->jobId, $e);
     }
 
@@ -172,16 +173,18 @@ class JobQueueService extends AService {
         $container = $this->getContainerInstance($params['containerId']);
 
         try {
-            $this->logJob($job, sprintf('Deleting process instance %s.', $params['instanceId']));
+            $this->logJob($job, sprintf('Deleting process instances [%s].', implode(', ', $params['instanceIds'])));
 
             $container->processInstanceRepository->beginTransaction(__METHOD__);
 
-            $container->processInstanceManager->deleteProcessInstance($params['instanceId']);
+            foreach($params['instanceIds'] as $instanceId) {
+                $container->processInstanceManager->deleteProcessInstance($instanceId);
+            }
 
             $container->processInstanceRepository->commit($this->app->userManager->getServiceUserId(), __METHOD__);
 
-            $this->logJob($job, sprintf('Deleted process instance %s.', $params['instanceId']));
-        } catch(AException $e) {
+            $this->logJob($job, sprintf('Deleted process instances [%s].', implode(', ', $params['instanceId'])));
+        } catch(AException|Throwable $e) {
             $container->processInstanceRepository->rollback(__METHOD__);
 
             $this->errorJob($job, $e);

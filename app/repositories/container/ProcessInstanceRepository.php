@@ -133,6 +133,18 @@ class ProcessInstanceRepository extends ARepository {
 
         return $qb->fetchBool();
     }
+
+    /**
+     * Composes a QueryBuilder instance for process instance log
+     */
+    public function composeQueryForProcessTransactionLog(): QueryBuilder {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->select(['*'])
+            ->from('process_instance_log');
+
+        return $qb;
+    }
 }
 
 ?>

@@ -6,12 +6,19 @@ use App\Core\DB\ABaseMigration;
 use App\Core\DB\Helpers\TableSchema;
 use App\Core\DB\Helpers\TableSeeding;
 
-class migration_2025_08_22_0026_container_permanent_flash_message_removal extends ABaseMigration {
+class migration_2025_08_28_0027_application_database_logger extends ABaseMigration {
     public function up(): TableSchema {
         $schema = $this->getTableSchema();
 
-        $schema->update('containers')
-            ->removeColumn('permanentFlashMessage');
+        $schema->create('application_log')
+            ->primaryKey('logId')
+            ->text('message')
+            ->text('stackTrace', true)
+            ->varchar('userId')
+            ->varchar('type')
+            ->varchar('method')
+            ->datetimeAuto('dateCreated')
+        ;
 
         return $schema;
     }

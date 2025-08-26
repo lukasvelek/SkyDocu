@@ -363,7 +363,8 @@ class ProcessInstanceManager extends AManager {
             'logId' => GUID::generate(),
             'instanceId' => $instanceId,
             'userId' => $userId,
-            'message' => $message
+            'message' => $message,
+            'tsDateCreated' => explode(' ', microtime())[0]
         ];
 
         if(!$this->processInstanceRepository->createNewProcessInstanceLogEntry($data)) {

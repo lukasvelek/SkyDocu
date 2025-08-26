@@ -15,6 +15,7 @@ class migration_2025_08_28_0028_process_instance_log extends AContainerBaseMigra
             ->varchar('instanceId')
             ->text('message')
             ->varchar('userId')
+            ->varchar('tsDateCreated')
             ->datetimeAuto('dateCreated')
         ;
 

@@ -101,6 +101,38 @@ class ProcessInstanceRepository extends ARepository {
 
         return $qb->fetchBool();
     }
+
+    /**
+     * Creates a new process instance file relation
+     * 
+     * @param string $relationId Relation ID
+     * @param string $instanceId Instance ID
+     * @param string $fileId File ID
+     */
+    public function createNewProcessInstanceFileRelation(string $relationId, string $instanceId, string $fileId): bool {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->insert('process_file_relation', ['relationId', 'instanceId', 'fileId'])
+            ->values([$relationId, $instanceId, $fileId])
+            ->execute();
+
+        return $qb->fetchBool();
+    }
+
+    /**
+     * Creates a new process instance log entry
+     * 
+     * @param array $data Data array
+     */
+    public function createNewProcessInstanceLogEntry(array $data): bool {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->insert('process_instance_log', array_keys($data))
+            ->values(array_values($data))
+            ->execute();
+
+        return $qb->fetchBool();
+    }
 }
 
 ?>

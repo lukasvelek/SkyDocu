@@ -25,6 +25,7 @@ use App\Managers\UserAbsenceManager;
 use App\Managers\UserManager;
 use App\Managers\UserSubstituteManager;
 use App\Modules\ModuleManager;
+use App\Repositories\ApplicationLogRepository;
 use App\Repositories\ContainerDatabaseRepository;
 use App\Repositories\ContainerInviteRepository;
 use app\Repositories\ContainerPermanentFlashMessagesRepository;
@@ -98,6 +99,7 @@ class Application {
     public ExternalSystemsLogRepository $externalSystemsLogRepository;
     public ExternalSystemsRightsRepository $externalSystemsRightsRepository;
     public ContainerPermanentFlashMessagesRepository $containerPermanentFlashMessagesRepository;
+    public ApplicationLogRepository $appLogRepository;
 
     public ServiceManager $serviceManager;
     public UserManager $userManager;
@@ -252,6 +254,9 @@ class Application {
             }
         }
 
+        $appDbLogger = new ApplicationDatabaseLogger($this->db, $this->currentUser->getId(), $this->appLogRepository);
+        $this->logger->setApplicationDatabaseLogger($appDbLogger);
+
         /**
          * Instead of query parameter isAjax, it can be easily determined with the request header.
          */
@@ -343,7 +348,7 @@ class Application {
             throw new ModuleDoesNotExistException($this->currentModule);
         }
 
-        $this->logger->info('Creating module.', __METHOD__);
+        //$this->logger->info('Creating module.', __METHOD__);
         try {
             $moduleObject = $this->moduleManager->createModule($this->currentModule);
         } catch(Exception $e) {
@@ -353,9 +358,9 @@ class Application {
         $moduleObject->setHttpRequest($this->getRequest());
         $moduleObject->setCacheFactory($this->cacheFactory);
 
-        $this->logger->info('Initializing render engine.', __METHOD__);
+        //$this->logger->info('Initializing render engine.', __METHOD__);
         $re = new RenderEngine($this->logger, $moduleObject, $this->currentPresenter, $this->currentAction, $this);
-        $this->logger->info('Rendering page content.', __METHOD__);
+        //$this->logger->info('Rendering page content.', __METHOD__);
         $re->setAjax($this->isAjaxRequest);
         try {
             return $re->render();

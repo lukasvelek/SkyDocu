@@ -26,6 +26,7 @@ Here is the list of changes in versions.
 - Added superadministration container grid bulk actions
 - Added support for automatic user deleting
     - Users are deleted after the retention period has ended
+- Added logging to database
 - Reworked process reports
 - Reworked container permanent flash messages
 - Fixed the users grid in Superadministration settings

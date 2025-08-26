@@ -24,6 +24,8 @@ class ApplicationLogPresenter extends ASuperAdminSettingsPresenter {
 
         $grid->createDataSourceFromQueryBuilder($qb, 'logId');
 
+        $grid->setLimit(15);
+
         $col = $grid->addColumnText('message', 'Message');
         $col->onRenderColumn[] = function(DatabaseRow $row, Row $_row, Cell $cell, HTML $html, mixed $value) {
             $el = HTML::el('span');
@@ -38,7 +40,20 @@ class ApplicationLogPresenter extends ASuperAdminSettingsPresenter {
 
             return $el;
         };
-        $grid->addColumnText('method', 'Method');
+        $col = $grid->addColumnText('method', 'Method');
+        $col->onRenderColumn[] = function(DatabaseRow $row, Row $_row, Cell $cell, HTML $html, mixed $value) {
+            $el = HTML::el('span');
+
+            $el->title($value);
+
+            if(strlen($value) > 50) {
+                $el->text(substr($value, 0, 50) . '...');
+            } else {
+                $el->text($value);
+            }
+
+            return $el;
+        };
         $grid->addColumnConst('type', 'Type', ApplicationLogTypes::class);
         $grid->addColumnDatetime('dateCreated', 'Date created');
 

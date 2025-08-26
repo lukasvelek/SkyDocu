@@ -92,7 +92,7 @@ class GridHelper {
             $this->gridPageData[$key] = $page;
         }
 
-        $this->logger->info(sprintf('Loaded page for grid \'%s\': %d.', $key, $this->gridPageData[$key]), __METHOD__);
+        //$this->logger->info(sprintf('Loaded page for grid \'%s\': %d.', $key, $this->gridPageData[$key]), __METHOD__);
 
         return $this->gridPageData[$key];
     }

@@ -47,13 +47,15 @@ class ApplicationDatabaseLogger {
         string $type
     ) {
         $logId = GUID::generate();
+        $tsCreated = time();
 
         $data = [
             'logId' => $logId,
             'userId' => $this->userId,
             'message' => $message,
             'method' => $method,
-            'type' => $type
+            'type' => $type,
+            'tsCreated' => $tsCreated
         ];
 
         if($stackTrace !== null) {

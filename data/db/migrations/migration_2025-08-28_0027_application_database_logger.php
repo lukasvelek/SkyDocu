@@ -18,6 +18,7 @@ class migration_2025_08_28_0027_application_database_logger extends ABaseMigrati
             ->varchar('type')
             ->varchar('method')
             ->datetimeAuto('dateCreated')
+            ->integer('tsCreated', 64)
         ;
 
         return $schema;

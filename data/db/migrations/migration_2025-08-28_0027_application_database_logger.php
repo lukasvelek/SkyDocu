@@ -14,7 +14,7 @@ class migration_2025_08_28_0027_application_database_logger extends ABaseMigrati
             ->primaryKey('logId')
             ->text('message')
             ->text('stackTrace', true)
-            ->varchar('userId')
+            ->varchar('userId', 256, true)
             ->varchar('type')
             ->varchar('method')
             ->datetimeAuto('dateCreated')

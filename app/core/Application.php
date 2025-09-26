@@ -254,7 +254,13 @@ class Application {
             }
         }
 
-        $appDbLogger = new ApplicationDatabaseLogger($this->db, $this->currentUser->getId(), $this->appLogRepository);
+        $userId = null;
+
+        if($this->currentUser !== null) {
+            $userId = $this->currentUser->getId();
+        }
+
+        $appDbLogger = new ApplicationDatabaseLogger($this->db, $userId, $this->appLogRepository);
         $this->logger->setApplicationDatabaseLogger($appDbLogger);
 
         /**

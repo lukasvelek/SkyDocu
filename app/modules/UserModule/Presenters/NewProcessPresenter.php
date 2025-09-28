@@ -10,6 +10,7 @@ use App\Constants\Container\ProcessInstanceOperations;
 use App\Constants\Container\ProcessInstanceStatus;
 use App\Constants\Container\ProcessInstanceSystemStatus;
 use App\Core\FileUploadManager;
+use App\Core\GUID;
 use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
 use App\Core\Http\JsonResponse;
@@ -164,16 +165,13 @@ class NewProcessPresenter extends AUserPresenter {
                 ];
 
                 try {
-                    $this->fileStorageRepository->beginTransaction(__METHOD__);
+                    $this->processInstanceRepository->beginTransaction(__METHOD__);
 
-                    $this->fileStorageManager->createNewFileProcessInstanceRelation(
-                        $instanceId,
-                        $fileId
-                    );
-
-                    $this->fileStorageRepository->commit($this->getUserId(), __METHOD__);
+                    $this->processInstanceRepository->createNewProcessInstanceFileRelation(GUID::generate(), $instanceId, $fileId);
+                    
+                    $this->processInstanceRepository->commit($this->getUserId(), __METHOD__);
                 } catch(AException $e) {
-                    $this->fileStorageRepository->rollback(__METHOD__);
+                    $this->processInstanceRepository->rollback(__METHOD__);
 
                     throw $e;
                 }
@@ -214,6 +212,8 @@ class NewProcessPresenter extends AUserPresenter {
             $this->processInstanceRepository->beginTransaction(__METHOD__);
 
             $this->processInstanceManager->startNewInstanceFromArray($instanceId, $instanceData);
+
+            $this->processInstanceManager->instanceLog($instanceId, $this->getUserId(), 'New process instance started');
 
             $this->processInstanceRepository->commit($this->getUserId(), __METHOD__);
         } catch(AException $e) {
@@ -256,6 +256,8 @@ class NewProcessPresenter extends AUserPresenter {
             $this->processInstanceRepository->beginTransaction(__METHOD__);
 
             $this->processInstanceManager->updateInstance($instanceId, $instanceData);
+
+            $this->processInstanceManager->instanceLog($instanceId, $this->getUserId(), 'Process instance has moved to next officer');
 
             $this->processInstanceRepository->commit($this->getUserId(), __METHOD__);
 

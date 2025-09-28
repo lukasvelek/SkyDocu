@@ -11,6 +11,7 @@ use App\Exceptions\GeneralException;
 use App\Logger\Logger;
 use App\Repositories\JobQueueProcessingHistoryRepository;
 use App\Repositories\JobQueueRepository;
+use Throwable;
 
 /**
  * JobQueueManager contains high-level API methods for job queue
@@ -199,12 +200,12 @@ class JobQueueManager extends AManager {
      * @param string $jobId Job ID
      * @param AException $e Exception thrown that caused the unexpected end
      */
-    public function errorJob(string $jobId, AException $e) {
+    public function errorJob(string $jobId, AException|Throwable $e) {
         // change status
-        $this->changeJobStatusWithMessage($jobId, JobQueueStatus::ERROR, 'Job unexpectedly ended due to exception: ' . $e->getMessage() . ' [#' . $e->getHash() . ']');
+        $this->changeJobStatusWithMessage($jobId, JobQueueStatus::ERROR, 'Job unexpectedly ended due to exception: ' . $e->getMessage() /*. ' [#' . $e->getHash() . ']'*/);
 
         // create processing history entry
-        $this->insertNewProcessingHistoryEntry($jobId, JobQueueProcessingHistoryTypes::ERROR_MESSAGE, 'Job unexpectedly ended due to exception: ' . $e->getMessage() . ' [#' . $e->getHash() . ']');
+        $this->insertNewProcessingHistoryEntry($jobId, JobQueueProcessingHistoryTypes::ERROR_MESSAGE, 'Job unexpectedly ended due to exception: ' . $e->getMessage() /*. ' [#' . $e->getHash() . ']'*/);
     }
 }
 

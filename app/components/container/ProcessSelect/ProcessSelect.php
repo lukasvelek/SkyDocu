@@ -67,6 +67,7 @@ class ProcessSelect extends AComponent {
     private function getProcesses() {
         $qb = $this->processRepository->composeQueryForAvailableProcesses();
         $qb->andWhere('isEnabled = 1')
+            ->andWhere('status IN (1,4)')
             ->execute();
 
         $processes = [];

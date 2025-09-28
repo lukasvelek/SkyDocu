@@ -7,6 +7,7 @@ use App\Constants\Container\ProcessInstanceOperations;
 use App\Constants\Container\ProcessInstanceStatus;
 use App\Constants\Container\SystemGroups;
 use App\Core\DB\DatabaseRow;
+use App\Core\GUID;
 use App\Entities\ProcessInstanceDataEntity;
 use App\Exceptions\GeneralException;
 use App\Logger\Logger;
@@ -346,6 +347,27 @@ class ProcessInstanceManager extends AManager {
      */
     public function deleteProcessInstance(string $instanceId) {
         if(!$this->processInstanceRepository->deleteProcessInstance($instanceId)) {
+            throw new GeneralException('Database error.');
+        }
+    }
+
+    /**
+     * Logs a process instance message
+     * 
+     * @param string $instanceId Instance ID
+     * @param string $userId User ID
+     * @param string $message Message
+     */
+    public function instanceLog(string $instanceId, string $userId, string $message) {
+        $data = [
+            'logId' => GUID::generate(),
+            'instanceId' => $instanceId,
+            'userId' => $userId,
+            'message' => $message,
+            'tsDateCreated' => explode(' ', microtime())[0]
+        ];
+
+        if(!$this->processInstanceRepository->createNewProcessInstanceLogEntry($data)) {
             throw new GeneralException('Database error.');
         }
     }

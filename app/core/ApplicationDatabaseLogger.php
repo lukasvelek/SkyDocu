@@ -2,6 +2,7 @@
 
 namespace App\Core;
 
+use App\Exceptions\AException;
 use App\Repositories\ApplicationLogRepository;
 
 /**
@@ -11,19 +12,19 @@ use App\Repositories\ApplicationLogRepository;
  */
 class ApplicationDatabaseLogger {
     private DatabaseConnection $conn;
-    private string $userId;
+    private ?string $userId;
     private ApplicationLogRepository $appLogRepository;
 
     /**
      * Class constructor
      * 
      * @param DatabaseConnection $conn DatabaseConnection instance
-     * @param string $userId User ID
+     * @param ?string $userId User ID
      * @param ApplicationLogRepository $appLogRepository ApplicationLogRepository instance
      */
     public function __construct(
         DatabaseConnection $conn,
-        string $userId,
+        ?string $userId,
         ApplicationLogRepository $appLogRepository
     ) {
         $this->conn = $conn;
@@ -46,19 +47,25 @@ class ApplicationDatabaseLogger {
         string $type
     ) {
         $logId = GUID::generate();
+        $tsCreated = time();
 
         $data = [
             'logId' => $logId,
             'userId' => $this->userId,
             'message' => $message,
             'method' => $method,
-            'type' => $type
+            'type' => $type,
+            'tsCreated' => $tsCreated
         ];
 
         if($stackTrace !== null) {
             $data['stackTrace'] = $stackTrace;
         }
 
-        $this->appLogRepository->insertNewData($data);
+        try {
+            $this->appLogRepository->insertNewData($data);
+        } catch(AException $e) {
+
+        }
     }
 }

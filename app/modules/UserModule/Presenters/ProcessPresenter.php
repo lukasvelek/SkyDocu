@@ -153,11 +153,13 @@ class ProcessPresenter extends AUserPresenter {
                             $this->processInstanceManager->finishProcessInstance($instanceId, $this->getUserId());
                             $description = sprintf('Finished %s', $process->title);
                             $fm = 'Process successfully finished.';
+                            $this->processInstanceManager->instanceLog($instanceId, $this->getUserId(), 'Process instance has finished');
                         } else {
                             // move to next user
                             $this->processInstanceManager->moveProcessInstanceToNextOfficer($instanceId, $this->getUserId(), $officer, $officerType);
                             $description = sprintf('%s waiting for your reaction', $process->title);
                             $fm = 'Process successfully moved to next officer.';
+                            $this->processInstanceManager->instanceLog($instanceId, $this->getUserId(), 'Process instance has moved to next officer');
 
                             if($officer == $this->app->userManager->getServiceUserId() && $officerType == ProcessInstanceOfficerTypes::USER) {
                                 // service user
@@ -199,10 +201,12 @@ class ProcessPresenter extends AUserPresenter {
                             $this->processInstanceManager->finishProcessInstance($instanceId, $this->getUserId());
                             $description = sprintf('Finished %s', $process->title);
                             $fm = 'Process successfully finished.';
+                            $this->processInstanceManager->instanceLog($instanceId, $this->getUserId(), 'Process instance has finished');
                         } else {
                             $this->processInstanceManager->moveProcessInstanceToNextOfficer($instanceId, $this->getUserId(), $officer, $officerType);
                             $description = sprintf('%s waiting for your reaction', $process->title);
                             $fm = 'Process successfully moved to next officer.';
+                            $this->processInstanceManager->instanceLog($instanceId, $this->getUserId(), 'Process instance has moved to next officer');
 
                             if($officer == $this->app->userManager->getServiceUserId() && $officerType == ProcessInstanceOfficerTypes::USER) {
                                 // service user
@@ -224,6 +228,7 @@ class ProcessPresenter extends AUserPresenter {
                         $this->processInstanceManager->archiveProcessInstance($instanceId, $this->getUserId());
                         $description = sprintf('Archived %s', $process->title);
                         $fm = 'Process succesfully archived.';
+                        $this->processInstanceManager->instanceLog($instanceId, $this->getUserId(), 'Process instance has finished');
                         break;
         
                     case ProcessInstanceOperations::CANCEL:
@@ -231,6 +236,7 @@ class ProcessPresenter extends AUserPresenter {
                         $this->processInstanceManager->cancelProcessInstance($instanceId, $this->getUserId());
                         $description = sprintf('Canceled %s', $process->title);
                         $fm = 'Process successfully canceled.';
+                        $this->processInstanceManager->instanceLog($instanceId, $this->getUserId(), 'Process instance has finished');
                         break;
         
                     case ProcessInstanceOperations::FINISH:
@@ -238,6 +244,7 @@ class ProcessPresenter extends AUserPresenter {
                         $this->processInstanceManager->changeProcessInstanceStatus($instanceId, ProcessInstanceStatus::FINISHED);
                         $description = sprintf('Finished %s', $process->title);
                         $fm = 'Process successfully finished.';
+                        $this->processInstanceManager->instanceLog($instanceId, $this->getUserId(), 'Process instance has finished');
                         break;
         
                     case ProcessInstanceOperations::REJECT:
@@ -245,6 +252,7 @@ class ProcessPresenter extends AUserPresenter {
                         $this->processInstanceManager->rejectProcessInstance($instanceId, $this->getUserId());
                         $description = sprintf('Rejected %s', $process->title);
                         $fm = 'Process successfully rejected.';
+                        $this->processInstanceManager->instanceLog($instanceId, $this->getUserId(), 'Process instance has finished');
                         break;
                 }
 

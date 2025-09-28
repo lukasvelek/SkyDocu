@@ -20,7 +20,7 @@ class ApplicationLogPresenter extends ASuperAdminSettingsPresenter {
 
         $qb = $this->app->appLogRepository->composeQueryForApplicationLog();
         $qb->andWhere('type <> ?', [ApplicationLogTypes::STOPWATCH])
-            ->orderBy('dateCreated', 'DESC');
+            ->orderBy('tsCreated', 'DESC');
 
         $grid->createDataSourceFromQueryBuilder($qb, 'logId');
 

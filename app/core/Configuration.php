@@ -43,7 +43,7 @@ class Configuration {
      * Returns current commit
      */
     private static function getCommit(): ?string {
-        $commit = 'ttt';
+        $commit = 'UNDEFINED';
 
         if(FileManager::fileExists(APP_ABSOLUTE_DIR . '.git\\FETCH_HEAD')) {
             $lines = FileManager::loadFileLineByLine(APP_ABSOLUTE_DIR . '.git\\FETCH_HEAD');

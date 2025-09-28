@@ -25,17 +25,15 @@ class ContainerDatabaseManager extends AManager {
      * Class constructor
      * 
      * @param Logger $logger
-     * @param EntityManager $entityManager
      * @param ContainerDatabaseRepository $containerDatabaseRepository
      * @param DatabaseManager $dbManager
      */
     public function __construct(
         Logger $logger,
-        EntityManager $entityManager,
         ContainerDatabaseRepository $containerDatabaseRepository,
         DatabaseManager $dbManager
     ) {
-        parent::__construct($logger, $entityManager);
+        parent::__construct($logger);
 
         $this->containerDatabaseRepository = $containerDatabaseRepository;
         $this->dbManager = $dbManager;
@@ -121,7 +119,7 @@ class ContainerDatabaseManager extends AManager {
      * @param bool $isDefault Is the database default
      */
     public function insertNewContainerDatabase(string $containerId, string $databaseName, string $title, string $description, bool $isDefault = false) {
-        $entryId = $this->createId(EntityManager::CONTAINER_DATABASES);
+        $entryId = $this->createId();
 
         if(!$this->containerDatabaseRepository->insertNewContainerDatabase($entryId, $containerId, $databaseName, $title, $description, $isDefault)) {
             throw new GeneralException('Database error [CC0001.1].');
@@ -159,7 +157,7 @@ class ContainerDatabaseManager extends AManager {
      * @param string $name Table name
      */
     public function insertNewContainerDatabaseTable(string $containerId, string $databaseId, string $name) {
-        $entryId = $this->createId(EntityManager::CONTAINER_DATABASE_TABLES);
+        $entryId = $this->createId();
 
         if(!$this->containerDatabaseRepository->insertNewContainerDatabaseTable($entryId, $containerId, $databaseId, $name)) {
             throw new GeneralException('Database error.');
@@ -189,7 +187,7 @@ class ContainerDatabaseManager extends AManager {
      * @param string $definition Column definition
      */
     public function insertNewContainerDatabaseTableColumn(string $containerId, string $databaseId, string $tableId, string $name, string $title, string $definition) {
-        $entryId = $this->createId(EntityManager::CONTAINER_DATABASE_TABLE_COLUMNS);
+        $entryId = $this->createId();
 
         if(!$this->containerDatabaseRepository->insertNewContainerDatabaseTableColumnDefinition($entryId, $containerId, $databaseId, $tableId, $name, $title, $definition)) {
             throw new GeneralException('Database error.');

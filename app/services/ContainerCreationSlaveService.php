@@ -121,7 +121,8 @@ class ContainerCreationSlaveService extends AService {
                 'description' => $row['description'],
                 'definition' => $row['definition'],
                 'userId' => $row['userId'],
-                'status' => 1
+                'status' => 1,
+                'name' => $row['name']
             ];
         }
 

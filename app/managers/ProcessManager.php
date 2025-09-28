@@ -19,8 +19,8 @@ use App\Repositories\ProcessRepository;
 class ProcessManager extends AManager {
     public ProcessRepository $processRepository;
 
-    public function __construct(Logger $logger, EntityManager $entityManager, ProcessRepository $processRepository) {
-        parent::__construct($logger, $entityManager);
+    public function __construct(Logger $logger, ProcessRepository $processRepository) {
+        parent::__construct($logger);
 
         $this->processRepository = $processRepository;
     }
@@ -38,6 +38,7 @@ class ProcessManager extends AManager {
             $process->description,
             $process->userId,
             json_decode(base64_decode($process->definition), true),
+            $process->name,
             $oldProcessId,
             ProcessStatus::NEW
         );
@@ -56,10 +57,19 @@ class ProcessManager extends AManager {
      * @param string $description Description
      * @param string $authorId Author user ID
      * @param array $definition Form definition
+     * @param string $name Name
      * @param ?string $oldProcessId Old process ID
+     * @param int $status Status
      */
-    public function createNewProcess(string $title, string $description, string $authorId, array $definition, ?string $oldProcessId = null, int $status = ProcessStatus::IN_DISTRIBUTION): array {
-        $processId = $this->createId(EntityManager::PROCESSES);
+    public function createNewProcess(
+        string $title,
+        string $description,
+        string $authorId,
+        array $definition,
+        string $name,
+        ?string $oldProcessId = null,
+        int $status = ProcessStatus::IN_DISTRIBUTION): array {
+        $processId = $this->createId();
 
         $version = 1;
         $uniqueProcessId = null;
@@ -69,10 +79,10 @@ class ProcessManager extends AManager {
             $uniqueProcessId = $process->uniqueProcessId;
             $version = (int)($this->getHighestVersionForUniqueProcessId($uniqueProcessId)) + 1;
         } else {
-            $uniqueProcessId = $this->createId(EntityManager::PROCESSES_UNIQUE);
+            $uniqueProcessId = $this->createId();
         }
 
-        if(!$this->processRepository->insertNewProcess($processId, $uniqueProcessId, $title, $description, base64_encode(json_encode($definition)), $authorId, $status, $version)) {
+        if(!$this->processRepository->insertNewProcess($processId, $uniqueProcessId, $title, $description, base64_encode(json_encode($definition)), $authorId, $status, $version, $name)) {
             throw new GeneralException('Database error.');
         }
 

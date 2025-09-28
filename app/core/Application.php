@@ -16,7 +16,6 @@ use App\Logger\Logger;
 use App\Managers\ContainerDatabaseManager;
 use App\Managers\ContainerInviteManager;
 use App\Managers\ContainerManager;
-use App\Managers\EntityManager;
 use App\Managers\ExternalSystemsManager;
 use App\Managers\FileStorageManager;
 use App\Managers\GroupManager;
@@ -26,8 +25,10 @@ use App\Managers\UserAbsenceManager;
 use App\Managers\UserManager;
 use App\Managers\UserSubstituteManager;
 use App\Modules\ModuleManager;
+use App\Repositories\ApplicationLogRepository;
 use App\Repositories\ContainerDatabaseRepository;
 use App\Repositories\ContainerInviteRepository;
+use app\Repositories\ContainerPermanentFlashMessagesRepository;
 use App\Repositories\ContainerRepository;
 use App\Repositories\ContentRepository;
 use App\Repositories\ExternalSystemsLogRepository;
@@ -72,7 +73,7 @@ class Application {
 
     private ModuleManager $moduleManager;
     public Logger $logger;
-    private DatabaseConnection $db;
+    public DatabaseConnection $db;
     public DatabaseManager $dbManager;
 
     public UserAuthenticator $userAuth;
@@ -97,10 +98,11 @@ class Application {
     public ExternalSystemsTokenRepository $externalSystemsTokenRepository;
     public ExternalSystemsLogRepository $externalSystemsLogRepository;
     public ExternalSystemsRightsRepository $externalSystemsRightsRepository;
+    public ContainerPermanentFlashMessagesRepository $containerPermanentFlashMessagesRepository;
+    public ApplicationLogRepository $appLogRepository;
 
     public ServiceManager $serviceManager;
     public UserManager $userManager;
-    public EntityManager $entityManager;
     public GroupManager $groupManager;
     public ContainerManager $containerManager;
     public ContainerInviteManager $containerInviteManager;
@@ -150,19 +152,18 @@ class Application {
 
         $this->dbManager = new DatabaseManager($this->db, $this->logger);
 
-        $this->entityManager = new EntityManager($this->logger, $this->contentRepository, $this->contentRepository);
-        $this->serviceManager = new ServiceManager($this->systemServicesRepository, $this->userRepository, $this->entityManager);
-        $this->userManager = new UserManager($this->logger, $this->userRepository, $this->entityManager);
-        $this->groupManager = new GroupManager($this->logger, $this->entityManager, $this->groupRepository, $this->groupMembershipRepository);
-        $this->containerDatabaseManager = new ContainerDatabaseManager($this->logger, $this->entityManager, $this->containerDatabaseRepository, $this->dbManager);
-        $this->containerManager = new ContainerManager($this->logger, $this->entityManager, $this->containerRepository, $this->dbManager, $this->groupManager, $this->db, $this->containerDatabaseManager);
-        $this->containerInviteManager = new ContainerInviteManager($this->logger, $this->entityManager, $this->containerInviteRepository);
-        $this->userAbsenceManager = new UserAbsenceManager($this->logger, $this->entityManager, $this->userAbsenceRepository);
-        $this->userSubstituteManager = new UserSubstituteManager($this->logger, $this->entityManager, $this->userSubstituteRepository);
-        $this->processManager = new ProcessManager($this->logger, $this->entityManager, $this->processRepository);
-        $this->jobQueueManager = new JobQueueManager($this->logger, $this->entityManager, $this->jobQueueRepository, $this->jobQueueProcessingHistoryRepository);
-        $this->fileStorageManager = new FileStorageManager($this->logger, $this->entityManager, $this->fileStorageRepository);
-        $this->externalSystemsManager = new ExternalSystemsManager($this->logger, $this->entityManager, $this->externalSystemsRepository, $this->externalSystemsLogRepository, $this->externalSystemsTokenRepository, $this->externalSystemsRightsRepository);
+        $this->serviceManager = new ServiceManager($this->systemServicesRepository, $this->userRepository);
+        $this->userManager = new UserManager($this->logger, $this->userRepository);
+        $this->groupManager = new GroupManager($this->logger, $this->groupRepository, $this->groupMembershipRepository);
+        $this->containerDatabaseManager = new ContainerDatabaseManager($this->logger, $this->containerDatabaseRepository, $this->dbManager);
+        $this->containerManager = new ContainerManager($this->logger, $this->containerRepository, $this->dbManager, $this->groupManager, $this->db, $this->containerDatabaseManager, $this->containerPermanentFlashMessagesRepository);
+        $this->containerInviteManager = new ContainerInviteManager($this->logger, $this->containerInviteRepository);
+        $this->userAbsenceManager = new UserAbsenceManager($this->logger,  $this->userAbsenceRepository);
+        $this->userSubstituteManager = new UserSubstituteManager($this->logger,  $this->userSubstituteRepository);
+        $this->processManager = new ProcessManager($this->logger,  $this->processRepository);
+        $this->jobQueueManager = new JobQueueManager($this->logger,  $this->jobQueueRepository, $this->jobQueueProcessingHistoryRepository);
+        $this->fileStorageManager = new FileStorageManager($this->logger,  $this->fileStorageRepository);
+        $this->externalSystemsManager = new ExternalSystemsManager($this->logger,  $this->externalSystemsRepository, $this->externalSystemsLogRepository, $this->externalSystemsTokenRepository, $this->externalSystemsRightsRepository);
 
         $this->initManagers();
 
@@ -188,7 +189,6 @@ class Application {
      */
     private function initManagers() {
         foreach([
-            $this->entityManager,
             $this->userManager,
             $this->groupManager,
             $this->containerDatabaseManager,
@@ -253,6 +253,15 @@ class Application {
                 $this->redirect(['page' => 'Anonym:Logout', 'action' => 'logout', 'reason' => 'authenticationError']);
             }
         }
+
+        $userId = null;
+
+        if($this->currentUser !== null) {
+            $userId = $this->currentUser->getId();
+        }
+
+        $appDbLogger = new ApplicationDatabaseLogger($this->db, $userId, $this->appLogRepository);
+        $this->logger->setApplicationDatabaseLogger($appDbLogger);
 
         /**
          * Instead of query parameter isAjax, it can be easily determined with the request header.
@@ -345,7 +354,7 @@ class Application {
             throw new ModuleDoesNotExistException($this->currentModule);
         }
 
-        $this->logger->info('Creating module.', __METHOD__);
+        //$this->logger->info('Creating module.', __METHOD__);
         try {
             $moduleObject = $this->moduleManager->createModule($this->currentModule);
         } catch(Exception $e) {
@@ -355,9 +364,9 @@ class Application {
         $moduleObject->setHttpRequest($this->getRequest());
         $moduleObject->setCacheFactory($this->cacheFactory);
 
-        $this->logger->info('Initializing render engine.', __METHOD__);
+        //$this->logger->info('Initializing render engine.', __METHOD__);
         $re = new RenderEngine($this->logger, $moduleObject, $this->currentPresenter, $this->currentAction, $this);
-        $this->logger->info('Rendering page content.', __METHOD__);
+        //$this->logger->info('Rendering page content.', __METHOD__);
         $re->setAjax($this->isAjaxRequest);
         try {
             return $re->render();

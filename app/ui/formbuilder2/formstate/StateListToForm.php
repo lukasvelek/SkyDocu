@@ -43,6 +43,7 @@ class StateListToForm {
             $element->isRequired = $this->stateList->$key->isRequired;
             
             $this->applyElementAttribute('isReadonly', $key, $element, 'readonly');
+            $this->applyElementAttribute('isDisabled', $key, $element, 'disabled');
 
             // Value handling
             if($element instanceof Select) {

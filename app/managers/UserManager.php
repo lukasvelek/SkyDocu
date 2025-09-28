@@ -16,10 +16,9 @@ class UserManager extends AManager {
 
     public function __construct(
         Logger $logger,
-        UserRepository $userRepository,
-        EntityManager $entityManager
+        UserRepository $userRepository
     ) {
-        parent::__construct($logger, $entityManager);
+        parent::__construct($logger);
 
         $this->userRepository = $userRepository;
     }
@@ -43,7 +42,7 @@ class UserManager extends AManager {
      * @throws GeneralException
      */
     public function createNewTechnicalUser(string $email, string $password, string $containerName): string {
-        $userId = $this->createId(EntityManager::USERS);
+        $userId = $this->createId();
         
         $containerName = strtolower($containerName);
         $containerName = preg_replace('/[^A-Za-z0-9]/', '_', $containerName);
@@ -81,7 +80,7 @@ class UserManager extends AManager {
      * @throws GeneralException
      */
     public function createNewUser(string $email, string $fullname, string $password): string {
-        $userId = $this->createId(EntityManager::USERS);
+        $userId = $this->createId();
 
         if(!$this->userRepository->createNewUser($userId, $email, $password, $fullname)) {
             throw new GeneralException('Could not create user.');
@@ -154,6 +153,24 @@ class UserManager extends AManager {
         }
 
         return UserEntity::createEntityFromDbRow($row);
+    }
+
+    /**
+     * Returns all subordinates for given user
+     * 
+     * @param string $userId User ID
+     */
+    public function getAllSubordinatesForUser(string $userId): array {
+        $qb = $this->userRepository->composeQueryForUsers();
+        $qb->andWhere('superiorUserId = ?', [$userId])
+            ->execute();
+        
+        $userIds = [];
+        while($row = $qb->fetchAssoc()) {
+            $userIds[] = $row['userId'];
+        }
+
+        return $userIds;
     }
 }
 

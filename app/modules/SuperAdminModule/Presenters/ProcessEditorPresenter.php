@@ -28,6 +28,34 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
 
     public function renderForm() {
         $this->template->links = $this->createBackFullUrl('SuperAdmin:Processes', 'list');
+
+        $this->addScript('
+            $("#title").on("blur", function (e) {
+                const text = $(this).val();
+
+                const clear = text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9 ]/g, "");
+
+                var result = "";
+
+                const clearParts = clear.split(" ");
+
+                result += clearParts[0].toLowerCase();
+
+                if(clearParts.length > 1) {
+                    for(let i = 1; i < clearParts.length; i++) {
+                        result += clearParts[i][0].toUpperCase();
+
+                        if(clearParts[i].length > 1) {
+                            for(let j = 1; j < clearParts[i].length; j++) {
+                                result += clearParts[i][j];
+                            }
+                        }
+                    }
+                }
+
+                $("#name").val("sys_" + result);
+            });
+        ');
     }
 
     protected function createComponentProcessForm(HttpRequest $request) {
@@ -63,6 +91,10 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
         if($process !== null) {
             $description->setContent($process->getDescription());
         }
+
+        $form->addTextInput('name', 'Name:')
+            ->setReadonly()
+            ->setValue('sys_');
             
         $colors = [];
         foreach(ProcessColorCombos::getAll() as $key => $value) {
@@ -95,6 +127,7 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
         $title = $fr->title;
         $description = $fr->description;
         $colorCombo = $fr->colorCombo;
+        $name = $fr->name;
 
         $oldProcessId = null;
         if($this->httpRequest->get('processId') !== null) {
@@ -133,6 +166,7 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
                 $description,
                 $this->getUserId(),
                 $definition,
+                $name,
                 $oldProcessId,
                 ProcessStatus::NEW
             );
@@ -843,104 +877,7 @@ class ProcessEditorPresenter extends ASuperAdminPresenter {
         } catch(AException $e) {
             $this->flashMessage('Could not publish process version. Reason: ' . $e->getMessage(), 'error', 10);
         }
-
-        /*try {
-            $process = $this->app->processManager->getProcessEntityById($processId);
-
-            $containers = $this->app->containerManager->getContainersInDistribution();
-
-            foreach($containers as $container) {
-                /**
-                 * @var \App\Entities\ContainerEntity $container
-                 */
-                /*$dbConn = $this->app->dbManager->getConnectionToDatabase($container->getDefaultDatabase()->getName());
-
-                $processRepository = new ProcessRepository($dbConn, $this->logger, $this->app->transactionLogRepository, $this->getUserId());
-                $processMetadataRepository = new ProcessMetadataRepository($dbConn, $this->logger, $this->app->transactionLogRepository, $this->getUserId());
-
-                $contentRepository = new ContentRepository($dbConn, $this->logger, $this->app->transactionLogRepository, $this->getUserId());
-                $entityManager = new EntityManager($this->logger, $contentRepository);
-
-                $processManager = new ProcessManager($this->logger, $entityManager, $processRepository);
-
-                $disable = false;
-
-                try {
-                    $processRepository->beginTransaction(__METHOD__);
-
-                    // Get previous process version in container
-                    $lastProcess = $processManager->getLastProcessForUniqueProcessId($uniqueProcessId);
-                    if($lastProcess->isEnabled == false) {
-                        $disable = true;
-                    }
-
-                    // Remove previous process version in container
-                    $processRepository->removeCurrentDistributionProcessFromDistributionForUniqueProcessId($uniqueProcessId);
-
-                    // Add new process version to container
-                    $processRepository->addNewProcess(
-                        $processId,
-                        $uniqueProcessId,
-                        $process->getTitle(),
-                        $process->getDescription(),
-                        base64_encode(json_encode($process->getDefinition())),
-                        $this->app->userManager->getServiceUserId(), // service user will be displayed as author
-                        ContainerProcessStatus::IN_DISTRIBUTION,
-                        !$disable
-                    );
-
-                    // Add process metadata
-                    if($hasMetadata) {
-                        $qb = $processMetadataRepository->composeQueryForProcessMetadata($uniqueProcessId);
-                        $qb->execute();
-
-                        $cMetadata = [];
-                        $delete = [];
-                        while($row = $qb->fetchAssoc()) {
-                            foreach($process->getMetadataDefinition()['metadata'] as $m) {
-                                if($m['type'] != $row['type'] &&
-                                    $m['name'] == $row['title'] &&
-                                    $m['label'] != $row['guiTitle']) {
-                                    $delete[] = $row['metadataId'];
-                                    $cMetadata[] = $m['name'];
-                                }
-                            }
-                        }
-
-                        foreach($delete as $metadataId) {
-                            $processMetadataRepository->removeMetadataValuesForMetadataId($metadataId);
-                            $processMetadataRepository->removeMetadata($metadataId);
-                        }
-
-                        foreach($cMetadata as $name) {
-                            $data = [
-                                'metadataId' => $entityManager->generateEntityId(EntityManager::C_PROCESS_CUSTOM_METADATA),
-                                'uniqueProcessId' => $uniqueProcessId,
-                                'title' => $name,
-                                'guiTitle' => $process->getMetadataDefinitionForMetadataName($name)['label'],
-                                'type' => $process->getMetadataDefinitionForMetadataName($name)['type'],
-                                'defaultValue' => $process->getMetadataDefinitionForMetadataName($name)['defaultValue'],
-                                'isRequired' => 1,
-                                'isSystem' => 1
-                            ];
-
-                            $processMetadataRepository->insertNewMetadata($data);
-                        }
-                    }
-
-                    $processRepository->commit($this->getUserId(), __METHOD__);
-                } catch(AException $e) {
-                    $processRepository->rollback(__METHOD__);
-
-                    throw $e;
-                }
-            }
-
-            $this->flashMessage('Successfully published new process ' . ($oldProcessId !== null ? 'version ' : '') . 'to distribution.', 'success');
-        } catch(AException $e) {
-            $this->flashMessage('Could not publish new process ' . ($oldProcessId !== null ? 'version ' : '') . 'to distribution. Reason: ' . $e->getMessage(), 'error', 10);
-        }*/
-
+        
         $this->redirect($this->createFullURL('SuperAdmin:Processes', 'list'));
     }
 

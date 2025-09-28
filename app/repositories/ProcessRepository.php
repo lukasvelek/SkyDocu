@@ -45,12 +45,13 @@ class ProcessRepository extends ARepository {
      * @param string $userId User ID
      * @param int $status Status
      * @param int $version Version
+     * @param string $name Name
      */
-    public function insertNewProcess(string $processId, string $uniqueProcessId, string $title, string $description, string $definition, string $userId, int $status, int $version): bool {
+    public function insertNewProcess(string $processId, string $uniqueProcessId, string $title, string $description, string $definition, string $userId, int $status, int $version, string $name): bool {
         $qb = $this->qb(__METHOD__);
 
-        $qb->insert('processes', ['processId', 'uniqueProcessId', 'title', 'description', 'definition', 'userId', 'status', 'version'])
-            ->values([$processId, $uniqueProcessId, $title, $description, $definition, $userId, $status, $version])
+        $qb->insert('processes', ['processId', 'uniqueProcessId', 'title', 'description', 'definition', 'userId', 'status', 'version', 'name'])
+            ->values([$processId, $uniqueProcessId, $title, $description, $definition, $userId, $status, $version, $name])
             ->execute();
 
         return $qb->fetchBool();

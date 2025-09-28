@@ -9,7 +9,6 @@ use App\Exceptions\GeneralException;
 use App\Exceptions\NonExistingEntityException;
 use App\Logger\Logger;
 use App\Managers\AManager;
-use App\Managers\EntityManager;
 use App\Repositories\Container\FolderRepository;
 use App\Repositories\Container\MetadataRepository;
 
@@ -17,15 +16,15 @@ class MetadataManager extends AManager {
     private MetadataRepository $metadataRepository;
     private FolderRepository $folderRepository;
 
-    public function __construct(Logger $logger, EntityManager $entityManager, MetadataRepository $metadataRepository, FolderRepository $folderRepository) {
-        parent::__construct($logger, $entityManager);
+    public function __construct(Logger $logger, MetadataRepository $metadataRepository, FolderRepository $folderRepository) {
+        parent::__construct($logger);
 
         $this->metadataRepository = $metadataRepository;
         $this->folderRepository = $folderRepository;
     }
     
     public function createNewMetadata(string $title, string $guiTitle, int $type, ?string $defaultValue, bool $isRequired) {
-        $metadataId = $this->createId(EntityManager::C_CUSTOM_METADATA);
+        $metadataId = $this->createId();
 
         $data = [
             'title' => $title,
@@ -81,7 +80,7 @@ class MetadataManager extends AManager {
     }
 
     public function createMetadataFolderRight(string $metadataId, string $folderId) {
-        $relationId = $this->createId(EntityManager::C_CUSTOM_METADATA_FOLDER_RELATION);
+        $relationId = $this->createId();
 
         if(!$this->metadataRepository->createNewMetadataFolderRight($relationId, $metadataId, $folderId)) {
             throw new GeneralException('Database error.');
@@ -97,7 +96,7 @@ class MetadataManager extends AManager {
     }
 
     public function createMetadataEnumValue(string $metadataId, string $title) {
-        $valueId = $this->createId(EntityManager::C_CUSTOM_METADATA_LIST_VALUES);
+        $valueId = $this->createId();
 
         $data = [
             'valueId' => $valueId,

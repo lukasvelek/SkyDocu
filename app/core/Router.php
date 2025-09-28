@@ -50,7 +50,13 @@ class Router {
             if(is_numeric($k)) {
                 $queryParameters[] = $v;
             } else {
-                $queryParameters[] = $k . '=' . $v;
+                if(is_array($v)) {
+                    foreach($v as $_v) {
+                        $queryParameters[] = $k . '=' . $_v;
+                    }
+                } else {
+                    $queryParameters[] = $k . '=' . $v;
+                }
             }
         }
         

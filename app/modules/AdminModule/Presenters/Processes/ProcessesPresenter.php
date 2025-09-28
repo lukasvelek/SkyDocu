@@ -2,11 +2,10 @@
 
 namespace App\Modules\AdminModule;
 
+use App\Components\Widgets\ProcessStatsWidget\ProcessStatsWidget;
 use App\Constants\Container\ProcessStatus;
 use App\Constants\Container\SystemGroups;
-use App\Constants\ProcessColorCombos;
 use App\Core\DB\DatabaseRow;
-use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
 use App\Helpers\GridHelper;
@@ -27,6 +26,12 @@ class ProcessesPresenter extends AAdminPresenter {
     }
 
     public function renderDashboard() {}
+
+    protected function createComponentProcessStatsWidget() {
+        $widget = $this->componentFactory->createComponentInstanceByClassName(ProcessStatsWidget::class, [$this->processManager, $this->processInstanceManager]);
+
+        return $widget;
+    }
 
     public function renderList() {
         $links = [];

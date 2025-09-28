@@ -25,7 +25,7 @@ abstract class ASuperAdminPresenter extends APresenter {
 
         $home = $this->checkAction('home');
         $status = $this->checkAction('status', 'listStatusHistory');
-        $advanced = $this->checkAction('advanced', 'newTechnicalAccountForm');
+        $advanced = $this->checkAction('advanced', 'newTechnicalAccountForm', 'runMigrationsForm');
         $usageStatistics = $this->checkAction('usageStatistics', 'clearUsageStatistics');
         $invites = $this->checkAction('invites', 'invitesWithoutGrid');
         $transactionLog = $this->checkAction('transactionLog');
@@ -36,7 +36,7 @@ abstract class ASuperAdminPresenter extends APresenter {
         $sidebar->addLink('&larr; Back', $this->createFullURL('SuperAdmin:Containers', 'list'));
         $sidebar->addLink('Home', $this->createURL('home', ['containerId' => $containerId]), $home);
         $sidebar->addLink('Status', $this->createURL('status', ['containerId' => $containerId]), $status);
-        if(!in_array($container->getStatus(), [ContainerStatus::ERROR_DURING_CREATION, ContainerStatus::IS_BEING_CREATED, ContainerStatus::REQUESTED, ContainerStatus::SCHEDULED_FOR_REMOVAL])) {
+        if(!in_array($container->getStatus(), [ContainerStatus::IS_BEING_CREATED, ContainerStatus::REQUESTED, ContainerStatus::SCHEDULED_FOR_REMOVAL])) {
             $sidebar->addLink('Advanced', $this->createURL('advanced', ['containerId' => $containerId]), $advanced);
         }
         if(!in_array($container->getStatus(), [ContainerStatus::ERROR_DURING_CREATION, ContainerStatus::IS_BEING_CREATED, ContainerStatus::NEW, ContainerStatus::REQUESTED, ContainerStatus::SCHEDULED_FOR_REMOVAL])) {

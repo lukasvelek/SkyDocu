@@ -7,11 +7,11 @@ use App\Authorizators\GroupStandardOperationsAuthorizator;
 use App\Authorizators\SupervisorAuthorizator;
 use App\Core\Caching\CacheFactory;
 use App\Entities\ContainerEntity;
+use App\Entities\UserEntity;
 use App\Logger\Logger;
 use App\Managers\Container\ArchiveManager;
 use App\Managers\Container\DocumentManager;
 use App\Managers\Container\EnumManager;
-use App\Managers\Container\FileStorageManager;
 use App\Managers\Container\FolderManager;
 use App\Managers\Container\GridManager;
 use App\Managers\Container\GroupManager;
@@ -19,17 +19,18 @@ use App\Managers\Container\MetadataManager;
 use App\Managers\Container\ProcessInstanceManager;
 use App\Managers\Container\ProcessManager;
 use App\Managers\Container\ProcessMetadataManager;
-use App\Managers\EntityManager;
+use App\Managers\Container\ProcessReportManager;
 use App\Repositories\Container\ArchiveRepository;
 use App\Repositories\Container\DocumentClassRepository;
 use App\Repositories\Container\DocumentRepository;
-use App\Repositories\Container\FileStorageRepository;
 use App\Repositories\Container\FolderRepository;
 use App\Repositories\Container\GridRepository;
 use App\Repositories\Container\GroupRepository;
 use App\Repositories\Container\MetadataRepository;
 use App\Repositories\Container\ProcessInstanceRepository;
 use App\Repositories\Container\ProcessMetadataRepository;
+use App\Repositories\Container\ProcessReportRightsRepository;
+use App\Repositories\Container\ProcessReportsRepository;
 use App\Repositories\Container\ProcessRepository;
 use App\Repositories\ContentRepository;
 use ReflectionClass;
@@ -55,11 +56,11 @@ class Container {
     public GridRepository $gridRepository;
     public ProcessRepository $processRepository;
     public ArchiveRepository $archiveRepository;
-    public FileStorageRepository $fileStorageRepository;
     public ProcessInstanceRepository $processInstanceRepository;
     public ProcessMetadataRepository $processMetadataRepository;
+    public ProcessReportsRepository $processReportsRepository;
+    public ProcessReportRightsRepository $processReportRightsRepository;
     
-    public EntityManager $entityManager;
     public FolderManager $folderManager;
     public DocumentManager $documentManager;
     public GroupManager $groupManager;
@@ -67,10 +68,10 @@ class Container {
     public EnumManager $enumManager;
     public GridManager $gridManager;
     public ArchiveManager $archiveManager;
-    public FileStorageManager $fileStorageManager;
     public ProcessManager $processManager;
     public ProcessInstanceManager $processInstanceManager;
     public ProcessMetadataManager $processMetadataManager;
+    public ProcessReportManager $processReportManager;
 
     public GroupStandardOperationsAuthorizator $groupStandardOperationsAuthorizator;
     public SupervisorAuthorizator $supervisorAuthorizator;
@@ -104,13 +105,12 @@ class Container {
 
         $this->initRepositories();
 
-        $this->entityManager = new EntityManager($this->logger, $this->contentRepository, $this->app->contentRepository);
-        $this->folderManager = new FolderManager($this->logger, $this->entityManager, $this->folderRepository, $this->groupRepository);
-        $this->documentManager = new DocumentManager($this->logger, $this->entityManager, $this->documentRepository, $this->documentClassRepository, $this->groupRepository, $this->folderRepository);
-        $this->groupManager = new GroupManager($this->logger, $this->entityManager, $this->groupRepository, $this->app->userRepository);
-        $this->metadataManager = new MetadataManager($this->logger, $this->entityManager, $this->metadataRepository, $this->folderRepository);
-        $this->enumManager = new EnumManager($this->logger, $this->entityManager, $this->app->userRepository, $this->app->groupManager, $this->container);
-        $this->gridManager = new GridManager($this->logger, $this->entityManager, $this->gridRepository);
+        $this->folderManager = new FolderManager($this->logger,  $this->folderRepository, $this->groupRepository);
+        $this->documentManager = new DocumentManager($this->logger,  $this->documentRepository, $this->documentClassRepository, $this->groupRepository, $this->folderRepository);
+        $this->groupManager = new GroupManager($this->logger,  $this->groupRepository, $this->app->userRepository);
+        $this->metadataManager = new MetadataManager($this->logger,  $this->metadataRepository, $this->folderRepository);
+        $this->enumManager = new EnumManager($this->logger,  $this->app->userRepository, $this->app->groupManager, $this->container);
+        $this->gridManager = new GridManager($this->logger,  $this->gridRepository);
 
         $this->initManagers();
         $this->injectCacheFactoryToManagers();
@@ -119,7 +119,7 @@ class Container {
         
         $this->groupStandardOperationsAuthorizator = new GroupStandardOperationsAuthorizator($this->conn, $this->logger, $this->groupManager);
         $this->supervisorAuthorizator = new SupervisorAuthorizator($this->conn, $this->logger, $this->groupManager);
-        $this->containerProcessAuthorizator = new ContainerProcessAuthorizator($this->conn, $this->logger, $this->processManager, $this->processInstanceManager, $this->groupManager, $this->app->userManager, $this->app->jobQueueRepository);
+        $this->containerProcessAuthorizator = new ContainerProcessAuthorizator($this->conn, $this->logger, $this->processManager, $this->processInstanceManager, $this->groupManager, $this->app->userManager, $this->app->jobQueueRepository, $this->processReportManager);
 
         $this->injectCacheFactoryToAuthorizators();
 
@@ -165,9 +165,6 @@ class Container {
             'archiveManager' => [
                 'archiveRepository'
             ],
-            'fileStorageManager' => [
-                'fileStorageRepository'
-            ],
             'processManager' => [
                 'processRepository'
             ],
@@ -178,6 +175,11 @@ class Container {
             ],
             'processMetadataManager' => [
                 'processMetadataRepository'
+            ],
+            'processReportManager' => [
+                'processReportsRepository',
+                'processReportRightsRepository',
+                'groupManager'
             ]
         ];
 
@@ -189,8 +191,7 @@ class Container {
                 $className = (string)$class;
 
                 $realArgs = [
-                    $this->logger,
-                    $this->entityManager
+                    $this->logger
                 ];
                 foreach($args as $arg) {
                     if($arg == ':currentUser') {
@@ -211,7 +212,7 @@ class Container {
                  * @var \App\Managers\AManager $obj
                  */
                 $obj = new $className(...$realArgs);
-                $obj->inject($this->logger, $this->entityManager);
+                $obj->inject($this->logger);
                 $this->{$varName} = $obj;
             } else {
                 $notFound[] = $varName;
@@ -232,7 +233,7 @@ class Container {
                      * @var \App\Managers\AManager $obj
                      */
                     $obj = new $className(...$args);
-                    $obj->inject($this->logger, $this->entityManager);
+                    $obj->inject($this->logger);
                     $this->{$varName} = $obj;
                     $this->_reflectionParamsCache[$varName] = $class;
                 }
@@ -274,6 +275,28 @@ class Container {
                 $this->$name->injectCacheFactory($this->cacheFactory);
             }
         }
+    }
+
+    /**
+     * Returns all container users
+     * 
+     * @return array<int, \App\Entities\UserEntity>
+     */
+    public function getContainerUsers(): array {
+        $container = $this->app->containerManager->getContainerById($this->containerId);
+
+        $groupUsers = $this->app->groupManager->getGroupUsersForGroupTitle($container->getTitle() . ' - users');
+
+        $qb = $this->app->userRepository->composeQueryForUsers();
+        $qb->andWhere($qb->getColumnInValues('userId', $groupUsers))
+            ->execute();
+
+        $users = [];
+        while($row = $qb->fetchAssoc()) {
+            $users[] = UserEntity::createEntityFromDbRow($row);
+        }
+
+        return $users;
     }
 }
 

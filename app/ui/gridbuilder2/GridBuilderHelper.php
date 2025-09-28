@@ -10,6 +10,7 @@ use App\Core\Http\Ajax\Operations\HTMLPageOperation;
 use App\Core\Http\Ajax\Requests\AAjaxRequest;
 use App\Core\Http\Ajax\Requests\PostAjaxRequest;
 use App\Core\Http\HttpRequest;
+use App\Exceptions\AException;
 use App\Helpers\AppThemeHelper;
 use App\Helpers\ArrayHelper;
 use App\Helpers\DateTimeFormatHelper;
@@ -144,7 +145,13 @@ class GridBuilderHelper {
                         foreach($this->columns[$name]->onRenderColumn as $render) {
                             try {
                                 $content = $render($row, $_row, $_cell, $_cell->html, $content);
-                            } catch(Exception $e) {}
+                            } catch(Exception $e) {
+                                $el = HTML::el('span');
+                                $el->title($e->getMessage())
+                                    ->text('#ERROR')
+                                    ->style('color', 'red');
+                                $content = $el->toString();
+                            }
                         }
                     }
                 } else {
@@ -154,7 +161,13 @@ class GridBuilderHelper {
                         foreach($this->columns[$name]->onRenderColumn as $render) {
                             try {
                                 $content = $render($row, $_row, $_cell, $_cell->html, $content);
-                            } catch(Exception $e) {}
+                            } catch(Exception $e) {
+                                $el = HTML::el('span');
+                                $el->title($e->getMessage())
+                                    ->text("#ERROR")
+                                    ->style('color', 'red');
+                                $content = $el->toString();
+                            }
                         }
                     }
                 }
@@ -461,11 +474,12 @@ class GridBuilderHelper {
                 if($value === null) {
                     return $value;
                 }
-                $user = $this->app->userManager->getUserById($value);
-                if($user === null) {
-                    return $value;
-                } else {
+                try {
+                    $user = $this->app->userManager->getUserById($value);
+
                     return $user->getFullname();
+                } catch(AException $e) {
+                    return $value;
                 }
             };
 
@@ -909,57 +923,34 @@ class GridBuilderHelper {
                     }).get();
 
                     if(_ids.length == 0) {
-                        ' . $this->componentName . '_processBulkActionsModalClose();
+                        $("#grid-links").html("");
+                        $("#grid-links").hide();
+                        $("#links").show();
                         return;
                     }
-
-                    $("#modal").show(); ' . $this->componentName . '_processBulkActionsModalOpen(true);
-
-                    await sleep(2000);
 
                     if(_checkboxHandlerTimestamp != _now) {
                         return;
                     };
 
                     if(_ids.length == 0) {
-                        ' . $this->componentName . '_processBulkActionsModalClose();
+                        $("#grid-links").html("");
+                        $("#grid-links").hide();
+                        $("#links").show();
                         return;
                     }
+
+                    $("#links").hide();
+                        $("#grid-links").show();
+
+                    showLoadingAnimation("grid-links", 32);
                 ')
-                ->updateHTMLElement('modal', 'modal')
+                ->updateHTMLElement('grid-links', 'modal')
                 ->addWhenDoneOperation('_checkboxHandlerTimestamp = null;')
-                ->addWhenDoneOperation('
-                    $("#modal").show(); ' . $this->componentName . '_processBulkActionsModalOpen(false);
-                ')
                 ->addCustomArg('_ids')
             ;
 
             $addScript($arb);
-
-            if(AppThemeHelper::getAppThemeForUser($this->app) == AppDesignThemes::DARK) {
-                $modalStyle = 'visibility: hidden; height: 0px; position: absolute; top: 5%; left: 5%; background-color: rgba(70, 70, 70, 1); z-index: 9999; border-radius: 5px;';
-            } else {
-                $modalStyle = 'visibility: hidden; height: 0px; position: absolute; top: 5%; left: 5%; background-color: rgba(225, 225, 225, 1); z-index: 9999; border-radius: 5px;';
-            }
-
-            $scripts[] = '
-                    function ' . $this->componentName . '_processBulkActionsModalOpen(_showLoading) {
-                        if(_showLoading) {
-                            $("#modal").html(\'<div id="bulk-actions-modal-inner" style="' . $modalStyle . '"></div>\');
-                            $("#bulk-actions-modal-inner").html(\'<div id="center" style="margin-top: 20px"><img src="resources/loading.gif" width="64"><br>Loading...</div>\');
-                        }
-
-                        $("#bulk-actions-modal-inner")
-                            .css("height", "15%")
-                            .css("visibility", "visible")
-                            .css("width", "90%");
-                    }
-
-                    function ' . $this->componentName . '_processBulkActionsModalClose() {
-                        $("#modal").html(\'\');
-                        $("#modal").hide();
-                    }
-            ';
         }
 
         return '<script type="text/javascript">' . implode("\r\n\r\n", $scripts) . '</script>';

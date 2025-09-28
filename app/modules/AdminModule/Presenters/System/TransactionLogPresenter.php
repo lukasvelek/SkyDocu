@@ -9,9 +9,7 @@ class TransactionLogPresenter extends AAdminPresenter {
         $this->setSystem();
     }
 
-    public function renderList() {
-        $this->template->links = [];
-    }
+    public function renderList() {}
 
     public function createComponentTransactionLogGrid() {
         $grid = $this->componentFactory->getGridBuilder($this->containerId);

@@ -116,8 +116,6 @@ class DatabaseMigrationManager {
                         $skip = false;
                     }
                 } else {
-                    $this->logger->info('Current database schema for given container: ' . (int)$migrationNumber, __METHOD__);
-                    
                     if((int)$migrationNumber == (int)$lastMigration) {
                         $skip = false;
                     }

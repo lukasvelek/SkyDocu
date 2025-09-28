@@ -6,6 +6,7 @@ use App\Constants\Container\SystemGroups;
 use App\Constants\ContainerStatus;
 use App\Core\Caching\CacheNames;
 use App\Core\DatabaseConnection;
+use App\Core\Datetypes\DateTime;
 use App\Core\DB\DatabaseManager;
 use App\Core\DB\DatabaseMigrationManager;
 use App\Core\HashManager;
@@ -15,6 +16,7 @@ use App\Exceptions\GeneralException;
 use App\Exceptions\NonExistingEntityException;
 use App\Logger\Logger;
 use App\Repositories\Container\GroupRepository;
+use app\Repositories\ContainerPermanentFlashMessagesRepository;
 use App\Repositories\ContainerRepository;
 use App\Repositories\ContentRepository;
 use App\Repositories\UserRepository;
@@ -30,15 +32,25 @@ class ContainerManager extends AManager {
     private GroupManager $groupManager;
     private DatabaseConnection $masterConn;
     private ContainerDatabaseManager $containerDatabaseManager;
+    public ContainerPermanentFlashMessagesRepository $containerPermanentFlashMessagesRepository;
 
-    public function __construct(Logger $logger, EntityManager $entityManager, ContainerRepository $containerRepository, DatabaseManager $dbManager, GroupManager $groupManager, DatabaseConnection $masterConn, ContainerDatabaseManager $containerDatabaseManager) {
-        parent::__construct($logger, $entityManager);
+    public function __construct(
+        Logger $logger,
+        ContainerRepository $containerRepository,
+        DatabaseManager $dbManager,
+        GroupManager $groupManager,
+        DatabaseConnection $masterConn,
+        ContainerDatabaseManager $containerDatabaseManager,
+        ContainerPermanentFlashMessagesRepository $containerPermanentFlashMessagesRepository
+    ) {
+        parent::__construct($logger);
 
         $this->containerRepository = $containerRepository;
         $this->dbManager = $dbManager;
         $this->groupManager = $groupManager;
         $this->masterConn = $masterConn;
         $this->containerDatabaseManager = $containerDatabaseManager;
+        $this->containerPermanentFlashMessagesRepository = $containerPermanentFlashMessagesRepository;
     }
 
     /**
@@ -60,11 +72,10 @@ class ContainerManager extends AManager {
      * @param string $title Container title
      * @param string $description Container description
      * @param string $callingUserId Calling user ID
-     * @param bool $canShowReferent Can show referent
      * @param int $status Container status
      */
-    public function createNewContainer(string $title, string $description, string $callingUserId, bool $canShowReferent, int $status = ContainerStatus::NEW) {
-        $containerId = $this->createId(EntityManager::CONTAINERS);
+    public function createNewContainer(string $title, string $description, string $callingUserId, int $status = ContainerStatus::NEW) {
+        $containerId = $this->createId();
         $databaseName = $this->generateContainerDatabaseName($containerId);
 
         $this->containerDatabaseManager->insertNewContainerDatabase($containerId, $databaseName, 'SkyDocu Database', 'Default SkyDocu database', true);
@@ -74,7 +85,7 @@ class ContainerManager extends AManager {
             'userId' => $callingUserId,
             'title' => $title,
             'description' => $description,
-            'canShowContainerReferent' => ($canShowReferent ? 1 : 0),
+            'canShowContainerReferent' => 1,
             'status' => $status
         ];
 
@@ -83,7 +94,7 @@ class ContainerManager extends AManager {
         }
 
         if($status != ContainerStatus::REQUESTED) {
-            $statusId = $this->createId(EntityManager::CONTAINER_CREATION_STATUS);
+            $statusId = $this->createId();
             if(!$this->containerRepository->createNewCreationStatusEntry($statusId, $containerId)) {
                 throw new GeneralException('Could not queue container for background creation.');
             }
@@ -158,7 +169,7 @@ class ContainerManager extends AManager {
      * @param string $description Description
      */
     public function changeContainerStatus(string $containerId, int $newStatus, string $callingUserId, string $description) {
-        $historyId = $this->createId(EntityManager::CONTAINER_STATUS_HISTORY);
+        $historyId = $this->createId();
 
         $container = $this->getContainerById($containerId);
 
@@ -224,7 +235,28 @@ class ContainerManager extends AManager {
 
         $containerEntity->addContainerDatabases($databases);
 
+        $permanentFlashMessage = $this->containerPermanentFlashMessagesRepository->getActivePermanentFlashMessage();
+        if($permanentFlashMessage !== null) {
+            $containerEntity->setPermanentFlashMessage($permanentFlashMessage['message'], $permanentFlashMessage['type']);
+        }
+
         return $containerEntity;
+    }
+
+    /**
+     * Returns an instance of ContainerEntity for given container
+     * 
+     * @param string $containerTitle Container title
+     * @param bool $force Force fetch data from the database (overrides cache and updates it)
+     */
+    public function getContainerByTitle(string $containerTitle, bool $force = false): ContainerEntity {
+        $row = $this->containerRepository->getContainerByTitle($containerTitle);
+
+        if($row === null) {
+            throw new NonExistingEntityException('Container \'' . $containerTitle . '\' does not exist.');
+        }
+
+        return $this->getContainerById($row['containerId'], $force);
     }
 
     /**
@@ -297,13 +329,8 @@ class ContainerManager extends AManager {
         $userRepository = new UserRepository($this->containerRepository->conn, $this->logger, $this->containerRepository->transactionLogRepository);
         $groupRepository = new GroupRepository($conn, $this->logger, $this->containerRepository->transactionLogRepository);
         $contentRepository = new ContentRepository($conn, $this->logger, $this->containerRepository->transactionLogRepository);
-        $entityManager = new EntityManager($this->logger, $contentRepository, new ContentRepository(
-            $this->containerRepository->transactionLogRepository->db,
-            $this->logger,
-            $this->containerRepository->transactionLogRepository
-        ));
 
-        $groupManager = new Container\GroupManager($this->logger, $entityManager, $groupRepository, $userRepository);
+        $groupManager = new Container\GroupManager($this->logger, $groupRepository, $userRepository);
 
         $groupManager->addUserToGroupTitle(SystemGroups::ALL_USERS, $userId);
     }
@@ -316,6 +343,23 @@ class ContainerManager extends AManager {
      */
     public function updateContainer(string $containerId, array $data) {
         if(!$this->containerRepository->updateContainer($containerId, $data)) {
+            throw new GeneralException('Database error.');
+        }
+
+        if(!$this->cacheFactory->invalidateCacheByNamespace(CacheNames::CONTAINERS)) {
+            throw new GeneralException('Could not invalidate cache.');
+        }
+    }
+
+    /**
+     * Updates containers in bulk
+     * 
+     * @param array $containerIds Container IDs
+     * @param array $data Data array
+     * @throws GeneralException
+     */
+    public function bulkUpdateContainers(array $containerIds, array $data) {
+        if(!$this->containerRepository->bulkUpdateContainers($containerIds, $data)) {
             throw new GeneralException('Database error.');
         }
 
@@ -387,7 +431,7 @@ class ContainerManager extends AManager {
             'status' => ContainerStatus::NEW
         ]);
 
-        $statusId = $this->createId(EntityManager::CONTAINER_CREATION_STATUS);
+        $statusId = $this->createId();
         if(!$this->containerRepository->createNewCreationStatusEntry($statusId, $containerId)) {
             throw new GeneralException('Could not queue container for background creation.');
         }
@@ -453,6 +497,68 @@ class ContainerManager extends AManager {
             return $containers;
         } else {
             return $containerIds;
+        }
+    }
+
+    /**
+     * Creates a new container permanent flash message and returns the messageId
+     * 
+     * @param string $userId User ID
+     * @param string $message Message
+     * @param int $type Message type
+     * @param string $dateValidUntil Date valid until
+     * @throws GeneralException
+     */
+    public function createNewContainerPermanentFlashMessage(string $userId, string $message, int $type, string $dateValidUntil): string {
+        $messageId = $this->createId();
+
+        $data = [
+            'messageId' => $messageId,
+            'userId' => $userId,
+            'message' => $message,
+            'type' => $type,
+            'dateValidUntil' => $dateValidUntil
+        ];
+
+        if(!$this->containerPermanentFlashMessagesRepository->createNewPermanentFlashMessage($data)) {
+            throw new GeneralException('Database error.');
+        }
+
+        return $messageId;
+    }
+
+    /**
+     * Updates container permanent flash message
+     * 
+     * @param string $messageId Message ID
+     * @param array $data Data array
+     */
+    public function updateContainerPermanentFlashMessage(string $messageId, array $data) {
+        if(!$this->containerPermanentFlashMessagesRepository->updatePermanentFlashMessage($messageId, $data)) {
+            throw new GeneralException('Database error.');
+        }
+    }
+
+    /**
+     * Disables previous container permanent flash messages
+     * 
+     * @param string $newMessageId New message ID
+     */
+    public function disablePreviousContainerPermanentFlashMessages(string $newMessageId) {
+        $qb = $this->containerPermanentFlashMessagesRepository->composeQueryForPermanentFlashMessages();
+        $qb->andWhere('messageId <> ?', [$newMessageId])
+            ->orderBy('dateCreated', 'DESC')
+            ->execute();
+
+        $messageIds = [];
+        while($row = $qb->fetchAssoc()) {
+            $messageIds[] = $row['messageId'];
+        }
+
+        foreach($messageIds as $messageId) {
+            $this->updateContainerPermanentFlashMessage($messageId, [
+                'isActive' => 0
+            ]);
         }
     }
 }

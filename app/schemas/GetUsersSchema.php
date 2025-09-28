@@ -31,6 +31,24 @@ class GetUsersSchema extends AQuerySchema {
             'orgSection',
             'personalNumber'
         ]);
+
+        $this->filterableColumns = [
+            'fullname',
+            'email',
+            'isTechnical',
+            'superiorUserId',
+            'isDeleted',
+            'orgPosition',
+            'orgDepartment',
+            'orgSection',
+            'personalNumber'
+        ];
+
+        $this->sortableColumns = [
+            'orgDepartment',
+            'orgSection',
+            'fullname'
+        ];
     }
 }
 

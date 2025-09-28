@@ -223,7 +223,7 @@ abstract class APresenter extends AGUICore {
         $result = array_merge($url, $params);
 
         if(Configuration::getAppBranch() == 'TEST') {
-            $this->router->checkEndpointExists($result, $throwException);
+            //$this->router->checkEndpointExists($result, $throwException);
         }
 
         return $result;
@@ -625,7 +625,7 @@ abstract class APresenter extends AGUICore {
                     throw new NoAjaxResponseException();
                 }
             } else {
-                throw new ActionDoesNotExistException('Method \'' . $component::class . '::' . $methodName . '()\' does not exist.');
+                throw new ActionDoesNotExistException($component::class . '::' . $methodName . '()');
             }
         } else {
             return null;
@@ -787,6 +787,34 @@ abstract class APresenter extends AGUICore {
      */
     protected function createBackFullUrl(string $modulePresenter, string $action, array $params = [], string $class = 'link') {
         return LinkBuilder::createSimpleLink('&larr; Back', $this->createFullURL($modulePresenter, $action, $params), $class);
+    }
+
+    /**
+     * Sets mandatory URL parameters that are checked when an action is called, if at least one is not found in the URL a redirect is performed and flash message is displayed
+     * 
+     * @param array $params Mandatory URL parameters
+     * @param array $redirectUrl Redirect URL
+     * @param ?string $flashMessageText Custom flash message text or null for default
+     */
+    protected function mandatoryUrlParams(array $params, array $redirectUrl, ?string $flashMessageText = null) {
+        $redirect = false;
+        $callingParam = null;
+        foreach($params as $param) {
+            if($this->httpRequest->get($param) === null && !array_key_exists($param, $this->httpRequest->query)) {
+                $callingParam = $param;
+                $redirect = true;
+            }
+        }
+
+        if($redirect) {
+            if($flashMessageText === null) {
+                $flashMessageText = sprintf('Parameter <b>%s</b> was not passed in the URL. You have been redirected.', $callingParam);
+            }
+
+            $this->flashMessage($flashMessageText, 'error', 10);
+
+            $this->redirect($redirectUrl);
+        }
     }
 }
 

@@ -9,16 +9,15 @@ use App\Core\DB\DatabaseRow;
 use App\Exceptions\GeneralException;
 use App\Logger\Logger;
 use App\Managers\AManager;
-use App\Managers\EntityManager;
 use App\Repositories\Container\GroupRepository;
 use App\Repositories\UserRepository;
 
 class GroupManager extends AManager {
-    private GroupRepository $groupRepository;
+    public GroupRepository $groupRepository;
     private UserRepository $userRepository;
 
-    public function __construct(Logger $logger, EntityManager $entityManager, GroupRepository $groupRepository, UserRepository $userRepository) {
-        parent::__construct($logger, $entityManager);
+    public function __construct(Logger $logger, GroupRepository $groupRepository, UserRepository $userRepository) {
+        parent::__construct($logger);
 
         $this->groupRepository = $groupRepository;
         $this->userRepository = $userRepository;
@@ -31,7 +30,7 @@ class GroupManager extends AManager {
     }
 
     public function addUserToGroupId(string $groupId, string $userId) {
-        $relationId = $this->createId(EntityManager::C_GROUP_USERS_RELATION);
+        $relationId = $this->createId();
 
         if(!$this->groupRepository->addUserToGroup($relationId, $groupId, $userId)) {
             throw new GeneralException('Database error.');
@@ -55,6 +54,14 @@ class GroupManager extends AManager {
             !$this->cacheFactory->invalidateCacheByNamespace(CacheNames::USER_GROUP_MEMBERSHIPS)
         ) {
             throw new GeneralException('Could not invalidate cache.');
+        }
+    }
+
+    public function removeUserFromAllGroups(string $userId) {
+        $groups = $this->getGroupsForUser($userId);
+
+        foreach($groups as $groupId) {
+            $this->removeUserFromGroupId($groupId, $userId);
         }
     }
 
@@ -111,7 +118,7 @@ class GroupManager extends AManager {
     }
 
     public function createNewGroup(string $title) {
-        $groupId = $this->createId(EntityManager::C_GROUPS);
+        $groupId = $this->createId();
 
         if(!$this->groupRepository->createNewGroup($groupId, $title)) {
             throw new GeneralException('Database error.');

@@ -34,7 +34,6 @@ class ExternalSystemsManager extends AManager {
      * Class constructor
      * 
      * @param Logger $logger Logger instance
-     * @param EntityManager $entityManager EntityManager instance
      * @param ExternalSystemsRepository $externalSystemsRepository instance
      * @param ExternalSystemsLogRepository $externalSystemsLogRepository ExternalSystemsLogRepository instance
      * @param ExternalSystemsTokenRepository $externalSystemsTokenRepository ExternalSystemsTokenRepository instance
@@ -42,13 +41,12 @@ class ExternalSystemsManager extends AManager {
      */
     public function __construct(
         Logger $logger,
-        EntityManager $entityManager,
         ExternalSystemsRepository $externalSystemsRepository,
         ExternalSystemsLogRepository $externalSystemsLogRepository,
         ExternalSystemsTokenRepository $externalSystemsTokenRepository,
         ExternalSystemsRightsRepository $externalSystemsRightsRepository
     ) {
-        parent::__construct($logger, $entityManager);
+        parent::__construct($logger);
 
         $this->externalSystemsRepository = $externalSystemsRepository;
         $this->externalSystemsLogRepository = $externalSystemsLogRepository;
@@ -70,9 +68,9 @@ class ExternalSystemsManager extends AManager {
         string $password,
         ?string $containerId = null
     ) {
-        $systemId = $this->createId(EntityManager::EXTERNAL_SYSTEMS);
+        $systemId = $this->createId();
 
-        $login = $this->createUniqueHashForDb(32, EntityManager::EXTERNAL_SYSTEMS, 'login');
+        $login = $this->createId();
         $password = HashManager::hashPassword($password);
 
         $data = [
@@ -107,6 +105,22 @@ class ExternalSystemsManager extends AManager {
         array $data
     ) {
         if(!$this->externalSystemsRepository->updateExternalSystem($systemId, $data)) {
+            throw new GeneralException('Database error.');
+        }
+    }
+
+    /**
+     * Updates external systems in bulk
+     * 
+     * @param array $systemIds System IDs
+     * @param array $data Data array
+     * @throws GeneralException
+     */
+    public function bulkUpdateExternalSystems(
+        array $systemIds,
+        array $data
+    ) {
+        if(!$this->externalSystemsRepository->bulkUpdateExternalSystems($systemIds, $data)) {
             throw new GeneralException('Database error.');
         }
     }
@@ -204,7 +218,7 @@ class ExternalSystemsManager extends AManager {
         string $systemId,
         ?string $containerId = null
     ): ExternalSystemTokenEntity {
-        $tokenId = $this->createId(EntityManager::EXTERNAL_SYSTEM_TOKENS);
+        $tokenId = $this->createId();
 
         $hash = HashManager::createHash(256, true);
 
@@ -306,7 +320,7 @@ class ExternalSystemsManager extends AManager {
         string $objectType,
         ?string $containerId = null
     ) {
-        $entryId = $this->createId(EntityManager::EXTERNAL_SYSTEM_LOG);
+        $entryId = $this->createId();
 
         $data = [
             'entryId' => $entryId,
@@ -447,7 +461,7 @@ class ExternalSystemsManager extends AManager {
         $operations = array_keys(ExternalSystemRightsOperations::getAll());
 
         foreach($operations as $operation) {
-            $rightId = $this->createId(EntityManager::EXTERNAL_SYSTEM_RIGHTS);
+            $rightId = $this->createId();
             
             if(!$this->externalSystemsRightsRepository->insertOperationRight([
                 'systemId' => $systemId,

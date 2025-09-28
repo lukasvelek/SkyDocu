@@ -2,6 +2,7 @@
 
 namespace App\Logger;
 
+use App\Core\ApplicationDatabaseLogger;
 use App\Core\Datetypes\DateTime;
 use App\Core\FileManager;
 use App\Helpers\DateTimeFormatHelper;
@@ -27,6 +28,7 @@ class Logger implements ILoggerCallable {
     private ?string $specialFilename;
     private int $stopwatchLogLevel;
     private ?string $containerId;
+    private ?ApplicationDatabaseLogger $appDbLogger = null;
 
     /**
      * Class constructor
@@ -37,6 +39,15 @@ class Logger implements ILoggerCallable {
         $this->specialFilename = null;
         $this->stopwatchLogLevel = LOG_STOPWATCH;
         $this->containerId = null;
+    }
+
+    /**
+     * Sets applications database logger instance
+     * 
+     * @param ApplicationDatabaseLogger $appDbLogger ApplicationDatabaseLogger instance
+     */
+    public function setApplicationDatabaseLogger(ApplicationDatabaseLogger $appDbLogger) {
+        $this->appDbLogger = $appDbLogger;
     }
 
     /**
@@ -92,9 +103,9 @@ class Logger implements ILoggerCallable {
         $this->specialFilename = 'service-log';
 
         $date = new DateTime();
-        $text = '[' . $date . '] [' . strtoupper($type) . '] ' . $serviceName . ': ' . $text;
+        $_text = '[' . $date . '] [' . strtoupper($type) . '] ' . $serviceName . ': ' . $text;
 
-        $result = $this->writeLog($text);
+        $result = $this->writeLog($text, $serviceName, $type, $_text);
 
         $this->specialFilename = $oldSpecialFilename;
 
@@ -123,16 +134,16 @@ class Logger implements ILoggerCallable {
      */
     private function logSQL(string $method, string $sql, null|int|float $msTaken, ?Exception $e = null) {
         $date = new DateTime();
-        $newText = '[' . $date . '] [' . strtoupper(self::LOG_SQL) . '] [' . (float)($msTaken) . ' ms] ' . $method . '(): ' . $sql;
+        $_newText = '[' . $date . '] [' . strtoupper(self::LOG_SQL) . '] [' . (float)($msTaken) . ' ms] ' . $method . '(): ' . $sql;
 
         if(SQL_LOG_LEVEL > 1 && $e !== null) {
-            $newText .= "\r\n" . 'Stack trace: ' . "\r\n" . $e->getTraceAsString();
+            $_newText .= "\r\n" . 'Stack trace: ' . "\r\n" . $e->getTraceAsString();
         }
 
         if($this->sqlLogLevel >= 1) {
             $oldSpecialFilename = $this->specialFilename;
             $this->specialFilename = 'sql-log';
-            $this->writeLog($newText, false);
+            $this->writeLog($sql, $method, strtoupper(self::LOG_SQL), $_newText, false, false);
             $this->specialFilename = $oldSpecialFilename;
         }
     }
@@ -189,37 +200,37 @@ class Logger implements ILoggerCallable {
      */
     protected function log(string $method, string $text, string $type = self::LOG_INFO) {
         $date = new DateTime();
-        $text = '[' . $date . '] [' . strtoupper($type) . '] ' . $method . '(): ' . $text;
+        $_text = '[' . $date . '] [' . strtoupper($type) . '] ' . $method . '(): ' . $text;
 
         $result = true;
         switch($type) {
             case self::LOG_STOPWATCH:
                 if($this->stopwatchLogLevel >= 1) {
-                    $result = $this->writeLog($text);
+                    $result = $this->writeLog($text, $method, $type, $_text);
                 }
                 break;
 
             case self::LOG_CACHE:
                 if($this->logLevel >= 4) {
-                    $result = $this->writeLog($text);
+                    $result = $this->writeLog($text, $method, $type, $_text);
                 }
                 break;
 
             case self::LOG_INFO:
                 if($this->logLevel >= 3) {
-                    $result = $this->writeLog($text);
+                    $result = $this->writeLog($text, $method, $type, $_text);
                 }
                 break;
 
             case self::LOG_WARNING:
                 if($this->logLevel >= 2) {
-                    $result = $this->writeLog($text);
+                    $result = $this->writeLog($text, $method, $type, $_text);
                 }
                 break;
             
             case self::LOG_ERROR:
                 if($this->logLevel >= 1) {
-                    $result = $this->writeLog($text);
+                    $result = $this->writeLog($text, $method, $type, $_text);
                 }
                 break;
 
@@ -243,10 +254,15 @@ class Logger implements ILoggerCallable {
     /**
      * Saves log message to the file
      * 
+     * @param string $rawText Raw log message
+     * @param string $method Method
+     * @param string $type Type
      * @param string $text Log message
+     * @param bool $addStackTrace Add stack trace?
+     * @param bool $saveToDatabase Save to database?
      * @return bool True on success or false on failure
      */
-    private function writeLog(string $text, bool $addStackTrace = true) {
+    private function writeLog(string $rawText, string $method, string $type, string $text, bool $addStackTrace = true, bool $saveToDatabase = true) {
         $folder = APP_ABSOLUTE_DIR . LOG_DIR;
 
         if($this->containerId !== null) {
@@ -266,12 +282,28 @@ class Logger implements ILoggerCallable {
             FileManager::createFolder($folder, true);
         }
 
+        $e = null;
         if(LOG_LEVEL >= 5 && $addStackTrace) {
             $e = new Exception;
 
             $text .= "\r\n Stack trace: \r\n" . $e->getTraceAsString();
         }
 
+        if($saveToDatabase && ($this->appDbLogger !== null)) {
+            $rawText = str_replace('\\', '\\\\', $rawText);
+            $stackTrace = null;
+            if($e !== null) {
+                $stackTrace = str_replace('\\', '\\\\', $e->getTraceAsString());
+                $stackTrace = htmlspecialchars($stackTrace);
+            }
+            $method = str_replace('\\', '\\\\', $method);
+            $this->appDbLogger->log(
+                htmlspecialchars($rawText),
+                $method . '()',
+                $stackTrace,
+                $type
+            );
+        }
         $result = FileManager::saveFile($folder, $file, $text . "\r\n", false, true);
 
         if($result !== false) {

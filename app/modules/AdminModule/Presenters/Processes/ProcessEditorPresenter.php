@@ -25,6 +25,34 @@ class ProcessEditorPresenter extends AAdminPresenter {
 
     public function renderForm() {
         $this->template->links = $this->createBackFullUrl('Admin:Processes', 'list');
+
+        $this->addScript('
+            $("#title").on("blur", function (e) {
+                const text = $(this).val();
+
+                const clear = text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9 ]/g, "");
+
+                var result = "";
+
+                const clearParts = clear.split(" ");
+
+                result += clearParts[0].toLowerCase();
+
+                if(clearParts.length > 1) {
+                    for(let i = 1; i < clearParts.length; i++) {
+                        result += clearParts[i][0].toUpperCase();
+
+                        if(clearParts[i].length > 1) {
+                            for(let j = 1; j < clearParts[i].length; j++) {
+                                result += clearParts[i][j];
+                            }
+                        }
+                    }
+                }
+
+                $("#name").val("sys_" + result);
+            });
+        ');
     }
 
     protected function createComponentProcessForm() {
@@ -60,6 +88,9 @@ class ProcessEditorPresenter extends AAdminPresenter {
         if($process !== null) {
             $description->setContent($process->getDescription());
         }
+
+        $form->addTextInput('name', 'Name:')
+            ->setReadonly();
             
         $colors = [];
         foreach(ProcessColorCombos::getAll() as $key => $value) {
@@ -92,6 +123,7 @@ class ProcessEditorPresenter extends AAdminPresenter {
         $title = $fr->title;
         $description = $fr->description;
         $colorCombo = $fr->colorCombo;
+        $name = $fr->name;
 
         $oldProcessId = null;
         if($this->httpRequest->get('processId') !== null) {
@@ -130,7 +162,8 @@ class ProcessEditorPresenter extends AAdminPresenter {
                 $description,
                 $this->getUserId(),
                 $definition,
-                $oldProcessId
+                $oldProcessId,
+                $name
             );
 
             $params = [

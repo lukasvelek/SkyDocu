@@ -32,11 +32,12 @@ class ProcessEntity extends AEntity {
     private array $definition;
     private array $metadataDefinition;
     private bool $isVisible;
+    private string $name;
     
     // FROM DEFINITION
     private string $colorCombo;
     private array $workflow = [];
-    private string $name = 'Process';
+    private string $definitionName = 'Process';
     private array $forms = [];
     // END FROM DEFINITION
 
@@ -53,6 +54,8 @@ class ProcessEntity extends AEntity {
      * @param string $dateCreated Date created
      * @param array $definition Definition
      * @param array $metadataDefinition Metadata definition
+     * @param bool $isVisible Is visible
+     * @param string $name Name
      */
     public function __construct(
         string $processId,
@@ -65,7 +68,8 @@ class ProcessEntity extends AEntity {
         string $dateCreated,
         array $definition,
         array $metadataDefinition,
-        bool $isVisible
+        bool $isVisible,
+        string $name
     ) {
         $this->processId = $processId;
         $this->uniqueProcessId = $uniqueProcessId;
@@ -78,13 +82,14 @@ class ProcessEntity extends AEntity {
         $this->definition = $definition;
         $this->metadataDefinition = $metadataDefinition;
         $this->isVisible = $isVisible;
+        $this->name = $name;
         
         // process definition
         if(array_key_exists(self::DEFINITION_COLOR_COMBO, $this->definition)) {
             $this->colorCombo = $this->definition[self::DEFINITION_COLOR_COMBO];
         }
         if(array_key_exists(self::DEFINITION_NAME, $this->definition)) {
-            $this->name = $this->definition[self::DEFINITION_NAME];
+            $this->definitionName = $this->definition[self::DEFINITION_NAME];
         }
         if(array_key_exists(self::DEFINITION_FORMS, $this->definition)) {
             $this->forms = $this->definition[self::DEFINITION_FORMS];
@@ -96,6 +101,13 @@ class ProcessEntity extends AEntity {
         }
 
         $this->workflow = $actors;
+    }
+
+    /**
+     * Returns process name
+     */
+    public function getName(): string {
+        return $this->name;
     }
 
     /**
@@ -188,8 +200,8 @@ class ProcessEntity extends AEntity {
     /**
      * Returns process name
      */
-    public function getName(): string {
-        return $this->name;
+    public function getDefinitionName(): string {
+        return $this->definitionName;
     }
 
     /**
@@ -254,7 +266,8 @@ class ProcessEntity extends AEntity {
             'status' => 'int',
             'dateCreated' => 'string',
             'metadataDefinition' => '?string',
-            'isVisible' => 'int'
+            'isVisible' => 'int',
+            'name' => 'string'
         ]);
 
         return new self(
@@ -268,7 +281,8 @@ class ProcessEntity extends AEntity {
             $row->dateCreated,
             json_decode(base64_decode($row->definition), true) ?? [],
             json_decode(base64_decode($row->metadataDefinition), true) ?? [],
-            ($row->isVisible == 1)
+            ($row->isVisible == 1),
+            $row->name
         );
     }
 }

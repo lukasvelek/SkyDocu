@@ -9,12 +9,14 @@ namespace App\UI\FormBuilder2\FormState;
  */
 class FormStateList {
     private array $_elements;
+    private ?string $callingElementName;
 
     /**
      * Class costructor
      */
     public function __construct() {
         $this->_elements = [];
+        $this->callingElementName = null;
     }
 
     public function __set(string $key, mixed $value) {
@@ -27,6 +29,22 @@ class FormStateList {
         } else {
             return null;
         }
+    }
+
+    /**
+     * Sets calling element's name
+     * 
+     * @param string $name Name
+     */
+    public function setCallingElementName(string $name) {
+        $this->callingElementName = $name;
+    }
+
+    /**
+     * Returns calling element's name
+     */
+    public function getCallingElementName(): ?string {
+        return $this->callingElementName;
     }
 
     /**

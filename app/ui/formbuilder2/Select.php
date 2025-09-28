@@ -143,6 +143,16 @@ class Select extends AInteractableElement {
             $this->addAttribute('id', $this->name);
         }
 
+        $selectValues = [];
+        foreach($this->options as $option) {
+            $selectValues[] = [
+                'value' => $option->getValue(),
+                'text' => $option->getText()
+            ];
+        }
+
+        $this->addAttribute('select-values', base64_encode(json_encode($selectValues)));
+
         $this->appendAttributesToCode($code);
 
         $code .= '>';

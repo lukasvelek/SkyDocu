@@ -7,7 +7,7 @@ use App\Exceptions\AException;
 use App\Helpers\UnitConversionHelper;
 
 /**
- * FileStorageStatsWidget display statistics for application file storage
+ * FileStorageStatsWidget displays statistics for application file storage
  * 
  * @author Lukas Velek
  */

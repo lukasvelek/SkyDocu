@@ -199,7 +199,7 @@ class DocumentFoldersPresenter extends AAdminPresenter {
         $folderId = $this->httpRequest->get('folderId');
 
         if($folderId === null) {
-            throw new RequiredAttributeIsNotSetException('folderId');
+            //throw new RequiredAttributeIsNotSetException('folderId');
         }
 
         if($fr !== null) {

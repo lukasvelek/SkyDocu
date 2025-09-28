@@ -7,14 +7,13 @@ use App\Core\DB\DatabaseRow;
 use App\Exceptions\GeneralException;
 use App\Logger\Logger;
 use App\Managers\AManager;
-use App\Managers\EntityManager;
 use App\Repositories\Container\GridRepository;
 
 class GridManager extends AManager {
     private GridRepository $gridRepository;
 
-    public function __construct(Logger $logger, EntityManager $entityManager, GridRepository $gridRepository) {
-        parent::__construct($logger, $entityManager);
+    public function __construct(Logger $logger, GridRepository $gridRepository) {
+        parent::__construct($logger);
 
         $this->gridRepository = $gridRepository;
     }
@@ -38,7 +37,7 @@ class GridManager extends AManager {
     }
 
     public function createGridConfiguration(string $gridName, array $columns) {
-        $configurationId = $this->createId(EntityManager::C_GRID_CONFIGURATION);
+        $configurationId = $this->createId();
 
         if(!$this->gridRepository->insertGridConfiguration($configurationId, $gridName, $this->processColumnsArrayToString($columns))) {
             throw new GeneralException('Database error.');

@@ -56,6 +56,14 @@ class ContainerRepository extends ARepository {
         return $qb->fetch();
     }
 
+    public function getContainerByTitle(string $containerTitle) {
+        $qb = $this->composeQueryForContainers()
+            ->where('title = ?', [$containerTitle])
+            ->execute();
+            
+        return $qb->fetch();
+    }
+
     public function createNewCreationStatusEntry(string $statusId, string $containerId, int $percentFinished = 0, ?string $description = null) {
         $qb = $this->qb(__METHOD__);
 
@@ -127,6 +135,17 @@ class ContainerRepository extends ARepository {
         $qb->update('containers')
             ->set($data)
             ->where('containerId = ?', [$containerId])
+            ->execute();
+
+        return $qb->fetchBool();
+    }
+
+    public function bulkUpdateContainers(array $containerIds, array $data): bool {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->update('containers')
+            ->set($data)
+            ->where($qb->getColumnInValues('containerId', $containerIds))
             ->execute();
 
         return $qb->fetchBool();

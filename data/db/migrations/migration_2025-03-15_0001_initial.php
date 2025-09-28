@@ -8,7 +8,6 @@ use App\Core\DB\ABaseMigration;
 use App\Core\DB\Helpers\TableSchema;
 use App\Core\DB\Helpers\TableSeeding;
 use App\Core\HashManager;
-use App\Managers\EntityManager;
 
 /**
  * This is the initial migration that defines the database schema for SkyDocu.
@@ -195,11 +194,11 @@ class migration_2025_03_15_0001_initial extends ABaseMigration {
         $seed = $this->getTableSeeding();
 
         $userIds = [
-            'admin' => $this->getId(EntityManager::USERS),
-            'service_user' => $this->getId(EntityManager::USERS)
+            'admin' => $this->getId(),
+            'service_user' => $this->getId()
         ];
 
-        $seed->seed(EntityManager::USERS)
+        $seed->seed('users')
             ->add([
                 'userId' => $userIds['admin'],
                 'username' => 'admin',
@@ -218,11 +217,11 @@ class migration_2025_03_15_0001_initial extends ABaseMigration {
             ]);
 
         $groupIds = [
-            SystemGroups::SUPERADMINISTRATORS => $this->getId(EntityManager::GROUPS),
-            SystemGroups::CONTAINER_MANAGERS => $this->getId(EntityManager::GROUPS)
+            SystemGroups::SUPERADMINISTRATORS => $this->getId(),
+            SystemGroups::CONTAINER_MANAGERS => $this->getId()
         ];
 
-        $seed->seed(EntityManager::GROUPS)
+        $seed->seed('groups')
             ->add([
                 'groupId' => $groupIds[SystemGroups::SUPERADMINISTRATORS],
                 'title' => SystemGroups::SUPERADMINISTRATORS
@@ -232,14 +231,14 @@ class migration_2025_03_15_0001_initial extends ABaseMigration {
                 'title' => SystemGroups::CONTAINER_MANAGERS
             ]);
 
-        $seed->seed(EntityManager::GROUP_USERS)
+        $seed->seed('group_users')
             ->add([
-                'groupUserId' => $this->getId(EntityManager::GROUP_USERS),
+                'groupUserId' => $this->getId(),
                 'groupId' => $groupIds[SystemGroups::SUPERADMINISTRATORS],
                 'userId' => $userIds['admin']
             ])
             ->add([
-                'groupUserId' => $this->getId(EntityManager::GROUP_USERS),
+                'groupUserId' => $this->getId(),
                 'groupId' => $groupIds[SystemGroups::CONTAINER_MANAGERS],
                 'userId' => $userIds['admin']
             ]);
@@ -253,14 +252,14 @@ class migration_2025_03_15_0001_initial extends ABaseMigration {
         ];
 
         $serviceIds = [
-            'ContainerCreationMaster' => $this->getId(EntityManager::SYSTEM_SERVICES),
-            'LogRotate' => $this->getId(EntityManager::SYSTEM_SERVICES),
-            'ContainerUsageStatistics' => $this->getId(EntityManager::SYSTEM_SERVICES),
-            'ProcessSubstitute' => $this->getId(EntityManager::SYSTEM_SERVICES),
-            'ContainerOrphanedFilesRemovingMaster' => $this->getId(EntityManager::SYSTEM_SERVICES)
+            'ContainerCreationMaster' => $this->getId(),
+            'LogRotate' => $this->getId(),
+            'ContainerUsageStatistics' => $this->getId(),
+            'ProcessSubstitute' => $this->getId(),
+            'ContainerOrphanedFilesRemovingMaster' => $this->getId()
         ];
 
-        $serviceSeed = $seed->seed(EntityManager::SYSTEM_SERVICES);
+        $serviceSeed = $seed->seed('system_services');
 
         foreach($services as $service => $path) {
             $arr = [
@@ -304,7 +303,7 @@ class migration_2025_03_15_0001_initial extends ABaseMigration {
             $masterId = $serviceIds[$masterService];
 
             foreach($services as $service => $path) {
-                $id = $this->getId(EntityManager::SYSTEM_SERVICES);
+                $id = $this->getId();
 
                 $serviceSeed->add([
                     'serviceId' => $id,

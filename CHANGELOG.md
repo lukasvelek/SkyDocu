@@ -2,6 +2,7 @@
 Here is the list of changes in versions.
 
 ## Index
+[SkyDocu `1.8` (09/28/2025)](#skydocu-18-09282025)
 [SkyDocu `1.7` (08/02/2025)](#skydocu-17-08022025)  
 [SkyDocu `1.6` (06/21/2025)](#skydocu-16-06212025)  
 [SkyDocu `1.5` (04/08/2025)](#skydocu-15-04082025)  
@@ -11,6 +12,29 @@ Here is the list of changes in versions.
 [SkyDocu `1.2` (01/27/2025)](#skydocu-12-01272025)  
 [SkyDocu `1.1` (01/07/2025)](#skydocu-11-01072025)  
 [SkyDocu `1.0` (11/29/2024)](#skydocu-10-11292024)
+
+## SkyDocu `1.8` (09/28/2025)
+- Added support for running database migrations for a single container
+- Added container users overview in Superadministartion
+- Added support for custom process reports
+- Added support for GUIDs instead of random hashes
+- Added support for deleting uncreated containers
+- Added process statistics widget to container process administration
+- Added document grid bulk actions
+- Added process grid bulk actions
+- Added external system grid bulk actions
+- Added superadministration container grid bulk actions
+- Added support for automatic user deleting
+    - Users are deleted after the retention period has ended
+- Added logging to database
+- Added process transaction log
+- Reworked process reports
+- Reworked container permanent flash messages
+- Fixed the users grid in Superadministration settings
+    - Only users with access to Superadministration are visible
+- Fixed the application version format
+- Fixed in-container process widgets
+    - Removed unnecessary actions and columns
 
 ## SkyDocu `1.7` (08/02/2025)
 - Added support for custom processes in containers

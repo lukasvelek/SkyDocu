@@ -15,6 +15,7 @@ use App\Modules\ModuleManager;
 use App\UI\AComponent;
 use App\UI\FormBuilder2\FormState\FormStateList;
 use App\UI\FormBuilder2\FormState\FormStateListHelper;
+use App\UI\ListBuilder\ListBuilder;
 
 /**
  * FormBuilder allows building forms for interaction with the server
@@ -230,7 +231,7 @@ class FormBuilder2 extends AComponent {
             $code = 'function addOnChange() {';
 
             foreach(array_keys($this->elements) as $name) {
-                $code .= '$("#' . $name . '").on("change", function() { ' . $this->componentName . '_onChange(\'' . implode('\', \'', $callArgs) . '\', \'null\'); });';
+                $code .= '$("#' . $name . '").on("change", function() { ' . $this->componentName . '_onChange(\'' . $name . '\', \'' . implode('\', \'', $callArgs) . '\', \'null\'); });';
             }
     
             $code .= '}';
@@ -252,19 +253,25 @@ class FormBuilder2 extends AComponent {
             'readonly',
             'value',
             'min',
-            'max'
+            'max',
+            'disabled'
         ];
 
         $code = 'function getFormState() {';
 
-        foreach(array_keys($this->elements) as $name) {
+        foreach($this->elements as $name => $element) {
             if($name == 'btn_submit') continue;
+
             foreach($attributes as $attr) {
                 $code .= 'var ' . $name . '_' . $attr . ' = $("#' . $name . '").prop("' . $attr . '"); ';
             }
+
+            if($element instanceof Select) {
+                $code .= 'var ' . $name . '_selectValues = $("#' . $name . '").attr("select-values"); ';
+            }
         }
 
-        foreach(array_keys($this->elements) as $name) {
+        foreach($this->elements as $name => $element) {
             if($name == 'btn_submit') continue;
 
             foreach($attributes as $attr) {
@@ -274,25 +281,37 @@ class FormBuilder2 extends AComponent {
                 }
 
                 $code .= 'if(' . $name . '_' . $attr . ' === undefined || ' . $name . '_' . $attr . ' === false || ' . $name . '_' . $attr . ' === "") { ' . $name . '_' . $attr . ' = false; }';
+
+                if($element instanceof Select) {
+                    $code .= 'if(' . $name . '_selectValues === undefined || ' . $name . '_selectValues === false || ' . $name . '_selectValues === "") { ' . $name . '_selectValues = null; }';
+                }
             }
         }
 
         $jsonArr = [];
-        foreach(array_keys($this->elements) as $name) {
+        foreach($this->elements as $name => $element) {
             if($name == 'btn_submit') continue;
 
             foreach($attributes as $attr) {
                 $jsonArr[$name][$attr] = $name . '_' . $attr;
             }
+
+            if($element instanceof Select) {
+                $jsonArr[$name]['selectValues'] = $name . '_selectValues';
+            }
         }
 
         $json = json_encode($jsonArr);
 
-        foreach(array_keys($this->elements) as $name) {
+        foreach($this->elements as $name => $element) {
             if($name == 'btn_submit') continue;
 
             foreach($attributes as $attr) {
                 $json = str_replace('"' . $name . '_' . $attr . '"', $name . '_' . $attr, $json);
+            }
+
+            if($element instanceof Select) {
+                $json = str_replace('"' . $name . '_selectValues"', $name . '_selectValues', $json);
             }
         }
 
@@ -328,6 +347,8 @@ class FormBuilder2 extends AComponent {
             $data[$k] = $v;
         }
 
+        $data['callingElement'] = '_callingElement';
+
         $par = new PostAjaxRequest($this->httpRequest);
 
         $par->setComponentUrl($this, 'onChange')
@@ -348,19 +369,22 @@ class FormBuilder2 extends AComponent {
             $par->addArgument($arg);
         }
 
+        $par->addArgument('_callingElement');
+
         $this->addScript($par);
 
         $___args = [];
 
         foreach($this->action as $k => $v) {
             if(in_array($k, ['page', 'action', 'do'])) continue;
+            if(is_array($v)) continue;
 
             $___args[] = '\'' . $v . '\'';
         }
 
         $__args[] = '\'\'';
 
-        $this->addScript('function ' . $this->componentName . '_onChange() { ' . $par->getFunctionName() . '(' . implode(', ', $___args) . '); }');
+        $this->addScript('function ' . $this->componentName . '_onChange(_call) { ' . $par->getFunctionName() . '(' . implode(', ', $___args) . ', _call); }');
 
         $this->router->inject($this->presenter, new ModuleManager());
         if(!$this->router->checkEndpointExists($this->action)) {
@@ -626,6 +650,19 @@ class FormBuilder2 extends AComponent {
     }
 
     /**
+     * Adds a hidden input
+     * 
+     * @param string $name Element name
+     */
+    public function addHiddenInput(string $name): HiddenInput {
+        $hi = new HiddenInput($name);
+
+        $this->elements[$name] = &$hi;
+
+        return $hi;
+    }
+
+    /**
      * Adds form submit button
      * 
      * @param string $text Button text
@@ -850,6 +887,20 @@ class FormBuilder2 extends AComponent {
         $this->elements['hl_' . count($this->elements)] = &$de;
 
         return $de;
+    }
+
+    /**
+     * Adds a list to the form
+     * 
+     * @param string $name Element name
+     * @param ListBuilder $list ListBuilder instance
+     */
+    public function addList(string $name, ListBuilder $list): ListElement {
+        $le = new ListElement($name, $list);
+
+        $this->elements[$name] = &$le;
+
+        return $le;
     }
 
     /**

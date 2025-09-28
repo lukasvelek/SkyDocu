@@ -4,7 +4,6 @@ namespace App\Modules\UserModule;
 
 use App\Components\ProcessesGrid\ProcessesGrid;
 use App\Constants\Container\ProcessGridViews;
-use App\Core\Http\HttpRequest;
 use App\UI\LinkBuilder;
 
 class HomePresenter extends AUserPresenter {
@@ -17,7 +16,8 @@ class HomePresenter extends AUserPresenter {
 
         $code = null;
         if($container->getPermanentFlashMessage() !== null) {
-            $code = $this->createFlashMessage('info', $container->getPermanentFlashMessage(), 0, false, true);
+            $fm = $container->getPermanentFlashMessage();
+            $code = $this->createPermanentFlashMessage($fm['type'], $fm['message']);
         }
 
         $this->template->permanent_flash_message = $code ?? '';
@@ -40,7 +40,7 @@ class HomePresenter extends AUserPresenter {
         $this->template->processes_started_by_me_widget_title = LinkBuilder::createSimpleLink('Processes started by me', $this->createFullURL('User:Processes', 'list', ['view' => ProcessGridViews::VIEW_STARTED_BY_ME]), 'widget-title');
     }
 
-    protected function createComponentWaitingForMeWidget(HttpRequest $request) {
+    protected function createComponentWaitingForMeWidget() {
         $grid = $this->componentFactory->getGridBuilder($this->containerId);
         $grid->setApplication($this->app);
 
@@ -56,6 +56,8 @@ class HomePresenter extends AUserPresenter {
         $grid->disablePagination();
 
         $grid->disableActionByName('workflowHistory');
+        $grid->disableActionByName('cancelInstance');
+        $grid->disableActionByName('deleteInstance');
         
         if($this->isAjax()) {
             $grid->setLimit(5);
@@ -66,7 +68,7 @@ class HomePresenter extends AUserPresenter {
         return $grid;
     }
 
-    protected function createComponentStartedByMeWidget(HttpRequest $request) {
+    protected function createComponentStartedByMeWidget() {
         $grid = $this->componentFactory->getGridBuilder($this->containerId);
         $grid->setApplication($this->app);
 
@@ -82,6 +84,8 @@ class HomePresenter extends AUserPresenter {
         $grid->disablePagination();
 
         $grid->disableActionByName('workflowHistory');
+        $grid->disableActionByName('cancelInstance');
+        $grid->disableActionByName('deleteInstance');
         
         if($this->isAjax()) {
             $grid->setLimit(5);

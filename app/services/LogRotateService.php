@@ -66,6 +66,15 @@ class LogRotateService extends AService {
             $this->logInfo('Moving file \'' . $filename . '\' located in \'' . $filepath . '\'.');
 
             $filenameParts = explode('.', $filename);
+            foreach([
+                'log',
+                'service-log',
+                'sql-log'
+            ] as $x) {
+                if(!str_starts_with($filename, $x)) {
+                    continue 2;
+                }
+            }
             
             $logDate = explode('_', $filenameParts[0])[1];
 

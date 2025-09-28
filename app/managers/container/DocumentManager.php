@@ -2,6 +2,7 @@
 
 namespace App\Managers\Container;
 
+use App\Constants\Container\DocumentStatus;
 use App\Core\Caching\CacheNames;
 use App\Core\Datetypes\DateTime;
 use App\Core\DB\DatabaseRow;
@@ -9,7 +10,6 @@ use App\Exceptions\GeneralException;
 use App\Exceptions\NonExistingEntityException;
 use App\Logger\Logger;
 use App\Managers\AManager;
-use App\Managers\EntityManager;
 use App\Repositories\Container\DocumentClassRepository;
 use App\Repositories\Container\DocumentRepository;
 use App\Repositories\Container\FolderRepository;
@@ -24,13 +24,12 @@ class DocumentManager extends AManager {
 
     public function __construct(
         Logger $logger,
-        EntityManager $entityManager,
         DocumentRepository $documentRepository,
         DocumentClassRepository $documentClassRepository,
         GroupRepository $groupRepository,
         FolderRepository $folderRepository
     ) {
-        parent::__construct($logger, $entityManager);
+        parent::__construct($logger);
 
         $this->documentRepository = $documentRepository;
         $this->documentClassRepository = $documentClassRepository;
@@ -67,6 +66,8 @@ class DocumentManager extends AManager {
                 $visibleCustomMetadata[] = $this->folderRepository->getCustomMetadataById($metadataId);
             }
         }
+
+        $qb->andWhere($qb->getColumnNotInValues('status', [DocumentStatus::DELETED]));
 
         return $qb;
     }
@@ -166,14 +167,14 @@ class DocumentManager extends AManager {
     }
 
     public function createNewDocument(array $metadataValues, array $customMetadataValues) {
-        $documentId = $this->createId(EntityManager::C_DOCUMENTS);
+        $documentId = $this->createId();
 
         if(!$this->documentRepository->createNewDocument($documentId, $metadataValues)) {
             throw new GeneralException('Database error.');
         }
 
         foreach($customMetadataValues as $metadataId => $value) {
-            $entryId = $this->createId(EntityManager::C_DOCUMENTS_CUSTOM_METADATA);
+            $entryId = $this->createId();
 
             $data = [
                 'documentId' => $documentId,
@@ -269,8 +270,19 @@ class DocumentManager extends AManager {
         }
     }
 
-    public function updateDocumentCustom(string $documentId, array $data) {
+    /**
+     * Updates documents in bulk
+     * 
+     * @param array $documentIds Document IDs
+     * @param array $data Data array
+     * @throws GeneralException
+     */
+    public function bulkUpdateDocuments(array $documentIds, array $data) {
+        $data['dateModified'] = DateTime::now();
 
+        if(!$this->documentRepository->bulkUpdateDocuments($documentIds, $data)) {
+            throw new GeneralException('Database error.');
+        }
     }
 
     /**
@@ -323,10 +335,22 @@ class DocumentManager extends AManager {
         $sharedUntil->modify('+7d');
         $sharedUntil = $sharedUntil->getResult();
 
-        $sharingId = $this->createId(EntityManager::C_DOCUMENT_SHARING);
+        $sharingId = $this->createId();
 
         if(!$this->documentRepository->createNewDocumentSharing($sharingId, $documentId, $sharedByUserId, $sharedToUserId, $sharedUntil)) {
-            throw new GeneralException('Database error.', null, false);
+            throw new GeneralException('Database error.');
+        }
+    }
+
+    public function unshareDocumentForUserId(string $documentId, string $userId) {
+        if(!$this->documentRepository->deleteDocumentSharingForUserId($documentId, $userId)) {
+            throw new GeneralException('Database error.');
+        }
+    }
+
+    public function unshareDocumentByUserId(string $documentId, string $userId) {
+    if(!$this->documentRepository->deleteDocumentSharingByUserId($documentId, $userId)) {
+            throw new GeneralException('Database error.');
         }
     }
 

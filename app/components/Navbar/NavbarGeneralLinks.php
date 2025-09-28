@@ -12,7 +12,7 @@ class NavbarGeneralLinks {
     public const DOCUMENTS = ['page' => 'User:Documents', 'action' => 'list'];
     public const ARCHIVE = ['page' => 'User:Archive', 'action' => 'list'];
     public const PROCESSES = ['page' => 'User:Processes', 'action' => 'list', 'view' => 'waitingForMe'];
-    //public const REPORTS = ['page' => 'User:Reports', 'action' => 'list'];
+    public const REPORTS = ['page' => 'User:Reports', 'action' => 'list'];
     public const CONTACTS = ['page' => 'User:Contacts', 'action' => 'contactsGrid'];
 
     public const A_SETTINGS = ['page' => 'Admin:Home', 'action' => 'dashboard'];
@@ -31,7 +31,7 @@ class NavbarGeneralLinks {
             'Documents' => self::DOCUMENTS,
             'Archive' => self::ARCHIVE,
             'Processes' => self::PROCESSES,
-            //'Reports' => self::REPORTS,
+            'Reports' => self::REPORTS,
             'Contacts' => self::CONTACTS
         ];
     }

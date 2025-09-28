@@ -17,7 +17,7 @@
 use App\Core\Application;
 use App\Core\Configuration;
 use App\Core\DatabaseConnection;
-use App\Managers\EntityManager;
+use App\Core\GUID;
 use App\Repositories\ContentRepository;
 use QueryBuilder\QueryBuilder;
 
@@ -32,8 +32,6 @@ $app = new Application();
 $containers = $app->containerManager->getAllContainers(true, true);
 
 say(sprintf('Found %d containers to process.', count($containers)));
-
-$entityManager = new EntityManager($app->logger, new ContentRepository($app->userRepository->conn, $app->logger, $app->transactionLogRepository), $app->contentRepository);
 
 $i = 1;
 foreach($containers as  $container) {
@@ -70,7 +68,7 @@ foreach($containers as  $container) {
     say(sprintf('Found %d container transaction log entries to process.', count($dataToInsert)));
 
     foreach($dataToInsert as $containerId => $data) {
-        $transactionId = $entityManager->generateEntityId(EntityManager::TRANSACTIONS);
+        $transactionId = GUID::generate();
 
         $userId = $data['userId'];
         $callingMethod = $data['callingMethod'];

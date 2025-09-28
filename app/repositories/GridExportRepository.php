@@ -2,7 +2,6 @@
 
 namespace App\Repositories;
 
-use App\Managers\EntityManager;
 
 class GridExportRepository extends ARepository {
     public function composeQueryForExports() {
@@ -16,7 +15,7 @@ class GridExportRepository extends ARepository {
     }
 
     public function createNewExport(string $userId, string $hash, string $gridName) {
-        $exportId = $this->createEntityId(EntityManager::GRID_EXPORTS);
+        $exportId = $this->createEntityId();
 
         $qb = $this->qb(__METHOD__);
 

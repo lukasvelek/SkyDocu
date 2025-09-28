@@ -11,6 +11,7 @@ class CreateTableSeeding {
     private string $name;
     private array $data = [];
     private array $deleteData = [];
+    private array $updateData = [];
     private bool $deleteAll = false;
 
     /**
@@ -36,6 +37,27 @@ class CreateTableSeeding {
      */
     public function add(array $data): static {
         $this->data[] = $data;
+
+        return $this;
+    }
+
+    /**
+     * Updates seed
+     * 
+     * Data array must be in this format:
+     * [
+     *  'column1' => 'value1',
+     *  'column2' => 'value2'
+     * ]
+     * 
+     * @param string $condition Condition
+     * @param array $data Data
+     */
+    public function update(string $condition, array $data): static {
+        $this->updateData[] = [
+            'condition' => $condition,
+            'data' => $data
+        ];
 
         return $this;
     }
@@ -82,6 +104,19 @@ class CreateTableSeeding {
     
                 $sql = "INSERT INTO " . $this->name . " (" . implode(', ', $columns) . ") VALUES ('" . implode('\', \'', $_data) . "')";
     
+                $sqls[] = $sql;
+            }
+
+            foreach($this->updateData as $update) {
+                $condition = $update['condition'];
+
+                $updateSqlChanges = [];
+                foreach($update['data'] as $k => $v) {
+                    $updateSqlChanges[] = $k . '=\'' . $v . '\'';
+                }
+
+                $sql = "UPDATE " . $this->name . " SET " . implode(', ', $updateSqlChanges) .  " WHERE " . $condition;
+
                 $sqls[] = $sql;
             }
     

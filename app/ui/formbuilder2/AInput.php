@@ -9,13 +9,16 @@ namespace App\UI\FormBuilder2;
  */
 abstract class AInput extends AInteractableElement {
     private string $type;
-    private string $name;
+    
+    protected string $name;
+    protected array $additionalCode;
 
     public function __construct(string $type, string $name) {
         parent::__construct();
 
         $this->type = $type;
         $this->name = $name;
+        $this->additionalCode = [];
     }
 
     /**
@@ -41,6 +44,10 @@ abstract class AInput extends AInteractableElement {
         $this->appendAttributesToCode($code);
 
         $code .= '>';
+
+        if(!empty($this->additionalCode)) {
+            $code .= implode('', $this->additionalCode);
+        }
 
         return $code;
     }

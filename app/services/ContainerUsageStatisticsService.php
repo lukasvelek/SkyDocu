@@ -5,8 +5,8 @@ namespace App\Services;
 use App\Constants\ContainerStatus;
 use App\Core\Application;
 use App\Core\FileManager;
+use App\Core\GUID;
 use App\Exceptions\AException;
-use App\Managers\EntityManager;
 use Exception;
 
 class ContainerUsageStatisticsService extends AService {
@@ -148,7 +148,7 @@ class ContainerUsageStatisticsService extends AService {
                 'totalTimeTaken' => $totalTimeTaken
             ];
         } catch(AException|Exception $e) {
-            return 0;
+            return [];
         }
     }
 
@@ -156,6 +156,8 @@ class ContainerUsageStatisticsService extends AService {
         foreach($results as $containerId => $data) {
             $this->logInfo('Saving analysis results for container \'' . $containerId . '\'.');
             foreach($data as $date => $measuredData) {
+                if(empty($measuredData)) continue;
+                
                 $totalSqlQueries = $measuredData['count'];
                 $averageTimeTaken = (float)$measuredData['averageTimeTaken'];
                 $totalTimeTaken = (float)$measuredData['totalTimeTaken'];
@@ -172,7 +174,7 @@ class ContainerUsageStatisticsService extends AService {
                 try {
                     $this->app->containerRepository->beginTransaction(__METHOD__);
                     
-                    $entryId = $this->app->containerManager->entityManager->generateEntityId(EntityManager::CONTAINER_USAGE_STATISTICS);
+                    $entryId = GUID::generate();
 
                     $this->app->containerRepository->insertNewContainerUsageStatisticsEntry($entryId, $containerId, $totalSqlQueries, $averageTimeTaken, $date, $totalTimeTaken);
 

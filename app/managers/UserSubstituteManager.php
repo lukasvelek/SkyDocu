@@ -17,8 +17,8 @@ class UserSubstituteManager extends AManager {
 
     private array $mUserSubstituteCache;
 
-    public function __construct(Logger $logger, EntityManager $entityManager, UserSubstituteRepository $userSubstituteRepository) {
-        parent::__construct($logger, $entityManager);
+    public function __construct(Logger $logger, UserSubstituteRepository $userSubstituteRepository) {
+        parent::__construct($logger);
 
         $this->userSubstituteRepository = $userSubstituteRepository;
 
@@ -70,7 +70,7 @@ class UserSubstituteManager extends AManager {
             }
         } else {
             // insert
-            $entryId = $this->createId(EntityManager::USER_SUBSTITUTES);
+            $entryId = $this->createId();
             if(!$this->userSubstituteRepository->insertUserSubstitute($entryId, $userId, $substituteUserId)) {
                 throw new GeneralException('Database error.');
             }

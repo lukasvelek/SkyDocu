@@ -7,9 +7,10 @@ use App\Constants\JobQueueProcessingHistoryTypes;
 use App\Constants\JobQueueTypes;
 use App\Core\Application;
 use App\Core\DB\DatabaseRow;
+use App\Core\GUID;
 use App\Exceptions\AException;
-use App\Managers\EntityManager;
 use Exception;
+use Throwable;
 
 class JobQueueService extends AService {
     public function __construct(
@@ -108,7 +109,7 @@ class JobQueueService extends AService {
      * 
      * @param DatabaseRow $job Job
      */
-    private function errorJob(DatabaseRow $job, AException $e) {
+    private function errorJob(DatabaseRow $job, AException|Throwable $e) {
         $this->app->jobQueueManager->errorJob($job->jobId, $e);
     }
 
@@ -172,16 +173,18 @@ class JobQueueService extends AService {
         $container = $this->getContainerInstance($params['containerId']);
 
         try {
-            $this->logJob($job, sprintf('Deleting process instance %s.', $params['instanceId']));
+            $this->logJob($job, sprintf('Deleting process instances [%s].', implode(', ', $params['instanceIds'])));
 
             $container->processInstanceRepository->beginTransaction(__METHOD__);
 
-            $container->processInstanceManager->deleteProcessInstance($params['instanceId']);
+            foreach($params['instanceIds'] as $instanceId) {
+                $container->processInstanceManager->deleteProcessInstance($instanceId);
+            }
 
             $container->processInstanceRepository->commit($this->app->userManager->getServiceUserId(), __METHOD__);
 
-            $this->logJob($job, sprintf('Deleted process instance %s.', $params['instanceId']));
-        } catch(AException $e) {
+            $this->logJob($job, sprintf('Deleted process instances [%s].', implode(', ', $params['instanceId'])));
+        } catch(AException|Throwable $e) {
             $container->processInstanceRepository->rollback(__METHOD__);
 
             $this->errorJob($job, $e);
@@ -272,7 +275,7 @@ class JobQueueService extends AService {
                     $this->logJob($job, sprintf('Creating new metadata for process.'));
                     foreach($cMetadata as $name) {
                         $data = [
-                            'metadataId' => $container->entityManager->generateEntityId(EntityManager::C_PROCESS_CUSTOM_METADATA),
+                            'metadataId' => GUID::generate(),
                             'uniqueProcessId' => $process->getUniqueProcessId(),
                             'title' => $name,
                             'guiTitle' => $process->getMetadataDefinitionForMetadataName($name)['label'],
@@ -336,22 +339,24 @@ class JobQueueService extends AService {
     private function _CANCEL_CONTAINER_PROCESS_INSTANCE(DatabaseRow $job) {
         $params = $this->parseParams($job);
 
-        $instanceId = $params['instanceId'];
+        $instanceIds = $params['instanceIds'];
         $containerId = $params['containerId'];
         $userId = $params['userId'];
 
         $container = $this->getContainerInstance($containerId);
 
         try {
-            $this->logJob($job, sprintf('Canceling process instance %s.', $instanceId));
+            $this->logJob($job, sprintf('Canceling process instances [%s].', implode(', ', $instanceIds)));
 
             $container->processInstanceRepository->beginTransaction(__METHOD__);
 
-            $container->processInstanceManager->cancelProcessInstance($instanceId, $userId);
+            foreach($instanceIds as $instanceId) {
+                $container->processInstanceManager->cancelProcessInstance($instanceId, $userId);
+            }
 
             $container->processInstanceRepository->commit($this->app->userManager->getServiceUserId(), __METHOD__);
 
-            $this->logJob($job, sprintf('Canceled process instance %s.', $instanceId));
+            $this->logJob($job, sprintf('Canceled process instances [%s].', implode(', ', $instanceIds)));
         } catch(AException $e) {
             $container->processInstanceRepository->rollback(__METHOD__);
 

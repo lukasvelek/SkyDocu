@@ -51,6 +51,17 @@ class UserAbsenceRepository extends ARepository {
 
         return $qb;
     }
+
+    public function deleteUserAbsenceForUser(string $userId): bool {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->delete()
+            ->from('user_absence')
+            ->where('userId = ?', [$userId])
+            ->execute();
+
+        return $qb->fetchBool();
+    }
 }
 
 ?>

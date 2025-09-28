@@ -1,0 +1,59 @@
+{
+    "table": "process_instances",
+    "primaryKey": "instanceId",
+    "columns": [
+        {
+            "name": "userId",
+            "title": "Author",
+            "type": "user"
+        },
+        {
+            "name": "status",
+            "title": "Status",
+            "type": "enum",
+            "enumClass": "\\App\\Constants\\Container\\ProcessInstanceStatus"
+        },
+        {
+            "name": "currentOfficerId",
+            "title": "Current officer",
+            "type": "userGroup",
+            "typeCheckColumnEnum": {
+                "name": "currentOfficerType",
+                "userKey": 1,
+                "groupKey": 2
+            }
+        },
+        {
+            "name": "dateCreated",
+            "title": "Date created",
+            "type": "datetime"
+        },
+        {
+            "name": "sum",
+            "title": "Sum",
+            "type": "processInstanceData_textCombination",
+            "combinationParts": [
+                {
+                    "type": "processInstanceData_text",
+                    "jsonPath": "forms.0.data.sum"
+                },
+                {
+                    "type": "text",
+                    "value": " "
+                },
+                {
+                    "type": "processInstanceData_enum",
+                    "jsonPath": "forms.0.data.sumCurrency",
+                    "enumClass": "\\App\\Constants\\Container\\InvoiceCurrencies"
+                }
+            ]
+        }
+    ],
+    "processFilter": "sys_invoice",
+    "order": [
+        {
+            "name": "dateModified",
+            "order": "ASC"
+        }
+    ]
+}

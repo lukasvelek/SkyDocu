@@ -38,6 +38,17 @@ class SupervisorAuthorizator extends AAuthorizator {
 
         return in_array($userId, $users);
     }
+
+    /**
+     * Checks if user can view all process reports
+     * 
+     * @param string $userId User ID
+     */
+    public function canUserViewAllReports(string $userId): bool {
+        $users = $this->groupManager->getUsersForGroupTitle(SystemGroups::PROCESS_SUPERVISOR);
+
+        return in_array($userId, $users);
+    }
 }
 
 ?>

@@ -94,6 +94,27 @@ class ArrayHelper {
 
         return $tmp;
     }
+
+    /**
+     * Joins multiple arrays
+     * 
+     * Only <int, mixed> arrays supported
+     * 
+     * @param array ...$array Arrays
+     */
+    public static function joinArrays(array ...$arrays): array {
+        $final = [];
+
+        foreach($arrays as $array) {
+            foreach($array as $item) {
+                if(!in_array($item, $final)) {
+                    $final[] = $item;
+                }
+            }
+        }
+
+        return $final;
+    }
 }
 
 ?>

@@ -62,6 +62,12 @@ define('MAX_CONTAINER_ARCHIVE_FOLDER_NESTING_LEVEL', 5);
  */
 define('APP_BRANCH', 'PROD');
 define('CONTAINER_DB_NAME_PREFIX', '');
+/**
+ * Defines how long a deleted user will be held in retention before being deleted completely
+ *
+ * Number of days
+ */
+define('DELETED_USER_RETENTION_PERIOD', '30');
 
 //
 //                      DATABASE

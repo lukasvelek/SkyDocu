@@ -13,6 +13,7 @@ class FormState {
     public bool $isRequired;
     public bool $isHidden;
     public bool $isReadonly;
+    public bool $isDisabled;
     public mixed $defaultValue;
     public mixed $value;
     public mixed $minimum;
@@ -29,6 +30,7 @@ class FormState {
         $this->isRequired = false;
         $this->isHidden = false;
         $this->isReadonly = false;
+        $this->isDisabled = false;
         $this->defaultValue = null;
         $this->value = null;
         $this->minimum = null;

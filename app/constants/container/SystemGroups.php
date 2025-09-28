@@ -22,7 +22,7 @@ class SystemGroups extends AConstant {
             self::ACCOUNTANTS => 'Accountants',
             self::CONTAINER_MANAGERS => 'Container managers',
             self::PROCESS_DESIGNERS => 'Process designers',
-            default => null
+            default => $key
         };
     }
 }

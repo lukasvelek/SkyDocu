@@ -194,11 +194,78 @@ class DocumentRepository extends ARepository {
         return $qb->fetchBool();
     }
 
+    public function bulkUpdateDocuments(array $documentIds, array $data) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->update('documents')
+            ->set($data)
+            ->where($qb->getColumnInValues('documentId', $documentIds))
+            ->execute();
+
+        return $qb->fetchBool();
+    }
+
     public function createNewDocumentSharing(string $sharingId, string $documentId, string $sharedByUserId, string $sharedToUserId, string $dateValidUntil) {
         $qb = $this->qb(__METHOD__);
 
         $qb->insert('document_sharing', ['sharingId', 'documentId', 'authorUserId', 'userId', 'dateValidUntil'])
             ->values([$sharingId, $documentId, $sharedByUserId, $sharedToUserId, $dateValidUntil])
+            ->execute();
+
+        return $qb->fetchBool();
+    }
+
+    public function deleteDocumentSharingForUserId(string $documentId, string $userId) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->delete()
+            ->from('document_sharing')
+            ->where('documentId = ?', [$documentId])
+            ->andWhere('userId = ?', [$userId])
+            ->execute();
+
+        return $qb->fetchBool();
+    }
+
+    public function deleteDocumentSharingByUserId(string $documentId, string $userId): bool {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->delete()
+            ->from('document_sharing')
+            ->where('documentId = ?', [$documentId])
+            ->andWhere('authorUserId = ?', [$userId])
+            ->execute();
+
+        return $qb->fetchBool();
+    }
+
+    public function getFileIdForDocumentId(string $documentId) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->select(['fileId'])
+            ->from('document_file_relation')
+            ->where('documentId = ?', [$documentId])
+            ->execute();
+
+        return $qb->fetch('fileId');
+    }
+
+    public function composeQueryForDocumentFileRelations() {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->select(['*'])
+            ->from('document_file_relation');
+
+        return $qb;
+    }
+
+    public function deleteDocumentFileRelation(string $documentId, string $fileId) {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->delete()
+            ->from('document_file_relation')
+            ->where('documentId = ?', [$documentId])
+            ->andWhere('fileId = ?', [$fileId])
             ->execute();
 
         return $qb->fetchBool();

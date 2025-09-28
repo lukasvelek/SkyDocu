@@ -3,14 +3,15 @@
 namespace App\Managers\Container;
 
 use App\Constants\Container\ProcessInstanceOfficerTypes;
+use App\Constants\Container\ProcessInstanceOperations;
 use App\Constants\Container\ProcessInstanceStatus;
 use App\Constants\Container\SystemGroups;
 use App\Core\DB\DatabaseRow;
+use App\Core\GUID;
 use App\Entities\ProcessInstanceDataEntity;
 use App\Exceptions\GeneralException;
 use App\Logger\Logger;
 use App\Managers\AManager;
-use App\Managers\EntityManager;
 use App\Managers\UserManager;
 use App\Repositories\Container\ProcessInstanceRepository;
 
@@ -26,12 +27,11 @@ class ProcessInstanceManager extends AManager {
 
     public function __construct(
         Logger $logger,
-        EntityManager $entityManager,
         ProcessInstanceRepository $processInstanceRepository,
         GroupManager $groupManager,
         UserManager $userManager
     ) {
-        parent::__construct($logger, $entityManager);
+        parent::__construct($logger);
 
         $this->processInstanceRepository = $processInstanceRepository;
         $this->groupManager = $groupManager;
@@ -42,7 +42,7 @@ class ProcessInstanceManager extends AManager {
      * Generates unique process instance ID
      */
     public function generateUniqueInstanceId(): ?string {
-        return $this->createId(EntityManager::C_PROCESS_INSTANCES);
+        return $this->createId();
     }
 
     /**
@@ -263,6 +263,19 @@ class ProcessInstanceManager extends AManager {
     }
 
     /**
+     * Reassigns process instance to different user (system only)
+     * 
+     * @param string $instanceId Instance ID
+     * @param string $userId User ID
+     */
+    public function sysReassignProcessInstance(string $instanceId, string $userId) {
+        $this->updateInstance($instanceId, [
+            'currentOfficerId' => $userId
+        ]);
+        $this->addWorkflowHistoryEntryToProcessInstance($instanceId, $userId, ProcessInstanceOperations::SYS_REASSIGN);
+    }
+
+    /**
      * Adds workflow history entry to process instance
      * 
      * @param string $instanceId Instance ID
@@ -334,6 +347,27 @@ class ProcessInstanceManager extends AManager {
      */
     public function deleteProcessInstance(string $instanceId) {
         if(!$this->processInstanceRepository->deleteProcessInstance($instanceId)) {
+            throw new GeneralException('Database error.');
+        }
+    }
+
+    /**
+     * Logs a process instance message
+     * 
+     * @param string $instanceId Instance ID
+     * @param string $userId User ID
+     * @param string $message Message
+     */
+    public function instanceLog(string $instanceId, string $userId, string $message) {
+        $data = [
+            'logId' => GUID::generate(),
+            'instanceId' => $instanceId,
+            'userId' => $userId,
+            'message' => $message,
+            'tsDateCreated' => explode(' ', microtime())[0]
+        ];
+
+        if(!$this->processInstanceRepository->createNewProcessInstanceLogEntry($data)) {
             throw new GeneralException('Database error.');
         }
     }

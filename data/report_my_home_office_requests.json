@@ -1,0 +1,55 @@
+{
+    "table": "process_instances",
+    "primaryKey": "instanceId",
+    "columns": [
+        {
+            "name": "userId",
+            "title": "Author",
+            "type": "user"
+        },
+        {
+            "name": "status",
+            "title": "Status",
+            "type": "enum",
+            "enumClass": "\\App\\Constants\\Container\\ProcessInstanceStatus"
+        },
+        {
+            "name": "currentOfficerId",
+            "title": "Current officer",
+            "type": "userGroup",
+            "typeCheckColumnEnum": {
+                "name": "currentOfficerType",
+                "userKey": 1,
+                "groupKey": 2
+            }
+        },
+        {
+            "name": "dateCreated",
+            "title": "Date created",
+            "type": "datetime"
+        },
+        {
+            "name": "dateFrom",
+            "title": "Date from",
+            "type": "processInstanceData_datetime",
+            "jsonPath": "forms.0.data.dateFrom"
+        },
+        {
+            "name": "dateTo",
+            "title": "Date to",
+            "type": "processInstanceData_datetime",
+            "jsonPath": "forms.0.data.dateTo"
+        }
+    ],
+    "filter": "status = 2",
+    "processFilter": "sys_homeOffice",
+    "order": [
+        {
+            "name": "dateModified",
+            "order": "ASC"
+        }
+    ],
+    "gridConfig": {
+        "pagination": false
+    }
+}

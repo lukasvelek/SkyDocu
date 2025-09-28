@@ -5,6 +5,7 @@ namespace PeeQL\Parser;
 use Exception;
 use PeeQL\Operations\QueryOperation;
 use PeeQL\Result\AResult;
+use PeeQL\Result\QueryResult;
 use PeeQL\Router\PeeQLRouter;
 use PeeQL\Schema\PeeQLSchema;
 
@@ -44,7 +45,14 @@ class PeeQLParser {
         $schemaName = ucfirst($operation->getHandlerMethodName()) . ucfirst($operation->getHandlerName()) . 'Schema';
 
         $_schema = $schema->getSchema($schemaName);
-        $operation = $_schema->validate($operation);
+        try {
+            $operation = $_schema->validate($operation);
+        } catch(Exception $e) {
+            $result = new QueryResult();
+            $result->setError($e->getMessage());
+
+            return $result;
+        }
 
         $handler = $router->route($operation->getHandlerName());
         

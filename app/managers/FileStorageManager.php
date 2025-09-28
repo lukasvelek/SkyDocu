@@ -19,10 +19,9 @@ class FileStorageManager extends AManager {
 
     public function __construct(
         Logger $logger,
-        EntityManager $entityManager,
         FileStorageRepository $fileStorageRepository
     ) {
-        parent::__construct($logger, $entityManager);
+        parent::__construct($logger);
 
         $this->fileStorageRepository = $fileStorageRepository;
     }
@@ -39,9 +38,9 @@ class FileStorageManager extends AManager {
     public function createNewFile(string $userId, string $filename, string $filepath, int $filesize, ?string $containerId = null): string {
         $filepath = str_replace('\\', '\\\\', $filepath);
 
-        $fileId = $this->createId(EntityManager::FILE_STORAGE);
+        $fileId = $this->createId();
 
-        $hash = $this->createUniqueHashForDb(256, EntityManager::FILE_STORAGE, 'hash');
+        $hash = $this->createId();
 
         $data = [
             'fileId' => $fileId,

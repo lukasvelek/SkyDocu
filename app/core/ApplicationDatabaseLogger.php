@@ -2,7 +2,6 @@
 
 namespace App\Core;
 
-use App\Exceptions\AException;
 use App\Repositories\ApplicationLogRepository;
 
 /**
@@ -64,7 +63,7 @@ class ApplicationDatabaseLogger {
 
         try {
             $this->appLogRepository->insertNewData($data);
-        } catch(AException $e) {
+        } catch(\Throwable|\mysqli_sql_exception $e) {
 
         }
     }

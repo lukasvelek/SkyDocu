@@ -82,6 +82,10 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
             ->setDisabled()
             ->setValue($container->isInDistribution() ? 'Yes' : 'No');
 
+        $form->addTextInput('containerTier', 'Container tier:')
+            ->setDisabled()
+            ->setValue(ContainerTiers::toString($container->getTier()));
+
         $fileSize = $this->app->fileStorageManager->getTotalFileSizeForContainer($container->getId());
         $fileSizeFriendly = UnitConversionHelper::convertBytesToUserFriendly($fileSize);
 

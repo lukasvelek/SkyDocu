@@ -3,6 +3,7 @@
 namespace App\Components\ContainersGrid;
 
 use App\Constants\ContainerStatus;
+use App\Constants\ContainerTiers;
 use App\Constants\ContainerTypes;
 use App\Core\DB\DatabaseRow;
 use App\Core\Http\JsonResponse;
@@ -43,6 +44,7 @@ class ContainersGrid extends GridBuilder implements IGridExtendingComponent {
 
     private function appendSystemMetadata() {
         $this->addColumnText('title', 'Title');
+        $this->addColumnConst('tier', 'Tier', ContainerTiers::class);
         $this->addColumnConst('status', 'Status', ContainerStatus::class);
     }
 

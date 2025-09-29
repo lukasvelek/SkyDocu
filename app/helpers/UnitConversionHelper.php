@@ -19,24 +19,24 @@ class UnitConversionHelper {
     public static function convertBytesToUserFriendly(int $bytes): string {
         $kb = $mb = $gb = $tb = 0;
 
-        while($bytes >= 1000) {
+        while($bytes >= 1_000) {
             $kb++;
-            $bytes -= 1000;
+            $bytes -= 1_000;
         }
 
-        while($kb >= 1000) {
+        while($kb >= 1_000) {
             $mb++;
-            $kb -= 1000;
+            $kb -= 1_000;
         }
 
-        while($mb >= 1000) {
+        while($mb >= 1_000) {
             $gb++;
-            $mb -= 1000;
+            $mb -= 1_000;
         }
 
-        while($gb >= 1000) {
+        while($gb >= 1_000) {
             $tb++;
-            $gb -= 1000;
+            $gb -= 1_000;
         }
 
         if($gb == 0) {

@@ -85,9 +85,17 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
         $fileSize = $this->app->fileStorageManager->getTotalFileSizeForContainer($container->getId());
         $fileSizeFriendly = UnitConversionHelper::convertBytesToUserFriendly($fileSize);
 
-        $form->addTextInput('containerTotalFileSize', 'Container storage file size:')
+        $storageLimit = ContainerTiers::getStorageLimitForTier($container->getTier());
+
+        if($storageLimit !== null) {
+            $storageLimit = UnitConversionHelper::convertBytesToUserFriendly($storageLimit);
+        } else {
+            $storageLimit = '-';
+        }
+
+        $form->addTextInput('containerTotalFileSize', 'Container storage file size / storage limit:')
             ->setDisabled()
-            ->setValue($fileSizeFriendly);
+            ->setValue($fileSizeFriendly . ' / ' . $storageLimit);
 
         return $form;
     }

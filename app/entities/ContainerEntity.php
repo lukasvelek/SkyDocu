@@ -21,6 +21,7 @@ class ContainerEntity extends AEntity {
     private ?array $permanentFlashMessage;
     private bool $isInDistribution;
     private int $type;
+    private int $tier;
 
     /**
      * @var array<int, ContainerDatabaseEntity> $databases
@@ -39,6 +40,7 @@ class ContainerEntity extends AEntity {
      * @param bool $canShowContainerReferent Can show container referent?
      * @param bool $isInDistribution Is in distribution?
      * @param int $type Container type
+     * @param int $tier Container tier
      */
     public function __construct(
         string $containerId,
@@ -49,7 +51,8 @@ class ContainerEntity extends AEntity {
         string $dateCreated,
         bool $canShowContainerReferent,
         bool $isInDistribution,
-        int $type
+        int $type,
+        int $tier
     ) {
         $this->containerId = $containerId;
         $this->title = $title;
@@ -60,6 +63,7 @@ class ContainerEntity extends AEntity {
         $this->canShowContainerReferent = $canShowContainerReferent;
         $this->isInDistribution = $isInDistribution;
         $this->type = $type;
+        $this->tier = $tier;
         
         $this->permanentFlashMessage = null;
         $this->databases = [];
@@ -185,6 +189,13 @@ class ContainerEntity extends AEntity {
         return $this->type;
     }
 
+    /**
+     * Returns container's tier
+     */
+    public function getTier(): int {
+        return $this->tier;
+    }
+
     public static function createEntityFromDbRow(mixed $row): ?static {
         if($row === null) {
             return null;
@@ -200,7 +211,8 @@ class ContainerEntity extends AEntity {
             'dateCreated' => 'string',
             'canShowContainerReferent' => 'bool',
             'isInDistribution' => 'bool',
-            'type' => 'int'
+            'type' => 'int',
+            'tier' => 'int'
         ]);
 
         $obj = new self(
@@ -212,7 +224,8 @@ class ContainerEntity extends AEntity {
             $row->dateCreated,
             $row->canShowContainerReferent,
             $row->isInDistribution,
-            $row->type
+            $row->type,
+            $row->tier
         );
 
         return $obj;

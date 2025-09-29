@@ -430,3 +430,14 @@ The workflow is going to look like this:
 ## Caching
 
 ## Logging
+
+## Container tiers
+
+### 1. FREE
+- 1 GB of storage
+
+### 2. STANDARD
+- 10 GB of storage
+
+### 3. PREMIUM
+- unlimited storage

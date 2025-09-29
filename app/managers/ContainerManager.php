@@ -4,6 +4,7 @@ namespace App\Managers;
 
 use App\Constants\Container\SystemGroups;
 use App\Constants\ContainerStatus;
+use App\Constants\ContainerTypes;
 use App\Core\Caching\CacheNames;
 use App\Core\DatabaseConnection;
 use App\Core\Datetypes\DateTime;
@@ -73,8 +74,10 @@ class ContainerManager extends AManager {
      * @param string $description Container description
      * @param string $callingUserId Calling user ID
      * @param int $status Container status
+     * @param int $type Container type
+     * @return string Container ID
      */
-    public function createNewContainer(string $title, string $description, string $callingUserId, int $status = ContainerStatus::NEW) {
+    public function createNewContainer(string $title, string $description, string $callingUserId, int $status = ContainerStatus::NEW, int $type = ContainerTypes::STANDARD): string {
         $containerId = $this->createId();
         $databaseName = $this->generateContainerDatabaseName($containerId);
 
@@ -86,7 +89,8 @@ class ContainerManager extends AManager {
             'title' => $title,
             'description' => $description,
             'canShowContainerReferent' => 1,
-            'status' => $status
+            'status' => $status,
+            'type' => $type
         ];
 
         if(!$this->containerRepository->createNewContainer($data)) {

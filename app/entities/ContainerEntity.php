@@ -20,6 +20,7 @@ class ContainerEntity extends AEntity {
     private bool $canShowContainerReferent;
     private ?array $permanentFlashMessage;
     private bool $isInDistribution;
+    private int $type;
 
     /**
      * @var array<int, ContainerDatabaseEntity> $databases
@@ -37,6 +38,7 @@ class ContainerEntity extends AEntity {
      * @param string $dateCreated Date created
      * @param bool $canShowContainerReferent Can show container referent?
      * @param bool $isInDistribution Is in distribution?
+     * @param int $type Container type
      */
     public function __construct(
         string $containerId,
@@ -46,7 +48,8 @@ class ContainerEntity extends AEntity {
         int $status,
         string $dateCreated,
         bool $canShowContainerReferent,
-        bool $isInDistribution
+        bool $isInDistribution,
+        int $type
     ) {
         $this->containerId = $containerId;
         $this->title = $title;
@@ -56,6 +59,7 @@ class ContainerEntity extends AEntity {
         $this->dateCreated = $dateCreated;
         $this->canShowContainerReferent = $canShowContainerReferent;
         $this->isInDistribution = $isInDistribution;
+        $this->type = $type;
         
         $this->permanentFlashMessage = null;
         $this->databases = [];
@@ -174,6 +178,13 @@ class ContainerEntity extends AEntity {
         }
     }
 
+    /**
+     * Returns container's type
+     */
+    public function getType(): int {
+        return $this->type;
+    }
+
     public static function createEntityFromDbRow(mixed $row): ?static {
         if($row === null) {
             return null;
@@ -188,7 +199,8 @@ class ContainerEntity extends AEntity {
             'status' => 'int',
             'dateCreated' => 'string',
             'canShowContainerReferent' => 'bool',
-            'isInDistribution' => 'bool'
+            'isInDistribution' => 'bool',
+            'type' => 'int'
         ]);
 
         $obj = new self(
@@ -199,7 +211,8 @@ class ContainerEntity extends AEntity {
             $row->status,
             $row->dateCreated,
             $row->canShowContainerReferent,
-            $row->isInDistribution
+            $row->isInDistribution,
+            $row->type
         );
 
         return $obj;

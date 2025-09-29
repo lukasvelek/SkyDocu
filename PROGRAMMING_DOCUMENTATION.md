@@ -441,3 +441,6 @@ The workflow is going to look like this:
 
 ### 3. PREMIUM
 - unlimited storage
+
+### 4. SERVICE
+- unlimited storage

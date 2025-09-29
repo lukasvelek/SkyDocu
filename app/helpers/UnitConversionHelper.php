@@ -59,6 +59,15 @@ class UnitConversionHelper {
 
         return round($tmp, 1) . ' GB';
     }
+
+    /**
+     * Converts GBs to bytes
+     * 
+     * @param int $gbs GBs
+     */
+    public static function convertGigaBytesToBytes(int $gbs): int {
+        return $gbs * 1_000_000_000;
+    }
 }
 
 ?>

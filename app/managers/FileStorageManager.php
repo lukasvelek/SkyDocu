@@ -120,4 +120,27 @@ class FileStorageManager extends AManager {
             throw new GeneralException('Database error.');
         }
     }
+
+    /**
+     * Returns total file size for container
+     * 
+     * @param string $containerId Container ID
+     */
+    public function getTotalFileSizeForContainer(string $containerId): int {
+        $size = 0;
+
+        $qb = $this->fileStorageRepository->composeQueryForFilesInStorage($containerId);
+
+        $qb->select(['SUM(filesize) AS size'])
+            ->regenerateSQL();
+
+        $_size = $qb->execute()
+            ->fetch('size');
+
+        if($_size !== null) {
+            $size = $_size;
+        }
+
+        return $size;
+    }
 }

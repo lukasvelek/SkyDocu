@@ -5,6 +5,7 @@ namespace App\Modules\UserModule;
 use App\Constants\Container\CustomMetadataTypes;
 use App\Constants\Container\DocumentStatus;
 use App\Core\FileUploadManager;
+use App\Core\GUID;
 use App\Core\Http\FormRequest;
 use App\Core\Http\HttpRequest;
 use App\Exceptions\AException;
@@ -142,7 +143,8 @@ class CreateDocumentPresenter extends AUserPresenter {
                 }
 
                 // create file-document relation
-                $this->fileStorageManager->createNewFileDocumentRelation($documentId, $fileId);
+                $relationId = GUID::generate();
+                $this->documentRepository->createDocumentFileRelation($relationId, $documentId, $fileId);
 
                 $this->documentClassRepository->commit($this->getUserId(), __METHOD__);
 

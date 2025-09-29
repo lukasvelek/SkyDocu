@@ -74,6 +74,7 @@ class ContainerManager extends AManager {
      * @param string $description Container description
      * @param string $callingUserId Calling user ID
      * @param int $status Container status
+     * @param int $type Container type
      * @return string Container ID
      */
     public function createNewContainer(string $title, string $description, string $callingUserId, int $status = ContainerStatus::NEW, int $type = ContainerTypes::STANDARD): string {

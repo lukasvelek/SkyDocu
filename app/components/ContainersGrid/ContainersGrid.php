@@ -3,6 +3,7 @@
 namespace App\Components\ContainersGrid;
 
 use App\Constants\ContainerStatus;
+use App\Constants\ContainerTypes;
 use App\Core\DB\DatabaseRow;
 use App\Core\Http\JsonResponse;
 use App\Helpers\GridHelper;
@@ -34,6 +35,8 @@ class ContainersGrid extends GridBuilder implements IGridExtendingComponent {
         if(!$this->app->groupManager->isUserMemberOfContainerManagers($this->app->currentUser->getId())) {
             $qb->andWhere('userId = ?', [$this->app->currentUser->getId()]);
         }
+
+        $qb->andWhere('type = ?', [ContainerTypes::STANDARD]);
 
         $this->createDataSourceFromQueryBuilder($qb, 'containerId');
     }

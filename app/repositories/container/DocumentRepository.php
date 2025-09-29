@@ -259,7 +259,17 @@ class DocumentRepository extends ARepository {
         return $qb;
     }
 
-    public function deleteDocumentFileRelation(string $documentId, string $fileId) {
+    public function createDocumentFileRelation(string $relationId, string $documentId, string $fileId): bool {
+        $qb = $this->qb(__METHOD__);
+
+        $qb->insert('document_file_relation', ['relationId', 'documentId', 'fileId'])
+            ->values([$relationId, $documentId, $fileId])
+            ->execute();
+
+        return $qb->fetchBool();
+    }
+
+    public function deleteDocumentFileRelation(string $documentId, string $fileId): bool {
         $qb = $this->qb(__METHOD__);
 
         $qb->delete()

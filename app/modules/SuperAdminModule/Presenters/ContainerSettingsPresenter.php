@@ -10,6 +10,7 @@ use App\Constants\Container\ProcessStatus;
 use App\Constants\Container\SystemGroups as ContainerSystemGroups;
 use App\Constants\ContainerInviteUsageStatus;
 use App\Constants\ContainerStatus;
+use App\Constants\ContainerTiers;
 use App\Constants\JobQueueTypes;
 use App\Core\Caching\CacheNames;
 use App\Core\Container;
@@ -24,6 +25,7 @@ use App\Exceptions\GeneralException;
 use App\Exceptions\RequiredAttributeIsNotSetException;
 use App\Helpers\DateTimeFormatHelper;
 use App\Helpers\LinkHelper;
+use App\Helpers\UnitConversionHelper;
 use App\UI\GridBuilder2\Action;
 use App\UI\GridBuilder2\Cell;
 use App\UI\GridBuilder2\Row;
@@ -79,6 +81,13 @@ class ContainerSettingsPresenter extends ASuperAdminPresenter {
         $form->addTextInput('containerIsInDistribution', 'Is container in distribution:')
             ->setDisabled()
             ->setValue($container->isInDistribution() ? 'Yes' : 'No');
+
+        $fileSize = $this->app->fileStorageManager->getTotalFileSizeForContainer($container->getId());
+        $fileSizeFriendly = UnitConversionHelper::convertBytesToUserFriendly($fileSize);
+
+        $form->addTextInput('containerTotalFileSize', 'Container storage file size:')
+            ->setDisabled()
+            ->setValue($fileSizeFriendly);
 
         return $form;
     }
